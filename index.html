@@ -784,7 +784,7 @@ html.hc{--muted:var(--ink)}html.hc .chip,html.hc .btn,html.hc .panel{outline:1px
 .live-sky .sun{left:var(--sx)!important;top:var(--sy)!important;right:auto!important;bottom:auto!important;transform:translate(-50%,-50%);transition:left 1.2s ease,top 1.2s ease}
 .live-sky.is-night .sun{width:46px;height:46px;background:radial-gradient(circle at 35% 35%,#f4f2e6 0 55%,rgba(244,242,230,0) 72%);box-shadow:none}
 .today .stars{position:absolute;left:0;top:0;width:1px;height:1px;border-radius:50%;opacity:0;transition:opacity 1s}
-.sky-night .stars{opacity:1;animation:twinkle 5s ease-in-out infinite alternate}.sky-dawn .stars,.sky-sunset .stars{opacity:.35}
+.sky-night .stars{opacity:.9}.sky-dawn .stars,.sky-sunset .stars{opacity:.35}
 @keyframes twinkle{to{opacity:.6}}
 .fx-clouds{position:absolute;inset:0 0 40% 0;pointer-events:none;overflow:hidden}
 .fx-clouds i{position:absolute;top:calc(8% + var(--i) * 13%);left:-30%;width:calc(150px + var(--i) * 30px);height:34px;border-radius:40px;background:rgba(255,255,255,.55);filter:blur(6px);animation:drift calc(70s + var(--i) * 17s) linear infinite;animation-delay:calc(var(--i) * -23s)}
@@ -4891,7 +4891,7 @@ ALT_OUT.BO5 = st => st.story.flags.BO4==='a' ? {good:`De Vries closes his notebo
 /* Hartwell now follows The Buyout */
 (function(){ const h=STORY.find(m=>m.id==='HW1'); if(h && h.req) h.req.after='BO3'; })();
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.19.2';
+const TW_VERSION = '0.19.3';
 
 /* ---------- live map ---------- */
 function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
@@ -6038,7 +6038,7 @@ function wxFx(key){ const rain=['showers','tstorm','wave','squall'].includes(key
 const _flHero = todayHero;
 todayHero = function(st){ let h=_flHero(st); const P=skyPos(st.clock); const wx=genLocWx(st);
   h=h.replace('<section class="today ', `<section style="--sx:${P.x.toFixed(1)}%;--sy:${P.y.toFixed(1)}%" class="today live-sky wx-${esc(wx.key||'')} ${P.night?'is-night':''} `);
-  return h.replace('<div class="sun" aria-hidden="true"></div>', `<div class="stars" aria-hidden="true" style="box-shadow:${STARS}"></div><div class="sun" aria-hidden="true"></div>${wxFx(wx.key)}<div class="shimmer" aria-hidden="true"></div>`); };
+  return h.replace('<div class="sun" aria-hidden="true"></div>', `<div class="stars" aria-hidden="true" style="box-shadow:${STARS}"></div><div class="sun" aria-hidden="true"></div>${wxFx(wx.key)}`); };
 
 /* 3. splash on launch */
 (function splash(){ try{ const d=document.createElement('div'); d.id='tw-splash'; d.setAttribute('aria-hidden','true');
