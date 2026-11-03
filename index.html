@@ -4891,7 +4891,7 @@ ALT_OUT.BO5 = st => st.story.flags.BO4==='a' ? {good:`De Vries closes his notebo
 /* Hartwell now follows The Buyout */
 (function(){ const h=STORY.find(m=>m.id==='HW1'); if(h && h.req) h.req.after='BO3'; })();
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.19.1';
+const TW_VERSION = '0.19.2';
 
 /* ---------- live map ---------- */
 function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
@@ -6033,7 +6033,6 @@ function skyPos(min){ const m=((min%1440)+1440)%1440; const rise=360, set=1110; 
 function wxFx(key){ const rain=['showers','tstorm','wave','squall'].includes(key); const clouds = key==='calm' ? 1 : ['wave','tstorm','north','showers'].includes(key) ? 5 : 3;
   let h=`<div class="fx-clouds c${clouds}" aria-hidden="true">${Array.from({length:clouds},(_,i)=>`<i style="--i:${i}"></i>`).join('')}</div>`;
   if(rain) h+=`<div class="fx-rain ${key==='tstorm'||key==='squall'?'heavy':''}" aria-hidden="true"></div>`;
-  if(key==='tstorm'||key==='squall') h+=`<div class="fx-flash" aria-hidden="true"></div>`;
   if(key==='dust') h+=`<div class="fx-haze" aria-hidden="true"></div>`;
   return h; }
 const _flHero = todayHero;
