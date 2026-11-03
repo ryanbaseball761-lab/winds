@@ -936,6 +936,12 @@ html[data-view="result"] body{background:radial-gradient(1100px 620px at 85% -8%
 .hg-tabs button{border:0;background:transparent;color:var(--muted);font-weight:700;padding:8px 14px;border-radius:9px;cursor:pointer;font:inherit;font-weight:700}
 .hg-tabs button.on{background:var(--ink);color:var(--bg)}
 .upd-bar{position:fixed;left:50%;transform:translateX(-50%);top:14px;z-index:98;display:flex;gap:12px;align-items:center;background:#1f9d55;color:#fff;padding:10px 12px 10px 18px;border-radius:14px;box-shadow:0 12px 34px rgba(0,0,0,.35);animation:toastIn .35s ease}
+
+/* ---- v0.19.4: calm headers. No moving or blinking parts in the hero, story and chapter headers ---- */
+.today *, .today, .chapter-hero, .chapter-hero *, .story-hero, .story-hero *, .main-next, .main-next *{animation:none!important;transition:none!important}
+.fx-clouds i{left:calc(4% + var(--i) * 19%);filter:blur(5px)}
+.fx-rain{opacity:.35}
+html[data-view] body{background-attachment:scroll!important}
 </style>
 <div id="app"></div>
 <script>
@@ -4891,7 +4897,7 @@ ALT_OUT.BO5 = st => st.story.flags.BO4==='a' ? {good:`De Vries closes his notebo
 /* Hartwell now follows The Buyout */
 (function(){ const h=STORY.find(m=>m.id==='HW1'); if(h && h.req) h.req.after='BO3'; })();
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.19.3';
+const TW_VERSION = '0.19.4';
 
 /* ---------- live map ---------- */
 function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
