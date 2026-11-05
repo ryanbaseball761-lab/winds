@@ -4939,7 +4939,7 @@ ALT_OUT.BO5 = st => st.story.flags.BO4==='a' ? {good:`De Vries closes his notebo
 /* Hartwell now follows The Buyout */
 (function(){ const h=STORY.find(m=>m.id==='HW1'); if(h && h.req) h.req.after='BO3'; })();
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.24.0';
+const TW_VERSION = '0.24.1';
 
 /* ---------- live map ---------- */
 function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
@@ -6910,7 +6910,7 @@ const VFLAP = { ga:100, stol:85, amph:85, hp:120, bush:90, twin:130, turbo:150, 
 const SAFE = { id:null, t:{} };
 function safeSay(key, text, every){ const now=Date.now(); if(SAFE.t[key] && now-SAFE.t[key] < (every||60000)) return; if(SAFE.any && now-SAFE.any < 6000) return; SAFE.any=now; SAFE.t[key]=now; try{ copilotSay(text, key+':'+now); }catch(_){} }
 const _qkSim2 = renderSimBits;
-renderSimBits = function(){ _qkSim2(); try{ const a=S.st&&S.st.active, s=S.sim; if(!a || !a.started || S.simState!=='live' || !s || !s.motion || s.motion.onGround) return;
+renderSimBits = function(){ _qkSim2(); try{ const a=S.st&&S.st.active, s=S.sim; if(!simRelevant(a) || !s.motion || s.motion.onGround) return;
     if(SAFE.id!==a.job.id){ SAFE.id=a.job.id; SAFE.t={}; }
     const cls=AC[a.job.ac].cls, ias=s.motion.ias, x=s.ext||{};
     if(ias > (VWARN[cls]||200)) safeSay('fast', `Speed! ${ias} knots. Power back.`, 20000);
@@ -6930,6 +6930,25 @@ const _qkIf = inflightView;
 inflightView = function(){ const h=_qkIf(); const a=S.st&&S.st.active; if(!a) return h; const c=approachCard(a); return c ? h.replace(/(<section class="if-head">[\s\S]*?<\/section>)/, m=>m+c) : h; };
 const _qkSim3 = renderSimBits;
 renderSimBits = function(){ _qkSim3(); try{ const a=S.st&&S.st.active; if(!a||!a.started||S.view!=='flight') return; const want=!!approachCard(a); const has=!!document.querySelector('.appr-card'); if(want!==has){ S.keepScroll=true; render(); } else if(has){ const t=tpl(approachCard(a)); document.querySelector('.appr-card').replaceWith(t.content.firstElementChild); } }catch(_){} };
+/* ===================== GUARD: ignore MSFS menu scenes and anything that isn't your flight ===================== */
+/* the sim data only counts once the flight has started, and only near the route */
+function simRelevant(a){ const s=S.sim; if(!a || !a.started || S.simState!=='live' || !s || !s.position) return false; const p={lat:s.position.lat, lon:s.position.lon};
+  const from=AP[a.job.from], to=a.job.local?from:AP[a.job.to]; const route=a.job.local?(a.job.tourNm||40):distNm(from,to); const lim=Math.max(60, route*1.3+30);
+  return distNm(p,from) < lim || distNm(p,to) < lim; }
+const _gdCabin = cabinTick;
+cabinTick = function(){ const a=S.st&&S.st.active; if(!simRelevant(a)) return; return _gdCabin.apply(this, arguments); };
+const _gdCopilot = copilotTick;
+copilotTick = function(){ const a=S.st&&S.st.active; if(!simRelevant(a)) return; return _gdCopilot.apply(this, arguments); };
+/* a flight only logs itself if it took off from the departure airport after you started, and landed at an airport */
+autoReady = function(a){ if(!a || !a.started) return null; const rec=simRecFor(a); if(!rec || !rec.touchdown || !rec.takeoff) return null; const j=a.job;
+  if(j.kind==='check' || j.request || (j.bonus && !j.bonus.auto)) return null;
+  if(rec.takeoff.t < a.started - 120000) return null;
+  if(rec.takeoff.lat!=null && distNm({lat:rec.takeoff.lat, lon:rec.takeoff.lon}, AP[j.from]) > 8) return null;
+  const near=nearestAirport(rec.touchdown.lat, rec.touchdown.lon); if(near.d > 6) return null;
+  if(rec.touchdown.t - rec.takeoff.t < 90000) return null;
+  return rec; };
+/* rename: The Logbook is now "Lost & Found" */
+(function(){ const OLD='The Logbook', NEW='Lost & Found'; STORY.forEach(m=>{ if(m.arc===OLD) m.arc=NEW; }); if(ARC_META[OLD]){ ARC_META[NEW]=Object.assign({}, ARC_META[OLD], {tag:`A lost logbook from 1978, a mail pilot who vanished, and the examiner who knew him.`}); delete ARC_META[OLD]; } if(typeof ARC_COLORS!=='undefined'){ ARC_COLORS[NEW]=ARC_COLORS[OLD]||'#7a5c3a'; delete ARC_COLORS[OLD]; if(ARC_META[NEW]) ARC_META[NEW].col=ARC_COLORS[NEW]; } })();
 boot();
 </script>
 <script>
