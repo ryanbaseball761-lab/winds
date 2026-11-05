@@ -4945,7 +4945,7 @@ ALT_OUT.BO5 = st => st.story.flags.BO4==='a' ? {good:`De Vries closes his notebo
 /* Hartwell now follows The Buyout */
 (function(){ const h=STORY.find(m=>m.id==='HW1'); if(h && h.req) h.req.after='BO3'; })();
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.27.0';
+const TW_VERSION = '0.27.1';
 
 /* ---------- live map ---------- */
 function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
@@ -7190,6 +7190,21 @@ const _p20Board2 = boardView;
 boardView = function(){ return _p20Board2().replace(/<a[^>]*>Book it on the Pilot tab<\/a>/, '<button class="btn sm" data-act="nav" data-v="pilot">Book checkride</button>'); };
 
 /* 20. very long job titles are clamped to two lines (CSS) */
+/* ===================== HW2 "Below the Surface": a short hand-flown hop on St. Martin, landing in Simpson Bay Lagoon beside TNCM ===================== */
+AP.WSBL = {n:`Simpson Bay Lagoon (water)`, isl:`Sint Maarten`, c:'SXM', r:'LEE', lat:18.0480, lon:-63.0880, el:0, water:true,
+  note:`The big sheltered lagoon right beside Princess Juliana (TNCM). Look for it just north-east of the runway. Land in open water away from the moored yachts and the causeway bridge.`};
+(function(){ const m=STORY.find(x=>x.id==='HW2'); if(!m) return;
+  Object.assign(m, { from:'TFFG', to:'WSBL', dep:450,
+    brief:[`Hartwell's secret turns out to be a reef. Through a foundation that never uses his name, he's funding coral restoration around St. Martin. The project's lead scientist, Dr. Amara Okafor, needs aerial photos of the new coral nurseries off Creole Rock and along the south coast before the afternoon wind ruffles the water.`,
+      `"Calm morning, low sun, glassy water," she says, strapping a camera rig to the door frame. "Perfect for photographs. Take off from Grand Case, follow the coast round to the south, and put us down in Simpson Bay Lagoon. The team's boat is waiting there." It's a short hop you fly by hand the whole way.`],
+    teach:[`Glassy water hides your height above the surface. Set up a stable 100–150 fpm descent in landing attitude near a shoreline reference and hold it until you touch down. Don't try to flare by eye.`,
+      `Simpson Bay Lagoon is right next to Princess Juliana (TNCM). Stay clear of the runway 10/28 approach path, land in open water away from moored boats and the bridge, and taxi slowly.`],
+    out:{ good:`Amara gets 600 clean frames of the nurseries. On the boat she shows you a photo of a hawksbill turtle swimming under your hull. "Lionel will want this one framed," she says.`,
+      ok:`The photos are usable. The landing was a little firm, and Amara's coffee is now on the ceiling.`,
+      bad:`The glassy-water landing went badly and the survey is scrubbed for the day. Amara is gracious about it, and the foundation pays the invoice anyway.` } });
+})();
+/* a booked HW2 on the old Tobago Cays route is un-booked once, so the story card offers the new one */
+(function(){ let done=false; const _r=render; render=function(){ if(!done && S.st){ done=true; try{ const a=S.st.active; if(a && !a.started && a.job.story==='HW2' && a.job.to!=='WSBL'){ S.st.active=null; save(); if(S.view==='flight') S.view='board'; setTimeout(()=>toast('Below the Surface now ends in Simpson Bay Lagoon by TNCM. Start it again from the story card.'),800); } }catch(_){} } return _r.apply(this, arguments); }; })();
 boot();
 </script>
 <script>
