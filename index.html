@@ -4945,7 +4945,7 @@ ALT_OUT.BO5 = st => st.story.flags.BO4==='a' ? {good:`De Vries closes his notebo
 /* Hartwell now follows The Buyout */
 (function(){ const h=STORY.find(m=>m.id==='HW1'); if(h && h.req) h.req.after='BO3'; })();
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.27.2';
+const TW_VERSION = '0.27.3';
 
 /* ---------- live map ---------- */
 function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
@@ -7219,6 +7219,16 @@ const _seaApply = applyResult;
 applyResult = function(st, job, f, res){ if(job.kind==='check' && job.rating==='SEA' && !res.crash && f && f.landing!=='hard') res.score=Math.max(70, res.score); return _seaApply(st, job, f, res); };
 /* a booked seaplane checkride on the old long route is rebuilt once */
 (function(){ let done=false; const _r=render; render=function(){ if(!done && S.st){ done=true; try{ const a=S.st.active; if(a && !a.started && a.job.kind==='check' && a.job.rating==='SEA' && a.job.to!=='WSBL'){ a.job=checkrideJob(S.st,'SEA',a.job.ac); save(); setTimeout(()=>toast('Seaplane checkride is now a short hop: Juliana to Simpson Bay Lagoon.'),800); } }catch(_){} } return _r.apply(this, arguments); }; })();
+/* ===================== Checkrides: an A or B (or 70+) with no crash is a pass ===================== */
+const _ckEasy = applyResult;
+applyResult = function(st, job, f, res){ if(job.kind==='check' && f && !res.crash && (res.score>=70 || res.grade==='A' || res.grade==='B')){ f.tasks=(job.tasks||[]).slice(); if(f.landing==='hard') f.landing='firm'; res.score=Math.max(70, res.score); } return _ckEasy(st, job, f, res); };
+/* a checkride already failed with an A or B is passed now */
+(function(){ let done=false; const _r=render; render=function(){ if(!done && S.st){ done=true; try{ const st=S.st, L=st.last;
+  if(L && L.job && L.job.kind==='check' && L.out && !L.out.pass && L.res && !L.res.crash && (L.res.grade==='A'||L.res.grade==='B'||L.res.score>=70) && !st.ratings[L.job.rating]){
+    const R=RATINGS[L.job.rating]; st.ratings[L.job.rating]=true; if(st.cooldown) delete st.cooldown[L.job.rating]; L.out.pass=true;
+    L.out.notes=(L.out.notes||[]).filter(n=>!/^Not this time/.test(n)); L.out.notes.push(`Passed. You now hold the ${R.n}.`);
+    try{ addJournal(st,`Earned: ${R.n}`, `${CAST[L.job.chars[0]].n} signs the logbook. ${R.unlocks}`, L.job.chars, 'milestone'); }catch(_){}
+    save(); setTimeout(()=>toast(`Checkride passed: you now hold the ${R.n}.`),800); } }catch(_){} } return _r.apply(this, arguments); }; })();
 boot();
 </script>
 <script>
