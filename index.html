@@ -4945,7 +4945,7 @@ ALT_OUT.BO5 = st => st.story.flags.BO4==='a' ? {good:`De Vries closes his notebo
 /* Hartwell now follows The Buyout */
 (function(){ const h=STORY.find(m=>m.id==='HW1'); if(h && h.req) h.req.after='BO3'; })();
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.27.1';
+const TW_VERSION = '0.27.2';
 
 /* ---------- live map ---------- */
 function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
@@ -7205,6 +7205,20 @@ AP.WSBL = {n:`Simpson Bay Lagoon (water)`, isl:`Sint Maarten`, c:'SXM', r:'LEE',
 })();
 /* a booked HW2 on the old Tobago Cays route is un-booked once, so the story card offers the new one */
 (function(){ let done=false; const _r=render; render=function(){ if(!done && S.st){ done=true; try{ const a=S.st.active; if(a && !a.started && a.job.story==='HW2' && a.job.to!=='WSBL'){ S.st.active=null; save(); if(S.view==='flight') S.view='board'; setTimeout(()=>toast('Below the Surface now ends in Simpson Bay Lagoon by TNCM. Start it again from the story card.'),800); } }catch(_){} } return _r.apply(this, arguments); }; })();
+
+/* ===================== Seaplane checkride: a short hop at St. Martin, Juliana (TNCM) to Simpson Bay Lagoon ===================== */
+RATINGS.SEA.tasks = [`Water landing in Simpson Bay Lagoon: landing attitude, a steady 100–150 fpm down, no flaring by eye`, `Taxi slowly clear of boats`];
+const _seaCk = checkrideJob;
+checkrideJob = function(st, rid, acId){ if(rid!=='SEA') return _seaCk(st, rid, acId);
+  const moved = st.loc!=='TNCM'; if(moved) st.loc='TNCM';
+  const j=_seaCk(st, rid, acId); Object.assign(j, { from:'TNCM', to:'WSBL', local:false, tourNm:0, wx:genWx(st,'WSBL','calm',j.dep) });
+  j.paras=[`${CAST[RATINGS.SEA.examiner].n} meets you at the seaplane on the ramp at Princess Juliana${moved?' (Coral Wing flew you over for free)':''}.`, `"Short and simple," she says. "Take off, swing around the lagoon, and put us down in Simpson Bay Lagoon, right over there. Gentle and steady, that's all I'm looking for." Pass, and you hold the Seaplane Rating: ${RATINGS.SEA.unlocks}`];
+  j.est=Math.max(10, plan(j).est); return j; };
+/* passing it: no crash, not a hard landing, and most of the tasks */
+const _seaApply = applyResult;
+applyResult = function(st, job, f, res){ if(job.kind==='check' && job.rating==='SEA' && !res.crash && f && f.landing!=='hard') res.score=Math.max(70, res.score); return _seaApply(st, job, f, res); };
+/* a booked seaplane checkride on the old long route is rebuilt once */
+(function(){ let done=false; const _r=render; render=function(){ if(!done && S.st){ done=true; try{ const a=S.st.active; if(a && !a.started && a.job.kind==='check' && a.job.rating==='SEA' && a.job.to!=='WSBL'){ a.job=checkrideJob(S.st,'SEA',a.job.ac); save(); setTimeout(()=>toast('Seaplane checkride is now a short hop: Juliana to Simpson Bay Lagoon.'),800); } }catch(_){} } return _r.apply(this, arguments); }; })();
 boot();
 </script>
 <script>
