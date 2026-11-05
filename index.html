@@ -974,6 +974,7 @@ main.wrap{gap:22px}
 .ch-goal span{display:inline-block;min-width:86px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--arc);filter:brightness(1.35)}
 .ch-obj{font-weight:700;color:#fff!important}
 .ask-note{border-left:4px solid #e8782a}
+.campaign .main-next{border-left-color:var(--arc,#1f9d55);background:linear-gradient(135deg,color-mix(in srgb,var(--arc,#1f9d55) 45%,#061a1e),#0b2f3a)}.mn-kicker{color:color-mix(in srgb,var(--arc,#5fe39a) 55%,#fff)}
 </style>
 <div id="app"></div>
 <script>
@@ -4929,7 +4930,7 @@ ALT_OUT.BO5 = st => st.story.flags.BO4==='a' ? {good:`De Vries closes his notebo
 /* Hartwell now follows The Buyout */
 (function(){ const h=STORY.find(m=>m.id==='HW1'); if(h && h.req) h.req.after='BO3'; })();
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.22.0';
+const TW_VERSION = '0.22.1';
 
 /* ---------- live map ---------- */
 function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
@@ -6821,6 +6822,19 @@ const CH_GOAL = {
 };
 const _mrHero = chapterHero;
 chapterHero = function(job){ const h=_mrHero(job); const g=CH_GOAL[job.story]; if(!g) return h; return h.replace('</h1>', `</h1><div class="ch-goal"><p class="ch-prev"><span>Previously</span> ${esc(g[1])}</p><p class="ch-obj"><span>Your goal</span> ${esc(g[0])}</p></div>`); };
+/* ===================== EVERY STORYLINE HAS ITS OWN COLOR ===================== */
+const ARC_COLORS = {
+  'Coral Wing':'#0b8a7a', 'The Buyout':'#2d4f9e', 'Hartwell':'#a0671c', 'Own Wings':'#c2410c', 'The Tour':'#b0306a', 'Your Company':'#1f9d55',
+  'The Logbook':'#7a5c3a', 'Starling':'#e8782a', 'Coast Watch':'#c0392b', 'The Short Ones':'#6a49a8', 'Going Abroad':'#1d6fa5', 'Island Tales':'#6f8a1f'
+};
+for(const k in ARC_COLORS){ if(ARC_META[k]) ARC_META[k].col = ARC_COLORS[k]; }
+function arcColor(arc){ return ARC_COLORS[arc] || (ARC_META[arc]&&ARC_META[arc].col) || '#0b8a7a'; }
+const _clrKind = jobKind;
+jobKind = function(job){ const k=_clrKind(job); if(job.kind==='story'){ const m=STORY.find(x=>x.id===job.story); if(m) k.c=arcColor(m.arc); } return k; };
+const _clrHero = chapterHero;
+chapterHero = function(job){ const h=_clrHero(job); const m=STORY.find(x=>x.id===job.story); return m ? h.replace(/style="--arc:[^"]*"/, `style="--arc:${arcColor(m.arc)}"`) : h; };
+const _clrCamp = campaignCard;
+campaignCard = function(st){ const h=_clrCamp(st); const t=tpl(h); const mn=t.content.querySelector('.main-next'); if(mn){ const k=(mn.querySelector('.mn-kicker')||{}).textContent||''; const arc=Object.keys(ARC_COLORS).find(a=>k.endsWith(a)); if(arc) mn.style.setProperty('--arc', arcColor(arc)); } return t.innerHTML; };
 boot();
 </script>
 <script>
