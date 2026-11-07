@@ -4945,7 +4945,7 @@ ALT_OUT.BO5 = st => st.story.flags.BO4==='a' ? {good:`De Vries closes his notebo
 /* Hartwell now follows The Buyout */
 (function(){ const h=STORY.find(m=>m.id==='HW1'); if(h && h.req) h.req.after='BO3'; })();
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.34.0';
+const TW_VERSION = '0.35.0';
 
 /* ---------- live map ---------- */
 function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
@@ -7947,13 +7947,13 @@ function cutscene(opt){ const shots=opt.shots.slice(); const col=opt.col||'#c896
   const el=document.createElement('div'); el.className='cut'; el.style.setProperty('--arc', col);
   el.innerHTML=`<div class="cut-bg">${opt.art||''}</div><div class="cut-shade"></div><div class="cut-bar top"></div><div class="cut-bar bot"></div>
     <div class="cut-stage"></div><div class="cut-ctl"><span class="cut-hint">Click or press Space</span><button class="cut-skip">Skip</button></div>`;
-  document.body.appendChild(el); requestAnimationFrame(()=>el.classList.add('on'));
+  document.body.appendChild(el); requestAnimationFrame(()=>el.classList.add('on')); try{ window.cutHook && cutHook.start(el, opt); }catch(_){}
   const stage=el.querySelector('.cut-stage'); let i=-1, typing=null, full='', txt=null, waiting=false, ended=false;
   const stopVoice=()=>{ try{ speechSynthesis.cancel(); }catch(_){} };
   const say=(k,t)=>{ if(!(typeof voiceOn==='function'&&voiceOn())||!window.speechSynthesis) return; const v=PRO_VOICE[k]||[false,0.95,0.9]; try{ stopVoice(); const u=new SpeechSynthesisUtterance(String(t).replace(/"/g,'')); const vv=pickVoice(v[0], k==='castillo'||k==='medina'?1:0); if(vv) u.voice=vv; u.rate=v[1]; u.pitch=v[2]; u.volume=voiceVol(); speechSynthesis.speak(u); }catch(_){} };
-  const end=()=>{ if(ended) return; ended=true; clearInterval(typing); stopVoice(); document.removeEventListener('keydown', key, true); el.classList.remove('on'); setTimeout(()=>{ el.remove(); opt.onEnd&&opt.onEnd(); }, 600); };
+  const end=()=>{ if(ended) return; ended=true; try{ window.cutHook && cutHook.end(el, opt); }catch(_){} clearInterval(typing); stopVoice(); document.removeEventListener('keydown', key, true); el.classList.remove('on'); setTimeout(()=>{ el.remove(); opt.onEnd&&opt.onEnd(); }, 600); };
   const bg=()=>{ el.querySelector('.cut-bg').style.transform=`scale(${1.06+Math.max(0,i)*0.025}) translate(${(i%2?-1:1)*1.2}%, ${Math.max(0,i)*0.35}%)`; };
-  const show=()=>{ i++; waiting=false; el.classList.remove('choosing','carding'); if(i>=shots.length){ end(); return; } const s=shots[i]; bg();
+  const show=()=>{ i++; waiting=false; el.classList.remove('choosing','carding'); if(i>=shots.length){ end(); return; } const s=shots[i]; bg(); try{ window.cutHook && cutHook.shot(s, el, i, opt); }catch(_){}
     if(s.card){ el.classList.add('carding'); stage.innerHTML=`<div class="cut-title"><p>${esc(s.kicker||'')}</p><h1>${esc(s.title||'')}</h1>${s.sub?`<div class="cut-sub">${s.sub}</div>`:''}</div>`; txt=null; full=''; try{ whoosh&&whoosh(); }catch(_){} if(s.auto) setTimeout(()=>{ if(shots[i]===s) show(); }, s.auto); return; }
     if(s.choice){ el.classList.add('choosing'); waiting=true; stage.innerHTML=`<p class="cut-place">Your call</p><p class="cut-text cut-q">${esc(s.q)}</p><div class="cut-opts">${s.opts.map((o,k)=>`<button class="cut-opt" data-k="${k}" ${o.why?'disabled':''}>${esc(o.t)}${o.why?`<small>${esc(o.why)}</small>`:''}</button>`).join('')}</div>`; txt=null; full=''; return; }
     const [pl,k,t]=s; stage.innerHTML=`<p class="cut-place">${esc(pl||'')}</p><div class="cut-line in">${k&&CAST[k]?`<div class="cut-who">${avatar(k)}<b>${esc(CAST[k].n)}</b></div>`:''}<p class="cut-text ${k?'':'nar'}"></p></div>`;
@@ -8096,10 +8096,10 @@ campaignCard = function(st){ const c=crime(st); const MC=mainChapters(); const a
   const meters = c.on ? `<div class="sc-m"><span class="sc-rank">${esc(crimeRank(c))}</span><span>Power <b>${c.power}</b></span><span>Heat <b class="${c.heat>=60?'hot':''}">${c.heat}</b></span></div>` : '';
   let body='';
   if(next){ const n=MC.indexOf(next)+1; const mm=dynM(st,next); const acN=storyAircraft(st,next)[0]||next.ac[0]; const pa=playAction(st,next,availSet,n);
-    const who=mm.chars.filter(k=>CAST[k]).map(k=>`<span class="sc-who">${avatar(k)}${esc({reyes:'Reyes',castillo:'Castillo'}[k]||shortName(k))}</span>`).join('');
+    const who=mm.chars.filter(k=>CAST[k]).map(k=>`<span class="sc-who"><span class="sc-avw">${avatar(k)}</span>${esc({reyes:'Reyes',castillo:'Castillo'}[k]||shortName(k))}</span>`).join('');
     body=`<div class="sc-next">
       <p class="sc-k">Chapter ${n} of ${MC.length}</p><h2>${esc(next.title)}</h2><p class="sc-hook">${esc(next.hook||'')}</p>
-      <p class="sc-meta"><b>${esc(next.from)} → ${esc(next.to)}</b><span>${esc(AC[acN]?AC[acN].n:acN)}</span><span>${esc({dawn:'Dawn',day:'Daytime',dusk:'Dusk',night:'Night'}[next.time]||'')}</span>${who?`<span class="sc-whos">${who}</span>`:''}</p>
+      <div class="sc-meta"><b>${esc(next.from)} → ${esc(next.to)}</b><span>${esc(AC[acN]?AC[acN].n:acN)}</span><span>${esc({dawn:'Dawn',day:'Daytime',dusk:'Dusk',night:'Night'}[next.time]||'')}</span>${who?`<span class="sc-whos">${who}</span>`:''}</div>
       <div class="sc-go">${pa.btn}${pa.note?`<span class="small muted">${pa.note}</span>`:''}</div></div>`; }
   else { const end={kingpin:'Kingpin',witness:'Witness',ghost:'Ghost'}[c.ending]||'The end'; body=`<div class="sc-next"><p class="sc-k">Story complete</p><h2>Ending: ${esc(end)}</h2><p class="sc-hook">Side jobs and the Starling story are still out there.</p></div>`; }
   return `<section class="panel campaign story-card fade" style="--arc:${act.col}">
@@ -8168,6 +8168,7 @@ const _b2Story = storyView; storyView = function(){ return _b2Story().replace(/ 
 .sc-next h2{font-size:28px;margin:4px 0 6px}.sc-hook{margin:0 0 12px;font-size:16px;color:var(--ink);opacity:.85}
 .sc-meta{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;margin:0 0 16px;font-size:13px;color:var(--muted)}.sc-meta b{color:var(--ink);font-family:var(--f-mono)}
 .sc-whos{display:inline-flex;gap:12px;align-items:center}.sc-who{display:inline-flex;flex-direction:row;align-items:center;gap:6px;white-space:nowrap}.sc-who .avatar{width:24px!important;height:24px!important;min-width:24px;flex:none;margin:0}
+.sc-avw{width:26px;height:26px;display:inline-block;flex:none;border-radius:50%;overflow:hidden}.sc-avw > *{width:100%!important;height:100%!important;min-width:0!important;margin:0!important}.sc-meta .sc-whos{flex-basis:100%;margin-top:6px}
 .sc-go{display:flex;align-items:center;gap:14px;flex-wrap:wrap}.btn.big{padding:12px 22px;font-size:16px}
 .board2{max-width:1180px}
 .b2-status{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;font-size:13px;color:var(--muted);padding:4px 0 14px;border-bottom:1px solid var(--line);margin-bottom:16px}
@@ -8185,6 +8186,226 @@ const _b2Story = storyView; storyView = function(){ return _b2Story().replace(/ 
 .b2-grid .chips .chip:not(.warn):not(.good):not(.vio){display:none}
 .b2-foot{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:22px}.b2-more summary{cursor:pointer;font-weight:600}
 @media (max-width:760px){.b2-foot{grid-template-columns:1fr}}`; document.head.appendChild(s); })();
+/* ===================== 20 UPGRADES: gameplay ===================== */
+
+/* ---- 4. a mid-flight decision in every chapter from Act 2 on; the next chapter remembers it ---- */
+const MID = {
+  CR5:{at:'cruise',who:'radio',text:`Unknown aircraft squawking 4521, say your destination and souls on board.|It's a customs patrol plane, ten miles off your wing.`,opts:[{t:'Answer calmly: Juliana, one soul',reply:`"Copy, thank you." The patrol plane turns away. Your voice didn't even shake.`},{t:'Go quiet and descend',reply:`You drop into the haze and say nothing. They don't follow, but they'll remember the tail number.`,heat:6,power:2,echo:`Customs still has your tail number from the San Juan run.`}]},
+  CR6:{at:'descent',who:'self',text:`The boy is wheezing hard. There's an oxygen bottle in the emergency kit, and Castillo's rule is no stops, no favors.`,opts:[{t:'Pass the oxygen back',reply:`His mother holds the mask to his face. His breathing eases a little.`,flag:'oxygen'},{t:'Keep your eyes forward',reply:`You fly. You don't look back.`,power:2}]},
+  CR7:{at:'cruise',who:'self',text:`Arnaud is asleep. His hard drive is sticking out of his jacket pocket.`,opts:[{t:'Copy the drive onto your phone',reply:`Ninety seconds. Every account, every name. Insurance.`,flag:'drivecopy',power:4,echo:`You still have a copy of Arnaud's hard drive on your phone.`},{t:'Leave it alone',reply:`Some things it's safer not to know.`}]},
+  CR8:{at:'cruise',who:'radio',text:`Punta Cana is reporting a thunderstorm over the field.|Two of the twenty bags are soaking up water from a leak in the hold.`,opts:[{t:'Push through and land on time',reply:`You thread the cells. Castillo will hear about this.`,power:4,heat:2},{t:'Hold for twenty minutes',reply:`You circle in the bumps until the cell drifts off. Late, but in one piece.`,cash:-1500,echo:`You held over Punta Cana in the storm, and Castillo noticed you were late.`}]},
+  CR9:{at:'cruise',who:'self',text:`There's a sealed case behind your seat and a feeling in your stomach you haven't had since the Cessna days.`,opts:[{t:'Hide the case in the avionics bay',reply:`Two screws, one panel. If anyone looks, they'll have to look hard.`,flag:'hidcase',heat:-4},{t:'Leave it where it is',reply:`It's a routine run. Probably.`}]},
+  CR10:{at:'cruise',who:'tico',text:`Boss, can I sit up front? Just for a minute? I want to see what it looks like.`,opts:[{t:'Let Tico take the right seat',reply:`Tico doesn't say a word for ten minutes. He just stares out at the sky, grinning.`,flag:'ticoSeat'},{t:'Tell him to stay with the cargo',reply:`"Yes, boss." He sits back down. Quieter than usual.`,power:2}]},
+  CR12:{at:'cruise',who:'castillo',text:`The lawyer works for me, not for Dez. Remember that when she asks you questions.`,opts:[{t:'Tell the lawyer everything',reply:`She writes it all down. "This helps Dez," she says. "It doesn't help you."`,heat:4,flag:'toldLawyer'},{t:'Say nothing',reply:`You fly. She reads. Nobody talks.`}]},
+  CR14:{at:'cruise',who:'hartwell',text:`If I give you the ledgers, Castillo will know it was me. I'd like a seat on a plane out, after.`,opts:[{t:'Promise him a seat out',reply:`Hartwell closes his eyes. "Thank you."`,flag:'hartwellSafe'},{t:'Make no promises',reply:`"I see," he says, and looks out of the window for the rest of the flight.`,power:4}]},
+  CR15:{at:'descent',who:'radio',text:`Caribe one, Tocumen ground. Customs requests you taxi to remote stand seven.|Remote stand seven is where they search planes.`,opts:[{t:'Comply and stay calm',reply:`They open three pallets of flowers. They find flowers.`,heat:-4},{t:'Claim a hydraulic issue and taxi to your hangar',reply:`You buy fifteen minutes. That's all your loaders need.`,heat:6,power:3}]},
+  CR16:{at:'cruise',who:'radio',text:`Heavy aircraft, unidentified, this is the U.S. Coast Guard on guard. Identify yourself.|You're over international water.`,opts:[{t:'Answer with your Caribe Cargo callsign',reply:`"Caribe four seven, freight to Montego Bay." Silence. Then: "Copy." They let you go.`},{t:'Ignore them',reply:`They follow you on radar for an hour, then give up.`,heat:8,power:4}]},
+  CRT:{at:'cruise',who:'medina',text:`Before you land: the suppliers want a show of strength. Do a low pass down the runway. Let them hear four engines.`,opts:[{t:'Do the low pass',reply:`The 747 roars down the runway at two hundred feet. Every phone at the table is pointed at you.`,power:6,heat:4},{t:'Land like a professional',reply:`A quiet, perfect arrival. Some people are impressed by that too.`}]}
+};
+Object.keys(MID).forEach(id=>{ if(BEATS[id]) BEATS[id].push(MID[id]); else BEATS[id]=[MID[id]]; });
+/* echoes: the next prologue opens with what you did last time */
+(function(){ const _sb=showBeat; showBeat=function(a,b,idx){ const r=_sb(a,b,idx); try{ const d=document.querySelector('.beat'); if(d && b.opts) d.addEventListener('click', e=>{ const btn=e.target.closest('[data-act="beat-opt"]'); if(!btn) return; const o=b.opts[Number(btn.dataset.i)]; const c=crime(); if(o.cash) txn(S.st,o.cash,'Story',a.job.title); if(o.echo){ c.echo={text:o.echo, from:a.job.story}; save(); } }); }catch(_){} return r; }; })();
+(function(){ const _pf=proFor; proFor=function(id){ const base=_pf(id)||[]; const e=crime().echo; return (e && e.from!==id) ? [[`Last time`, null, e.text]].concat(base) : base; }; })();
+(function(){ const _ap=applyResult; applyResult=function(st,job,f,res){ const r=_ap(st,job,f,res); try{ const c=crime(st); if(job.kind==='story' && CRIME_IDS.has(job.story) && !res.crash && c.echo && c.echo.from!==job.story) c.echo=null; }catch(_){} return r; }; })();
+
+/* ---- 5. failing a chapter has consequences, and you try again ---- */
+(function(){ const _ap=applyResult; applyResult=function(st,job,f,res){ const r=_ap(st,job,f,res); try{ if(job.kind==='story' && CRIME_IDS.has(job.story)){ const c=crime(st); const o=st.last&&st.last.out;
+  if(res.crash){ delete st.story.done[job.story]; if(c.on){ crBump(c,'heat',8); crBump(c,'power',-5); } if(o) o.notes.unshift('The chapter failed. You can fly it again from the Main story page.'); st.last.failed=true; }
+  else if(res.grade==='D'||res.grade==='F'){ if(c.on){ crBump(c,'heat',4); } st.last.sloppy=true; } save(); } }catch(_){} return r; }; })();
+(function(){ const _pa=playAftermath; playAftermath=function(){ const st=S.st, L=st&&st.last; if(!L||!L.job) return _pa(); const m=CRIME.find(x=>x.id===L.job.story); if(!m) return _pa(); const act=CRIME_ACTS.find(a=>a.arc===m.arc)||CRIME_ACTS[0];
+  if(L.failed){ const boss=crime(st).on?'castillo':'dez'; cutscene({col:act.col, art:SCENES.ramp(), shots:[{card:true,kicker:m.title,title:'It went wrong',auto:1800},[`Phone call`, boss, boss==='castillo'?`I don't pay for wreckage. Get yourself together and do it again. Properly.`:`Rookie, what happened out there? Breathe. We'll try it again.`],{card:true,kicker:'Chapter failed',title:'Try again',sub:`<p>Power −5, Heat +8. Play the chapter again from the Main story page.</p>`}], onEnd:()=>render()}); return; }
+  return _pa(); }; })();
+
+/* ---- 6 + 9 + 13. network runs: night drops at closed strips, hot airports, rank rewards ---- */
+const DROP_STRIPS = ['TAPH','TUPA','TNCE','TRPG','TFFS','TFFM','TQPF','TNCS','MBGT','MYAN'];
+const RANK_PERKS = [[12,'Courier','Network runs unlocked'],[28,'Runner','One more network run a day, night runs pay +15%'],[45,'Lieutenant','Network runs in jets, +20% pay'],[65,'Partner','Airliner network runs, +30% pay'],[85,'Boss','Heat cools by 2 every new day']];
+function rankMul(c){ return c.power>=65?1.3:c.power>=45?1.2:1; }
+(function(){ const _g=genJobs; genJobs=function(st){ const L=_g(st); try{ const c=crime(st); if(!c.on) return L; c.hot=c.hot||{};
+  L.forEach(j=>{ if(!j.network) return; j.pay=Math.round(j.pay*rankMul(c)/10)*10;
+    if(Math.random()<0.4){ const strips=DROP_STRIPS.filter(k=>AP[k] && k!==st.loc && apOk(st,k,j.ac) && distNm(AP[st.loc],AP[k])<Math.min(400,(AC[j.ac].range||500)*0.6)); if(strips.length){ const k=pick(strips); j.to=k; j.drop=true; j.dep=Math.max(j.dep, 1260); j.title=`Night drop at ${AP[k].isl}`; j.pay=Math.round(j.pay*1.3*(c.power>=28?1.15:1)/10)*10; j.paras=[`The strip at ${AP[k].n} closes at sunset. Tonight it's open for you: two trucks, headlights on, engines running. Land, unload, leave.`]; try{ j.est=plan(j).est; }catch(_){} } }
+    if(Math.random()<0.35){ j.lowLevel=true; j.title+=' (under the radar)'; }
+    if(c.hot[j.to]){ j.hot=true; j.pay=Math.round(j.pay*1.2/10)*10; } }); }catch(_){} return L; }; })();
+const _twStrip = stripHTML;
+stripHTML = function(st, job, opts){ let h=_twStrip(st, job, opts); const tags=[]; if(job.drop) tags.push('<span class="chip warn">Night drop</span>'); if(job.lowLevel) tags.push('<span class="chip warn">Stay under 1,000 ft: +25%</span>'); if(job.hot) tags.push('<span class="chip warn">Hot airport</span>'); if(tags.length) h=h.replace('<div class="chips">', '<div class="chips">'+tags.join('')); return h; };
+/* rest: Boss rank cools heat; hot airports cool off after 3 days */
+(function(){ const _rs=rest; rest=function(st){ const r=_rs(st); try{ const c=crime(st); if(c.power>=85) crBump(c,'heat',-2); for(const k in (c.hot||{})) if(st.day-c.hot[k]>3) delete c.hot[k]; }catch(_){} return r; }; })();
+
+/* ---- 7 + 8 + 18. what the sim tells us during the flight: low level, transponder, real fuel burn ---- */
+(function(){ const _rs=renderSimBits; renderSimBits=function(){ _rs(); try{ const a=S.st&&S.st.active, s=S.sim; if(!a||!a.started||!s||S.simState!=='live'||!s.motion||!s.position) return; const now=Date.now(); const T=a.track=a.track||{air:0,low:0,last:now,fuel:[]}; const dt=Math.min(20,(now-T.last)/1000); T.last=now;
+  if(!s.motion.onGround){ T.air+=dt; if((s.position.aglFt||0)<1000) T.low+=dt; }
+  if(s.systems && s.systems.fuelLb!=null){ T.fuel.push([now, s.systems.fuelLb]); while(T.fuel.length && now-T.fuel[0][0]>15*60000) T.fuel.shift(); }
+  const x=s.ext||{}; if(a.job.network && x.transponder!=null){ T.xpdrSeen=true; if(String(x.transponder.mode||x.transponder).match(/stby|standby|off/i)) T.dark=(T.dark||0)+dt; }
+  const c=crime(); if(a.job.network && c.heat>=50 && !a.cgCall && T.air>240){ a.cgCall=true; showBeat(a,{at:'cruise',who:'radio',text:`Aircraft on this frequency, U.S. Coast Guard. Be advised, we are conducting air interdiction operations in this sector.|Your Heat is high. They might be talking about you.`},99); }
+  }catch(_){} }; })();
+/* fuel check from your actual burn rate, not the book number */
+(function(){ const _ss=safeSay; safeSay=function(key, text, every){ if(key!=='fuel') return _ss(key, text, every); const a=S.st&&S.st.active, s=S.sim; const T=a&&a.track; if(!a||!s||!T||T.fuel.length<2||!s.position||!s.motion) return;
+  const [t0,f0]=T.fuel[0], [t1,f1]=T.fuel[T.fuel.length-1]; const mins=(t1-t0)/60000; if(mins<6) return; const burn=(f0-f1)/mins; if(!(burn>0)) return;
+  const dest=a.job.local?AP[a.job.from]:AP[a.job.to]; const togo=a.job.local?0:distNm({lat:s.position.lat,lon:s.position.lon},dest); const gs=Math.max(60,s.motion.gs||AC[a.job.ac].cruise);
+  const need=burn*(togo/gs*60 + 30); if(f1 < need) return _ss(key, `Fuel check. At this burn rate we'll land with less than thirty minutes left. Consider the nearest airport.`, every); }; })();
+/* payouts for low-level and dark runs */
+(function(){ const _ap=applyResult; applyResult=function(st,job,f,res){ const a=st.active; const T=a&&a.track; const r=_ap(st,job,f,res); try{ const o=st.last&&st.last.out; if(!o||res.crash||!job.network) return r;
+  if(job.lowLevel && T && T.air>120){ const frac=T.low/T.air; if(frac>=0.6){ const b=Math.round(job.pay*0.25/10)*10; txn(st,b,'Network','Under the radar bonus'); o.notes.push(`Under the radar: ${Math.round(frac*100)}% of the flight below 1,000 ft. Bonus ${money(b)}.`); } else o.notes.push(`Only ${Math.round(frac*100)}% of the flight was below 1,000 ft. No radar bonus.`); }
+  if(T && T.xpdrSeen && T.dark>T.air*0.5){ crBump(crime(st),'heat',-3); o.notes.push('You flew most of it with the transponder in standby. Heat −3.'); }
+  if(job.hot){ crBump(crime(st),'heat',3); } }catch(_){} return r; }; })();
+/* searches and busts mark the airport as hot for a few days */
+(function(){ const _ap=applyResult; applyResult=function(st,job,f,res){ const r=_ap(st,job,f,res); try{ const o=st.last&&st.last.out; if(o && o.notes.some(n=>/^Customs searched|^BUSTED/.test(n))){ const c=crime(st); c.hot=c.hot||{}; c.hot[job.to]=st.day; o.notes.push(`${job.to} is a hot airport for the next few days: more pay, more Heat.`); } }catch(_){} return r; }; })();
+
+/* ---- 10. dirty cash: network money has to be laundered before you can spend it ---- */
+(function(){ const _ap=applyResult; applyResult=function(st,job,f,res){ const before=st.cash; const r=_ap(st,job,f,res); try{ if(job.network && !res.crash){ const gained=st.cash-before; if(gained>0){ const c=crime(st); c.dirty=(c.dirty||0)+gained; st.cash-=gained; const o=st.last&&st.last.out; if(o) o.notes.unshift(`${money(gained)} is dirty cash. Launder it before you can spend it.`); save(); } } }catch(_){} return r; }; })();
+function launderOpts(st){ const d=st.story.done; const L=[]; L.push({id:'dez',n:'Dez, cash under the counter',fee:0.25,heat:3}); if(d.CR5) L.push({id:'trust',n:'The Hartwell Reef Trust',fee:0.15,heat:1}); if(d.CR15) L.push({id:'caribe',n:'Caribe Cargo invoices',fee:0.08,heat:0}); return L; }
+function launderHTML(st){ const c=crime(st); if(!c.dirty) return ''; const L=launderOpts(st); return `<section class="panel launder"><div class="row between"><div><p class="label">Dirty cash</p><h3>${money(c.dirty)}</h3></div><p class="small muted" style="max-width:420px">Money from network runs. Launder it to move it into your cash. Better options unlock as the story goes on.</p></div><div class="row" style="flex-wrap:wrap;gap:8px;margin-top:10px">${L.map(o=>`<button class="btn sm" data-act="launder" data-v="${o.id}">${esc(o.n)} · ${Math.round(o.fee*100)}% fee${o.heat?` · Heat +${o.heat}`:''}</button>`).join('')}</div></section>`; }
+document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="launder"]'); if(!b||!S.st) return; const st=S.st, c=crime(st); const o=launderOpts(st).find(x=>x.id===b.dataset.v); if(!o||!c.dirty) return; const amt=c.dirty, net=Math.round(amt*(1-o.fee)); c.dirty=0; txn(st,net,'Laundered',o.n); if(o.heat) crBump(c,'heat',o.heat); save(); toast(`Laundered ${money(amt)} through ${o.n}: ${money(net)} clean.`); S.keepScroll=true; render(); });
+
+/* ---- 11 + 12. your fleet and your crew ---- */
+const FLEET = [['CR5','SF50','Cirrus Vision Jet','N505HT','Registered to the Hartwell Reef Trust'],['CR10','CJ4','Citation CJ4','N88MC','Castillo bought it for you'],['CR14','B38M','Boeing 737','HP-1471CC','Leased under a fake name'],['CR16','B748','Boeing 747-8F','HP-747CC','Caribe Cargo flagship']];
+const CREW = [ {id:'loaders',n:'Loading crew',cost:3000,need:'CR10',perk:'Network runs add 2 less Heat',lost:f=>false},
+  {id:'tico',n:'Tico (loader)',cost:0,need:'CR10',perk:'Network runs pay +5%',lost:(f,d)=>d.CR11 && !f.ticoRan},
+  {id:'dez',n:'Dez (fixer)',cost:0,need:'CR12',perk:'Customs payoffs cost half',lost:f=>!f.dezFree},
+  {id:'fo',n:'First officer',cost:8000,need:'CR14',perk:'Airliner network runs pay +10%',lost:()=>false} ];
+function crewHas(st,id){ const c=crime(st); const k=CREW.find(x=>x.id===id); return !!(c.crew&&c.crew[id]) && k && !k.lost(c.flags, st.story.done); }
+function fleetCrewHTML(st){ const d=st.story.done; const f=FLEET.filter(x=>d[x[0]]); const c=crime(st); if(!f.length && !c.on) return '';
+  const crew=CREW.filter(k=>d[k.need]).map(k=>{ const lost=k.lost(c.flags,d); const has=c.crew&&c.crew[k.id]; return `<div class="fc-row"><div><b>${esc(k.n)}</b><p class="small muted">${lost?'No longer with you.':esc(k.perk)}</p></div>${lost?'<span class="chip">Gone</span>':has?'<span class="chip good">On your crew</span>':`<button class="btn sm" data-act="hire" data-v="${k.id}">${k.cost?`Hire · ${money(k.cost)}`:'Bring on'}</button>`}</div>`; }).join('');
+  return `<section class="panel fleet"><p class="label">Your operation</p><h3>Fleet</h3>${f.length?`<div class="fc-grid">${f.map(x=>`<div class="fc-ac"><b class="mono">${x[3]}</b><span>${esc(x[2])}</span><small>${esc(x[4])}</small></div>`).join('')}</div>`:'<p class="small muted">Your first jet comes in Act 2.</p>'}
+    ${crew?`<h3 style="margin-top:16px">Crew</h3>${crew}`:''}</section>`; }
+document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="hire"]'); if(!b||!S.st) return; const st=S.st, c=crime(st); const k=CREW.find(x=>x.id===b.dataset.v); if(!k) return; if(st.cash<k.cost){ toast(`You need ${money(k.cost)}.`); return; } if(k.cost) txn(st,-k.cost,'Crew',k.n); c.crew=c.crew||{}; c.crew[k.id]=1; save(); toast(`${k.n} joined your crew.`); S.keepScroll=true; render(); });
+(function(){ const _g=genJobs; genJobs=function(st){ const L=_g(st); try{ L.forEach(j=>{ if(!j.network) return; let m=1; if(crewHas(st,'tico')) m+=0.05; if(crewHas(st,'fo') && ['airliner','widebody','regional'].includes(AC[j.ac].cls)) m+=0.1; j.pay=Math.round(j.pay*m/10)*10; }); }catch(_){} return L; }; })();
+(function(){ const _ap=applyResult; applyResult=function(st,job,f,res){ const c=crime(st); const h0=c.heat, cash0=st.cash; const r=_ap(st,job,f,res); try{ if(job.network && crewHas(st,'loaders') && c.heat>h0) crBump(c,'heat',-2);
+  const o=st.last&&st.last.out; if(crewHas(st,'dez') && o){ const p=fin(st).ledger.slice(0,6).find(x=>x.c==='Payoffs' && x.a<0); if(p && !p.halved){ p.halved=1; txn(st,Math.round(-p.a/2),'Payoffs','Dez knew a guy (half back)'); o.notes.push('Dez knew a guy: half the payoff came back.'); } } }catch(_){} return r; }; })();
+/* ===================== CUTSCENES: illustrated backdrops, ambient sound, and a "previously on" recap ===================== */
+/* ---- 2. backdrops (1600x900 SVG, noir palette) ---- */
+const SCENES = {
+  hangar:()=>`<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="hg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d0e12"/><stop offset="1" stop-color="#1a1813"/></linearGradient><radialGradient id="hg2" cx=".5" cy="0" r=".8"><stop offset="0" stop-color="#f4d58a" stop-opacity=".35"/><stop offset="1" stop-color="#f4d58a" stop-opacity="0"/></radialGradient></defs>
+    <rect width="1600" height="900" fill="url(#hg1)"/><path d="M0 120 L800 20 L1600 120 L1600 160 L0 160Z" fill="#08090b"/>${[300,800,1300].map(x=>`<path d="M${x-30} 150 L${x+30} 150 L${x+260} 900 L${x-260} 900Z" fill="url(#hg2)"/><rect x="${x-26}" y="140" width="52" height="10" fill="#f8e7b0"/>`).join('')}
+    <rect x="0" y="720" width="1600" height="180" fill="#121110"/><g fill="#050506"><path d="M380 640 L1220 600 L1260 620 L1220 650 L420 680Z"/><path d="M720 630 L560 760 L640 760 L860 640Z"/><path d="M1150 610 L1210 520 L1250 520 L1230 615Z"/><circle cx="560" cy="700" r="14"/><circle cx="1120" cy="690" r="14"/></g>
+    <g fill="#26231c">${[80,150,1450,1520].map(x=>`<rect x="${x}" y="620" width="50" height="100" rx="4"/>`).join('')}</g></svg>`,
+  office:()=>`<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice"><rect width="1600" height="900" fill="#100f0d"/><rect x="180" y="110" width="1240" height="430" fill="#0b1420"/>
+    <g fill="#f5c26b">${Array.from({length:26},(_,i)=>`<circle cx="${220+i*46}" cy="${470+Math.sin(i)*4}" r="3"/>`).join('')}</g><g fill="#6fa8d8" opacity=".7">${Array.from({length:14},(_,i)=>`<circle cx="${260+i*80}" cy="430" r="2"/>`).join('')}</g>
+    <path d="M180 110 H1420 V540 H180Z M800 110 V540" stroke="#1d1b17" stroke-width="18" fill="none"/><rect x="0" y="600" width="1600" height="300" fill="#17140f"/><rect x="420" y="640" width="760" height="40" rx="6" fill="#2a2116"/><rect x="560" y="600" width="120" height="44" rx="4" fill="#3a3326"/><circle cx="1040" cy="620" r="22" fill="#2b2418"/><path d="M1000 560 q40 -60 80 0" stroke="#f4d58a" stroke-width="4" fill="none" opacity=".5"/></svg>`,
+  villa:()=>`<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="vl1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05070d"/><stop offset=".6" stop-color="#14203a"/><stop offset="1" stop-color="#0a0f18"/></linearGradient></defs><rect width="1600" height="900" fill="url(#vl1)"/>
+    <circle cx="1220" cy="190" r="56" fill="#e9e4d2" opacity=".85"/><path d="M0 560 H1600 V900 H0Z" fill="#0b1626"/><path d="M1000 560 L1440 560 L1300 900 L1140 900Z" fill="#e9e4d2" opacity=".07"/>
+    <rect x="0" y="690" width="1600" height="210" fill="#0d0c0b"/><g stroke="#1f1c17" stroke-width="10">${Array.from({length:17},(_,i)=>`<line x1="${i*100}" y1="640" x2="${i*100}" y2="700"/>`).join('')}<line x1="0" y1="640" x2="1600" y2="640"/></g>
+    <g fill="#030405"><path d="M180 700 q10 -260 30 -380 q-60 -40 -150 10 q90 -10 140 0 q-80 -70 -170 -40 q110 0 160 40 q10 -60 90 -100 q-40 60 -60 110 q80 -30 150 10 q-90 0 -140 20 q-10 120 -20 340Z"/><path d="M1460 700 q-6 -200 -24 -300 q60 -30 130 10 q-80 -10 -120 0 q60 -60 140 -30 q-100 0 -140 30 q-20 -50 -90 -80 q40 50 60 90 q-70 -20 -130 10 q80 0 120 20 q10 100 20 250Z"/></g></svg>`,
+  room:()=>`<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="rm1" cx=".5" cy=".15" r=".7"><stop offset="0" stop-color="#e9dfc2" stop-opacity=".45"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs><rect width="1600" height="900" fill="#0a0a0b"/><rect width="1600" height="900" fill="url(#rm1)"/>
+    <line x1="800" y1="0" x2="800" y2="140" stroke="#222" stroke-width="3"/><path d="M740 140 H860 L830 190 H770Z" fill="#2a2a2a"/><ellipse cx="800" cy="192" rx="30" ry="6" fill="#fff4cf"/>
+    <rect x="460" y="560" width="680" height="30" fill="#1b1a18"/><rect x="490" y="590" width="20" height="240" fill="#141312"/><rect x="1090" y="590" width="20" height="240" fill="#141312"/>
+    <rect x="720" y="540" width="160" height="20" fill="#d9d2c0" opacity=".6"/><rect x="1240" y="200" width="300" height="160" fill="#0f1114" stroke="#1e2126" stroke-width="8"/><g fill="#050505"><circle cx="640" cy="470" r="44"/><path d="M570 560 q70 -80 140 0Z"/></g></svg>`,
+  ramp:()=>`<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="rp1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#06070a"/><stop offset="1" stop-color="#141821"/></linearGradient><linearGradient id="rp2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff2c4" stop-opacity=".45"/><stop offset="1" stop-color="#fff2c4" stop-opacity="0"/></linearGradient></defs>
+    <rect width="1600" height="900" fill="url(#rp1)"/><rect y="560" width="1600" height="340" fill="#0e0f11"/><g fill="#f0a640">${Array.from({length:30},(_,i)=>`<circle cx="${i*56}" cy="560" r="2.5"/>`).join('')}</g>
+    <g fill="#030304"><path d="M520 470 L1260 440 L1320 470 L1260 500 L560 520Z"/><path d="M820 480 L640 600 L720 600 L990 490Z"/><path d="M1200 450 L1270 340 L1310 340 L1290 460Z"/></g>
+    ${[150,330].map(x=>`<g><rect x="${x}" y="600" width="140" height="70" rx="8" fill="#050506"/><rect x="${x+90}" y="570" width="50" height="40" rx="4" fill="#050506"/><path d="M${x+140} 640 L${x+600} 600 L${x+600} 700Z" fill="url(#rp2)"/><circle cx="${x+138}" cy="640" r="7" fill="#fff6d8"/></g>`).join('')}</svg>`,
+  phone:()=>`<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice"><defs><radialGradient id="ph1" cx=".5" cy=".45" r=".35"><stop offset="0" stop-color="#4c7fb0" stop-opacity=".35"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs><rect width="1600" height="900" fill="#060607"/><rect width="1600" height="900" fill="url(#ph1)"/>
+    <rect x="700" y="200" width="200" height="400" rx="28" fill="#0c0d10" stroke="#2b2e35" stroke-width="6"/><rect x="716" y="236" width="168" height="320" rx="10" fill="#122033"/><circle cx="800" cy="330" r="36" fill="#1d3550"/><rect x="740" y="390" width="120" height="12" rx="6" fill="#2d4c70"/><circle cx="760" cy="500" r="20" fill="#2e7d4f"/><circle cx="840" cy="500" r="20" fill="#9a2e25"/></svg>`,
+  cockpit:()=>`<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="ck1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a1222"/><stop offset="1" stop-color="#1c2a40"/></linearGradient></defs><rect width="1600" height="900" fill="url(#ck1)"/><g fill="#d9e2f0" opacity=".6">${Array.from({length:40},(_,i)=>`<circle cx="${(i*397)%1600}" cy="${(i*131)%380}" r="${i%3?1:1.8}"/>`).join('')}</g>
+    <path d="M0 0 H1600 V900 H0Z M120 120 L760 80 L700 470 L80 520Z M840 80 L1480 120 L1520 520 L900 470Z" fill="#050608" fill-rule="evenodd"/><rect y="560" width="1600" height="340" fill="#0b0c0f"/>
+    ${[260,520,1080,1340].map(x=>`<rect x="${x-90}" y="610" width="180" height="130" rx="6" fill="#0f1a26" stroke="#1f2a36" stroke-width="4"/><rect x="${x-70}" y="640" width="140" height="6" fill="#3fb57a" opacity=".7"/><rect x="${x-70}" y="670" width="90" height="6" fill="#e0b24a" opacity=".6"/>`).join('')}<rect x="760" y="620" width="80" height="200" rx="10" fill="#14161b"/></svg>`
+};
+function sceneFor(shot, opt){ if(!shot || shot.card || shot.choice) return null; const [pl,k]=shot; const p=String(pl||'');
+  if(/phone|text message|unknown number/i.test(p)) return 'phone'; if(/villa|terrace|mustique/i.test(p)) return 'villa'; if(/room|custody|interrog|office.*dea|station/i.test(p)) return 'room';
+  if(/hangar/i.test(p)) return 'hangar'; if(/office|fbo|lounge|terminal|jet bridge|courthouse|table|dinner/i.test(p)) return 'office'; if(/cockpit|jump seat|cruise|flight deck/i.test(p)) return 'cockpit';
+  if(/ramp|cargo|apron|strip|across the airfield/i.test(p)) return 'ramp'; return null; }
+
+/* ---- 3. ambient sound: a tension bed, plus rain, jet idle and phone rings ---- */
+const AMB = {nodes:[], ring:null};
+function ambNoise(ctx){ const b=ctx.createBuffer(1, ctx.sampleRate*2, ctx.sampleRate); const d=b.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; const s=ctx.createBufferSource(); s.buffer=b; s.loop=true; return s; }
+function ambStart(kind, vol){ const ctx=typeof actx==='function'?actx():null; if(!ctx || !sfxOn()) return; const g=ctx.createGain(); g.gain.value=0; g.connect(ctx.destination); const parts=[g];
+  if(kind==='bed'){ [55,55.6,82.4].forEach(f=>{ const o=ctx.createOscillator(); o.type='sawtooth'; o.frequency.value=f; const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=180; o.connect(lp); lp.connect(g); o.start(); parts.push(o,lp); }); }
+  if(kind==='rain'){ const n=ambNoise(ctx); const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1400; bp.Q.value=0.6; n.connect(bp); bp.connect(g); n.start(); parts.push(n,bp); }
+  if(kind==='jet'){ const n=ambNoise(ctx); const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=2500; n.connect(hp); hp.connect(g); n.start(); const o=ctx.createOscillator(); o.frequency.value=190; o.connect(g); o.start(); parts.push(n,hp,o); }
+  g.gain.linearRampToValueAtTime(vol, ctx.currentTime+1.5); AMB.nodes.push({kind, parts, g}); }
+function ambStop(kind){ const ctx=typeof actx==='function'?actx():null; AMB.nodes=AMB.nodes.filter(n=>{ if(kind && n.kind!==kind) return true; try{ n.g.gain.linearRampToValueAtTime(0, ctx.currentTime+0.8); setTimeout(()=>n.parts.forEach(p=>{ try{ p.stop&&p.stop(); }catch(_){} try{ p.disconnect(); }catch(_){} }), 1000); }catch(_){} return false; }); }
+function ambRing(){ const ctx=typeof actx==='function'?actx():null; if(!ctx || !sfxOn()) return; const t0=ctx.currentTime; [0,0.5].forEach(off=>{ [440,480].forEach(f=>{ const o=ctx.createOscillator(); const g=ctx.createGain(); o.frequency.value=f; g.gain.setValueAtTime(0,t0+off); g.gain.linearRampToValueAtTime(0.035,t0+off+0.02); g.gain.setValueAtTime(0.035,t0+off+0.35); g.gain.linearRampToValueAtTime(0,t0+off+0.4); o.connect(g); g.connect(ctx.destination); o.start(t0+off); o.stop(t0+off+0.45); }); }); }
+window.cutHook = {
+  start(el, opt){ ambStart('bed', 0.035); if(opt && opt.rain) ambStart('rain', 0.05); el.dataset.scene=''; },
+  shot(s, el, i, opt){ const sc=sceneFor(s, opt); const bgEl=el.querySelector('.cut-bg'); if(sc && el.dataset.scene!==sc){ el.dataset.scene=sc; bgEl.classList.add('swap'); setTimeout(()=>{ bgEl.innerHTML=SCENES[sc](); bgEl.classList.remove('swap'); }, 250); }
+    if(Array.isArray(s)){ const p=String(s[0]||''); if(/phone|text message/i.test(p)) ambRing(); const wantJet=sc==='ramp'||sc==='hangar'||sc==='cockpit'; const hasJet=AMB.nodes.some(n=>n.kind==='jet'); if(wantJet&&!hasJet) ambStart('jet',0.018); if(!wantJet&&hasJet) ambStop('jet'); } },
+  end(){ ambStop(); }
+};
+/* pass rain for stormy chapters */
+(function(){ const _cs=cutscene; cutscene=function(opt){ try{ const a=S.st&&S.st.active, L=S.st&&S.st.last; const wx=(a&&a.job.wx)||(L&&L.job&&L.job.wx)||{}; if(/wave|storm|shower|rain/i.test(String(wx.k||wx.id||wx.type||wx.name||''))) opt.rain=true; }catch(_){} return _cs(opt); }; })();
+
+/* ---- 1. "Previously on Trade Winds" when you open the app mid-story ---- */
+(function(){ let done=false; const _r=render; render=function(){ const x=_r.apply(this, arguments); if(!done && S.st){ done=true; try{ const st=S.st; const MC=mainChapters(); const dn=MC.filter(m=>st.story.done[m.id]);
+    if(dn.length && !(st.active&&st.active.started) && !S.showResult && !(st.ui&&st.ui.noRecap)){ const last3=dn.slice(-3); const next=MC.find(m=>!st.story.done[m.id]); const act=next?CRIME_ACTS.find(a=>a.arc===next.arc):CRIME_ACTS[CRIME_ACTS.length-1];
+      const shots=[{card:true,kicker:'Previously on',title:'Trade Winds',auto:1600}].concat(last3.map(m=>[`Chapter ${MC.indexOf(m)+1} · ${m.title}`, null, m.recap||''])); if(next) shots.push({card:true,kicker:`Up next · Chapter ${MC.indexOf(next)+1}`,title:next.title,sub:`<p>${esc(next.hook||'')}</p>`});
+      setTimeout(()=>{ if(!document.querySelector('.cut')) cutscene({shots, col:act.col, art:SCENES.office(), onEnd:()=>{}}); }, 900); } }catch(_){} } return x; }; })();
+
+(function(){ const s=document.createElement('style'); s.textContent=`.cut-bg{transition:transform 7s ease-out, opacity .25s}.cut-bg.swap{opacity:0}`; document.head.appendChild(s); })();
+/* ===================== 20 UPGRADES: clarity, pages and testing ===================== */
+
+/* ---- 14. one "Right now" button in the header on every page ---- */
+function rightNow(st){ if(!st) return null; const a=st.active; if(a) return {t:a.started?'Flight in progress':'Your booked flight', b:a.started?'Open flight':'Open flight', act:'nav', v:'flight'};
+  const MC=mainChapters(); const next=MC.find(m=>!st.story.done[m.id]); if(!next) return {t:'Story complete', b:'Side jobs', act:'nav', v:'board'};
+  const availSet=new Set(storyAvailable(st).map(m=>m.id)); const s=chapterStatus(st,next,availSet); const n=MC.indexOf(next)+1;
+  if(s.k==='ready') return {t:`Chapter ${n} · ${next.title}`, b:'▶ Play', act:'accept-story', id:next.id};
+  if(s.k==='travel') return {t:`Chapter ${n} · ${next.title}`, b:'▶ Play', act:'story-go', id:next.id};
+  if(s.k==='locked'){ const need=((next.req||{}).ratings||[]).find(r=>!st.ratings[r]); if(need && checkrideReady(st,need).ok) return {t:`Next: ${RATINGS[need].n} checkride`, b:'Book it', act:'nav', v:'pilot'}; if(need) return {t:`Needs ${RATINGS[need].n}`, b:'Fly side jobs', act:'nav', v:'board'}; }
+  if(s.k==='aircraft') return {t:`Chapter ${n} needs an aircraft`, b:'Hangar', act:'nav', v:'hangar'};
+  return {t:`Chapter ${n} · ${next.title}`, b:'Story', act:'nav', v:'story'}; }
+function nowHTML(st){ const r=rightNow(st); if(!r) return ''; return `<div class="now-pill"><span>${esc(r.t)}</span><button class="btn sm action" data-act="${r.act}" ${r.v?`data-v="${r.v}"`:''} ${r.id?`data-id="${r.id}"`:''}>${esc(r.b)}</button></div>`; }
+(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const hud=document.querySelector('.topbar .hud'); if(hud && S.st){ const old=document.querySelector('.now-pill'); if(old) old.remove(); const t=tpl(nowHTML(S.st)); if(t.content.firstElementChild) hud.prepend(t.content.firstElementChild); } }catch(_){} return x; }; })();
+
+/* ---- 15. result screen: one summary card, everything else folded ---- */
+const _uiRes = resultView;
+resultView = function(){ const h=_uiRes(); const st=S.st, L=st&&st.last; if(!L||!L.job) return h; const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h;
+  const kids=[...main.children]; const sum=kids.find(e=>e.tagName==='SECTION'); const bar=main.querySelector('.next-bar'); const keep=new Set([sum,bar].filter(Boolean));
+  kids.forEach(e=>{ if(e.querySelector && (e.querySelector('[data-act="after-replay"]') || e.classList.contains('choice'))) keep.add(e); });
+  const rest=kids.filter(e=>!keep.has(e) && !(e.tagName==='DIV' && e.classList.contains('row') && /Back to the job board/.test(e.textContent) && !e.classList.contains('next-bar')));
+  kids.forEach(e=>{ if(e.tagName==='DIV' && e.classList.contains('row') && !e.classList.contains('next-bar') && /Back to the job board/.test(e.textContent)) e.remove(); });
+  const c=crime(st); const extra=[]; if(c.on && L.job && (L.job.network||L.job.kind==='story')) extra.push(`<span class="chip">Power ${c.power}</span><span class="chip ${c.heat>=60?'warn':''}">Heat ${c.heat}</span>`); if(c.dirty) extra.push(`<span class="chip warn">Dirty cash ${money(c.dirty)}</span>`);
+  if(sum && extra.length){ const ch=sum.querySelector('.chips, .row'); const d=document.createElement('div'); d.className='row'; d.style.cssText='gap:6px;margin-top:8px;flex-wrap:wrap'; d.innerHTML=extra.join(''); (ch?ch.after(d):sum.appendChild(d)); }
+  const flat=[]; rest.forEach(e=>{ if(e.tagName==='DETAILS'){ [...e.children].filter(x=>x.tagName!=='SUMMARY').forEach(x=>flat.push(x)); e.remove(); } else { e.remove(); flat.push(e); } });
+  if(flat.length){ const d=wrapDetails(flat, 'Flight details: score, passengers, notes and share card'); if(d){ d.classList.add('res-more'); main.appendChild(d); } }
+  if(bar) bar.querySelectorAll('button').forEach(b=>{ if(/Back to the job board/.test(b.textContent)) b.textContent='Side jobs'; });
+  return t.innerHTML; };
+
+/* ---- 16. pilot page: the licence ladder says what each licence unlocks in the story ---- */
+const LADDER = [['PPL','Act 1 · the Cessna'],['JET','Act 2 · the Vision Jet and the CJ4'],['ATP','Act 4 · airliners and the 747']];
+const _uiPilot = pilotView;
+pilotView = function(){ const h=_uiPilot(); const st=S.st; const steps=LADDER.map(([r,u])=>{ const has=st.ratings[r]; const ready=!has && checkrideReady(st,r).ok; return `<div class="lad ${has?'has':ready?'ready':''}"><span class="lad-dot">${has?'✓':ready?'!':''}</span><b>${esc(RATINGS[r].n)}</b><small>${esc(u)}</small>${ready?`<a href="#" class="small" data-act="lad-go" data-r="${r}">Checkride ready, book below</a>`:''}</div>`; }).join('<i class="lad-line"></i>');
+  return h.replace(/(<main[^>]*>)/, `$1<section class="panel ladder"><p class="label">Your path through the story</p><div class="lad-row">${steps}</div><p class="small muted" style="margin-top:8px">Other ratings (Commercial, Instrument, Multi-Engine…) open more side jobs but aren't needed for the story.</p></section>`); };
+document.addEventListener('click', e=>{ const a=e.target.closest('[data-act="lad-go"]'); if(!a) return; e.preventDefault(); const el=document.querySelector(`[data-act="book-check"][data-r="${a.dataset.r}"]`); if(el) el.scrollIntoView({behavior:'smooth',block:'center'}); });
+
+/* ---- 17. the map shows the story: past chapters, and the next destination pulsing ---- */
+const _uiMap = mapView;
+mapView = function(){ const h=_uiMap(); try{ const st=S.st; const v=MAPV[S.mapZoom||'east']; const W=1000; const X=lon=>(lon-v.lon[0])/(v.lon[1]-v.lon[0])*W; const H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05); const Y=lat=>H-(lat-v.lat[0])/(v.lat[1]-v.lat[0])*H;
+  const MC=mainChapters(); let g='<g class="story-lines">'; MC.forEach(m=>{ if(!st.story.done[m.id]) return; const a=AP[m.from], b=AP[m.to]; if(!a||!b) return; const col=(CRIME_ACTS.find(x=>x.arc===m.arc)||{}).col||'#c8962a'; g+=`<line x1="${X(a.lon)}" y1="${Y(a.lat)}" x2="${X(b.lon)}" y2="${Y(b.lat)}" stroke="${col}" stroke-width="2" stroke-opacity=".55" stroke-dasharray="5 4"/>`; });
+  const next=MC.find(m=>!st.story.done[m.id]); if(next && AP[next.to]){ const b=AP[next.to], a=AP[next.from]; g+=`<line x1="${X(a.lon)}" y1="${Y(a.lat)}" x2="${X(b.lon)}" y2="${Y(b.lat)}" stroke="#d23b2c" stroke-width="3"/><circle cx="${X(b.lon)}" cy="${Y(b.lat)}" r="9" fill="none" stroke="#d23b2c" stroke-width="3" class="map-pulse"/><text x="${X(b.lon)+12}" y="${Y(b.lat)-12}" class="map-next">Next: ${esc(next.title)}</text>`; }
+  g+='</g>'; const i=h.indexOf('</svg>'); return i>0 ? h.slice(0,i)+g+h.slice(i) : h; }catch(_){ return h; } };
+
+/* ---- dirty cash, fleet, crew and rank rewards on the right pages ---- */
+(function(){ const _b=boardView; boardView=function(){ const h=_b(); try{ const l=launderHTML(S.st); return l ? h.replace('<div class="b2-head">', l+'<div class="b2-head">') : h; }catch(_){ return h; } }; })();
+(function(){ const _m=moneyView; moneyView=function(){ const h=_m(); try{ const l=launderHTML(S.st); return l ? h.replace(/(<main[^>]*>)/, '$1'+l) : h; }catch(_){ return h; } }; })();
+(function(){ const _hv=hangarView; hangarView=function(){ const h=_hv(); try{ if((S.hangarTab||'fleet')!=='fleet') return h; const f=fleetCrewHTML(S.st); return f ? h.replace(/(<main[^>]*>(?:\s*<div class="row[^"]*calm-subnav[\s\S]*?<\/div>)?)/, '$1'+f) : h; }catch(_){ return h; } }; })();
+(function(){ const _sv=storyView; storyView=function(){ const h=_sv(); try{ const c=crime(S.st); if(!c.on) return h; const perks=RANK_PERKS.map(([v,n,p])=>`<li class="${c.power>=v?'on':''}"><b>${n}</b> <span class="mono small">${v}+</span><p>${esc(p)}</p></li>`).join('');
+  const f=fleetCrewHTML(S.st); return h.replace('<section class="panel"><h3>The five acts</h3>', `<div class="sh-grid">${f||''}<section class="panel"><h3>Rank rewards <span class="small muted">Power ${c.power}</span></h3><ul class="perks">${perks}</ul></section></div><section class="panel"><h3>The five acts</h3>`); }catch(_){ return h; } }; })();
+
+/* ---- 19. test sessions: try things out, then put your real career back ---- */
+const TEST_KEY='tw.realCareer.backup';
+function testSession(){ try{ return !!localStorage.getItem(TEST_KEY); }catch(_){ return false; } }
+document.addEventListener('click', async e=>{ const b=e.target.closest('[data-act="test-session"]'); if(!b||!S.st) return;
+  if(!testSession()){ const json=JSON.stringify(S.st); try{ localStorage.setItem(TEST_KEY, json); }catch(_){ toast('Could not save a backup.'); return; } try{ if(window.twNative&&twNative.flightLog) await twNative.flightLog('real-career-backup.json', json); }catch(_){} S.st.ui=S.st.ui||{}; S.st.ui.testTools=true; save(); toast('Test session started. Your real career is backed up.'); }
+  else { let json=null; try{ json=localStorage.getItem(TEST_KEY); }catch(_){} if(!json) return; S.st=JSON.parse(json); S.st.savedAt=Date.now(); try{ localStorage.removeItem(TEST_KEY); }catch(_){} save(); toast('Test session ended. Your real career is back.'); }
+  S.keepScroll=true; render(); });
+(function(){ const _b=boardView; boardView=function(){ const h=_b(); const on=testSession(); const box=`<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><button class="btn sm ${on?'action':''}" data-act="test-session">${on?'End test session · restore my real career':'Start a test session'}</button><span class="tiny muted">${on?'Anything you do now is thrown away when you end the session.':'Backs up your career first, so you can skip and experiment freely.'}</span></div>`;
+  return h.replace('<button class="btn sm" data-act="practice"', box+'<button class="btn sm" data-act="practice"'); }; })();
+(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ if(testSession() && !document.querySelector('.test-banner')){ const d=document.createElement('div'); d.className='test-banner'; d.innerHTML=`Test session: changes will be thrown away <button class="btn sm" data-act="test-session">End and restore</button>`; document.body.appendChild(d); } if(!testSession()) document.querySelectorAll('.test-banner').forEach(e=>e.remove()); }catch(_){} return x; }; })();
+
+/* ---- 20. leftovers from the old career: Academy, Butter Cup and old names ---- */
+TEXT_FIX.push([/Coral Wing's (pilots|crews|chief pilot)/g,'the island pilots'],[/Mari says,?/g,'Your instructor says'],[/the Coral Wing (team|family)/g,'the islands']);
+(function(){ const _av=typeof academyView==='function'?academyView:null; if(!_av) return; academyView=function(){ return _av().replace(/Coral Wing/g,'the islands'); }; })();
+
+(function(){ const s=document.createElement('style'); s.textContent=`
+.now-pill{display:flex;align-items:center;gap:10px;padding:4px 4px 4px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:13px;max-width:420px}.now-pill span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}.now-pill .btn{border-radius:999px;white-space:nowrap}
+.res-more{margin-top:16px}
+.ladder{margin-bottom:16px}.lad-row{display:flex;align-items:center;gap:0;margin-top:10px;flex-wrap:wrap}.lad{display:grid;justify-items:start;gap:2px;min-width:180px}.lad small{color:var(--muted)}
+.lad-dot{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--line);font-weight:700;margin-bottom:4px}.lad.has .lad-dot{background:#7cbf6f;border-color:#7cbf6f;color:#0a0a0c}.lad.ready .lad-dot{border-color:var(--sea);color:var(--sea)}
+.lad-line{flex:1;min-width:30px;height:2px;background:var(--line);margin:0 12px 34px}
+.map-pulse{animation:mpulse 1.6s infinite;transform-box:fill-box;transform-origin:center}@keyframes mpulse{0%{transform:scale(1);opacity:1}100%{transform:scale(2.4);opacity:0}}.map-next{fill:#ece6da;font-size:14px;font-weight:700;paint-order:stroke;stroke:#000;stroke-width:3px}
+.launder{margin:14px 0;border-left:4px solid #c8962a}.launder h3{margin:2px 0 0;font-family:var(--f-mono)}
+.fleet .fc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-top:8px}.fc-ac{display:grid;gap:2px;padding:12px;border:1px solid var(--line);border-radius:10px}.fc-ac small{color:var(--muted);font-size:12px}
+.fc-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}.fc-row p{margin:2px 0 0}
+.perks{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:8px}.perks li{opacity:.5}.perks li.on{opacity:1}.perks li p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.test-banner{position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:9000;background:#3a1d0c;color:#ffd9a8;border:1px solid #c8962a;border-radius:999px;padding:4px 6px 4px 14px;font-size:13px;display:flex;gap:10px;align-items:center}`; document.head.appendChild(s); })();
 boot();
 </script>
 <script>
