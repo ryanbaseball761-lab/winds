@@ -15,3 +15,9 @@ A story career for Microsoft Flight Simulator 2024. The desktop app downloads `i
 
 ## Adding a change
 Add a new file to `src/js/` (e.g. `100-my-change.js`), append its name to `src/order.txt`, then `tools/ship.sh`.
+
+## Docs and checks for big changes
+- `docs/FABLE_BRIEF.md`: the plan and rules for the pre-release pass (start here)
+- `docs/CODEMAP.md` (`node tools/codemap.js`): files, wrapper chains, duplicates
+- `docs/STORY.md` (`node tools/storydump.js`): the whole main story as a readable script
+- `tests/snapshot.js`: behaviour snapshot; `save` to set a baseline, run plain to compare (a pure refactor must show 0 differences)
