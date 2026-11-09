@@ -21,10 +21,6 @@ todayHero = function(st){ let h=_flHero(st); const P=skyPos(st.clock); const wx=
 
 /* 4. view transitions */
 S._lastView = null;
-const _flRender = render;
-render = function(){ const changed = S._lastView !== S.view; const r=_flRender.apply(this, arguments); S._lastView=S.view;
-  try{ if(changed && !calmMotion()){ const m=document.querySelector('main'); if(m){ m.classList.remove('view-in'); void m.offsetWidth; m.classList.add('view-in'); } } afterRenderFx(); }catch(_){}
-  return r; };
 
 /* 5 + 6 + 7. result reveal: animated ring, counting numbers, celebrations, license reveal */
 function countUp(el, to, ms, fmt){ if(calmMotion()){ el.textContent=fmt(to); return; } const t0=performance.now(); const step=t=>{ const k=Math.min(1,(t-t0)/ms); const e=1-Math.pow(1-k,3); el.textContent=fmt(Math.round(to*e)); if(k<1) requestAnimationFrame(step); }; requestAnimationFrame(step); }

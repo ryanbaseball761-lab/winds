@@ -21,8 +21,6 @@ settingsHTML = function(){ let h=_p20Set(); const d=diff();
 const _p20Say = copilotSay;
 copilotSay = function(text, key){ const m=String(text).match(/(\d{4,}) feet per minute/); if(m && Number(m[1])>1500) text='Down and safe.'; return _p20Say(text, key); };
 
-/* 6. an old save sitting "after midnight" starts a fresh day */
-(function(){ let done=false; const _r=render; render=function(){ if(!done && S.st){ done=true; try{ if(S.st.clock>=1440 && !S.st.active){ rest(S.st); save(); } }catch(_){} } return _r.apply(this, arguments); }; })();
 
 /* 7. result: what next, right at the top; the share card folds away */
 const _p20Res = resultView;

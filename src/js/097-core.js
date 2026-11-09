@@ -58,8 +58,6 @@ window.cutAuto = ()=>!!uiP().autoCut;
 /* 19. a backup every 30 minutes of play, too */
 setInterval(()=>{ try{ if(S.st && !(S.st.active&&S.st.active.started)) backupLabeled(S.st, `Autosave · ${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`); }catch(_){} }, 30*60000);
 
-/* 20. dirty cash shows in the header next to your cash */
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const hud=document.querySelector('.topbar .hud'); const c=S.st&&crime(); const old=document.querySelector('.dirty-chip'); if(old) old.remove(); if(hud && c && c.dirty>0){ const d=document.createElement('button'); d.className='dirty-chip'; d.dataset.act='nav'; d.dataset.v='money'; d.title='Dirty cash from network runs. Launder it on the Money page.'; d.innerHTML=`<span>Dirty</span><b>${money(c.dirty)}</b>`; const bell=hud.querySelector('.bell'); bell?bell.before(d):hud.appendChild(d); } }catch(_){} return x; }; })();
 
 (function(){ const s=document.createElement('style'); s.textContent=`
 .jr-p small.dirty{display:block;font-size:10px;font-weight:400;letter-spacing:.1em;text-transform:uppercase;color:#e5533d}

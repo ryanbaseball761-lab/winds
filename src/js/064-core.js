@@ -12,6 +12,4 @@ AP.WSBL = {n:`Simpson Bay Lagoon (water)`, isl:`Sint Maarten`, c:'SXM', r:'LEE',
       ok:`The photos are usable. The landing was a little firm, and Amara's coffee is now on the ceiling.`,
       bad:`The flight got rough and half the photos are blurred. Amara is gracious about it, and the foundation pays the invoice anyway.` } });
 })();
-/* a booked HW2 on an old route is un-booked once, so the story card offers the new one */
-(function(){ let done=false; const _r=render; render=function(){ if(!done && S.st){ done=true; try{ const a=S.st.active; if(a && !a.started && a.job.story==='HW2' && a.job.to!=='TNCM'){ S.st.active=null; save(); if(S.view==='flight') S.view='board'; setTimeout(()=>toast('Below the Surface is now a runway flight: Grand Case to Juliana. Start it again from the story card.'),800); } }catch(_){} } return _r.apply(this, arguments); }; })();
 

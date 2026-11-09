@@ -23,5 +23,3 @@ unlockHint = function(st, m){ const miss=_ctHint(st, m); for(const x of ((m.req|
   fixText('CG1', 'Lt. Daniela Ortiz calls Mari, Mari calls you.', 'Lt. Daniela Ortiz, who flew Jayhawks with Mari at Air Station Borinquen, calls Mari. Mari calls you.');
 })();
 /* existing careers: tabs you already had don't announce themselves as "new" */
-const _ctRender = render;
-render = function(){ try{ const st=S.st; if(st && !(st.ui && st.ui.seen)){ st.ui=st.ui||{}; st.ui.seen={}; for(const k in TAB_UNLOCK) if(TAB_UNLOCK[k].t(st)) st.ui.seen[k]=1; } }catch(_){} return _ctRender.apply(this, arguments); };

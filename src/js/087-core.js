@@ -50,10 +50,5 @@ window.cutHook = {
 /* pass rain for stormy chapters */
 (function(){ const _cs=cutscene; cutscene=function(opt){ try{ const a=S.st&&S.st.active, L=S.st&&S.st.last; const wx=(a&&a.job.wx)||(L&&L.job&&L.job.wx)||{}; if(/wave|storm|shower|rain/i.test(String(wx.k||wx.id||wx.type||wx.name||''))) opt.rain=true; }catch(_){} return _cs(opt); }; })();
 
-/* ---- 1. "Previously on Trade Winds" when you open the app mid-story ---- */
-(function(){ let done=false; const _r=render; render=function(){ const x=_r.apply(this, arguments); if(!done && S.st){ done=true; try{ const st=S.st; const MC=mainChapters(); const dn=MC.filter(m=>st.story.done[m.id]);
-    if(dn.length && !S._walk && !S._title && !(st.active&&st.active.started) && !S.showResult && !(st.ui&&st.ui.noRecap)){ const last3=dn.slice(-3); const next=MC.find(m=>!st.story.done[m.id]); const act=next?CRIME_ACTS.find(a=>a.arc===next.arc):CRIME_ACTS[CRIME_ACTS.length-1];
-      const shots=[{card:true,kicker:'Previously on',title:'Trade Winds',auto:1600}].concat(last3.map(m=>[`Chapter ${MC.indexOf(m)+1} · ${m.title}`, null, m.recap||''])); if(next) shots.push({card:true,kicker:`Up next · Chapter ${MC.indexOf(next)+1}`,title:next.title,sub:`<p>${esc(next.hook||'')}</p>`});
-      setTimeout(()=>{ if(!document.querySelector('.cut')) cutscene({shots, col:act.col, art:SCENES.office(), onEnd:()=>{}}); }, 900); } }catch(_){} } return x; }; })();
 
 (function(){ const s=document.createElement('style'); s.textContent=`.cut-bg{transition:transform 7s ease-out, opacity .25s}.cut-bg.swap{opacity:0}`; document.head.appendChild(s); })();

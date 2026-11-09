@@ -18,8 +18,6 @@ function makeManifest(job){
 function manifestHTML(job){ const M=job.manifest; if(!M) return '';
   return `<section class="panel stack manifest"><div class="row between"><h3>Passenger manifest</h3><span class="small muted">${M.length} aboard</span></div><div class="mf-list">${M.map(p=>`<div class="mf"><span class="mf-ic" title="${esc(TRAITS[p.trait].n)}">${TRAITS[p.trait].i}</span><div><b>${esc(p.name)}</b><span class="tiny muted">Seat ${p.seat} · ${esc(TRAITS[p.trait].n)}</span></div></div>`).join('')}</div><p class="tiny muted">${[...new Set(M.map(p=>p.trait))].map(t=>`${TRAITS[t].i} ${esc(TRAITS[t].d)}`).join(' ')}</p></section>`; }
 /* give every passenger job a manifest when it becomes active */
-const _mfRenderAll = render;
-render = function(){ const a=S.st&&S.st.active; if(a && a.job.manifest===undefined){ a.job.manifest = makeManifest(a.job); } return _mfRenderAll(); };
 const _mfFlight = flightView;
 flightView = function(){ const h=_mfFlight(); const a=S.st&&S.st.active; if(!a || !a.job.manifest || S.debrief || S.showResult) return h;
   if(a.started && !S.ifBrief) return h.replace(/(<div class="stack">)(<section class="panel stack cabin-host">)/, `$1$2`).replace('<section class="panel stack small"><h3>Quick reference</h3>', manifestHTML(a.job)+'<section class="panel stack small"><h3>Quick reference</h3>');

@@ -17,7 +17,6 @@ const _m2Res = resultView;
 resultView = function(){ const h=_m2Res(); const L=S.st&&S.st.last; if(!L||!L.delta||!crime().on) return h; const d=L.delta, c=crime(); if(!d.power && !d.heat) return h;
   const bar=(n,v,dv,col)=>`<div class="dbar"><span>${n}</span><div class="db-t"><i style="width:${Math.max(0,v-Math.max(0,dv))}%;background:${col}"></i><i class="db-new" style="width:${Math.abs(dv)}%;background:${dv>=0?col:'transparent'};${dv<0?`outline:1px dashed ${col}`:''}"></i></div><b>${v} <small class="${dv>0?'up':dv<0?'down':''}">${dv>0?'+':''}${dv||''}</small></b></div>`;
   return h.replace('<div class="row next-bar">', `<section class="panel deltas">${bar('Power',c.power,d.power,'#c8962a')}${bar('Heat',c.heat,d.heat,'#c23a2b')}</section><div class="row next-bar">`); };
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ if(S.showResult && !S._counted){ S._counted=true; const el=[...document.querySelectorAll('main section b, main section .big, main section strong')].find(e=>/^\+\$[\d,]+$/.test(e.textContent.trim())); if(el){ const target=Number(el.textContent.replace(/[^\d]/g,'')); let t0=null; const step=ts=>{ if(!t0) t0=ts; const k=Math.min(1,(ts-t0)/900); el.textContent='+'+money(Math.round(target*(1-Math.pow(1-k,3)))); if(k<1) requestAnimationFrame(step); }; requestAnimationFrame(step); } } if(!S.showResult) S._counted=false; }catch(_){} return x; }; })();
 
 /* ---- 3. story achievements ---- */
 ACH.push(
@@ -61,7 +60,6 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="walk-ag
 
 /* ---- 7. what Power, Heat and dirty cash mean, wherever they appear ---- */
 const CX_TIPS = { Power:`Power: how much of the network answers to you. Grows with chapters, hard choices and network runs. Unlocks rank rewards.`, Heat:`Heat: how close the law is. Network runs raise it; legit jobs, lying low and laundering through Caribe Cargo keep it down. Above 60 customs searches you; at 90 you're busted.`, Dirty:`Dirty cash: money from network runs. Launder it on the Jobs or Money page before you can spend it.` };
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ document.querySelectorAll('.sc-m span, .hq-m span, .dbar > span, .chip, .launder .label').forEach(el=>{ if(el.title) return; const t=el.textContent.trim(); const k=/^Power/.test(t)?'Power':/^Heat/.test(t)?'Heat':/^Dirty/i.test(t)?'Dirty':null; if(k){ el.title=CX_TIPS[k]; el.classList.add('has-tip'); } }); }catch(_){} return x; }; })();
 
 /* ---- 8. jobs: see the route on the map ---- */
 const _m8Row = jobRow;
@@ -74,8 +72,6 @@ mapView = function(){ const h=_m8Map(); try{ const j=S.mapRoute&&(S.st.jobs||[])
   return (i>0?h.slice(0,i)+g+h.slice(i):h).replace(/(<main[^>]*>)/, '$1'+back); }catch(_){ return h; } };
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="map-back"]')){ S.mapRoute=null; go('board'); } else if(e.target.closest('[data-act="nav"]')) S.mapRoute=null; }, true);
 
-/* ---- 9. cash changes flash in the header ---- */
-(function(){ let last=null; const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const st=S.st; if(!st) return x; const v=st.cash; if(last!=null && v!==last){ const el=[...document.querySelectorAll('.topbar .hud *')].find(e=>!e.children.length && /^\$[\d,−-]+$/.test(e.textContent.trim())); if(el){ const d=document.createElement('span'); d.className='cashfx '+(v>last?'up':'down'); d.textContent=(v>last?'+':'−')+money(Math.abs(v-last)); el.parentElement.style.position='relative'; el.parentElement.appendChild(d); setTimeout(()=>d.remove(),1800); } } last=v; }catch(_){} return x; }; })();
 
 /* ---- 10. a smooth landing on the story page: the next chapter card glows when it's ready to play ---- */
 (function(){ const s=document.createElement('style'); s.textContent=`

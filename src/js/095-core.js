@@ -25,7 +25,6 @@ function showTitle(){ if(document.querySelector('.title-screen')) return; const 
     if(a==='continue') close(()=>{ S.view = S.st.active ? 'flight' : 'story'; render(); setTimeout(playRecapNow, 300); });
     if(a==='settings') close(()=>{ S.view='hangar'; S.hangarTab='settings'; render(); });
     if(a==='new') close(()=>{ if(S.st){ try{ backupLabeled(S.st,'Before starting a new game'); }catch(_){} } S.st=null; try{ localStorage.removeItem(KEY); }catch(_){} S.view='board'; render(); }); }); }
-(function(){ let shown=false; const _r=render; render=function(){ const x=_r.apply(this, arguments); if(!shown && S._title){ shown=true; setTimeout(showTitle, 50); } return x; }; })();
 function playRecapNow(){ try{ const st=S.st; if(!st || uiP().noRecap || uiP().skipCuts || !uiP().walk3) return; const MC=mainChapters(); const dn=MC.filter(m=>st.story.done[m.id]); if(!dn.length || (st.active&&st.active.started)) return;
   const next=MC.find(m=>!st.story.done[m.id]); const act=next?CRIME_ACTS.find(a=>a.arc===next.arc):CRIME_ACTS[CRIME_ACTS.length-1];
   const shots=[{card:true,kicker:'Previously on',title:'Trade Winds',auto:1600}].concat(dn.slice(-3).map(m=>[`Chapter ${MC.indexOf(m)+1} · ${m.title}`, null, m.recap||''])); if(next) shots.push({card:true,kicker:`Up next · Chapter ${MC.indexOf(next)+1}`,title:next.title,sub:`<p>${esc(next.hook||'')}</p>`});
@@ -45,7 +44,6 @@ function coldOpenShots(){ const st=S.st; if(!st || (st.flights||0)>0 || st.story
 
 /* ---- units: imperial or metric everywhere ---- */
 function toMetric(t){ return t.replace(/(\d[\d,]*(?:\.\d+)?)\s?lb\b/g,(m,n)=>`${Math.round(Number(n.replace(/,/g,''))*0.4536).toLocaleString()} kg`).replace(/(\d[\d,]*(?:\.\d+)?)\s?gal\b/g,(m,n)=>`${Math.round(Number(n.replace(/,/g,''))*3.785).toLocaleString()} L`); }
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ if(uiP().metric){ const w=document.createTreeWalker(document.getElementById('app')||document.body, NodeFilter.SHOW_TEXT); const L=[]; while(w.nextNode()) L.push(w.currentNode); L.forEach(n=>{ if(/\d\s?(lb|gal)\b/.test(n.nodeValue)) n.nodeValue=toMetric(n.nodeValue); }); } }catch(_){} return x; }; })();
 
 /* ---- volume per channel: voices, music, effects ---- */
 (function(){ const _vv=voiceVol; voiceVol=function(){ return _vv()*volOf('voice')/0.8*0.8; }; })();

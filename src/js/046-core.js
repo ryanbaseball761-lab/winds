@@ -29,8 +29,6 @@ spawnUrgent = function(force){ const st=S.st; if(!force && st && ((st.ui&&st.ui.
 function applyA11y(){ const ui = S.st ? uiPrefs() : {}; const el=document.documentElement;
   el.style.setProperty('--tw-zoom', String(ui.zoom||1)); el.classList.toggle('tw-zoom', (ui.zoom||1)!==1);
   el.classList.toggle('rm', !!ui.reduceMotion); el.classList.toggle('hc', !!ui.contrast); }
-const _dcRender = render;
-render = function(){ const r=_dcRender.apply(this, arguments); try{ applyA11y(); }catch(_){} return r; };
 
 /* ---- settings live in one place (Hangar) ---- */
 function settingsHTML(){ const ui=uiPrefs(); const z=ui.zoom||1;

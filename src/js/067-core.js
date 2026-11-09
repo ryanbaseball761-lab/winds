@@ -212,12 +212,6 @@ const CR_RANKS = [[0,'Pilot'],[12,'Courier'],[28,'Runner'],[45,'Lieutenant'],[65
 function crimeRank(c){ if(c.ending==='kingpin') return 'Kingpin'; if(c.ending==='witness') return 'Witness'; if(c.ending==='ghost') return 'Ghost'; let r='Pilot'; CR_RANKS.forEach(([v,n])=>{ if(c.power>=v) r=n; }); return r; }
 function crBump(c, k, v){ c[k]=clamp(Math.round((c[k]||0)+v), k==='con'?-10:0, k==='con'?10:100); }
 
-/* ---- an old save: the old main story is cleared once so the new one starts at chapter 1 ---- */
-(function(){ let done=false; const _r=render; render=function(){ if(!done && S.st){ done=true; try{ const st=S.st; if(st.crimeV===1){ st.crimeV=2; const keep=new Set(['CW1','CR2','CR3','CR4']); for(const id in (st.story.done||{})) if(/^CR\d+$/.test(id) && !keep.has(id)) delete st.story.done[id]; const c0=crime(st); for(const id in c0.choice) if(!keep.has(id)) delete c0.choice[id]; delete c0.ending; if(st.active && !st.active.started && st.active.job.kind==='story' && /^CR\d+$/.test(st.active.job.story) && !keep.has(st.active.job.story)) st.active=null; save(); }
-    if(!st.crimeV){ st.crimeV=2;
-    ['CW1','CW2','CW3','CW4','BO1','BO2','BO3','BO4','BO5','HW1','HW2','HW3','HW4','HW5','OW1','MR1','TR1','TR2','TR3','TR4','TR5','CO1','CO2','CO3'].forEach(id=>{ if(st.story && st.story.done) delete st.story.done[id]; });
-    if(st.active && !st.active.started && st.active.job.kind==='story' && !STORY.find(m=>m.id===st.active.job.story)) st.active=null;
-    st.rep.castillo = st.rep.castillo||10; st.rep.reyes = st.rep.reyes||10; crime(st); save(); } else crime(st); st.rep.castillo=st.rep.castillo||10; st.rep.reyes=st.rep.reyes||10; }catch(_){} } return _r.apply(this, arguments); }; })();
 
 /* ---- after a chapter: power, heat, customs searches; side jobs are legit cover that cools the heat ---- */
 const _crApply = applyResult;

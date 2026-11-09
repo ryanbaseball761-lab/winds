@@ -9,5 +9,3 @@ checkrideJob = function(st, rid, acId){ if(rid!=='SEA') return _seaCk(st, rid, a
 /* passing it: no crash, not a hard landing, and most of the tasks */
 const _seaApply = applyResult;
 applyResult = function(st, job, f, res){ if(job.kind==='check' && job.rating==='SEA' && !res.crash && f && f.landing!=='hard') res.score=Math.max(70, res.score); return _seaApply(st, job, f, res); };
-/* a booked seaplane checkride on the old long route is rebuilt once */
-(function(){ let done=false; const _r=render; render=function(){ if(!done && S.st){ done=true; try{ const a=S.st.active; if(a && !a.started && a.job.kind==='check' && a.job.rating==='SEA' && a.job.to!=='WSBL'){ a.job=checkrideJob(S.st,'SEA',a.job.ac); save(); setTimeout(()=>toast('Seaplane checkride is now a short hop: Juliana to Simpson Bay Lagoon.'),800); } }catch(_){} } return _r.apply(this, arguments); }; })();

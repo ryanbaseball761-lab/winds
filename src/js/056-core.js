@@ -67,7 +67,6 @@ function adoptSpec(){ const s=S.sim, st=S.st; if(!s || !s.spec || S.simState!=='
   if(sp.maxGrossLb>sp.emptyLb && sp.emptyLb>500){ const u=sp.maxGrossLb-sp.emptyLb; if(Math.abs(u-a.useful)/a.useful<0.5) r.useful=Math.round(u); }
   const cap=(sp.fuelGal||0); if(cap>5 && a.burn>0){ const dens=a.fuel==='avgas'?6:6.7; const rng=Math.round(cap*dens/a.burn*(r.cruise||a.cruise)*0.85); if(Math.abs(rng-a.range)/a.range<0.6) r.range=rng; }
   if(Object.keys(r).length){ st.acReal[id]=r; Object.assign(a, r); save(); toast(`Using your MSFS ${a.n} numbers for planning.`); } else st.acReal[id]={}; }
-const _mrRender = render; render = function(){ try{ if(!S._acReal && S.st){ S._acReal=true; for(const k in (S.st.acReal||{})) if(AC[k]) Object.assign(AC[k], S.st.acReal[k]); } }catch(_){} return _mrRender.apply(this, arguments); };
 const _mrSim2 = renderSimBits;
 renderSimBits = function(){ _mrSim2(); try{ adoptSpec(); }catch(_){} };
 

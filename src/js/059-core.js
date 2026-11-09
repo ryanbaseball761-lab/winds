@@ -1,6 +1,4 @@
 /* ===================== QUICK WINS BEFORE TESTING ===================== */
-/* 1. a booked flight opens the Flight screen when the app starts, and when the engine starts */
-(function(){ let done=false; const _r=render; render=function(){ if(!done && S.st){ done=true; if(S.st.active && S.view==='board') S.view='flight'; } return _r.apply(this, arguments); }; })();
 const _qkSim = renderSimBits;
 renderSimBits = function(){ const a=S.st&&S.st.active; const was=a&&a.started; _qkSim(); try{ if(a && !was && a.started && S.view!=='flight') go('flight'); }catch(_){} };
 

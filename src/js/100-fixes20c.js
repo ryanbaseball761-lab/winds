@@ -15,8 +15,6 @@ document.addEventListener('click', e=>{ const p=e.target.closest('.sh-p, .sc-who
 /* 4. result screen: the grade letter is coloured by how you did */
 /* (CSS only, see below) */
 
-/* 5. the job list remembers your tab and sort */
-(function(){ const _r=render; let loaded=false; render=function(){ if(!loaded && S.st){ loaded=true; const u=S.st.ui||{}; if(u.jobTab) S.jobTab=u.jobTab; if(u.jobSort) S.jobSort=u.jobSort; } const x=_r.apply(this, arguments); try{ if(S.st){ const u=S.st.ui=S.st.ui||{}; if(u.jobTab!==S.jobTab||u.jobSort!==S.jobSort){ u.jobTab=S.jobTab; u.jobSort=S.jobSort; } } }catch(_){} return x; }; })();
 
 /* 6. command bar: what you used recently comes first */
 (function(){ const _ci=cmdItems; cmdItems=function(){ const L=_ci(); let rec=[]; try{ rec=JSON.parse(localStorage.getItem('tw.cmdRecent')||'[]'); }catch(_){}
@@ -54,8 +52,6 @@ const WHATS_NEW = [['0.42','Illustrated portraits and scenes, person cards on th
 (function(){ const _t=titleHTML; titleHTML=function(){ return _t().replace('<p class="ts-foot">', `<button class="ts-new" data-ts-new="1">What's new in ${WHATS_NEW[0][0]}</button><p class="ts-foot">`); }; })();
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-ts-new]')) return; e.stopPropagation(); const d=document.createElement('div'); d.className='pc-wrap'; d.style.zIndex=13000; d.innerHTML=`<div class="pc keys"><div class="pc-in"><p class="label">Updates</p><h2>What's new</h2><dl>${WHATS_NEW.map(([v,t])=>`<dt><b>${v}</b></dt><dd>${esc(t)}</dd>`).join('')}</dl><button class="btn sm" data-act="pc-close">Close</button></div></div>`; document.body.appendChild(d); d.addEventListener('click', ev=>{ if(ev.target===d||ev.target.closest('[data-act="pc-close"]')) d.remove(); }); }, true);
 
-/* 15. the window title says where you are in the story */
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const st=S.st; if(!st){ document.title='Trade Winds'; return x; } const a=st.active; if(a){ document.title=`${a.job.from} → ${a.job.local?a.job.from:a.job.to} · Trade Winds`; } else { const MC=mainChapters(); const n=MC.find(m=>!st.story.done[m.id]); document.title = n ? `Chapter ${MC.indexOf(n)+1}: ${n.title} · Trade Winds` : 'Trade Winds'; } }catch(_){} return x; }; })();
 
 /* 16. click a finished chapter in "The story so far" for its full recap */
 document.addEventListener('click', e=>{ const li=e.target.closest('.sh-time li'); if(!li || e.target.closest('button')) return; const n=Number((li.querySelector('.sh-n')||{}).textContent); const m=mainChapters()[n-1]; if(!m||!S.st.story.done[m.id]) return; const c=crime(); const ch=m.choice&&c.choice[m.id]!=null?m.choice.opts[c.choice[m.id]]:null;

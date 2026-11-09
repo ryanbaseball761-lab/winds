@@ -59,8 +59,6 @@ const _clInflight = inflightView;
 inflightView = function(){ let h=_clInflight(); const a=S.st&&S.st.active; if(!a) return h; try{ const R=runwayPlan(a.job); if(R.dep) h=h.replace(/(<p class="label">In flight[^<]*<\/p>)/, `$1<p class="if-rw">Take off <b class="mono">${esc(R.dep.water?'into wind':R.dep.rw)}</b>${R.arr?` · Land <b class="mono">${esc(R.arr.water?'into wind':R.arr.rw)}</b>`:''} · wind ${pad3(a.job.wx.dir)}°/${a.job.wx.spd} kt</p>`); }catch(_){} return h.replace('id="preflight"','id="preflight" data-x="1"').replace('class="panel stack preflight"','class="panel stack preflight fsetup"'); };
 
 /* ---- each screen gets its own atmosphere ---- */
-const _clRender = render;
-render = function(){ const r=_clRender.apply(this, arguments); try{ document.documentElement.dataset.view = S.showResult && S.view==='flight' ? 'result' : (S.st&&S.st.active&&S.st.active.started&&S.view==='flight'?'inflight':S.view||''); }catch(_){} return r; };
 
 /* ---- hangar in tabs instead of one very long page ---- */
 const HG_TABS = [['fleet','Your fleet'],['settings','Settings'],['msfs','MSFS connection'],['save','Saves & help']];

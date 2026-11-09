@@ -5,10 +5,7 @@
 
 /* 2. Pilot tabs include Profile and Logbook, so they're easy to find */
 try{ const g=NAV5.find(x=>x.v==='pilot'); g.tabs=[['pilot','Licences'],['profile','Profile'],['log','Logbook'],['money','Money'],['cup','Butter Cup'],['academy','Academy']]; }catch(_){}
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ document.querySelectorAll('.subtabs button').forEach(b=>{ if(b.dataset.v==='pilot' && ['profile','log'].includes(S.view)) b.classList.remove('on'); if(b.dataset.v===S.view) b.classList.add('on'); }); }catch(_){} return x; }; })();
 
-/* 3. a settings gear in the header */
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const hud=document.querySelector('.topbar .hud'); if(hud && !hud.querySelector('.gear-btn')){ const g=document.createElement('button'); g.className='cmd-btn gear-btn'; g.title='Settings'; g.dataset.act='open-settings'; g.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'; hud.appendChild(g); } }catch(_){} return x; }; })();
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="open-settings"]')) return; S.hangarTab='settings'; go('hangar'); });
 
 /* 4. command bar: search story chapters and achievements too */
@@ -20,8 +17,6 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="open-se
 /* 6. Heat cools by 1 every new day on its own */
 (function(){ const _rs=rest; rest=function(st){ const r=_rs(st); try{ const c=crime(st); if(c.on) crBump(c,'heat',-1); }catch(_){} return r; }; })();
 
-/* 7. header: the licence chip goes (it's on the Pilot page), so the header breathes */
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ document.querySelectorAll('.topbar .hud .hp').forEach(h=>{ if(/^License/i.test(h.textContent.trim())) h.remove(); }); }catch(_){} return x; }; })();
 
 /* 8. the Story badge explains itself */
 (function(){ const _bd=band; band=function(){ return _bd().replace(/<span class="nb">(\d+)<\/span>/, (m,n)=>`<span class="nb" title="${n} chapter${n>1?'s':''} ready to play">${n}</span>`); }; })();
@@ -70,4 +65,3 @@ document.addEventListener('keydown', e=>{ if(e.key.toLowerCase()!=='m' || /INPUT
     if(/^story$/i.test(x)){ const v=[...box.querySelectorAll('*')].find(e=>!e.children.length && /\d+\s*\/\s*\d+/.test(e.textContent)); if(v) v.textContent=`${done}/${MC.length}`; else { const v2=[...box.childNodes].find(n=>n.nodeType===3 && /\d+\/\d+/.test(n.nodeValue)); if(v2) v2.nodeValue=v2.nodeValue.replace(/\d+\/\d+/, `${done}/${MC.length}`); } }
     if(/^avg touchdown$/i.test(x) && avg!=null){ const v=[...box.querySelectorAll('*')].find(e=>e!==el && !e.children.length && /^\d+$/.test(e.textContent.trim())); if(v) v.textContent=String(avg); } });
   return t.innerHTML; }catch(_){ return h; } }; })();
-boot();

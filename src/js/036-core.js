@@ -1,14 +1,5 @@
 /* ===================== STABILITY: crash screen, automatic backups ===================== */
-const _stRender = render;
 let _stFails = 0;
-render = function(){
-  try{ _stRender(); _stFails=0; }
-  catch(e){ _stFails++; try{ logErr(`render(${S.view}): ${e && e.message}`); }catch(_){}
-    const app=document.getElementById('app'); if(!app) return;
-    if(_stFails<2 && S.view!=='board'){ S.view='board'; S.debrief=false; S.showResult=false; S.confirm=null; try{ _stRender(); toast('Something went wrong on that screen, so you\'re back on the job board. A report was saved.'); return; }catch(_){ } }
-    app.innerHTML = `<main class="wrap"><div class="panel stack" style="max-width:640px;margin:60px auto;text-align:center"><h2>Turbulence in the code</h2><p>Trade Winds hit an error drawing this screen. Your career is saved.</p><p class="tiny muted mono">${esc(String(e&&e.message||e).slice(0,200))}</p><div class="row" style="justify-content:center"><button class="btn primary" data-act="st-home">Back to the job board</button><button class="btn" data-act="st-restore">Restore last backup</button></div></div></main>`;
-  }
-};
 document.addEventListener('click', e=>{
   if(e.target.closest('[data-act="st-home"]')){ _stFails=0; S.view='board'; S.debrief=false; S.showResult=false; render(); }
   if(e.target.closest('[data-act="st-restore"]')){ const b=latestBackup(); if(b){ S.st=migrate(b); save(); _stFails=0; S.view='board'; render(); toast('Restored your last backup.'); } else toast('No backup yet.'); }

@@ -2680,14 +2680,6 @@ function hangarView(){
 }
 
 /* ---------- render ---------- */
-function render(){
-  const y = window.scrollY;
-  if(!S.st){ app.innerHTML = setupView(); return; }
-  const v = S.view;
-  const body = v==='cockpit'?cockpitView(): v==='money'?moneyView(): v==='map'?mapView(): v==='flight'?flightView(): v==='pilot'?pilotView(): v==='story'?storyView(): v==='log'?logView(): v==='company'?companyView(): v==='hangar'?hangarView(): boardView();
-  app.innerHTML = band() + body + tourHTML(S.st);
-  if(S.keepScroll) window.scrollTo(0,y); S.keepScroll=false;
-}
 function go(v){ if(v==='flight' && S.mcp && S.simState!=='nobridge') setTimeout(()=>simPoll(true),0); S.view=v; S.confirm=null; if(v!=='flight'){ S.debrief=false; } if(location.hash!=='#'+v){ try{ history.replaceState(null,'','#'+v); }catch(e){ location.hash=v; } } render(); window.scrollTo(0,0); }
 
 /* ---------- AI ---------- */
@@ -5188,16 +5180,7 @@ document.addEventListener('click', e=>{ if(e.target.closest('[data-act="big-open
 const _bgInflight = inflightView;
 inflightView = function(){ return _bgInflight().replace('<button class="btn sm ghost" data-act="if-brief">Briefing</button>', '<button class="btn sm ghost" data-act="big-open">⛶ Big display</button><button class="btn sm ghost" data-act="if-brief">Briefing</button>'); };
 /* ===================== STABILITY: crash screen, automatic backups ===================== */
-const _stRender = render;
 let _stFails = 0;
-render = function(){
-  try{ _stRender(); _stFails=0; }
-  catch(e){ _stFails++; try{ logErr(`render(${S.view}): ${e && e.message}`); }catch(_){}
-    const app=document.getElementById('app'); if(!app) return;
-    if(_stFails<2 && S.view!=='board'){ S.view='board'; S.debrief=false; S.showResult=false; S.confirm=null; try{ _stRender(); toast('Something went wrong on that screen, so you\'re back on the job board. A report was saved.'); return; }catch(_){ } }
-    app.innerHTML = `<main class="wrap"><div class="panel stack" style="max-width:640px;margin:60px auto;text-align:center"><h2>Turbulence in the code</h2><p>Trade Winds hit an error drawing this screen. Your career is saved.</p><p class="tiny muted mono">${esc(String(e&&e.message||e).slice(0,200))}</p><div class="row" style="justify-content:center"><button class="btn primary" data-act="st-home">Back to the job board</button><button class="btn" data-act="st-restore">Restore last backup</button></div></div></main>`;
-  }
-};
 document.addEventListener('click', e=>{
   if(e.target.closest('[data-act="st-home"]')){ _stFails=0; S.view='board'; S.debrief=false; S.showResult=false; render(); }
   if(e.target.closest('[data-act="st-restore"]')){ const b=latestBackup(); if(b){ S.st=migrate(b); save(); _stFails=0; S.view='board'; render(); toast('Restored your last backup.'); } else toast('No backup yet.'); }
@@ -5291,8 +5274,6 @@ function makeManifest(job){
 function manifestHTML(job){ const M=job.manifest; if(!M) return '';
   return `<section class="panel stack manifest"><div class="row between"><h3>Passenger manifest</h3><span class="small muted">${M.length} aboard</span></div><div class="mf-list">${M.map(p=>`<div class="mf"><span class="mf-ic" title="${esc(TRAITS[p.trait].n)}">${TRAITS[p.trait].i}</span><div><b>${esc(p.name)}</b><span class="tiny muted">Seat ${p.seat} · ${esc(TRAITS[p.trait].n)}</span></div></div>`).join('')}</div><p class="tiny muted">${[...new Set(M.map(p=>p.trait))].map(t=>`${TRAITS[t].i} ${esc(TRAITS[t].d)}`).join(' ')}</p></section>`; }
 /* give every passenger job a manifest when it becomes active */
-const _mfRenderAll = render;
-render = function(){ const a=S.st&&S.st.active; if(a && a.job.manifest===undefined){ a.job.manifest = makeManifest(a.job); } return _mfRenderAll(); };
 const _mfFlight = flightView;
 flightView = function(){ const h=_mfFlight(); const a=S.st&&S.st.active; if(!a || !a.job.manifest || S.debrief || S.showResult) return h;
   if(a.started && !S.ifBrief) return h.replace(/(<div class="stack">)(<section class="panel stack cabin-host">)/, `$1$2`).replace('<section class="panel stack small"><h3>Quick reference</h3>', manifestHTML(a.job)+'<section class="panel stack small"><h3>Quick reference</h3>');
@@ -5716,8 +5697,6 @@ spawnUrgent = function(force){ const st=S.st; if(!force && st && ((st.ui&&st.ui.
 function applyA11y(){ const ui = S.st ? uiPrefs() : {}; const el=document.documentElement;
   el.style.setProperty('--tw-zoom', String(ui.zoom||1)); el.classList.toggle('tw-zoom', (ui.zoom||1)!==1);
   el.classList.toggle('rm', !!ui.reduceMotion); el.classList.toggle('hc', !!ui.contrast); }
-const _dcRender = render;
-render = function(){ const r=_dcRender.apply(this, arguments); try{ applyA11y(); }catch(_){} return r; };
 
 /* ---- settings live in one place (Hangar) ---- */
 function settingsHTML(){ const ui=uiPrefs(); const z=ui.zoom||1;
@@ -5779,10 +5758,6 @@ todayHero = function(st){ let h=_flHero(st); const P=skyPos(st.clock); const wx=
 
 /* 4. view transitions */
 S._lastView = null;
-const _flRender = render;
-render = function(){ const changed = S._lastView !== S.view; const r=_flRender.apply(this, arguments); S._lastView=S.view;
-  try{ if(changed && !calmMotion()){ const m=document.querySelector('main'); if(m){ m.classList.remove('view-in'); void m.offsetWidth; m.classList.add('view-in'); } } afterRenderFx(); }catch(_){}
-  return r; };
 
 /* 5 + 6 + 7. result reveal: animated ring, counting numbers, celebrations, license reveal */
 function countUp(el, to, ms, fmt){ if(calmMotion()){ el.textContent=fmt(to); return; } const t0=performance.now(); const step=t=>{ const k=Math.min(1,(t-t0)/ms); const e=1-Math.pow(1-k,3); el.textContent=fmt(Math.round(to*e)); if(k<1) requestAnimationFrame(step); }; requestAnimationFrame(step); }
@@ -6052,8 +6027,6 @@ unlockHint = function(st, m){ const miss=_ctHint(st, m); for(const x of ((m.req|
   fixText('CG1', 'Lt. Daniela Ortiz calls Mari, Mari calls you.', 'Lt. Daniela Ortiz, who flew Jayhawks with Mari at Air Station Borinquen, calls Mari. Mari calls you.');
 })();
 /* existing careers: tabs you already had don't announce themselves as "new" */
-const _ctRender = render;
-render = function(){ try{ const st=S.st; if(st && !(st.ui && st.ui.seen)){ st.ui=st.ui||{}; st.ui.seen={}; for(const k in TAB_UNLOCK) if(TAB_UNLOCK[k].t(st)) st.ui.seen[k]=1; } }catch(_){} return _ctRender.apply(this, arguments); };
 /* ===================== FROM YOUR FIRST TEST FLIGHTS ===================== */
 
 /* ---- 1. shorter checklists (5 phases, 3–4 items), detailed list optional ---- */
@@ -6252,8 +6225,6 @@ const _clInflight = inflightView;
 inflightView = function(){ let h=_clInflight(); const a=S.st&&S.st.active; if(!a) return h; try{ const R=runwayPlan(a.job); if(R.dep) h=h.replace(/(<p class="label">In flight[^<]*<\/p>)/, `$1<p class="if-rw">Take off <b class="mono">${esc(R.dep.water?'into wind':R.dep.rw)}</b>${R.arr?` · Land <b class="mono">${esc(R.arr.water?'into wind':R.arr.rw)}</b>`:''} · wind ${pad3(a.job.wx.dir)}°/${a.job.wx.spd} kt</p>`); }catch(_){} return h.replace('id="preflight"','id="preflight" data-x="1"').replace('class="panel stack preflight"','class="panel stack preflight fsetup"'); };
 
 /* ---- each screen gets its own atmosphere ---- */
-const _clRender = render;
-render = function(){ const r=_clRender.apply(this, arguments); try{ document.documentElement.dataset.view = S.showResult && S.view==='flight' ? 'result' : (S.st&&S.st.active&&S.st.active.started&&S.view==='flight'?'inflight':S.view||''); }catch(_){} return r; };
 
 /* ---- hangar in tabs instead of one very long page ---- */
 const HG_TABS = [['fleet','Your fleet'],['settings','Settings'],['msfs','MSFS connection'],['save','Saves & help']];
@@ -6461,7 +6432,6 @@ function adoptSpec(){ const s=S.sim, st=S.st; if(!s || !s.spec || S.simState!=='
   if(sp.maxGrossLb>sp.emptyLb && sp.emptyLb>500){ const u=sp.maxGrossLb-sp.emptyLb; if(Math.abs(u-a.useful)/a.useful<0.5) r.useful=Math.round(u); }
   const cap=(sp.fuelGal||0); if(cap>5 && a.burn>0){ const dens=a.fuel==='avgas'?6:6.7; const rng=Math.round(cap*dens/a.burn*(r.cruise||a.cruise)*0.85); if(Math.abs(rng-a.range)/a.range<0.6) r.range=rng; }
   if(Object.keys(r).length){ st.acReal[id]=r; Object.assign(a, r); save(); toast(`Using your MSFS ${a.n} numbers for planning.`); } else st.acReal[id]={}; }
-const _mrRender = render; render = function(){ try{ if(!S._acReal && S.st){ S._acReal=true; for(const k in (S.st.acReal||{})) if(AC[k]) Object.assign(AC[k], S.st.acReal[k]); } }catch(_){} return _mrRender.apply(this, arguments); };
 const _mrSim2 = renderSimBits;
 renderSimBits = function(){ _mrSim2(); try{ adoptSpec(); }catch(_){} };
 
@@ -6549,8 +6519,6 @@ inflightView = function(){ return _tsIf().replace(/(<div class="row"><span class
 const _tsRes = resultView;
 resultView = function(){ const h=_tsRes(); return h.replace(/(<section class="panel how-did">)/, `<div class="row" style="justify-content:flex-end">${NOTE_BTN}</div>$1`); };
 /* ===================== QUICK WINS BEFORE TESTING ===================== */
-/* 1. a booked flight opens the Flight screen when the app starts, and when the engine starts */
-(function(){ let done=false; const _r=render; render=function(){ if(!done && S.st){ done=true; if(S.st.active && S.view==='board') S.view='flight'; } return _r.apply(this, arguments); }; })();
 const _qkSim = renderSimBits;
 renderSimBits = function(){ const a=S.st&&S.st.active; const was=a&&a.started; _qkSim(); try{ if(a && !was && a.started && S.view!=='flight') go('flight'); }catch(_){} };
 
@@ -6759,8 +6727,6 @@ settingsHTML = function(){ let h=_p20Set(); const d=diff();
 const _p20Say = copilotSay;
 copilotSay = function(text, key){ const m=String(text).match(/(\d{4,}) feet per minute/); if(m && Number(m[1])>1500) text='Down and safe.'; return _p20Say(text, key); };
 
-/* 6. an old save sitting "after midnight" starts a fresh day */
-(function(){ let done=false; const _r=render; render=function(){ if(!done && S.st){ done=true; try{ if(S.st.clock>=1440 && !S.st.active){ rest(S.st); save(); } }catch(_){} } return _r.apply(this, arguments); }; })();
 
 /* 7. result: what next, right at the top; the share card folds away */
 const _p20Res = resultView;
@@ -6848,8 +6814,6 @@ AP.WSBL = {n:`Simpson Bay Lagoon (water)`, isl:`Sint Maarten`, c:'SXM', r:'LEE',
       ok:`The photos are usable. The landing was a little firm, and Amara's coffee is now on the ceiling.`,
       bad:`The flight got rough and half the photos are blurred. Amara is gracious about it, and the foundation pays the invoice anyway.` } });
 })();
-/* a booked HW2 on an old route is un-booked once, so the story card offers the new one */
-(function(){ let done=false; const _r=render; render=function(){ if(!done && S.st){ done=true; try{ const a=S.st.active; if(a && !a.started && a.job.story==='HW2' && a.job.to!=='TNCM'){ S.st.active=null; save(); if(S.view==='flight') S.view='board'; setTimeout(()=>toast('Below the Surface is now a runway flight: Grand Case to Juliana. Start it again from the story card.'),800); } }catch(_){} } return _r.apply(this, arguments); }; })();
 
 /* ===================== Seaplane checkride: a short hop at St. Martin, Juliana (TNCM) to Simpson Bay Lagoon ===================== */
 RATINGS.SEA.tasks = [`Water landing in Simpson Bay Lagoon: landing attitude, a steady 100–150 fpm down, no flaring by eye`, `Taxi slowly clear of boats`];
@@ -6862,18 +6826,9 @@ checkrideJob = function(st, rid, acId){ if(rid!=='SEA') return _seaCk(st, rid, a
 /* passing it: no crash, not a hard landing, and most of the tasks */
 const _seaApply = applyResult;
 applyResult = function(st, job, f, res){ if(job.kind==='check' && job.rating==='SEA' && !res.crash && f && f.landing!=='hard') res.score=Math.max(70, res.score); return _seaApply(st, job, f, res); };
-/* a booked seaplane checkride on the old long route is rebuilt once */
-(function(){ let done=false; const _r=render; render=function(){ if(!done && S.st){ done=true; try{ const a=S.st.active; if(a && !a.started && a.job.kind==='check' && a.job.rating==='SEA' && a.job.to!=='WSBL'){ a.job=checkrideJob(S.st,'SEA',a.job.ac); save(); setTimeout(()=>toast('Seaplane checkride is now a short hop: Juliana to Simpson Bay Lagoon.'),800); } }catch(_){} } return _r.apply(this, arguments); }; })();
 /* ===================== Checkrides: an A or B (or 70+) with no crash is a pass ===================== */
 const _ckEasy = applyResult;
 applyResult = function(st, job, f, res){ if(job.kind==='check' && f && !res.crash && (res.score>=70 || res.grade==='A' || res.grade==='B')){ f.tasks=(job.tasks||[]).slice(); if(f.landing==='hard') f.landing='firm'; res.score=Math.max(70, res.score); } return _ckEasy(st, job, f, res); };
-/* a checkride already failed with an A or B is passed now */
-(function(){ let done=false; const _r=render; render=function(){ if(!done && S.st){ done=true; try{ const st=S.st, L=st.last;
-  if(L && L.job && L.job.kind==='check' && L.out && !L.out.pass && L.res && !L.res.crash && (L.res.grade==='A'||L.res.grade==='B'||L.res.score>=70) && !st.ratings[L.job.rating]){
-    const R=RATINGS[L.job.rating]; st.ratings[L.job.rating]=true; if(st.cooldown) delete st.cooldown[L.job.rating]; L.out.pass=true;
-    L.out.notes=(L.out.notes||[]).filter(n=>!/^Not this time/.test(n)); L.out.notes.push(`Passed. You now hold the ${R.n}.`);
-    try{ addJournal(st,`Earned: ${R.n}`, `${CAST[L.job.chars[0]].n} signs the logbook. ${R.unlocks}`, L.job.chars, 'milestone'); }catch(_){}
-    save(); setTimeout(()=>toast(`Checkride passed: you now hold the ${R.n}.`),800); } }catch(_){} } return _r.apply(this, arguments); }; })();
 /* ===================== MAIN STORY: CONTRABAND =====================
    A clean pilot gets pulled into the islands' smuggling network and rises to run it.
    4 acts, 15 chapters. Power (how much of the network answers to you) and Heat (how close the law is). */
@@ -7088,12 +7043,6 @@ const CR_RANKS = [[0,'Pilot'],[12,'Courier'],[28,'Runner'],[45,'Lieutenant'],[65
 function crimeRank(c){ if(c.ending==='kingpin') return 'Kingpin'; if(c.ending==='witness') return 'Witness'; if(c.ending==='ghost') return 'Ghost'; let r='Pilot'; CR_RANKS.forEach(([v,n])=>{ if(c.power>=v) r=n; }); return r; }
 function crBump(c, k, v){ c[k]=clamp(Math.round((c[k]||0)+v), k==='con'?-10:0, k==='con'?10:100); }
 
-/* ---- an old save: the old main story is cleared once so the new one starts at chapter 1 ---- */
-(function(){ let done=false; const _r=render; render=function(){ if(!done && S.st){ done=true; try{ const st=S.st; if(st.crimeV===1){ st.crimeV=2; const keep=new Set(['CW1','CR2','CR3','CR4']); for(const id in (st.story.done||{})) if(/^CR\d+$/.test(id) && !keep.has(id)) delete st.story.done[id]; const c0=crime(st); for(const id in c0.choice) if(!keep.has(id)) delete c0.choice[id]; delete c0.ending; if(st.active && !st.active.started && st.active.job.kind==='story' && /^CR\d+$/.test(st.active.job.story) && !keep.has(st.active.job.story)) st.active=null; save(); }
-    if(!st.crimeV){ st.crimeV=2;
-    ['CW1','CW2','CW3','CW4','BO1','BO2','BO3','BO4','BO5','HW1','HW2','HW3','HW4','HW5','OW1','MR1','TR1','TR2','TR3','TR4','TR5','CO1','CO2','CO3'].forEach(id=>{ if(st.story && st.story.done) delete st.story.done[id]; });
-    if(st.active && !st.active.started && st.active.job.kind==='story' && !STORY.find(m=>m.id===st.active.job.story)) st.active=null;
-    st.rep.castillo = st.rep.castillo||10; st.rep.reyes = st.rep.reyes||10; crime(st); save(); } else crime(st); st.rep.castillo=st.rep.castillo||10; st.rep.reyes=st.rep.reyes||10; }catch(_){} } return _r.apply(this, arguments); }; })();
 
 /* ---- after a chapter: power, heat, customs searches; side jobs are legit cover that cools the heat ---- */
 const _crApply = applyResult;
@@ -7350,7 +7299,6 @@ function storyRole(st){ const c=crime(st); if(c.ending==='kingpin') return 'King
 const TEXT_FIX = [[/Coral Wing ops board/g,'Island ops board'],[/Ana Reyes \(Winair\)/g,'Ana Ruiz (Winair)'],[/(Tip: )?Coral Wing's story has a chapter called[^.]*\./g,'Your own airline, Caribe Cargo, comes later in the main story.']];
 function fixText(root){ if(!root||!S.st) return; const role=storyRole(S.st); const w=document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes=[]; while(w.nextNode()) nodes.push(w.currentNode);
   nodes.forEach(n=>{ let t=n.nodeValue, o=t; if(t.indexOf('Coral Wing Air')>=0 && role!=='Coral Wing Air' && !(n.parentElement&&n.parentElement.closest('.story-body,.brief,.choice,.hq-prev,.sh-time'))) t=t.replace(/Coral Wing Air/g, role); TEXT_FIX.forEach(([re,r])=>{ t=t.replace(re,r); }); if(t!==o) n.nodeValue=t; }); }
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ fixText(document.body); }catch(_){} return x; }; })();
 const _s3Setup = setupView;
 setupView = function(){ return _s3Setup().replace(/You arrive in St\. Martin with a fresh private license and 62 hours\.[^<]*/, `You arrive in St. Martin with a fresh licence and a cheap job flying a Cessna for Coral Wing Air. Then the mechanic, Dez, asks you for a small favor. Five acts later you're flying a 747 full of contraband, and either running the Caribbean or running from it.`); };
 
@@ -7386,7 +7334,6 @@ storyView = function(){ const st=S.st; const c=crime(st); const MC=mainChapters(
 /* nav: "Main story" first; the app opens on it */
 const _s3Band = band;
 band = function(){ const h=_s3Band(); try{ const t=tpl(h); const st=t.content.querySelector('[data-act="nav"][data-v="story"]'); const first=t.content.querySelector('[data-act="nav"][data-v="board"]'); if(st&&first){ const l=st.querySelector('.lbl'); if(l) l.textContent='Main story'; first.before(st); const lb=first.querySelector('.lbl'); if(lb) lb.textContent='Side jobs'; } return t.innerHTML; }catch(_){ return h; } };
-(function(){ let done=false; const _r=render; render=function(){ if(!done && S.st){ done=true; if(!S.st.active && (S.view==='board'||!S.view)) S.view='story'; } return _r.apply(this, arguments); }; })();
 /* side-jobs board: the story banner first, above everything */
 (function(){ const _b=boardView; boardView=function(){ const h=_b(); if(S.view!=='board'||!S.st) return h; const t=tpl(h); const main=t.content.querySelector('main'); const hq=main&&main.querySelector('.hq'); if(!hq) return h; const head=main.querySelector(':scope > .page-head, :scope > header'); const top=main.firstElementChild; (head&&head.nextSibling)?head.after(hq):main.prepend(hq);
   const posted=[...main.querySelectorAll('p,div')].find(x=>!x.children.length && /^Posted by Coral Wing dispatch/.test(x.textContent.trim())); if(posted) posted.textContent = crime(S.st).on ? 'Legit jobs cool your Heat down. Network runs pay more and heat you up.' : 'Posted by Coral Wing dispatch'; return t.innerHTML; }; })();
@@ -7593,9 +7540,6 @@ function playAftermath(){ const st=S.st, L=st&&st.last; if(!L||!L.job) return; c
       const o=m.choice.opts[i]; const after=splitOut(o.out).map(t=>[here, null, t]); const fx=fxSub(o); if(fx) after.push({card:true, kicker:'Your choice', title:o.t, sub:`<p>${esc(fx)}</p>`, auto:2200}); return after.concat(nextCard()); }});
   } else nextCard().forEach(s=>shots.push(s));
   cutscene({shots, col:act.col, art:sceneArt(job.to, Math.min(1439,(job.dep||600)+(job.est||60)), job.ac), onEnd:()=>{ S.keepScroll=false; render(); }}); }
-/* play it once, as soon as the result screen for a main-story chapter appears */
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const st=S.st, L=st&&st.last; if(S.showResult && L && L.job && L.job.kind==='story' && CRIME_IDS.has(L.job.story) && !document.querySelector('.cut')){ const c=crime(st); c.afterSeen=c.afterSeen||{}; const key=L.job.id+':'+(L.job.accepted||'')+':'+(L.res&&L.res.score);
-    if(!c.afterSeen[key]){ c.afterSeen[key]=1; const ks=Object.keys(c.afterSeen); if(ks.length>40) delete c.afterSeen[ks[0]]; save(); setTimeout(playAftermath, 350); } } }catch(_){} return x; }; })();
 /* the result screen gets a button to watch it again */
 const _csRes = resultView;
 resultView = function(){ const h=_csRes(); const L=S.st&&S.st.last; if(!L||!L.job||!CRIME_IDS.has(L.job.story)) return h; return h.replace(/(<main[^>]*>)/, `$1<div class="row" style="justify-content:flex-end;margin-bottom:8px"><button class="btn sm ghost" data-act="after-replay">▶ Replay scene</button></div>`); };
@@ -7622,11 +7566,6 @@ window.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cancel-ye
   if(p.how==='bond'){ const F=fin(st); const owe=Math.round(p.fee*1.1); F.bond=Math.max(0,(F.bond||0)-owe); move(st,0,'Training bond',`${R.n} checkride cancelled: bond of ${money(owe)} cancelled`); }
   else txn(st, p.fee, 'Licenses & training', `Refund: ${R.n} checkride (cancelled)`);
   j.paid=null; setTimeout(()=>toast(`Checkride cancelled. ${p.how==='bond'?'Your training bond was cancelled.':`${money(p.fee)} refunded.`}`), 300); }, true);
-/* one-time: refund a checkride that was cancelled before this fix (the Airline Transport Pilot booking) */
-(function(){ let done=false; const _r=render; render=function(){ if(!done && S.st){ done=true; try{ const st=S.st; if(!st.ckRefund1){ st.ckRefund1=1; const F=fin(st); const a=st.active;
-  ['ATP'].forEach(rid=>{ const R=RATINGS[rid]; if(st.ratings[rid] || (a && a.job.kind==='check' && a.job.rating===rid)) return; const paid=F.ledger.find(x=>x.m===`${R.n} checkride` && x.a<0); const refunded=F.ledger.some(x=>/^Refund: /.test(x.m||'') && x.m.includes(R.n));
-    if(paid && !refunded){ txn(st, -paid.a, 'Licenses & training', `Refund: ${R.n} checkride (cancelled)`); setTimeout(()=>toast(`Refunded ${money(-paid.a)} for your cancelled ${R.n} checkride.`), 1200); } });
-  save(); } }catch(_){} } return _r.apply(this, arguments); }; })();
 /* ===================== FLIGHT SCREEN, REORGANIZED: ticket first, then three plain steps ===================== */
 const _flLay = flightView;
 flightView = function(){ const h=_flLay(); const a=S.st&&S.st.active; if(!a || a.started || S.showResult || S.debrief) return h; const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h;
@@ -7670,8 +7609,6 @@ checkrideJob = function(st, rid, acId){ const j=_atpCk(st, rid, acId); if(rid!==
 /* the runway card shows the ILS runway for this checkride */
 const _atpPf = preflightHTML;
 preflightHTML = function(job){ let h=_atpPf(job); if(job && job.kind==='check' && job.rating==='ATP' && job.ilsRwy){ h=h.replace(/(<small>Land<\/small><b[^>]*>)\s*[0-9]{2}[LRC]?\s*(<\/b>)/i, `$1${job.ilsRwy}$2`); h=h.replace(/(class="su-tile[^"]*"[^>]*>[\s\S]*?Runways[\s\S]*?)(<\/div>\s*<\/div>)/, `$1<p class="small" style="margin-top:6px"><b>Approach: ILS ${job.ilsRwy}</b>, RNAV ${job.ilsRwy} as backup</p>$2`); } return h; };
-/* a booked ATP checkride that isn't flown yet is moved to the new route */
-(function(){ let done=false; const _r=render; render=function(){ if(!done && S.st){ done=true; try{ const a=S.st.active; if(a && !a.started && a.job.kind==='check' && a.job.rating==='ATP' && !a.job.ilsRwy){ const paid=a.job.paid; const ac=a.job.ac; S.st.loc=a.job.from; a.job=checkrideJob(S.st,'ATP',ac); if(paid) a.job.paid=paid; save(); setTimeout(()=>toast(`Your airline checkride now goes to ${a.job.to}: ILS runway ${a.job.ilsRwy}.`),900); } }catch(_){} } return _r.apply(this, arguments); }; })();
 /* ===================== REWORK: a calm story card and a clean Side jobs page ===================== */
 
 /* ---- the next-chapter action, in plain words ---- */
@@ -7919,11 +7856,6 @@ window.cutHook = {
 /* pass rain for stormy chapters */
 (function(){ const _cs=cutscene; cutscene=function(opt){ try{ const a=S.st&&S.st.active, L=S.st&&S.st.last; const wx=(a&&a.job.wx)||(L&&L.job&&L.job.wx)||{}; if(/wave|storm|shower|rain/i.test(String(wx.k||wx.id||wx.type||wx.name||''))) opt.rain=true; }catch(_){} return _cs(opt); }; })();
 
-/* ---- 1. "Previously on Trade Winds" when you open the app mid-story ---- */
-(function(){ let done=false; const _r=render; render=function(){ const x=_r.apply(this, arguments); if(!done && S.st){ done=true; try{ const st=S.st; const MC=mainChapters(); const dn=MC.filter(m=>st.story.done[m.id]);
-    if(dn.length && !S._walk && !S._title && !(st.active&&st.active.started) && !S.showResult && !(st.ui&&st.ui.noRecap)){ const last3=dn.slice(-3); const next=MC.find(m=>!st.story.done[m.id]); const act=next?CRIME_ACTS.find(a=>a.arc===next.arc):CRIME_ACTS[CRIME_ACTS.length-1];
-      const shots=[{card:true,kicker:'Previously on',title:'Trade Winds',auto:1600}].concat(last3.map(m=>[`Chapter ${MC.indexOf(m)+1} · ${m.title}`, null, m.recap||''])); if(next) shots.push({card:true,kicker:`Up next · Chapter ${MC.indexOf(next)+1}`,title:next.title,sub:`<p>${esc(next.hook||'')}</p>`});
-      setTimeout(()=>{ if(!document.querySelector('.cut')) cutscene({shots, col:act.col, art:SCENES.office(), onEnd:()=>{}}); }, 900); } }catch(_){} } return x; }; })();
 
 (function(){ const s=document.createElement('style'); s.textContent=`.cut-bg{transition:transform 7s ease-out, opacity .25s}.cut-bg.swap{opacity:0}`; document.head.appendChild(s); })();
 /* ===================== 20 UPGRADES: clarity, pages and testing ===================== */
@@ -7938,7 +7870,6 @@ function rightNow(st){ if(!st) return null; const a=st.active; if(a) return {t:a
   if(s.k==='aircraft') return {t:`Chapter ${n} needs an aircraft`, b:'Hangar', act:'nav', v:'hangar'};
   return {t:`Chapter ${n} · ${next.title}`, b:'Story', act:'nav', v:'story'}; }
 function nowHTML(st){ const r=rightNow(st); if(!r) return ''; return `<div class="now-pill"><span>${esc(r.t)}</span><button class="btn sm action" data-act="${r.act}" ${r.v?`data-v="${r.v}"`:''} ${r.id?`data-id="${r.id}"`:''}>${esc(r.b)}</button></div>`; }
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const hud=document.querySelector('.topbar .hud'); if(hud && S.st){ const old=document.querySelector('.now-pill'); if(old) old.remove(); const t=tpl(nowHTML(S.st)); if(t.content.firstElementChild) hud.prepend(t.content.firstElementChild); } }catch(_){} return x; }; })();
 
 /* ---- 15. result screen: one summary card, everything else folded ---- */
 const _uiRes = resultView;
@@ -7984,7 +7915,6 @@ document.addEventListener('click', async e=>{ const b=e.target.closest('[data-ac
   S.keepScroll=true; render(); });
 (function(){ const _b=boardView; boardView=function(){ const h=_b(); const on=testSession(); const box=`<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><button class="btn sm ${on?'action':''}" data-act="test-session">${on?'End test session · restore my real career':'Start a test session'}</button><span class="tiny muted">${on?'Anything you do now is thrown away when you end the session.':'Backs up your career first, so you can skip and experiment freely.'}</span></div>`;
   return h.replace('<button class="btn sm" data-act="practice"', box+'<button class="btn sm" data-act="practice"'); }; })();
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ if(testSession() && !document.querySelector('.test-banner')){ const d=document.createElement('div'); d.className='test-banner'; d.innerHTML=`Test session: changes will be thrown away <button class="btn sm" data-act="test-session">End and restore</button>`; document.body.appendChild(d); } if(!testSession()) document.querySelectorAll('.test-banner').forEach(e=>e.remove()); }catch(_){} return x; }; })();
 
 /* ---- 20. leftovers from the old career: Academy, Butter Cup and old names ---- */
 TEXT_FIX.push([/Coral Wing's (pilots|crews|chief pilot)/g,'the island pilots'],[/Mari says,?/g,'Your instructor says'],[/the Coral Wing (team|family)/g,'the islands']);
@@ -8018,7 +7948,6 @@ band = function(){ const h=_u10Band(); try{ const t=tpl(h); const cur=navGroup(S
   const nav=t.content.querySelector('.side-nav'); if(nav) nav.innerHTML=items;
   t.content.querySelectorAll('nav:not(.side-nav)').forEach(n=>{ if(n.querySelector('.snav,[data-act="nav"]')) n.innerHTML=NAV5.map(g=>`<button class="${cur&&cur.v===g.v?'on':''}" data-act="nav" data-v="${g.v}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">${g.ico}</svg><span>${g.n}</span></button>`).join(''); });
   return t.innerHTML; }catch(_){ return h; } };
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const g=navGroup(S.view); const main=document.querySelector('main'); if(g && g.tabs && main && !main.querySelector('.subtabs') && !(S.view==='flight')){ const d=document.createElement('div'); d.className='subtabs'; d.innerHTML=g.tabs.map(([v,n])=>`<button class="${S.view===v||(v==='pilot'&&['profile','log'].includes(S.view))?'on':''}" data-act="nav" data-v="${v}">${n}</button>`).join(''); main.prepend(d); } }catch(_){} return x; }; })();
 
 /* ---- 3. flight mode: once you're flying, the flight takes over the screen ---- */
 function hudHTML(a){ const s=S.sim||{}; const live=S.simState==='live'&&s.position; const job=a.job; const to=job.local?job.from:job.to; const dest=AP[to];
@@ -8028,7 +7957,6 @@ function hudHTML(a){ const s=S.sim||{}; const live=S.simState==='live'&&s.positi
   return `<section class="fhud"><div class="fhud-route"><b>${esc(job.from)}</b><i></i><b>${esc(to)}</b><span>${esc(job.title)}</span></div><div class="fhud-cells">${cell('To go',togo!=null?Math.round(togo):null,' nm')}${cell('ETA',eta,' min')}${cell('Ground speed',gs,' kt')}${cell('Altitude',alt!=null?alt.toLocaleString():null,' ft')}${cell('Fuel',fuel!=null?fuel.toLocaleString():null,' lb')}</div>${live?'':'<p class="small muted" style="margin:8px 0 0">MSFS isn\'t connected, so live numbers are off. The flight still finishes with the Finish button.</p>'}</section>`; }
 const _u10If = inflightView;
 inflightView = function(){ const h=_u10If(); const a=S.st&&S.st.active; if(!a) return h; return h.replace(/(<main[^>]*>)/, `$1<div class="fm-bar"><span class="fm-dot"></span> Flight mode <button class="btn sm ghost" data-act="fm-menu">${S.fmMenu?'Hide menu':'Show menu'}</button></div>${hudHTML(a)}`); };
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const a=S.st&&S.st.active; const on=!!(a&&a.started&&S.view==='flight'&&!S.showResult&&!S.debrief); document.body.classList.toggle('flying', on && !S.fmMenu); }catch(_){} return x; }; })();
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="fm-menu"]')) return; S.fmMenu=!S.fmMenu; S.keepScroll=true; render(); });
 (function(){ const _rs=renderSimBits; renderSimBits=function(){ _rs(); try{ const a=S.st&&S.st.active; const el=document.querySelector('.fhud'); if(a&&el){ const t=tpl(hudHTML(a)); el.replaceWith(t.content.firstElementChild); } }catch(_){} }; })();
 
@@ -8074,17 +8002,9 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="job
 /* ---- 8. notifications: one stack at the bottom right, plus a history in the header ---- */
 S.notifs=S.notifs||[]; S.notifSeen=0;
 (function(){ const _t=toast; toast=function(msg){ try{ if(!S._cabMute && msg){ S.notifs.unshift({t:Date.now(), m:String(msg)}); S.notifs=S.notifs.slice(0,40); const b=document.querySelector('.bell b'); if(b){ b.textContent=S.notifs.length-S.notifSeen; b.style.display=''; } } }catch(_){} return _t.apply(this, arguments); }; })();
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const hud=document.querySelector('.topbar .hud'); if(hud && !hud.querySelector('.bell')){ const n=S.notifs.length-S.notifSeen; const b=document.createElement('button'); b.className='bell'; b.dataset.act='bell'; b.title='Notifications'; b.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></svg><b style="${n>0?'':'display:none'}">${n}</b>`; hud.appendChild(b); const k=document.createElement('button'); k.className='cmd-btn'; k.dataset.act='cmd'; k.title='Search (Ctrl+K)'; k.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></svg><kbd>Ctrl K</kbd>'; hud.appendChild(k); } }catch(_){} return x; }; })();
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="cmd"]')){ openCmd(); return; } const b=e.target.closest('[data-act="bell"]'); if(!b) { if(!e.target.closest('.notif-pane')) document.querySelectorAll('.notif-pane').forEach(p=>p.remove()); return; } const open=document.querySelector('.notif-pane'); if(open){ open.remove(); return; }
   S.notifSeen=S.notifs.length; const c=b.querySelector('b'); if(c) c.style.display='none'; const p=document.createElement('div'); p.className='notif-pane'; p.innerHTML=`<p class="label">Notifications</p>${S.notifs.length?`<ul>${S.notifs.map(n=>`<li><span>${new Date(n.t).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>${esc(n.m)}</li>`).join('')}</ul>`:'<p class="small muted">Nothing yet this session.</p>'}`; document.body.appendChild(p); });
 
-/* ---- 9. first-run walkthrough: three screens ---- */
-(function(){ let done=false; const _r=render; render=function(){ if(!done && S.st && !S._title){ done=true; const st=S.st; st.ui=st.ui||{}; if(!st.ui.walk3 && !(st.active&&st.active.started)){ S._walk=true; st.ui.walk3=1; save();
-    setTimeout(()=>cutscene({col:'#c8962a', art:(typeof SCENES!=='undefined'?SCENES.ramp():''), shots:[...(typeof coldOpenShots==='function'?coldOpenShots():[]),
-      {card:true,kicker:'Welcome to Trade Winds · 1 of 3',title:'The story',sub:`<p>You're a pilot in the Caribbean. One main story in five acts takes you from a Cessna to a 747, and from a clean licence to running the islands' smuggling network.</p><p>Everything starts on the <b>Story</b> page.</p>`},
-      {card:true,kicker:'2 of 3',title:'How to fly a chapter',sub:`<p><b>1.</b> Press <b>Play</b>. A short cutscene sets it up.</p><p><b>2.</b> In MSFS, load the aircraft at the departure airport. The flight screen tells you where to park, how much fuel to load and which runway to use.</p><p><b>3.</b> Fly and land. The app follows you and grades the landing by itself.</p>`},
-      {card:true,kicker:'3 of 3',title:'Power, Heat and dirty cash',sub:`<p><b>Power</b> grows with every chapter and hard choice, and unlocks rewards.</p><p><b>Heat</b> is how close the law is. Network runs raise it, legit jobs cool it. Above 60, customs starts searching.</p><p><b>Dirty cash</b> from network runs has to be laundered before you can spend it.</p><p class="small">Tip: press <b>Ctrl + K</b> anywhere to jump to any page, airport or action.</p>`}], onEnd:()=>{ S._walk=false; }}), 700); } }
-  return _r.apply(this, arguments); }; })();
 
 /* ---- 2 + 5 + 10. one layout system, one type scale, one meaning per colour, motion ---- */
 (function(){ const s=document.createElement('style'); s.textContent=`
@@ -8156,7 +8076,6 @@ const _m2Res = resultView;
 resultView = function(){ const h=_m2Res(); const L=S.st&&S.st.last; if(!L||!L.delta||!crime().on) return h; const d=L.delta, c=crime(); if(!d.power && !d.heat) return h;
   const bar=(n,v,dv,col)=>`<div class="dbar"><span>${n}</span><div class="db-t"><i style="width:${Math.max(0,v-Math.max(0,dv))}%;background:${col}"></i><i class="db-new" style="width:${Math.abs(dv)}%;background:${dv>=0?col:'transparent'};${dv<0?`outline:1px dashed ${col}`:''}"></i></div><b>${v} <small class="${dv>0?'up':dv<0?'down':''}">${dv>0?'+':''}${dv||''}</small></b></div>`;
   return h.replace('<div class="row next-bar">', `<section class="panel deltas">${bar('Power',c.power,d.power,'#c8962a')}${bar('Heat',c.heat,d.heat,'#c23a2b')}</section><div class="row next-bar">`); };
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ if(S.showResult && !S._counted){ S._counted=true; const el=[...document.querySelectorAll('main section b, main section .big, main section strong')].find(e=>/^\+\$[\d,]+$/.test(e.textContent.trim())); if(el){ const target=Number(el.textContent.replace(/[^\d]/g,'')); let t0=null; const step=ts=>{ if(!t0) t0=ts; const k=Math.min(1,(ts-t0)/900); el.textContent='+'+money(Math.round(target*(1-Math.pow(1-k,3)))); if(k<1) requestAnimationFrame(step); }; requestAnimationFrame(step); } } if(!S.showResult) S._counted=false; }catch(_){} return x; }; })();
 
 /* ---- 3. story achievements ---- */
 ACH.push(
@@ -8200,7 +8119,6 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="walk-ag
 
 /* ---- 7. what Power, Heat and dirty cash mean, wherever they appear ---- */
 const CX_TIPS = { Power:`Power: how much of the network answers to you. Grows with chapters, hard choices and network runs. Unlocks rank rewards.`, Heat:`Heat: how close the law is. Network runs raise it; legit jobs, lying low and laundering through Caribe Cargo keep it down. Above 60 customs searches you; at 90 you're busted.`, Dirty:`Dirty cash: money from network runs. Launder it on the Jobs or Money page before you can spend it.` };
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ document.querySelectorAll('.sc-m span, .hq-m span, .dbar > span, .chip, .launder .label').forEach(el=>{ if(el.title) return; const t=el.textContent.trim(); const k=/^Power/.test(t)?'Power':/^Heat/.test(t)?'Heat':/^Dirty/i.test(t)?'Dirty':null; if(k){ el.title=CX_TIPS[k]; el.classList.add('has-tip'); } }); }catch(_){} return x; }; })();
 
 /* ---- 8. jobs: see the route on the map ---- */
 const _m8Row = jobRow;
@@ -8213,8 +8131,6 @@ mapView = function(){ const h=_m8Map(); try{ const j=S.mapRoute&&(S.st.jobs||[])
   return (i>0?h.slice(0,i)+g+h.slice(i):h).replace(/(<main[^>]*>)/, '$1'+back); }catch(_){ return h; } };
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="map-back"]')){ S.mapRoute=null; go('board'); } else if(e.target.closest('[data-act="nav"]')) S.mapRoute=null; }, true);
 
-/* ---- 9. cash changes flash in the header ---- */
-(function(){ let last=null; const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const st=S.st; if(!st) return x; const v=st.cash; if(last!=null && v!==last){ const el=[...document.querySelectorAll('.topbar .hud *')].find(e=>!e.children.length && /^\$[\d,−-]+$/.test(e.textContent.trim())); if(el){ const d=document.createElement('span'); d.className='cashfx '+(v>last?'up':'down'); d.textContent=(v>last?'+':'−')+money(Math.abs(v-last)); el.parentElement.style.position='relative'; el.parentElement.appendChild(d); setTimeout(()=>d.remove(),1800); } } last=v; }catch(_){} return x; }; })();
 
 /* ---- 10. a smooth landing on the story page: the next chapter card glows when it's ready to play ---- */
 (function(){ const s=document.createElement('style'); s.textContent=`
@@ -8329,7 +8245,6 @@ function showTitle(){ if(document.querySelector('.title-screen')) return; const 
     if(a==='continue') close(()=>{ S.view = S.st.active ? 'flight' : 'story'; render(); setTimeout(playRecapNow, 300); });
     if(a==='settings') close(()=>{ S.view='hangar'; S.hangarTab='settings'; render(); });
     if(a==='new') close(()=>{ if(S.st){ try{ backupLabeled(S.st,'Before starting a new game'); }catch(_){} } S.st=null; try{ localStorage.removeItem(KEY); }catch(_){} S.view='board'; render(); }); }); }
-(function(){ let shown=false; const _r=render; render=function(){ const x=_r.apply(this, arguments); if(!shown && S._title){ shown=true; setTimeout(showTitle, 50); } return x; }; })();
 function playRecapNow(){ try{ const st=S.st; if(!st || uiP().noRecap || uiP().skipCuts || !uiP().walk3) return; const MC=mainChapters(); const dn=MC.filter(m=>st.story.done[m.id]); if(!dn.length || (st.active&&st.active.started)) return;
   const next=MC.find(m=>!st.story.done[m.id]); const act=next?CRIME_ACTS.find(a=>a.arc===next.arc):CRIME_ACTS[CRIME_ACTS.length-1];
   const shots=[{card:true,kicker:'Previously on',title:'Trade Winds',auto:1600}].concat(dn.slice(-3).map(m=>[`Chapter ${MC.indexOf(m)+1} · ${m.title}`, null, m.recap||''])); if(next) shots.push({card:true,kicker:`Up next · Chapter ${MC.indexOf(next)+1}`,title:next.title,sub:`<p>${esc(next.hook||'')}</p>`});
@@ -8349,7 +8264,6 @@ function coldOpenShots(){ const st=S.st; if(!st || (st.flights||0)>0 || st.story
 
 /* ---- units: imperial or metric everywhere ---- */
 function toMetric(t){ return t.replace(/(\d[\d,]*(?:\.\d+)?)\s?lb\b/g,(m,n)=>`${Math.round(Number(n.replace(/,/g,''))*0.4536).toLocaleString()} kg`).replace(/(\d[\d,]*(?:\.\d+)?)\s?gal\b/g,(m,n)=>`${Math.round(Number(n.replace(/,/g,''))*3.785).toLocaleString()} L`); }
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ if(uiP().metric){ const w=document.createTreeWalker(document.getElementById('app')||document.body, NodeFilter.SHOW_TEXT); const L=[]; while(w.nextNode()) L.push(w.currentNode); L.forEach(n=>{ if(/\d\s?(lb|gal)\b/.test(n.nodeValue)) n.nodeValue=toMetric(n.nodeValue); }); } }catch(_){} return x; }; })();
 
 /* ---- volume per channel: voices, music, effects ---- */
 (function(){ const _vv=voiceVol; voiceVol=function(){ return _vv()*volOf('voice')/0.8*0.8; }; })();
@@ -8512,8 +8426,6 @@ window.cutAuto = ()=>!!uiP().autoCut;
 /* 19. a backup every 30 minutes of play, too */
 setInterval(()=>{ try{ if(S.st && !(S.st.active&&S.st.active.started)) backupLabeled(S.st, `Autosave · ${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`); }catch(_){} }, 30*60000);
 
-/* 20. dirty cash shows in the header next to your cash */
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const hud=document.querySelector('.topbar .hud'); const c=S.st&&crime(); const old=document.querySelector('.dirty-chip'); if(old) old.remove(); if(hud && c && c.dirty>0){ const d=document.createElement('button'); d.className='dirty-chip'; d.dataset.act='nav'; d.dataset.v='money'; d.title='Dirty cash from network runs. Launder it on the Money page.'; d.innerHTML=`<span>Dirty</span><b>${money(c.dirty)}</b>`; const bell=hud.querySelector('.bell'); bell?bell.before(d):hud.appendChild(d); } }catch(_){} return x; }; })();
 
 (function(){ const s=document.createElement('style'); s.textContent=`
 .jr-p small.dirty{display:block;font-size:10px;font-weight:400;letter-spacing:.1em;text-transform:uppercase;color:#e5533d}
@@ -8528,10 +8440,7 @@ setInterval(()=>{ try{ if(S.st && !(S.st.active&&S.st.active.started)) backupLab
 
 /* 2. Pilot tabs include Profile and Logbook, so they're easy to find */
 try{ const g=NAV5.find(x=>x.v==='pilot'); g.tabs=[['pilot','Licences'],['profile','Profile'],['log','Logbook'],['money','Money'],['cup','Butter Cup'],['academy','Academy']]; }catch(_){}
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ document.querySelectorAll('.subtabs button').forEach(b=>{ if(b.dataset.v==='pilot' && ['profile','log'].includes(S.view)) b.classList.remove('on'); if(b.dataset.v===S.view) b.classList.add('on'); }); }catch(_){} return x; }; })();
 
-/* 3. a settings gear in the header */
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const hud=document.querySelector('.topbar .hud'); if(hud && !hud.querySelector('.gear-btn')){ const g=document.createElement('button'); g.className='cmd-btn gear-btn'; g.title='Settings'; g.dataset.act='open-settings'; g.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'; hud.appendChild(g); } }catch(_){} return x; }; })();
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="open-settings"]')) return; S.hangarTab='settings'; go('hangar'); });
 
 /* 4. command bar: search story chapters and achievements too */
@@ -8543,8 +8452,6 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="open-se
 /* 6. Heat cools by 1 every new day on its own */
 (function(){ const _rs=rest; rest=function(st){ const r=_rs(st); try{ const c=crime(st); if(c.on) crBump(c,'heat',-1); }catch(_){} return r; }; })();
 
-/* 7. header: the licence chip goes (it's on the Pilot page), so the header breathes */
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ document.querySelectorAll('.topbar .hud .hp').forEach(h=>{ if(/^License/i.test(h.textContent.trim())) h.remove(); }); }catch(_){} return x; }; })();
 
 /* 8. the Story badge explains itself */
 (function(){ const _bd=band; band=function(){ return _bd().replace(/<span class="nb">(\d+)<\/span>/, (m,n)=>`<span class="nb" title="${n} chapter${n>1?'s':''} ready to play">${n}</span>`); }; })();
@@ -8593,7 +8500,6 @@ document.addEventListener('keydown', e=>{ if(e.key.toLowerCase()!=='m' || /INPUT
     if(/^story$/i.test(x)){ const v=[...box.querySelectorAll('*')].find(e=>!e.children.length && /\d+\s*\/\s*\d+/.test(e.textContent)); if(v) v.textContent=`${done}/${MC.length}`; else { const v2=[...box.childNodes].find(n=>n.nodeType===3 && /\d+\/\d+/.test(n.nodeValue)); if(v2) v2.nodeValue=v2.nodeValue.replace(/\d+\/\d+/, `${done}/${MC.length}`); } }
     if(/^avg touchdown$/i.test(x) && avg!=null){ const v=[...box.querySelectorAll('*')].find(e=>e!==el && !e.children.length && /^\d+$/.test(e.textContent.trim())); if(v) v.textContent=String(avg); } });
   return t.innerHTML; }catch(_){ return h; } }; })();
-boot();
 /* ===================== 20 FIXES AND SMALL UPGRADES (Nov 9) ===================== */
 
 /* 1. art: preload the portraits and scenes so they never pop in mid-cutscene */
@@ -8611,8 +8517,6 @@ document.addEventListener('click', e=>{ const p=e.target.closest('.sh-p, .sc-who
 /* 4. result screen: the grade letter is coloured by how you did */
 /* (CSS only, see below) */
 
-/* 5. the job list remembers your tab and sort */
-(function(){ const _r=render; let loaded=false; render=function(){ if(!loaded && S.st){ loaded=true; const u=S.st.ui||{}; if(u.jobTab) S.jobTab=u.jobTab; if(u.jobSort) S.jobSort=u.jobSort; } const x=_r.apply(this, arguments); try{ if(S.st){ const u=S.st.ui=S.st.ui||{}; if(u.jobTab!==S.jobTab||u.jobSort!==S.jobSort){ u.jobTab=S.jobTab; u.jobSort=S.jobSort; } } }catch(_){} return x; }; })();
 
 /* 6. command bar: what you used recently comes first */
 (function(){ const _ci=cmdItems; cmdItems=function(){ const L=_ci(); let rec=[]; try{ rec=JSON.parse(localStorage.getItem('tw.cmdRecent')||'[]'); }catch(_){}
@@ -8650,8 +8554,6 @@ const WHATS_NEW = [['0.42','Illustrated portraits and scenes, person cards on th
 (function(){ const _t=titleHTML; titleHTML=function(){ return _t().replace('<p class="ts-foot">', `<button class="ts-new" data-ts-new="1">What's new in ${WHATS_NEW[0][0]}</button><p class="ts-foot">`); }; })();
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-ts-new]')) return; e.stopPropagation(); const d=document.createElement('div'); d.className='pc-wrap'; d.style.zIndex=13000; d.innerHTML=`<div class="pc keys"><div class="pc-in"><p class="label">Updates</p><h2>What's new</h2><dl>${WHATS_NEW.map(([v,t])=>`<dt><b>${v}</b></dt><dd>${esc(t)}</dd>`).join('')}</dl><button class="btn sm" data-act="pc-close">Close</button></div></div>`; document.body.appendChild(d); d.addEventListener('click', ev=>{ if(ev.target===d||ev.target.closest('[data-act="pc-close"]')) d.remove(); }); }, true);
 
-/* 15. the window title says where you are in the story */
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const st=S.st; if(!st){ document.title='Trade Winds'; return x; } const a=st.active; if(a){ document.title=`${a.job.from} → ${a.job.local?a.job.from:a.job.to} · Trade Winds`; } else { const MC=mainChapters(); const n=MC.find(m=>!st.story.done[m.id]); document.title = n ? `Chapter ${MC.indexOf(n)+1}: ${n.title} · Trade Winds` : 'Trade Winds'; } }catch(_){} return x; }; })();
 
 /* 16. click a finished chapter in "The story so far" for its full recap */
 document.addEventListener('click', e=>{ const li=e.target.closest('.sh-time li'); if(!li || e.target.closest('button')) return; const n=Number((li.querySelector('.sh-n')||{}).textContent); const m=mainChapters()[n-1]; if(!m||!S.st.story.done[m.id]) return; const c=crime(); const ch=m.choice&&c.choice[m.id]!=null?m.choice.opts[c.choice[m.id]]:null;
@@ -8690,8 +8592,6 @@ document.addEventListener('click', e=>{ const li=e.target.closest('.sh-time li')
 /* ===================== 50 FIXES (Nov 9, second sweep) ===================== */
 /* 1 (setup pitch), 14 (quiet mode wording) and 15 (title Settings) were fixed in their own files. */
 
-/* 2 + 3. the new-career screen: no Jobs/Map tabs, and the noir look */
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ if(!S.st) document.querySelectorAll('.subtabs').forEach(e=>e.remove()); }catch(_){} return x; }; })();
 
 /* 4. no more "New tab unlocked" pop-ups: everything lives in the five-item menu now */
 (function(){ const _t=toast; toast=function(msg){ if(/^New tab unlocked/i.test(String(msg))) return; return _t.apply(this, arguments); }; })();
@@ -8709,8 +8609,6 @@ document.addEventListener('click', e=>{ const li=e.target.closest('.sh-time li')
 (function(){ const _b=boardView; boardView=function(){ const h=_b(); return h.replace(/<div class="b2-note"><b>Checkride ready:<\/b> ([^<]*)(<button[^>]*>Book checkride<\/button><\/div>)/, (m,list,btn)=>{ const all=list.trim().split(', '); const key=['Jet Type Rating','Airline Transport Pilot','Private Pilot']; const main=all.filter(n=>key.some(k=>n.startsWith(k))); const rest=all.filter(n=>!main.includes(n)); const shown=main.length?main:all.slice(0,1); const more=all.length-shown.length;
   return `<div class="b2-note"><b>Checkride ready:</b> ${shown.join(', ')}${more?` <span class="small muted" title="${rest.join(', ')}">+${more} optional</span>`:''} ${btn}`; }); }; })();
 
-/* 10. the "Right now" button hides on the Flight page, where it would just repeat itself */
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const p=document.querySelector('.now-pill'); if(p) p.style.display = S.view==='flight' ? 'none' : ''; }catch(_){} return x; }; })();
 
 /* 11. your role reads properly everywhere ("Castillo's crew", not just "Castillo") */
 (function(){ const _sr=storyRole; storyRole=function(st){ const r=_sr(st); return r==='Castillo' ? "Castillo's crew" : r; }; })();
@@ -8746,8 +8644,6 @@ window.addEventListener('keydown', e=>{ if(e.key==='Escape'){ document.querySele
 /* 27. the Skip button says where it goes: to your next decision, or the end */
 (function(){ const _sh=cutHook.shot; cutHook.shot=function(s,el,i,opt){ _sh.call(this,s,el,i,opt); try{ const sk=el.querySelector('.cut-skip'); const L=(opt&&opt.shots)||[]; if(sk && L.length) sk.textContent = L.slice(i+1).some(x=>x&&x.choice) ? 'Skip to decision' : (s&&s.choice ? 'Skip' : 'Skip scene'); }catch(_){} }; })();
 
-/* 28. the notifications badge caps at 9+ */
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const b=document.querySelector('.bell b'); if(b && Number(b.textContent)>9) b.textContent='9+'; }catch(_){} return x; }; })();
 
 /* 29 + 30. command bar: find people and open their card */
 (function(){ const _ci=cmdItems; cmdItems=function(){ const L=_ci(); try{ (typeof metPeople==='function'?metPeople(S.st):[]).forEach(k=>L.push({n:CAST[k].n, k:'Person · '+(CAST[k].role||''), run:()=>{ go('story'); setTimeout(()=>personCard(k),150); }})); }catch(_){} return L; }; })();
@@ -8768,8 +8664,6 @@ window.addEventListener('keydown', e=>{ if(e.key!=='Escape') return; const w=doc
 /* 36. laundering says what it did to your Heat */
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="launder"]'); if(!b||!S.st) return; const o=launderOpts(S.st).find(x=>x.id===b.dataset.v); if(o&&o.heat) setTimeout(()=>toast(`Heat +${o.heat} from laundering.`), 700); });
 
-/* 37 + 38. Heat in the header, coloured: green, amber, red */
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const hud=document.querySelector('.topbar .hud'); const old=document.querySelector('.heat-chip'); if(old) old.remove(); const c=S.st&&crime(); if(hud && c && c.on){ const d=document.createElement('button'); d.className='heat-chip '+(c.heat>=80?'hot':c.heat>=60?'warm':'cool'); d.dataset.act='nav'; d.dataset.v='story'; d.title=CX_TIPS.Heat; d.innerHTML=`<span>Heat</span><b>${c.heat}</b>`; const ref=hud.querySelector('.dirty-chip')||hud.querySelector('.bell'); ref?ref.before(d):hud.appendChild(d); } }catch(_){} return x; }; })();
 
 /* 39. cancelling a story chapter takes you back to the Story page, and says you can replay it */
 (function(){ const _fv=flightView; flightView=function(){ const h=_fv(); const a=S.st&&S.st.active; return a && a.job.kind==='story' ? h.replace(/>Cancel job</, '>Cancel chapter (play it again any time)<') : h; }; })();
@@ -8784,8 +8678,6 @@ window.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cancel-ye
 /* 44. at Heat 80+ (the feds are looking) the Heat chip pulses */
 /* (CSS below) */
 
-/* 45. the browser tab warns you when the feds are on you */
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const c=S.st&&crime(); if(c&&c.on&&c.heat>=80&&!/^⚠/.test(document.title)) document.title='⚠ '+document.title; }catch(_){} return x; }; })();
 
 /* 46. clicking a speaker's portrait in a scene doesn't skip the line you're reading */
 document.addEventListener('click', e=>{ if(e.target.closest('.cut-who')) e.stopPropagation(); }, true);
@@ -8818,6 +8710,172 @@ WHATS_NEW.unshift(['0.43','50 fixes: the new-career screen fits the story, Heat 
 .heat-chip.cool span{color:#7cbf6f}.heat-chip.warm{border-color:#6b4e1a}.heat-chip.warm span{color:#e0b24a}.heat-chip.hot{border-color:#6b2a20;background:rgba(194,58,43,.12)}.heat-chip.hot span{color:#e5533d}
 @keyframes heatp{50%{box-shadow:0 0 0 4px rgba(229,83,61,.18)}}.heat-chip.hot{animation:heatp 1.6s ease-in-out infinite}
 .jr-m{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}`; document.head.appendChild(s); })();
+/* ===================== RENDER =====================
+   render() redraws the whole page from S (what's on screen) and S.st (the career).
+   It runs in three parts, always in this order:
+     1. before drawing: one-time start-up fixes for old saves, and small state set-up
+     2. draw the page (with a crash guard, so a broken screen can never lock you out)
+     3. after drawing: finishing touches on the page that was just drawn
+   Add a new step to the list it belongs in; don't wrap render(). */
+
+/* ---------- 1. before drawing ---------- */
+
+/* Fixes that run once per app start, on the first draw that has a career loaded, in this order. */
+const STARTUP_FIXES = [
+  /* a booked ATP checkride that isn't flown yet is moved to the ILS route */
+  function moveATPCheckride(st){ try{ const a=st.active; if(a && !a.started && a.job.kind==='check' && a.job.rating==='ATP' && !a.job.ilsRwy){ const paid=a.job.paid; const ac=a.job.ac; st.loc=a.job.from; a.job=checkrideJob(st,'ATP',ac); if(paid) a.job.paid=paid; save(); setTimeout(()=>toast(`Your airline checkride now goes to ${a.job.to}: ILS runway ${a.job.ilsRwy}.`),900); } }catch(_){} },
+  /* refund a checkride that was cancelled before refunds existed (the Airline Transport Pilot booking) */
+  function refundCancelledATP(st){ try{ if(!st.ckRefund1){ st.ckRefund1=1; const F=fin(st); const a=st.active;
+    ['ATP'].forEach(rid=>{ const R=RATINGS[rid]; if(st.ratings[rid] || (a && a.job.kind==='check' && a.job.rating===rid)) return; const paid=F.ledger.find(x=>x.m===`${R.n} checkride` && x.a<0); const refunded=F.ledger.some(x=>/^Refund: /.test(x.m||'') && x.m.includes(R.n));
+      if(paid && !refunded){ txn(st, -paid.a, 'Licenses & training', `Refund: ${R.n} checkride (cancelled)`); setTimeout(()=>toast(`Refunded ${money(-paid.a)} for your cancelled ${R.n} checkride.`), 1200); } });
+    save(); } }catch(_){} },
+  /* with no flight booked, the app opens on the Story page */
+  function openOnStory(st){ if(!st.active && (S.view==='board'||!S.view)) S.view='story'; },
+  /* an old save: the old main story is cleared once so the crime story starts at chapter 1 */
+  function migrateToCrimeStory(st){ try{
+    if(st.crimeV===1){ st.crimeV=2; const keep=new Set(['CW1','CR2','CR3','CR4']); for(const id in (st.story.done||{})) if(/^CR\d+$/.test(id) && !keep.has(id)) delete st.story.done[id]; const c0=crime(st); for(const id in c0.choice) if(!keep.has(id)) delete c0.choice[id]; delete c0.ending; if(st.active && !st.active.started && st.active.job.kind==='story' && /^CR\d+$/.test(st.active.job.story) && !keep.has(st.active.job.story)) st.active=null; save(); }
+    if(!st.crimeV){ st.crimeV=2;
+      ['CW1','CW2','CW3','CW4','BO1','BO2','BO3','BO4','BO5','HW1','HW2','HW3','HW4','HW5','OW1','MR1','TR1','TR2','TR3','TR4','TR5','CO1','CO2','CO3'].forEach(id=>{ if(st.story && st.story.done) delete st.story.done[id]; });
+      if(st.active && !st.active.started && st.active.job.kind==='story' && !STORY.find(m=>m.id===st.active.job.story)) st.active=null;
+      st.rep.castillo = st.rep.castillo||10; st.rep.reyes = st.rep.reyes||10; crime(st); save(); } else crime(st);
+    st.rep.castillo=st.rep.castillo||10; st.rep.reyes=st.rep.reyes||10; }catch(_){} },
+  /* a checkride already failed with an A or B is passed now */
+  function passGoodCheckride(st){ try{ const L=st.last;
+    if(L && L.job && L.job.kind==='check' && L.out && !L.out.pass && L.res && !L.res.crash && (L.res.grade==='A'||L.res.grade==='B'||L.res.score>=70) && !st.ratings[L.job.rating]){
+      const R=RATINGS[L.job.rating]; st.ratings[L.job.rating]=true; if(st.cooldown) delete st.cooldown[L.job.rating]; L.out.pass=true;
+      L.out.notes=(L.out.notes||[]).filter(n=>!/^Not this time/.test(n)); L.out.notes.push(`Passed. You now hold the ${R.n}.`);
+      try{ addJournal(st,`Earned: ${R.n}`, `${CAST[L.job.chars[0]].n} signs the logbook. ${R.unlocks}`, L.job.chars, 'milestone'); }catch(_){}
+      save(); setTimeout(()=>toast(`Checkride passed: you now hold the ${R.n}.`),800); } }catch(_){} },
+  /* a booked seaplane checkride on the old long route is rebuilt once */
+  function rebuildSeaplaneCheckride(st){ try{ const a=st.active; if(a && !a.started && a.job.kind==='check' && a.job.rating==='SEA' && a.job.to!=='WSBL'){ a.job=checkrideJob(st,'SEA',a.job.ac); save(); setTimeout(()=>toast('Seaplane checkride is now a short hop: Juliana to Simpson Bay Lagoon.'),800); } }catch(_){} },
+  /* a booked HW2 on an old route is un-booked once, so the story card offers the new one */
+  function unbookOldHW2(st){ try{ const a=st.active; if(a && !a.started && a.job.story==='HW2' && a.job.to!=='TNCM'){ st.active=null; save(); if(S.view==='flight') S.view='board'; setTimeout(()=>toast('Below the Surface is now a runway flight: Grand Case to Juliana. Start it again from the story card.'),800); } }catch(_){} },
+  /* an old save sitting "after midnight" starts a fresh day */
+  function rollPastMidnight(st){ try{ if(st.clock>=1440 && !st.active){ rest(st); save(); } }catch(_){} },
+  /* a booked flight opens the Flight screen when the app starts */
+  function openBookedFlight(st){ if(st.active && S.view==='board') S.view='flight'; },
+];
+const RENDER_ONCE = { startup:false, jobPrefs:false, walkthrough:false, recap:false, title:false };
+let renderFails = 0;      // consecutive draws that crashed
+let renderLastCash = null; // for the cash flash in the header
+let renderViewChanged = false; // did this draw switch pages?
+
+/* the job list remembers your tab and sort (read them back once) */
+function restoreJobListPrefs(){ if(!RENDER_ONCE.jobPrefs && S.st){ RENDER_ONCE.jobPrefs=true; const u=S.st.ui||{}; if(u.jobTab) S.jobTab=u.jobTab; if(u.jobSort) S.jobSort=u.jobSort; } }
+/* first-run walkthrough: the cold open, then three cards */
+function maybeStartWalkthrough(){ if(RENDER_ONCE.walkthrough || !S.st || S._title) return; RENDER_ONCE.walkthrough=true; const st=S.st; st.ui=st.ui||{};
+  if(!st.ui.walk3 && !(st.active&&st.active.started)){ S._walk=true; st.ui.walk3=1; save();
+    setTimeout(()=>cutscene({col:'#c8962a', art:(typeof SCENES!=='undefined'?SCENES.ramp():''), shots:[...(typeof coldOpenShots==='function'?coldOpenShots():[]),
+      {card:true,kicker:'Welcome to Trade Winds · 1 of 3',title:'The story',sub:`<p>You're a pilot in the Caribbean. One main story in five acts takes you from a Cessna to a 747, and from a clean licence to running the islands' smuggling network.</p><p>Everything starts on the <b>Story</b> page.</p>`},
+      {card:true,kicker:'2 of 3',title:'How to fly a chapter',sub:`<p><b>1.</b> Press <b>Play</b>. A short cutscene sets it up.</p><p><b>2.</b> In MSFS, load the aircraft at the departure airport. The flight screen tells you where to park, how much fuel to load and which runway to use.</p><p><b>3.</b> Fly and land. The app follows you and grades the landing by itself.</p>`},
+      {card:true,kicker:'3 of 3',title:'Power, Heat and dirty cash',sub:`<p><b>Power</b> grows with every chapter and hard choice, and unlocks rewards.</p><p><b>Heat</b> is how close the law is. Network runs raise it, legit jobs cool it. Above 60, customs starts searching.</p><p><b>Dirty cash</b> from network runs has to be laundered before you can spend it.</p><p class="small">Tip: press <b>Ctrl + K</b> anywhere to jump to any page, airport or action.</p>`}], onEnd:()=>{ S._walk=false; }}), 700); } }
+/* aircraft specs you measured in MSFS replace the built-in ones (once per app start) */
+function applyMeasuredAircraft(){ try{ if(!S._acReal && S.st){ S._acReal=true; for(const k in (S.st.acReal||{})) if(AC[k]) Object.assign(AC[k], S.st.acReal[k]); } }catch(_){} }
+/* an old save with no record of which tabs it has seen: mark the ones already unlocked */
+function initSeenTabs(){ try{ const st=S.st; if(st && !(st.ui && st.ui.seen)){ st.ui=st.ui||{}; st.ui.seen={}; for(const k in TAB_UNLOCK) if(TAB_UNLOCK[k].t(st)) st.ui.seen[k]=1; } }catch(_){} }
+/* a booked job from an old save gets its passenger manifest */
+function ensureManifest(){ const a=S.st&&S.st.active; if(a && a.job.manifest===undefined){ a.job.manifest = makeManifest(a.job); } }
+
+/* ---------- 2. draw ---------- */
+
+function drawPage(){
+  const y = window.scrollY;
+  if(!S.st){ app.innerHTML = setupView(); return; }
+  const v = S.view;
+  const body = v==='cockpit'?cockpitView(): v==='money'?moneyView(): v==='map'?mapView(): v==='flight'?flightView(): v==='pilot'?pilotView(): v==='story'?storyView(): v==='log'?logView(): v==='company'?companyView(): v==='hangar'?hangarView(): boardView();
+  app.innerHTML = band() + body + tourHTML(S.st);
+  if(S.keepScroll) window.scrollTo(0,y); S.keepScroll=false;
+}
+/* If a screen crashes: log it, fall back to the job board once, then show a recovery screen. */
+function drawPageGuarded(){
+  try{ drawPage(); renderFails=0; }
+  catch(e){ renderFails++; try{ logErr(`render(${S.view}): ${e && e.message}`); }catch(_){}
+    const app=document.getElementById('app'); if(!app) return;
+    if(renderFails<2 && S.view!=='board'){ S.view='board'; S.debrief=false; S.showResult=false; S.confirm=null; try{ drawPage(); toast('Something went wrong on that screen, so you\'re back on the job board. A report was saved.'); return; }catch(_){ } }
+    app.innerHTML = `<main class="wrap"><div class="panel stack" style="max-width:640px;margin:60px auto;text-align:center"><h2>Turbulence in the code</h2><p>Trade Winds hit an error drawing this screen. Your career is saved.</p><p class="tiny muted mono">${esc(String(e&&e.message||e).slice(0,200))}</p><div class="row" style="justify-content:center"><button class="btn primary" data-act="st-home">Back to the job board</button><button class="btn" data-act="st-restore">Restore last backup</button></div></div></main>`;
+  }
+}
+
+/* ---------- 3. after drawing ---------- */
+
+/* each step is independent: one failing never stops the others */
+const AFTER_RENDER = [
+  function a11y(){ applyA11y(); },
+  /* a page change fades in; then small per-page effects */
+  function pageFade(){ S._lastView=S.view; if(renderViewChanged && !calmMotion()){ const m=document.querySelector('main'); if(m){ m.classList.remove('view-in'); void m.offsetWidth; m.classList.add('view-in'); } } afterRenderFx(); },
+  /* tell the stylesheet which screen is showing */
+  function tagView(){ document.documentElement.dataset.view = S.showResult && S.view==='flight' ? 'result' : (S.st&&S.st.active&&S.st.active.started&&S.view==='flight'?'inflight':S.view||''); },
+  /* old wording in saved text is replaced with your current role */
+  function fixRoleText(){ fixText(document.body); },
+  /* the after-flight scene plays once, as soon as the result screen for a main-story chapter appears */
+  function playAftermathOnce(){ const st=S.st, L=st&&st.last; if(S.showResult && L && L.job && L.job.kind==='story' && CRIME_IDS.has(L.job.story) && !document.querySelector('.cut')){ const c=crime(st); c.afterSeen=c.afterSeen||{}; const key=L.job.id+':'+(L.job.accepted||'')+':'+(L.res&&L.res.score);
+    if(!c.afterSeen[key]){ c.afterSeen[key]=1; const ks=Object.keys(c.afterSeen); if(ks.length>40) delete c.afterSeen[ks[0]]; save(); setTimeout(playAftermath, 350); } } },
+  /* "Previously on Trade Winds" when you open the app mid-story */
+  function previouslyOn(){ if(RENDER_ONCE.recap || !S.st) return; RENDER_ONCE.recap=true; const st=S.st; const MC=mainChapters(); const dn=MC.filter(m=>st.story.done[m.id]);
+    if(dn.length && !S._walk && !S._title && !(st.active&&st.active.started) && !S.showResult && !(st.ui&&st.ui.noRecap)){ const last3=dn.slice(-3); const next=MC.find(m=>!st.story.done[m.id]); const act=next?CRIME_ACTS.find(a=>a.arc===next.arc):CRIME_ACTS[CRIME_ACTS.length-1];
+      const shots=[{card:true,kicker:'Previously on',title:'Trade Winds',auto:1600}].concat(last3.map(m=>[`Chapter ${MC.indexOf(m)+1} · ${m.title}`, null, m.recap||''])); if(next) shots.push({card:true,kicker:`Up next · Chapter ${MC.indexOf(next)+1}`,title:next.title,sub:`<p>${esc(next.hook||'')}</p>`});
+      setTimeout(()=>{ if(!document.querySelector('.cut')) cutscene({shots, col:act.col, art:SCENES.office(), onEnd:()=>{}}); }, 900); } },
+  /* header: the "Right now" button */
+  function nowPill(){ const hud=document.querySelector('.topbar .hud'); if(hud && S.st){ const old=document.querySelector('.now-pill'); if(old) old.remove(); const t=tpl(nowHTML(S.st)); if(t.content.firstElementChild) hud.prepend(t.content.firstElementChild); } },
+  /* the test-session banner */
+  function testBanner(){ if(testSession() && !document.querySelector('.test-banner')){ const d=document.createElement('div'); d.className='test-banner'; d.innerHTML=`Test session: changes will be thrown away <button class="btn sm" data-act="test-session">End and restore</button>`; document.body.appendChild(d); } if(!testSession()) document.querySelectorAll('.test-banner').forEach(e=>e.remove()); },
+  /* the tabs under the main menu (Jobs/Map, Pilot/Money/...) */
+  function subTabs(){ const g=navGroup(S.view); const main=document.querySelector('main'); if(g && g.tabs && main && !main.querySelector('.subtabs') && !(S.view==='flight')){ const d=document.createElement('div'); d.className='subtabs'; d.innerHTML=g.tabs.map(([v,n])=>`<button class="${S.view===v||(v==='pilot'&&['profile','log'].includes(S.view))?'on':''}" data-act="nav" data-v="${v}">${n}</button>`).join(''); main.prepend(d); } },
+  /* flight mode: the page chrome hides while you're flying */
+  function flyingClass(){ const a=S.st&&S.st.active; const on=!!(a&&a.started&&S.view==='flight'&&!S.showResult&&!S.debrief); document.body.classList.toggle('flying', on && !S.fmMenu); },
+  /* header: notifications bell and the search button */
+  function bellAndSearch(){ const hud=document.querySelector('.topbar .hud'); if(hud && !hud.querySelector('.bell')){ const n=S.notifs.length-S.notifSeen; const b=document.createElement('button'); b.className='bell'; b.dataset.act='bell'; b.title='Notifications'; b.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></svg><b style="${n>0?'':'display:none'}">${n}</b>`; hud.appendChild(b); const k=document.createElement('button'); k.className='cmd-btn'; k.dataset.act='cmd'; k.title='Search (Ctrl+K)'; k.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></svg><kbd>Ctrl K</kbd>'; hud.appendChild(k); } },
+  /* result screen: the pay counts up once */
+  function countUpPay(){ if(S.showResult && !S._counted){ S._counted=true; const el=[...document.querySelectorAll('main section b, main section .big, main section strong')].find(e=>/^\+\$[\d,]+$/.test(e.textContent.trim())); if(el){ const target=Number(el.textContent.replace(/[^\d]/g,'')); let t0=null; const step=ts=>{ if(!t0) t0=ts; const k=Math.min(1,(ts-t0)/900); el.textContent='+'+money(Math.round(target*(1-Math.pow(1-k,3)))); if(k<1) requestAnimationFrame(step); }; requestAnimationFrame(step); } } if(!S.showResult) S._counted=false; },
+  /* hover tips on Power, Heat and Dirty wherever they appear */
+  function meterTips(){ document.querySelectorAll('.sc-m span, .hq-m span, .dbar > span, .chip, .launder .label').forEach(el=>{ if(el.title) return; const t=el.textContent.trim(); const k=/^Power/.test(t)?'Power':/^Heat/.test(t)?'Heat':/^Dirty/i.test(t)?'Dirty':null; if(k){ el.title=CX_TIPS[k]; el.classList.add('has-tip'); } }); },
+  /* cash changes flash in the header */
+  function cashFlash(){ const st=S.st; if(!st) return; const v=st.cash; if(renderLastCash!=null && v!==renderLastCash){ const el=[...document.querySelectorAll('.topbar .hud *')].find(e=>!e.children.length && /^\$[\d,−-]+$/.test(e.textContent.trim())); if(el){ const d=document.createElement('span'); d.className='cashfx '+(v>renderLastCash?'up':'down'); d.textContent=(v>renderLastCash?'+':'−')+money(Math.abs(v-renderLastCash)); el.parentElement.style.position='relative'; el.parentElement.appendChild(d); setTimeout(()=>d.remove(),1800); } } renderLastCash=v; },
+  /* the title screen shows once, right after the first draw */
+  function showTitleOnce(){ if(!RENDER_ONCE.title && S._title){ RENDER_ONCE.title=true; setTimeout(showTitle, 50); } },
+  /* metric units, if chosen in Settings */
+  function metricUnits(){ if(uiP().metric){ const w=document.createTreeWalker(document.getElementById('app')||document.body, NodeFilter.SHOW_TEXT); const L=[]; while(w.nextNode()) L.push(w.currentNode); L.forEach(n=>{ if(/\d\s?(lb|gal)\b/.test(n.nodeValue)) n.nodeValue=toMetric(n.nodeValue); }); } },
+  /* header: dirty cash next to your cash */
+  function dirtyChip(){ const hud=document.querySelector('.topbar .hud'); const c=S.st&&crime(); const old=document.querySelector('.dirty-chip'); if(old) old.remove(); if(hud && c && c.dirty>0){ const d=document.createElement('button'); d.className='dirty-chip'; d.dataset.act='nav'; d.dataset.v='money'; d.title='Dirty cash from network runs. Launder it on the Money page.'; d.innerHTML=`<span>Dirty</span><b>${money(c.dirty)}</b>`; const bell=hud.querySelector('.bell'); bell?bell.before(d):hud.appendChild(d); } },
+  /* the sub-tab for the page you're on is the one highlighted */
+  function subTabHighlight(){ document.querySelectorAll('.subtabs button').forEach(b=>{ if(b.dataset.v==='pilot' && ['profile','log'].includes(S.view)) b.classList.remove('on'); if(b.dataset.v===S.view) b.classList.add('on'); }); },
+  /* header: the settings gear */
+  function gearButton(){ const hud=document.querySelector('.topbar .hud'); if(hud && !hud.querySelector('.gear-btn')){ const g=document.createElement('button'); g.className='cmd-btn gear-btn'; g.title='Settings'; g.dataset.act='open-settings'; g.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'; hud.appendChild(g); } },
+  /* header: the licence chip goes (it's on the Pilot page) */
+  function dropLicenceChip(){ document.querySelectorAll('.topbar .hud .hp').forEach(h=>{ if(/^License/i.test(h.textContent.trim())) h.remove(); }); },
+  /* the job list remembers your tab and sort (write them back) */
+  function storeJobListPrefs(){ if(S.st){ const u=S.st.ui=S.st.ui||{}; if(u.jobTab!==S.jobTab||u.jobSort!==S.jobSort){ u.jobTab=S.jobTab; u.jobSort=S.jobSort; } } },
+  /* the window title says where you are in the story */
+  function windowTitle(){ const st=S.st; if(!st){ document.title='Trade Winds'; return; } const a=st.active; if(a){ document.title=`${a.job.from} → ${a.job.local?a.job.from:a.job.to} · Trade Winds`; } else { const MC=mainChapters(); const n=MC.find(m=>!st.story.done[m.id]); document.title = n ? `Chapter ${MC.indexOf(n)+1}: ${n.title} · Trade Winds` : 'Trade Winds'; } },
+  /* the new-career screen has no sub-tabs */
+  function noSubTabsOnSetup(){ if(!S.st) document.querySelectorAll('.subtabs').forEach(e=>e.remove()); },
+  /* the "Right now" button hides on the Flight page, where it would just repeat itself */
+  function hideNowPillInFlight(){ const p=document.querySelector('.now-pill'); if(p) p.style.display = S.view==='flight' ? 'none' : ''; },
+  /* the notifications badge caps at 9+ */
+  function capBellBadge(){ const b=document.querySelector('.bell b'); if(b && Number(b.textContent)>9) b.textContent='9+'; },
+  /* header: Heat, coloured green, amber, red */
+  function heatChip(){ const hud=document.querySelector('.topbar .hud'); const old=document.querySelector('.heat-chip'); if(old) old.remove(); const c=S.st&&crime(); if(hud && c && c.on){ const d=document.createElement('button'); d.className='heat-chip '+(c.heat>=80?'hot':c.heat>=60?'warm':'cool'); d.dataset.act='nav'; d.dataset.v='story'; d.title=CX_TIPS.Heat; d.innerHTML=`<span>Heat</span><b>${c.heat}</b>`; const ref=hud.querySelector('.dirty-chip')||hud.querySelector('.bell'); ref?ref.before(d):hud.appendChild(d); } },
+  /* the browser tab warns you when the feds are on you */
+  function fedsInTitle(){ const c=S.st&&crime(); if(c&&c.on&&c.heat>=80&&!/^⚠/.test(document.title)) document.title='⚠ '+document.title; },
+];
+
+
+function render(){
+  restoreJobListPrefs();
+  maybeStartWalkthrough();
+  if(!RENDER_ONCE.startup && S.st){ RENDER_ONCE.startup=true; STARTUP_FIXES.forEach(fix=>fix(S.st)); }
+  applyMeasuredAircraft();
+  initSeenTabs();
+  renderViewChanged = S._lastView !== S.view;
+  ensureManifest();
+
+  drawPageGuarded();
+
+  for(const step of AFTER_RENDER){ try{ step(); }catch(_){} }
+}
+/* ===================== START =====================
+   Everything above only defines things. This starts the app. Keep this file last in order.txt. */
+boot();
 </script>
 <script>
 /* Standalone tweaks applied after the game script loads */

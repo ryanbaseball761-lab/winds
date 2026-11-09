@@ -1,8 +1,6 @@
 /* ===================== 50 FIXES (Nov 9, second sweep) ===================== */
 /* 1 (setup pitch), 14 (quiet mode wording) and 15 (title Settings) were fixed in their own files. */
 
-/* 2 + 3. the new-career screen: no Jobs/Map tabs, and the noir look */
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ if(!S.st) document.querySelectorAll('.subtabs').forEach(e=>e.remove()); }catch(_){} return x; }; })();
 
 /* 4. no more "New tab unlocked" pop-ups: everything lives in the five-item menu now */
 (function(){ const _t=toast; toast=function(msg){ if(/^New tab unlocked/i.test(String(msg))) return; return _t.apply(this, arguments); }; })();
@@ -20,8 +18,6 @@
 (function(){ const _b=boardView; boardView=function(){ const h=_b(); return h.replace(/<div class="b2-note"><b>Checkride ready:<\/b> ([^<]*)(<button[^>]*>Book checkride<\/button><\/div>)/, (m,list,btn)=>{ const all=list.trim().split(', '); const key=['Jet Type Rating','Airline Transport Pilot','Private Pilot']; const main=all.filter(n=>key.some(k=>n.startsWith(k))); const rest=all.filter(n=>!main.includes(n)); const shown=main.length?main:all.slice(0,1); const more=all.length-shown.length;
   return `<div class="b2-note"><b>Checkride ready:</b> ${shown.join(', ')}${more?` <span class="small muted" title="${rest.join(', ')}">+${more} optional</span>`:''} ${btn}`; }); }; })();
 
-/* 10. the "Right now" button hides on the Flight page, where it would just repeat itself */
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const p=document.querySelector('.now-pill'); if(p) p.style.display = S.view==='flight' ? 'none' : ''; }catch(_){} return x; }; })();
 
 /* 11. your role reads properly everywhere ("Castillo's crew", not just "Castillo") */
 (function(){ const _sr=storyRole; storyRole=function(st){ const r=_sr(st); return r==='Castillo' ? "Castillo's crew" : r; }; })();
@@ -57,8 +53,6 @@ window.addEventListener('keydown', e=>{ if(e.key==='Escape'){ document.querySele
 /* 27. the Skip button says where it goes: to your next decision, or the end */
 (function(){ const _sh=cutHook.shot; cutHook.shot=function(s,el,i,opt){ _sh.call(this,s,el,i,opt); try{ const sk=el.querySelector('.cut-skip'); const L=(opt&&opt.shots)||[]; if(sk && L.length) sk.textContent = L.slice(i+1).some(x=>x&&x.choice) ? 'Skip to decision' : (s&&s.choice ? 'Skip' : 'Skip scene'); }catch(_){} }; })();
 
-/* 28. the notifications badge caps at 9+ */
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const b=document.querySelector('.bell b'); if(b && Number(b.textContent)>9) b.textContent='9+'; }catch(_){} return x; }; })();
 
 /* 29 + 30. command bar: find people and open their card */
 (function(){ const _ci=cmdItems; cmdItems=function(){ const L=_ci(); try{ (typeof metPeople==='function'?metPeople(S.st):[]).forEach(k=>L.push({n:CAST[k].n, k:'Person · '+(CAST[k].role||''), run:()=>{ go('story'); setTimeout(()=>personCard(k),150); }})); }catch(_){} return L; }; })();
@@ -79,8 +73,6 @@ window.addEventListener('keydown', e=>{ if(e.key!=='Escape') return; const w=doc
 /* 36. laundering says what it did to your Heat */
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="launder"]'); if(!b||!S.st) return; const o=launderOpts(S.st).find(x=>x.id===b.dataset.v); if(o&&o.heat) setTimeout(()=>toast(`Heat +${o.heat} from laundering.`), 700); });
 
-/* 37 + 38. Heat in the header, coloured: green, amber, red */
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const hud=document.querySelector('.topbar .hud'); const old=document.querySelector('.heat-chip'); if(old) old.remove(); const c=S.st&&crime(); if(hud && c && c.on){ const d=document.createElement('button'); d.className='heat-chip '+(c.heat>=80?'hot':c.heat>=60?'warm':'cool'); d.dataset.act='nav'; d.dataset.v='story'; d.title=CX_TIPS.Heat; d.innerHTML=`<span>Heat</span><b>${c.heat}</b>`; const ref=hud.querySelector('.dirty-chip')||hud.querySelector('.bell'); ref?ref.before(d):hud.appendChild(d); } }catch(_){} return x; }; })();
 
 /* 39. cancelling a story chapter takes you back to the Story page, and says you can replay it */
 (function(){ const _fv=flightView; flightView=function(){ const h=_fv(); const a=S.st&&S.st.active; return a && a.job.kind==='story' ? h.replace(/>Cancel job</, '>Cancel chapter (play it again any time)<') : h; }; })();
@@ -95,8 +87,6 @@ window.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cancel-ye
 /* 44. at Heat 80+ (the feds are looking) the Heat chip pulses */
 /* (CSS below) */
 
-/* 45. the browser tab warns you when the feds are on you */
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const c=S.st&&crime(); if(c&&c.on&&c.heat>=80&&!/^⚠/.test(document.title)) document.title='⚠ '+document.title; }catch(_){} return x; }; })();
 
 /* 46. clicking a speaker's portrait in a scene doesn't skip the line you're reading */
 document.addEventListener('click', e=>{ if(e.target.closest('.cut-who')) e.stopPropagation(); }, true);

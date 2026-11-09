@@ -8,8 +8,3 @@ window.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cancel-ye
   if(p.how==='bond'){ const F=fin(st); const owe=Math.round(p.fee*1.1); F.bond=Math.max(0,(F.bond||0)-owe); move(st,0,'Training bond',`${R.n} checkride cancelled: bond of ${money(owe)} cancelled`); }
   else txn(st, p.fee, 'Licenses & training', `Refund: ${R.n} checkride (cancelled)`);
   j.paid=null; setTimeout(()=>toast(`Checkride cancelled. ${p.how==='bond'?'Your training bond was cancelled.':`${money(p.fee)} refunded.`}`), 300); }, true);
-/* one-time: refund a checkride that was cancelled before this fix (the Airline Transport Pilot booking) */
-(function(){ let done=false; const _r=render; render=function(){ if(!done && S.st){ done=true; try{ const st=S.st; if(!st.ckRefund1){ st.ckRefund1=1; const F=fin(st); const a=st.active;
-  ['ATP'].forEach(rid=>{ const R=RATINGS[rid]; if(st.ratings[rid] || (a && a.job.kind==='check' && a.job.rating===rid)) return; const paid=F.ledger.find(x=>x.m===`${R.n} checkride` && x.a<0); const refunded=F.ledger.some(x=>/^Refund: /.test(x.m||'') && x.m.includes(R.n));
-    if(paid && !refunded){ txn(st, -paid.a, 'Licenses & training', `Refund: ${R.n} checkride (cancelled)`); setTimeout(()=>toast(`Refunded ${money(-paid.a)} for your cancelled ${R.n} checkride.`), 1200); } });
-  save(); } }catch(_){} } return _r.apply(this, arguments); }; })();

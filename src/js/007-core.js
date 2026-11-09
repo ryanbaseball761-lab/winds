@@ -389,14 +389,6 @@ function hangarView(){
 }
 
 /* ---------- render ---------- */
-function render(){
-  const y = window.scrollY;
-  if(!S.st){ app.innerHTML = setupView(); return; }
-  const v = S.view;
-  const body = v==='cockpit'?cockpitView(): v==='money'?moneyView(): v==='map'?mapView(): v==='flight'?flightView(): v==='pilot'?pilotView(): v==='story'?storyView(): v==='log'?logView(): v==='company'?companyView(): v==='hangar'?hangarView(): boardView();
-  app.innerHTML = band() + body + tourHTML(S.st);
-  if(S.keepScroll) window.scrollTo(0,y); S.keepScroll=false;
-}
 function go(v){ if(v==='flight' && S.mcp && S.simState!=='nobridge') setTimeout(()=>simPoll(true),0); S.view=v; S.confirm=null; if(v!=='flight'){ S.debrief=false; } if(location.hash!=='#'+v){ try{ history.replaceState(null,'','#'+v); }catch(e){ location.hash=v; } } render(); window.scrollTo(0,0); }
 
 /* ---------- AI ---------- */

@@ -10,7 +10,6 @@ function rightNow(st){ if(!st) return null; const a=st.active; if(a) return {t:a
   if(s.k==='aircraft') return {t:`Chapter ${n} needs an aircraft`, b:'Hangar', act:'nav', v:'hangar'};
   return {t:`Chapter ${n} · ${next.title}`, b:'Story', act:'nav', v:'story'}; }
 function nowHTML(st){ const r=rightNow(st); if(!r) return ''; return `<div class="now-pill"><span>${esc(r.t)}</span><button class="btn sm action" data-act="${r.act}" ${r.v?`data-v="${r.v}"`:''} ${r.id?`data-id="${r.id}"`:''}>${esc(r.b)}</button></div>`; }
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ const hud=document.querySelector('.topbar .hud'); if(hud && S.st){ const old=document.querySelector('.now-pill'); if(old) old.remove(); const t=tpl(nowHTML(S.st)); if(t.content.firstElementChild) hud.prepend(t.content.firstElementChild); } }catch(_){} return x; }; })();
 
 /* ---- 15. result screen: one summary card, everything else folded ---- */
 const _uiRes = resultView;
@@ -56,7 +55,6 @@ document.addEventListener('click', async e=>{ const b=e.target.closest('[data-ac
   S.keepScroll=true; render(); });
 (function(){ const _b=boardView; boardView=function(){ const h=_b(); const on=testSession(); const box=`<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><button class="btn sm ${on?'action':''}" data-act="test-session">${on?'End test session · restore my real career':'Start a test session'}</button><span class="tiny muted">${on?'Anything you do now is thrown away when you end the session.':'Backs up your career first, so you can skip and experiment freely.'}</span></div>`;
   return h.replace('<button class="btn sm" data-act="practice"', box+'<button class="btn sm" data-act="practice"'); }; })();
-(function(){ const _r=render; render=function(){ const x=_r.apply(this, arguments); try{ if(testSession() && !document.querySelector('.test-banner')){ const d=document.createElement('div'); d.className='test-banner'; d.innerHTML=`Test session: changes will be thrown away <button class="btn sm" data-act="test-session">End and restore</button>`; document.body.appendChild(d); } if(!testSession()) document.querySelectorAll('.test-banner').forEach(e=>e.remove()); }catch(_){} return x; }; })();
 
 /* ---- 20. leftovers from the old career: Academy, Butter Cup and old names ---- */
 TEXT_FIX.push([/Coral Wing's (pilots|crews|chief pilot)/g,'the island pilots'],[/Mari says,?/g,'Your instructor says'],[/the Coral Wing (team|family)/g,'the islands']);
