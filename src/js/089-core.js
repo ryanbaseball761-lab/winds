@@ -8,12 +8,6 @@ const NAV5 = [
   {v:'pilot', n:'Pilot', ico:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>', tabs:[['pilot','Licences'],['money','Money'],['cup','Butter Cup'],['academy','Academy']]},
   {v:'hangar', n:'Hangar', ico:'<path d="M3 20V9l9-5 9 5v11M7 20v-6h10v6"/>'} ];
 function navGroup(v){ return NAV5.find(g=>g.v===v || (g.tabs||[]).some(t=>t[0]===v)) || NAV5.find(g=>g.v==='pilot' && ['profile','log','company','cockpit'].includes(v)) || null; }
-const _u10Band = band;
-band = function(){ const h=_u10Band(); try{ const t=tpl(h); const cur=navGroup(S.view); const badge=(()=>{ try{ const st=S.st; const n=st?storyAvailable(st).filter(m=>MAIN_ORDER.includes(m.arc)).length:0; return n; }catch(_){ return 0; } })();
-  const items=NAV5.map(g=>`<button class="snav ${cur&&cur.v===g.v?'on':''}" data-act="nav" data-v="${g.v}" ${cur&&cur.v===g.v?'aria-current="page"':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${g.ico}</svg><span class="lbl">${g.n}</span>${g.v==='story'&&badge?`<span class="nb">${badge}</span>`:''}<kbd>${NAV5.indexOf(g)+1}</kbd></button>`).join('');
-  const nav=t.content.querySelector('.side-nav'); if(nav) nav.innerHTML=items;
-  t.content.querySelectorAll('nav:not(.side-nav)').forEach(n=>{ if(n.querySelector('.snav,[data-act="nav"]')) n.innerHTML=NAV5.map(g=>`<button class="${cur&&cur.v===g.v?'on':''}" data-act="nav" data-v="${g.v}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">${g.ico}</svg><span>${g.n}</span></button>`).join(''); });
-  return t.innerHTML; }catch(_){ return h; } };
 
 /* ---- 3. flight mode: once you're flying, the flight takes over the screen ---- */
 function hudHTML(a){ const s=S.sim||{}; const live=S.simState==='live'&&s.position; const job=a.job; const to=job.local?job.from:job.to; const dest=AP[to];

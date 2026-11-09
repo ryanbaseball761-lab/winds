@@ -43,8 +43,6 @@ window.cutAuto = ()=>!!uiP().autoCut;
 /* 14. the result screen warns when Heat is getting dangerous */
 (function(){ const _r=resultView; resultView=function(){ const h=_r(); const c=crime(); if(!c.on || c.heat<60) return h; const msg = c.heat>=80 ? `Heat ${c.heat}: the feds are watching. Story chapters are on hold until it's under 80.` : `Heat ${c.heat}: customs is searching planes now. A clean landing gets you waved through; legit jobs cool it down.`; return h.replace('<div class="row next-bar">', `<div class="heat-warn">${msg}</div><div class="row next-bar">`); }; })();
 
-/* 15. the "right now" button shows its full text on hover */
-(function(){ const _n=nowHTML; nowHTML=function(st){ const r=rightNow(st); return _n(st).replace('<div class="now-pill">', `<div class="now-pill" title="${r?esc(r.t):''}">`); }; })();
 
 /* 16. "New day" shows the full cost: rent plus fleet and crew */
 (function(){ const _b=boardView; boardView=function(){ const h=_b(); try{ const st=S.st; const H=HOUSING[fin(st).housing]||HOUSING.bunk; const ops=dailyCosts(st).reduce((s,x)=>s+x[1],0); const tot=(H.rent||0)+ops; return h.replace(/New day · rent \$[\d,]+/, `New day · ${money(tot)}`).replace('<button class="btn sm" data-act="rest"', `<button class="btn sm" data-act="rest" title="Rent ${money(H.rent||0)}${ops?` + fleet and crew ${money(ops)}`:''}"`); }catch(_){ return h; } }; })();

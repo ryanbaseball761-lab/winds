@@ -34,8 +34,6 @@ function urgentBanner(){
     return `<div class="urgent ${left<0?'late':''}"><span class="urg-pulse"></span><div><b>${left<0?'LATE: standard pay only':'WHEELS UP IN'}</b><span class="mono big-count urg-count" data-until="${a.job.wheelsUpBy}">${mmss(left)}</span></div><button class="btn sm" data-act="nav" data-v="flight">Open flight</button></div>`; }
   return '';
 }
-const _urBand = band;
-band = function(){ const b=urgentBanner(); return b ? _urBand().replace('</header>', `<div class="urgent-host">${b}</div></header>`) : _urBand(); };
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="urg-yes"],[data-act="urg-no"],[data-act="urg-toggle"]'); if(!b || !S.st) return; const st=S.st;
   if(b.dataset.act==='urg-toggle'){ const on=!urgentOn(); try{ localStorage.setItem('tw.urgent', on?'on':'off'); }catch(_){} toast(on?'Urgent dispatch calls on.':'Urgent dispatch calls off.'); render(); return; }

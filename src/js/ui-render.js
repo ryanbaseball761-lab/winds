@@ -103,16 +103,12 @@ const AFTER_RENDER = [
     if(dn.length && !S._walk && !S._title && !(st.active&&st.active.started) && !S.showResult && !(st.ui&&st.ui.noRecap)){ const last3=dn.slice(-3); const next=MC.find(m=>!st.story.done[m.id]); const act=next?CRIME_ACTS.find(a=>a.arc===next.arc):CRIME_ACTS[CRIME_ACTS.length-1];
       const shots=[{card:true,kicker:'Previously on',title:'Trade Winds',auto:1600}].concat(last3.map(m=>[`Chapter ${MC.indexOf(m)+1} · ${m.title}`, null, m.recap||''])); if(next) shots.push({card:true,kicker:`Up next · Chapter ${MC.indexOf(next)+1}`,title:next.title,sub:`<p>${esc(next.hook||'')}</p>`});
       setTimeout(()=>{ if(!document.querySelector('.cut')) cutscene({shots, col:act.col, art:SCENES.office(), onEnd:()=>{}}); }, 900); } },
-  /* header: the "Right now" button */
-  function nowPill(){ const hud=document.querySelector('.topbar .hud'); if(hud && S.st){ const old=document.querySelector('.now-pill'); if(old) old.remove(); const t=tpl(nowHTML(S.st)); if(t.content.firstElementChild) hud.prepend(t.content.firstElementChild); } },
   /* the test-session banner */
   function testBanner(){ if(testSession() && !document.querySelector('.test-banner')){ const d=document.createElement('div'); d.className='test-banner'; d.innerHTML=`Test session: changes will be thrown away <button class="btn sm" data-act="test-session">End and restore</button>`; document.body.appendChild(d); } if(!testSession()) document.querySelectorAll('.test-banner').forEach(e=>e.remove()); },
   /* the tabs under the main menu (Jobs/Map, Pilot/Money/...) */
   function subTabs(){ const g=navGroup(S.view); const main=document.querySelector('main'); if(g && g.tabs && main && !main.querySelector('.subtabs') && !(S.view==='flight')){ const d=document.createElement('div'); d.className='subtabs'; d.innerHTML=g.tabs.map(([v,n])=>`<button class="${S.view===v||(v==='pilot'&&['profile','log'].includes(S.view))?'on':''}" data-act="nav" data-v="${v}">${n}</button>`).join(''); main.prepend(d); } },
   /* flight mode: the page chrome hides while you're flying */
   function flyingClass(){ const a=S.st&&S.st.active; const on=!!(a&&a.started&&S.view==='flight'&&!S.showResult&&!S.debrief); document.body.classList.toggle('flying', on && !S.fmMenu); },
-  /* header: notifications bell and the search button */
-  function bellAndSearch(){ const hud=document.querySelector('.topbar .hud'); if(hud && !hud.querySelector('.bell')){ const n=S.notifs.length-S.notifSeen; const b=document.createElement('button'); b.className='bell'; b.dataset.act='bell'; b.title='Notifications'; b.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></svg><b style="${n>0?'':'display:none'}">${n}</b>`; hud.appendChild(b); const k=document.createElement('button'); k.className='cmd-btn'; k.dataset.act='cmd'; k.title='Search (Ctrl+K)'; k.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></svg><kbd>Ctrl K</kbd>'; hud.appendChild(k); } },
   /* result screen: the pay counts up once */
   function countUpPay(){ if(S.showResult && !S._counted){ S._counted=true; const el=[...document.querySelectorAll('main section b, main section .big, main section strong')].find(e=>/^\+\$[\d,]+$/.test(e.textContent.trim())); if(el){ const target=Number(el.textContent.replace(/[^\d]/g,'')); let t0=null; const step=ts=>{ if(!t0) t0=ts; const k=Math.min(1,(ts-t0)/900); el.textContent='+'+money(Math.round(target*(1-Math.pow(1-k,3)))); if(k<1) requestAnimationFrame(step); }; requestAnimationFrame(step); } } if(!S.showResult) S._counted=false; },
   /* hover tips on Power, Heat and Dirty wherever they appear */
@@ -123,26 +119,14 @@ const AFTER_RENDER = [
   function showTitleOnce(){ if(!RENDER_ONCE.title && S._title){ RENDER_ONCE.title=true; setTimeout(showTitle, 50); } },
   /* metric units, if chosen in Settings */
   function metricUnits(){ if(uiP().metric){ const w=document.createTreeWalker(document.getElementById('app')||document.body, NodeFilter.SHOW_TEXT); const L=[]; while(w.nextNode()) L.push(w.currentNode); L.forEach(n=>{ if(/\d\s?(lb|gal)\b/.test(n.nodeValue)) n.nodeValue=toMetric(n.nodeValue); }); } },
-  /* header: dirty cash next to your cash */
-  function dirtyChip(){ const hud=document.querySelector('.topbar .hud'); const c=S.st&&crime(); const old=document.querySelector('.dirty-chip'); if(old) old.remove(); if(hud && c && c.dirty>0){ const d=document.createElement('button'); d.className='dirty-chip'; d.dataset.act='nav'; d.dataset.v='money'; d.title='Dirty cash from network runs. Launder it on the Money page.'; d.innerHTML=`<span>Dirty</span><b>${money(c.dirty)}</b>`; const bell=hud.querySelector('.bell'); bell?bell.before(d):hud.appendChild(d); } },
   /* the sub-tab for the page you're on is the one highlighted */
   function subTabHighlight(){ document.querySelectorAll('.subtabs button').forEach(b=>{ if(b.dataset.v==='pilot' && ['profile','log'].includes(S.view)) b.classList.remove('on'); if(b.dataset.v===S.view) b.classList.add('on'); }); },
-  /* header: the settings gear */
-  function gearButton(){ const hud=document.querySelector('.topbar .hud'); if(hud && !hud.querySelector('.gear-btn')){ const g=document.createElement('button'); g.className='cmd-btn gear-btn'; g.title='Settings'; g.dataset.act='open-settings'; g.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>'; hud.appendChild(g); } },
-  /* header: the licence chip goes (it's on the Pilot page) */
-  function dropLicenceChip(){ document.querySelectorAll('.topbar .hud .hp').forEach(h=>{ if(/^License/i.test(h.textContent.trim())) h.remove(); }); },
   /* the job list remembers your tab and sort (write them back) */
   function storeJobListPrefs(){ if(S.st){ const u=S.st.ui=S.st.ui||{}; if(u.jobTab!==S.jobTab||u.jobSort!==S.jobSort){ u.jobTab=S.jobTab; u.jobSort=S.jobSort; } } },
   /* the window title says where you are in the story */
   function windowTitle(){ const st=S.st; if(!st){ document.title='Trade Winds'; return; } const a=st.active; if(a){ document.title=`${a.job.from} → ${a.job.local?a.job.from:a.job.to} · Trade Winds`; } else { const MC=mainChapters(); const n=MC.find(m=>!st.story.done[m.id]); document.title = n ? `Chapter ${MC.indexOf(n)+1}: ${n.title} · Trade Winds` : 'Trade Winds'; } },
   /* the new-career screen has no sub-tabs */
   function noSubTabsOnSetup(){ if(!S.st) document.querySelectorAll('.subtabs').forEach(e=>e.remove()); },
-  /* the "Right now" button hides on the Flight page, where it would just repeat itself */
-  function hideNowPillInFlight(){ const p=document.querySelector('.now-pill'); if(p) p.style.display = S.view==='flight' ? 'none' : ''; },
-  /* the notifications badge caps at 9+ */
-  function capBellBadge(){ const b=document.querySelector('.bell b'); if(b && Number(b.textContent)>9) b.textContent='9+'; },
-  /* header: Heat, coloured green, amber, red */
-  function heatChip(){ const hud=document.querySelector('.topbar .hud'); const old=document.querySelector('.heat-chip'); if(old) old.remove(); const c=S.st&&crime(); if(hud && c && c.on){ const d=document.createElement('button'); d.className='heat-chip '+(c.heat>=80?'hot':c.heat>=60?'warm':'cool'); d.dataset.act='nav'; d.dataset.v='story'; d.title=CX_TIPS.Heat; d.innerHTML=`<span>Heat</span><b>${c.heat}</b>`; const ref=hud.querySelector('.dirty-chip')||hud.querySelector('.bell'); ref?ref.before(d):hud.appendChild(d); } },
   /* the browser tab warns you when the feds are on you */
   function fedsInTitle(){ const c=S.st&&crime(); if(c&&c.on&&c.heat>=80&&!/^⚠/.test(document.title)) document.title='⚠ '+document.title; },
 ];

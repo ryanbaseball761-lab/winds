@@ -3,8 +3,6 @@ function themePref(){ try{ return localStorage.getItem('tw.theme') || (window.TW
 function applyTheme(){ const p=themePref(); const r=document.documentElement; if(p==='auto') delete r.dataset.theme; else r.dataset.theme=p; }
 applyTheme();
 const THEME_LBL = {auto:'Theme: auto', dark:'Theme: dark', light:'Theme: light'};
-const _thBand = band;
-band = function(){ return _thBand().replace('<div class="side-foot">', `<button class="theme-btn" data-act="theme">${THEME_LBL[themePref()]}</button><div class="side-foot">`); };
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="theme"],[data-act="export-file"],[data-act="import-file"]'); if(!b) return;
   if(b.dataset.act==='theme'){ const order=['dark','light','auto']; const n=order[(order.indexOf(themePref())+1)%3]; try{ localStorage.setItem('tw.theme', n); }catch(_){} applyTheme(); if(S.st) render(); return; }

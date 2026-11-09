@@ -18,8 +18,6 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="open-se
 (function(){ const _rs=rest; rest=function(st){ const r=_rs(st); try{ const c=crime(st); if(c.on) crBump(c,'heat',-1); }catch(_){} return r; }; })();
 
 
-/* 8. the Story badge explains itself */
-(function(){ const _bd=band; band=function(){ return _bd().replace(/<span class="nb">(\d+)<\/span>/, (m,n)=>`<span class="nb" title="${n} chapter${n>1?'s':''} ready to play">${n}</span>`); }; })();
 
 /* 9. Skip on a decision explains why it doesn't skip */
 document.addEventListener('click', e=>{ const s=e.target.closest('.cut-skip'); if(!s) return; const c=s.closest('.cut'); if(c && c.classList.contains('choosing')){ s.textContent="Decisions can't be skipped"; setTimeout(()=>{ s.textContent='Skip'; }, 1800); } }, true);

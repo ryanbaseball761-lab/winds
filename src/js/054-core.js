@@ -4,9 +4,6 @@ function headText(el){ return ((el.querySelector('h1,h2,h3,.label')||{}).textCon
 function wrapDetails(nodes, title, cls){ if(!nodes.length) return null; const d=document.createElement('details'); d.className='calm-more '+(cls||''); const s=document.createElement('summary'); s.innerHTML=title; d.appendChild(s); const box=document.createElement('div'); box.className='calm-more-in'; nodes.forEach(n=>box.appendChild(n)); d.appendChild(box); return d; }
 
 /* ---- navigation: fewer tabs ---- */
-const _cmBand = band;
-band = function(){ const st=S.st; if(!st) return _cmBand(); const hide=new Set(['profile','log']); if(!st.active && S.view!=='cockpit') hide.add('cockpit'); if(!st.company && !(st.story&&st.story.done&&st.story.done.OW1)) hide.add('company'); hide.delete(S.view);
-  const keep=NAV_GROUPS.map(g=>g.slice()); try{ NAV_GROUPS.forEach(g=>{ const f=g.filter(k=>!hide.has(k)); g.length=0; g.push(...f); }); return _cmBand(); } finally { NAV_GROUPS.forEach((g,i)=>{ g.length=0; g.push(...keep[i]); }); } };
 
 /* ---- job board ---- */
 const CHIP_KEEP = /urgent|vip|sealed|bonus|owner|ifr|night|instructor|festival|storm|hurricane|2×|double/i;

@@ -28,8 +28,6 @@ function callHTML(st){
     <div class="row" style="justify-content:center"><button class="btn action" data-act="call-yes">Take the job</button><button class="btn" data-act="call-no">Not today</button></div>
   </div></div>`;
 }
-const _evBand = band;
-band = function(){ return _evBand() + (S.view==='board' && !S.showResult ? callHTML(S.st) : ''); };
 const _evAfterCall = afterFlight;
 afterFlight = function(st, job, f, res, out){ const r=_evAfterCall(st, job, f, res, out);
   // live weather bonus

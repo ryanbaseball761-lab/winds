@@ -60,8 +60,6 @@ document.addEventListener('click', e=>{ const li=e.target.closest('.sh-time li')
 /* 17. a small "Saved" tick in the sidebar when your career is saved */
 (function(){ const _sv=save; save=function(){ const r=_sv.apply(this, arguments); try{ clearTimeout(S._svT); S._svT=setTimeout(()=>{ const el=document.querySelector('.band .sync, .side .sync, .side-foot'); if(el){ el.classList.add('saved-flash'); setTimeout(()=>el.classList.remove('saved-flash'), 900); } }, 50); }catch(_){} return r; }; })();
 
-/* 18. sidebar: your story rank under your name once you work for Castillo */
-(function(){ const _bd=band; band=function(){ let h=_bd(); try{ const c=crime(S.st); if(c.on) h=h.replace(/(Senior Pilot|Line Pilot|Captain|Senior Captain|Chief Pilot|Trainee) · [^<]*/, `${esc(crimeRank(c))} · Power ${c.power}`); }catch(_){} return h; }; })();
 
 /* 19. bigger portraits in "The people" now that there's art */
 /* (CSS only, see below) */

@@ -2,8 +2,6 @@
 const _nrApply = applyTheme;
 applyTheme = function(){ _nrApply(); const r=document.documentElement; if(themePref()==='light'){ delete r.dataset.noir; } else { r.dataset.noir='1'; r.dataset.theme='dark'; } };
 THEME_LBL.auto='Theme: noir'; THEME_LBL.dark='Theme: noir'; THEME_LBL.light='Theme: light';
-const _nrBand = band;
-band = function(){ return _nrBand().replace('Caribbean career for MSFS', 'Every cargo has a price'); };
 (function(){ const css=`
 :root[data-noir]{--bg:#0a0a0c;--surface:#131316;--surface-2:#0f0f12;--ink:#ece6da;--muted:#8f897e;--line:#26262b;
   --sea:#c8962a;--sea-soft:#2a2112;--coral:#c23a2b;--coral-soft:#2b1210;--sand:#1d1a14;--sky:#8a9bb0;--sky-soft:#151a21;

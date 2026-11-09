@@ -9,12 +9,6 @@ function diff(){ return (S.st && S.st.difficulty) || 'standard'; }
  // Preflight, Start, Taxi, Before takeoff
 var checklistDone; /* defined in full below (051-core.js) */
 var checklistCount; /* defined in full below (051-core.js) */
-const _dfBand = band;
-band = function(){
-  const h=_dfBand(); const d=diff();
-  const sel = `<div class="diff" role="group" aria-label="Difficulty">${Object.keys(DIFF).map(k=>`<button class="${k===d?'on':''}" data-act="diff" data-v="${k}" title="${esc(DIFF[k].d)}">${DIFF[k].n}</button>`).join('')}</div>`;
-  return h.replace('<div class="hud">', `<div class="hud">${sel}`);
-};
 const _dfPass = boardingPass;
 boardingPass = function(st, job, p, a, started, mins, ai){
   let h=_dfPass(st, job, p, a, started, mins, ai);

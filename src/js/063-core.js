@@ -8,8 +8,6 @@ const _p20Strip = stripHTML;
 stripHTML = function(st, job, opts){ let h=_p20Strip(st, job, opts); if(job.dep<=st.clock) h=h.replace(`STD ${hhmm(job.dep)}`, 'Ready now'); return h; };
 
 /* 3 + 4. difficulty and theme move out of the top bar and sidebar into Hangar > Settings */
-const _p20Band = band;
-band = function(){ let h=_p20Band(); h=h.replace(/<div class="diff" role="group" aria-label="Difficulty">[\s\S]*?<\/div>/, ''); h=h.replace(/<button class="theme-btn" data-act="theme">[^<]*<\/button>/, ''); return h; };
 const _p20Set = settingsHTML;
 settingsHTML = function(){ let h=_p20Set(); const d=diff();
   const extra=`<div><p class="label">Difficulty</p><div class="diff">${Object.keys(DIFF).map(k=>`<button class="${k===d?'on':''}" data-act="diff" data-v="${k}" title="${esc(DIFF[k].d)}">${DIFF[k].n}</button>`).join('')}</div><p class="tiny muted" style="margin-top:4px">${esc(DIFF[d].d)}</p></div>

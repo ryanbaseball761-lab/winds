@@ -9,11 +9,6 @@ const TAB_UNLOCK = {
 };
 function uiPrefs(){ const st=S.st; st.ui = st.ui || {}; return st.ui; }
 function tabOpen(k){ const st=S.st; if(!st) return true; if(uiPrefs().allTabs) return true; const u=TAB_UNLOCK[k]; return !u || u.t(st) || S.view===k; }
-const _dcBand = band;
-band = function(){ if(!S.st) return _dcBand(); const keep = NAV_GROUPS.map(g=>g.slice()); const names = NAV_GROUP_NAMES.slice();
-  try{ for(let i=NAV_GROUPS.length-1;i>=0;i--){ const g=NAV_GROUPS[i].filter(tabOpen); NAV_GROUPS[i].length=0; NAV_GROUPS[i].push(...g); }
-    return _dcBand(); }
-  finally{ NAV_GROUPS.forEach((g,i)=>{ g.length=0; g.push(...keep[i]); }); } };
 function checkUnlocks(){ const st=S.st; if(!st) return; const ui=uiPrefs(); ui.seen = ui.seen || {}; const label=Object.fromEntries(VIEWS);
   for(const k in TAB_UNLOCK){ if(ui.seen[k]) continue; if(TAB_UNLOCK[k].t(st)){ ui.seen[k]=1; if(st.flights>0) setTimeout(()=>toast(`New tab unlocked: ${label[k]||k}`), 1200); } } }
 const _dcApply = applyResult;

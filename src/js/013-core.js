@@ -13,41 +13,6 @@ const VIEW_META = {
 };
 const NAV_GROUP_NAMES = ['Fly','Career','Business'];
 function initials(n){ return n.split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('') || 'P'; }
-function band(){
-  const st=S.st; const r=topRating(st); const rk=rankOf(st);
-  const emp = st.company ? esc(st.company.name) : 'Coral Wing Air';
-  const avail = storyAvailable(st).length;
-  const rides = RATING_ORDER.filter(x=>x!=='CO' && checkrideReady(st,x).ok).length;
-  const badge = v => v==='flight' && st.active ? `<span class="nb live" aria-label="flight booked">1</span>` : v==='story' && avail ? `<span class="nb" aria-label="${avail} chapters available">${avail}</span>` : v==='pilot' && rides ? `<span class="nb" aria-label="${rides} checkrides ready">${rides}</span>` : '';
-  const label = Object.fromEntries(VIEWS);
-  const item = (k, cls) => `<button class="${cls}" data-act="nav" data-v="${k}" ${S.view===k?'aria-current="page"':''}><svg viewBox="0 0 24 24" aria-hidden="true">${NAV_ICON[k]||''}</svg><span class="lbl">${label[k]}</span>${badge(k)}</button>`;
-  const meta = VIEW_META[S.view] || [label[S.view]||'',''];
-  const live = S.simState==='live';
-  return `<aside class="side" aria-label="Main menu">
-    <div class="side-brand">${LOGO}<div><b>Trade Winds</b><span>Caribbean career for MSFS</span></div></div>
-    <div class="side-pilot">
-      <div class="pav">${esc(initials(st.pilot.name))}</div>
-      <div style="min-width:0"><b>${esc(st.pilot.name)}</b><span>${esc(rk.name)} · ${emp}</span>
-        <div class="xp" title="${rk.next?`Next rank: ${rk.next} at ${rk.nextH} h`:'Top rank'}"><i style="width:${rk.pct.toFixed(0)}%"></i></div>
-        <small>${fmtH(st.minutes)} logged${rk.next?` · ${esc(rk.next)} at ${rk.nextH} h`:''}</small></div>
-    </div>
-    <nav class="side-nav">${NAV_GROUPS.map((g,i)=>`<p class="side-g">${NAV_GROUP_NAMES[i]}</p>${g.filter(k=>label[k]).map(k=>item(k,'snav')).join('')}`).join('')}</nav>
-    <div class="side-foot"><span class="simdot ${live?'on':''}"></span><span id="sim-band">${live?'MSFS live':'Sim not connected'}</span><span class="sep">·</span><span id="sync">${syncText()}</span></div>
-  </aside>
-  <header class="topbar">
-    <div class="tb-in">
-      <div class="tb-title"><div class="tb-brand">${LOGO}<b>Trade Winds</b></div><h1>${esc(meta[0])}</h1><p>${esc(meta[1])}</p></div>
-      <div class="hud">
-        <span class="hp"><small>At</small><b class="mono">${esc(st.loc)}</b></span>
-        <span class="hp"><small>Day ${st.day}</small><b class="mono">${dateTxt(st.day)} ${hhmm(st.clock)}</b></span>
-        <span class="hp cash"><small>Cash</small><b class="mono">${money(st.cash)}</b></span>
-        <span class="hp hide-s"><small>License</small><b class="mono">${r.code}</b></span>
-        ${st.active?`<button class="hp go" data-act="nav" data-v="flight"><small>Booked</small><b class="mono">${esc(st.active.job.from)}→${esc(st.active.job.local?st.active.job.from:st.active.job.to)}</b></button>`:''}
-      </div>
-    </div>
-    <nav class="mrail" aria-label="Sections">${NAV_GROUPS.map(g=>g.filter(k=>label[k]).map(k=>item(k,'tab')).join('')).join('<span class="tab-sep" aria-hidden="true"></span>')}</nav>
-  </header>`;
-}
 /* sim status text lives in the sidebar now */
 const _shellRenderSim = renderSimBits;
 renderSimBits = function(){
