@@ -40,7 +40,7 @@ function settingsHTML(){ const ui=uiPrefs(); const z=ui.zoom||1;
     <div><p class="label">Text size</p><div class="diff">${[[1,'Normal'],[1.12,'Large'],[1.25,'Larger']].map(([v,l])=>`<button class="${z===v?'on':''}" data-act="ui-zoom" data-v="${v}">${l}</button>`).join('')}</div></div>
     <label class="row"><input type="checkbox" data-act="ui-flag" data-k="reduceMotion" ${ui.reduceMotion?'checked':''}> Reduce motion and animations</label>
     <label class="row"><input type="checkbox" data-act="ui-flag" data-k="contrast" ${ui.contrast?'checked':''}> High contrast text and outlines</label>
-    <label class="row"><input type="checkbox" data-act="ui-flag" data-k="quiet" ${ui.quiet?'checked':''}> Quiet mode: no phone calls or urgent-job pop-ups</label>
+    <label class="row"><input type="checkbox" data-act="ui-flag" data-k="quiet" ${ui.quiet?'checked':''}> Quiet mode: no urgent-job pop-ups</label>
     <label class="row"><input type="checkbox" data-act="ui-flag" data-k="allTabs" ${ui.allTabs?'checked':''}> Show every tab now (skip unlocking them)</label>
   </div>
   ${window.twNative&&twNative.openFolder?`<div class="row"><button class="btn sm" data-act="open-logs">Open flight logs folder</button><span class="tiny muted">Every flight with MSFS connected is recorded here. Send one along if something looks wrong.</span></div>`:''}</section>`; }

@@ -15,7 +15,7 @@ function setupView(){
       <div class="wrap setup-copy">
         <p class="eyebrow">A Caribbean career for Microsoft Flight Simulator 2024</p>
         <h1>Trade Winds</h1>
-        <p class="lede">Fresh license. Sixty-two hours. A trainee seat at a tiny charter outfit in St. Martin. Everything after that is up to how you fly.</p>
+        <p class="lede">A fresh licence and a cheap job flying a Cessna in St. Martin. Then the mechanic asks you for a small favor. Five acts later you're flying a 747 full of contraband, and either running the Caribbean or running from it.</p>
       </div>
     </section>
     <div class="wrap">

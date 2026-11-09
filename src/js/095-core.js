@@ -9,7 +9,7 @@ function titleHTML(){ const st=S.st; let cont=''; if(st){ const MC=mainChapters(
   <div class="ts-in"><div class="ts-logo"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="none" stroke="#c8962a" stroke-width="2"/><path d="M32 6 L36 28 L58 32 L36 36 L32 58 L28 36 L6 32 L28 28Z" fill="#c8962a"/></svg><div><h1>TRADE WINDS</h1><p>Every cargo has a price</p></div></div>
   <nav class="ts-menu">${st?`<button data-ts="continue" class="on"><b>Continue</b><span>${esc(st.pilot&&st.pilot.name||'')}${cont?` · ${esc(cont)}`:''}</span></button>`:''}
     <button data-ts="new"><b>New game</b><span>${st?'Start a new career (your current one is backed up)':'Start your career'}</span></button>
-    <button data-ts="settings" ${st?'':'disabled'}><b>Settings</b><span>Sound, units, cutscenes</span></button>
+    ${st?'<button data-ts="settings"><b>Settings</b><span>Sound, units, cutscenes</span></button>':''}
     ${window.twNative?'<button data-ts="quit"><b>Quit</b></button>':''}</nav>
   <p class="ts-foot">v${typeof TW_VERSION!=='undefined'?TW_VERSION:''} · A story career for Microsoft Flight Simulator 2024 · Not affiliated with Microsoft or Asobo</p></div>`; }
 function showTitle(){ if(document.querySelector('.title-screen')) return; const el=document.createElement('div'); el.className='title-screen'; el.innerHTML=titleHTML(); document.body.appendChild(el); requestAnimationFrame(()=>el.classList.add('on'));
