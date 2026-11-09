@@ -52,7 +52,7 @@ const FLIGHTS={
   check:   {setup:STATES.early+`S.st.cash=90000;`, start:`S.view='pilot'; render(); const b=document.querySelector('[data-act="book-check"]:not([disabled])'); if(!b) throw new Error('no checkride'); b.click(); __tick(400);`, opt:{}},
 };
 const VIEWS=['story','board','map','flight','pilot','money','cup','academy','profile','log','hangar'];
-const norm=h=>String(h==null?'':h).replace(/\s+/g,' ').trim();
+const norm=h=>String(h==null?'':h).replace(/\s+/g,' ').replace(/>\s+</g,'><').replace(/ style=""/g,'').trim();
 (async()=>{ const b=await chromium.launch(); const out={};
  const open=async(save)=>{ const ctx=await b.newContext({viewport:{width:1300,height:900}}); await ctx.addInitScript(INIT); await ctx.addInitScript(HELP); const p=await ctx.newPage(); p._errs=[]; p.on('pageerror',e=>p._errs.push(e.message));
    await p.goto('file://'+ROOT+'/index.html'); await p.evaluate(s=>{ localStorage.clear(); if(s) localStorage.setItem('tradewinds.career.v1',s); },save); await p.reload(); await p.evaluate(()=>__tick(3000)); p._ctx=ctx; return p; };
