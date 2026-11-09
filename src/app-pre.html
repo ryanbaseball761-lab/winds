@@ -1,0 +1,13 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>
+<script>
+/* Standalone runtime: stands in for the claude.ai capabilities the web version uses. */
+(function(){
+  const N = window.twNative; if(!N) return;
+  const mcp = { callTool: async (server, tool, input) => ({ payload: await N.callTool(tool, input) }) };
+  const downloads = { save: async ({filename, data}) => {
+    const bytes = data instanceof Blob ? new Uint8Array(await data.arrayBuffer()) : typeof data === 'string' ? new TextEncoder().encode(data) : new Uint8Array(data.buffer || data);
+    const ok = await N.saveFile(filename, bytes); if(!ok) throw { code:'declined', message:'Cancelled' }; return 'saved'; } };
+  window.claude = { use: async (name) => name === 'mcp' ? mcp : name === 'downloads' ? downloads : null };
+  window.TW_STANDALONE = true; document.documentElement.classList.add('tw-app');
+})();
+</script>

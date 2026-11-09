@@ -1,0 +1,110 @@
+/* ===================== GAMEPLAY: more job types, filters & sort, deeper difficulty, aircraft data, mid-game story ===================== */
+/* ---- aircraft numbers checked against published specs ---- */
+Object.assign(AC.KA350, {burn:720}); Object.assign(AC.SF50, {burn:450, cruise:305}); Object.assign(AC.TBM, {cruise:320});
+Object.assign(AC.PC12, {cruise:280}); Object.assign(AC.C172, {range:640}); Object.assign(AC.C152, {useful:500});
+Object.assign(AC.CJ4, {burn:1050, cruise:430}); Object.assign(AC.DHC6, {burn:620});
+
+/* ---- 16 more kinds of work ---- */
+const P_ = a => pick(a);
+ARCH.push(
+ {id:'vet',label:`Flying vet`,kind:'pax',w:4,cls:['ga','stol','hp','bush','turbo'],need:'PPL',pax:[1,1],cargo:[60,180],
+  story:c=>{const v=`Dr. ${P_(NAMES.last)}`; const pet=P_([`a racehorse with colic`,`a herd of goats with a mystery cough`,`a donkey that ate a fishing net`,`a sea turtle tangled in line`,`a farm full of sheep due for vaccines`]);return{title:`Vet call: ${c.to.isl}`,client:`${v}, veterinarian`,paras:[`${v} is the only large-animal vet for three islands, and today it's ${pet} on ${c.to.isl}. The kit takes up the back seat and smells faintly of iodine.`,`"I'll be two hours," the vet says, which always means four. You'll wait on the ramp and bring them home, so plan your fuel for the round trip.`]}}},
+ {id:'band',label:`Steel band gig`,kind:'pax',w:3,cls:['turbo','twin','bush'],need:'COMM',pax:[5,9],cargo:[300,700],
+  story:c=>({title:`The band plays ${c.to.isl} tonight`,client:`The ${P_(['Silver Tide','Pan Royale','Harbour Lights','Moonsplash'])} Steel Orchestra`,paras:[`A steel orchestra has a festival slot on ${c.to.isl} tonight, and the ferry broke down with their pans already on the dock. The pans are big, light and fragile, and the players won't let them out of sight.`,`Weight is fine, but volume isn't: load carefully and keep the center of gravity in limits. The bandleader will tune the tenor pan the moment you're parked, whether you like it or not.`]})},
+ {id:'surveyor',label:`Survey flight`,kind:'pax',w:3,cls:['ga','hp','stol','twin','turbo'],need:'COMM',pax:[1,2],cargo:[80,250],local:true,
+  story:c=>({title:`Coastline survey off ${c.from.isl}`,client:`${P_(NAMES.first)} ${P_(NAMES.last)}, coastal engineer`,paras:[`The government is mapping beach erosion on ${c.from.isl} after last season's swells. A coastal engineer needs the shoreline photographed in straight, level passes at exactly the same altitude.`,`It's a precision job: hold altitude within 100 ft and heading within 5° on each pass, and you'll save them a second trip. Wander, and they'll politely ask you to fly the whole coast again.`]})},
+ {id:'sail',label:`Sailing crew change`,kind:'pax',w:4,cls:['ga','hp','twin','turbo','amph','bush'],need:'PPL',pax:[2,4],cargo:[100,260],
+  story:c=>({title:`Crew change for a yacht in ${c.to.isl}`,client:`Skipper ${P_(NAMES.first)} ${P_(NAMES.last)}`,paras:[`A delivery yacht is leaving ${c.to.isl} for the Panama Canal at dawn, and half the crew is still on ${c.from.isl} with their sea bags. Sea bags are soft, heavy and wet.`,`The skipper wants them aboard by sunset. Weigh the bags: sailors always underestimate.`]})},
+ {id:'chef',label:`Chef's market run`,kind:'cargo',w:4,cls:['ga','stol','hp','bush','turbo'],need:'PPL',pax:[0,1],cargo:[120,420],
+  story:c=>{const ch=`Chef ${P_(NAMES.first)}`; return{title:`Fresh catch for ${c.to.isl}`,client:`${ch}, ${P_(['Le Bleu','Salt & Coral','The Driftwood','Casa Marea'])}`,paras:[`${ch} runs the hardest table to book on ${c.to.isl}, and tonight's menu depends on a cooler of snapper, lobster and wahoo from the ${c.from.isl} fish market.`,`Ice melts and fish don't wait. The chef says if it arrives cold, there's a table for you any night this season.`]}}},
+ {id:'priest',label:`Sunday service`,kind:'pax',w:2,cls:['ga','stol','hp','bush'],need:'PPL',pax:[1,2],cargo:[20,60],
+  story:c=>({title:`Father ${P_(NAMES.last)} to ${c.to.isl}`,client:`Parish of ${c.from.isl}`,paras:[`The priest covers three island parishes and flies between them most weekends. He brings the hymn books, a guitar, and opinions about crosswind technique that he learned from a pilot in the 1980s.`,`He'll pray before takeoff. He also checks the fuel himself. "God helps those who sump their tanks," he says.`]})},
+ {id:'record',label:`Record attempt`,kind:'pax',w:2,cls:['ga','hp','turbo'],need:'COMM',pax:[1,1],cargo:[20,60],minRep:25,
+  story:c=>({title:`Timed run: ${c.from.isl} to ${c.to.isl}`,client:`Caribbean Air Racing Club`,paras:[`The racing club wants an official time between ${c.from.isl} and ${c.to.isl} for its record book, with an observer in the right seat holding a stopwatch.`,`Fly it fast and legal: no busting airspeed limits, and a stabilized approach is still required. The fastest time on the board is held by Jack Calloway, and he'd love it if you lost.`]})},
+ {id:'turtle',label:`Turtle release`,kind:'cargo',w:2,cls:['ga','stol','hp','bush','turbo','amph'],need:'PPL',pax:[1,1],cargo:[60,160],
+  story:c=>({title:`Rehabilitated turtles to ${c.to.isl}`,client:`Sea turtle rescue, ${c.from.isl}`,paras:[`Two green turtles have recovered at the rescue center on ${c.from.isl} and are going home to the reef they were found on near ${c.to.isl}. They travel in padded crates with wet towels and a volunteer.`,`The volunteer will spray them with water every ten minutes. Keep the cabin cool and the ride gentle. Turtles don't complain, but the volunteer does.`]})},
+ {id:'lost',label:`Lost luggage`,kind:'cargo',w:3,cls:['ga','hp','turbo','twin','stol'],need:'PPL',pax:[0,0],cargo:[60,300],urgent:true,
+  story:c=>({title:`Twelve suitcases for ${c.to.isl}`,client:`Airline baggage office, ${c.from.isl}`,paras:[`A wedding party flew to ${c.to.isl}, and their suitcases flew somewhere else. The bags turned up on ${c.from.isl} this morning, including, everyone hopes, the dress.`,`The wedding is tomorrow at noon. Get the bags there today and the bride's mother may stop calling the airline.`]})},
+ {id:'school',label:`School trip`,kind:'pax',w:2,cls:['turbo','twin'],need:'COMM',pax:[6,9],cargo:[100,300],
+  story:c=>({title:`Science class to ${c.to.isl}`,client:`${c.from.isl} Secondary School`,paras:[`A class of teenagers is spending the day at ${c.to.isl}'s marine research station, with two teachers and a lot of snacks.`,`Half of them have never flown. The teachers ask if you'll say a few words about how the airplane flies. Be good: one of them might be a pilot in ten years.`]})},
+ {id:'divers',label:`Dive boat parts`,kind:'cargo',w:3,cls:['ga','stol','hp','bush','turbo','amph'],need:'PPL',pax:[0,1],cargo:[150,500],
+  story:c=>({title:`Compressor for a dive shop on ${c.to.isl}`,client:`${P_(['Blue Hole','Reef Raiders','Deep Calm','Coral Garden'])} Divers`,paras:[`The dive shop on ${c.to.isl} has a boat full of tourists and no air: their compressor died at breakfast. The replacement is heavy, awkward and needs tying down properly.`,`Strap it to the floor rings and check the CG. A 200-lb compressor that slides aft on rotation will ruin your day.`]})},
+ {id:'election',label:`Ballot boxes`,kind:'cargo',w:1,cls:['ga','hp','turbo','twin'],need:'COMM',pax:[1,2],cargo:[100,250],minRep:30,
+  story:c=>({title:`Sealed ballots to ${c.to.isl}`,client:`Electoral office`,paras:[`Sealed ballot boxes from ${c.from.isl} need to reach the counting center on ${c.to.isl} tonight, with two officials who won't let them out of arm's reach.`,`Nobody is allowed to touch the boxes but the officials. They are very serious people. They also want to know if there's a bathroom on board.`]})},
+ {id:'kite',label:`Kitesurf team`,kind:'pax',w:2,cls:['ga','hp','turbo','twin','bush'],need:'PPL',pax:[2,4],cargo:[150,350],
+  story:c=>({title:`Kitesurfers chasing wind to ${c.to.isl}`,client:`${P_(NAMES.first)} and the ${P_(['Trade Wind','Gusty','Salt Air'])} Kite Team`,paras:[`A kitesurfing team has heard the wind is perfect on ${c.to.isl} today. Their boards are long and their kites are bulky. They will ask if you can "just fly a bit faster."`,`They love wind; you need to respect it. Expect a gusty, turbulent arrival exactly where they want to be.`]})},
+ {id:'radio',label:`Radio station delivery`,kind:'cargo',w:2,cls:['ga','hp','stol','turbo'],need:'PPL',pax:[0,1],cargo:[80,240],
+  story:c=>({title:`Transmitter tubes for ${c.to.isl} radio`,client:`${P_(['ZIZ','Radio Nevis','Island 98','Voice of the Islands'])} FM`,paras:[`The only radio station on ${c.to.isl} went off the air last night when its transmitter died. Without it, there are no hurricane alerts, no cricket commentary and no request hour.`,`The DJ promises a shout-out to "the pilot who saved the airwaves." The whole island will hear your name, so land it nicely.`]})},
+ {id:'proposal',label:`Proposal flight`,kind:'pax',w:2,cls:['ga','hp','turbo'],need:'PPL',pax:[2,2],cargo:[20,40],local:true,
+  story:c=>{const a=P_(NAMES.first); return{title:`A ring at 2,000 feet over ${c.from.isl}`,client:`${a} ${P_(NAMES.last)}`,paras:[`${a} has a ring in a pocket and a plan: a scenic flight over ${c.from.isl}, then the question over the prettiest bay you can find. Their partner thinks it's just a sightseeing trip.`,`Smooth air, gentle turns, and a nice bank over the water at the right moment. ${a} will give you a thumbs-up. Don't miss it.`]}}},
+ {id:'doctor',label:`Visiting specialist`,kind:'pax',w:3,cls:['ga','hp','turbo','twin'],need:'COMM',pax:[1,2],cargo:[40,120],
+  story:c=>({title:`Eye surgeon to ${c.to.isl}`,client:`Dr. ${P_(NAMES.first)} ${P_(NAMES.last)}`,paras:[`Once a month a visiting eye surgeon flies to ${c.to.isl} and sees forty patients in a day. The waiting room fills at 7 a.m.`,`Every minute late is a patient who goes home without an appointment. The doctor sleeps the whole flight and wakes up exactly when the wheels touch.`]})}
+);
+
+/* ---- job board: sort and filter ---- */
+function boardPrefs(){ try{ return JSON.parse(localStorage.getItem('tw_board')||'{}'); }catch(_){ return {}; } }
+function setBoardPrefs(p){ try{ localStorage.setItem('tw_board', JSON.stringify(p)); }catch(_){} }
+function jobPerHour(j){ const est=j.est||plan(j).est; return j.pay / Math.max(0.25, est/60); }
+function filterJobs(list){ const p=boardPrefs(); let L=list.slice();
+  if(p.kind && p.kind!=='all') L=L.filter(j=> p.kind==='vip' ? j.vip : p.kind==='urgent' ? j.urgent : p.kind==='local' ? j.local : (j.cat||'')===p.kind);
+  if(p.ac && p.ac!=='all') L=L.filter(j=>j.ac===p.ac);
+  const by=p.sort||'dep'; const key={dep:j=>j.dep, pay:j=>-j.pay, rate:j=>-jobPerHour(j), short:j=>j.local?(j.tourNm||40):distNm(AP[j.from],AP[j.to]), long:j=>-(j.local?(j.tourNm||40):distNm(AP[j.from],AP[j.to]))}[by]||(j=>j.dep);
+  return L.sort((a,b)=>key(a)-key(b)); }
+function boardTools(st){ const p=boardPrefs(); const acs=[...new Set(st.jobs.map(j=>j.ac))];
+  const sel=(k,opts)=>`<select data-act="bp" data-k="${k}" aria-label="${k}">${opts.map(([v,l])=>`<option value="${v}" ${ (p[k]||opts[0][0])===v?'selected':''}>${esc(l)}</option>`).join('')}</select>`;
+  return `<div class="board-tools">${sel('sort',[['dep','Soonest'],['pay','Highest pay'],['rate','Best pay per hour'],['short','Shortest'],['long','Longest']])}${sel('kind',[['all','All jobs'],['pax','Passengers'],['cargo','Cargo'],['vip','VIP'],['urgent','Urgent'],['local','Local tours']])}${acs.length>1?sel('ac',[['all','Any aircraft'],...acs.map(k=>[k,AC[k].n])]):''}</div>`; }
+const _gpBoard = boardView;
+boardView = function(){ const st=S.st; if(!st || S.view!=='board') return _gpBoard(); try{ ensureJobs(st); }catch(_){} if(!st.jobs) return _gpBoard(); const all=st.jobs; const shown=filterJobs(all);
+  st.jobs=shown; let h; try{ h=_gpBoard(); } finally { st.jobs=all; }
+  const hidden=all.length-shown.length;
+  return h.replace(/(<h2>Jobs at [^<]*<\/h2>)/, `$1${boardTools(st)}${hidden?`<span class="tiny muted">${hidden} hidden by filters</span>`:''}`); };
+document.addEventListener('change', e=>{ const s=e.target.closest('[data-act="bp"]'); if(!s) return; const p=boardPrefs(); p[s.dataset.k]=s.value; setBoardPrefs(p); S.keepScroll=true; render(); });
+
+/* ---- difficulty with teeth ---- */
+DIFF.casual.d = 'Forgiving: landings up to 450 fpm count as firm, rough rides cost less, fewer surprises. Checklist optional.';
+DIFF.standard.d = 'The career as designed. Checklist optional.';
+DIFF.expert.d = 'Stricter landing grades, mandatory checklist, the right fuel and aircraft loaded before you start, fines for landing below legal reserve, more in-flight surprises, and 15% extra pay.';
+landingClass = function(fpm){ const d=diff(); if(d==='expert') return fpm<80?'butter':fpm<170?'smooth':fpm<300?'firm':'hard'; if(d==='casual') return fpm<120?'butter':fpm<240?'smooth':fpm<450?'firm':'hard'; return fpm<100?'butter':fpm<200?'smooth':fpm<350?'firm':'hard'; };
+const _gpGen = genJobs;
+genJobs = function(st){ const L=_gpGen(st); const d=diff();
+  for(const j of L){ if(d==='expert' && !j.scen && Math.random()<0.08){ const sc=scenFor(j); if(sc) j.scen=sc; } if(d==='casual' && j.scen && Math.random()<0.5) j.scen=null; }
+  return L; };
+document.addEventListener('click', e=>{ const s=e.target.closest('[data-act="start"]'); if(!s || !S.st || !S.st.active || diff()!=='expert' || S.simState!=='live') return;
+  const bad=preflightChecks(S.st.active.job).filter(c=>!c.ok && ['ac','fuel','pos'].includes(c.k));
+  if(bad.length){ e.stopImmediatePropagation(); e.preventDefault(); toast(`Expert mode: fix the pre-flight check first (${bad.map(c=>c.t).join('; ')}).`); const el=document.getElementById('preflight'); if(el) el.scrollIntoView({behavior:'smooth', block:'center'}); } }, true);
+const _gpApply = applyResult;
+applyResult = function(st, job, f, res){ const r=_gpApply(st, job, f, res);
+  if(diff()==='expert' && !res.crash && job.kind!=='check' && res.fuelMin!=null && res.fuelMin < plan(job).reserveMin*0.75 && AC[job.ac].fuel!=='elec'){ const fine=Math.max(250, Math.round(job.pay*0.2/10)*10); txn(st,-fine,'Accidents & fines','Landed below reserve fuel'); const o=st.last&&st.last.out; if(o){ o.costs=(o.costs||0)+fine; o.notes.push(`Expert: you landed with ${res.fuelMin} min of fuel, below the legal reserve. The authority fines you ${money(fine)}.`); } st.reputation=clamp(st.reputation-2,0,100); }
+  return r; };
+
+/* ---- mid-game story: The Logbook ---- */
+CAST.lucille = {n:`Lucille Bain`, col:'#7a5c99', role:`Retired schoolteacher, Antigua`, bio:`Eddie Bain's daughter. Seventy-one, sharp as a tack, and still angry at her father for disappearing in 1981.`};
+ARC_META['The Logbook'] = {main:true, n:1.7, tag:`An old pilot's logbook, a mystery from 1981, and the examiner who knew him.`, col:'#1f9d55'};
+STORY.push(
+ {id:'LB1',arc:`The Logbook`,title:`Ghost in the Logbook`,chars:['wilkins','mari'],req:{after:'CW4',hours:4},from:'TNCM',to:'TQPF',ac:['C152','C172','DA40','G36'],pax:1,cargo:20,cargoLabel:`a cracked leather logbook from 1978`,time:'day',dep:600,wx:'trades',
+  brief:[`Clearing out Coral Wing's lost-and-found, Mari finds a leather logbook with a broken strap. The first page says "E. Bain, Commercial Pilot, 1978." Inside are three years of island mail runs, written in neat block capitals.`,`Examiner Grace Wilkins goes very quiet when she sees it. "Eddie Bain taught me to fly," she says. "He vanished in 1981. I'd like to fly his first entry with you. Juliana to Anguilla, the way he did it: map, clock and compass."`],
+  teach:[`Fly it by pilotage: pick landmarks before you go, note the time over each one, and compare against your planned groundspeed.`,`Anguilla is low and flat. From 2,500 ft it can hide against the haze until you're close, so trust your heading and time.`],
+  out:{good:`Wilkins times the leg to the minute against Eddie's entry. "Forty-four years apart and the same number," she says, and writes your name under his.`,ok:`A solid leg. Wilkins reads you Eddie's remark for that day: "Haze. Found it anyway."`,bad:`Wilkins doesn't say much. She reads Eddie's remark aloud: "Rough one. Do better tomorrow." Then she smiles. "He'd have liked you."`},rep:{wilkins:5,mari:2}},
+ {id:'LB2',arc:`The Logbook`,title:`The One That Matters`,chars:['wilkins'],req:{after:'LB1',hours:7},from:'TQPF',to:'TKPN',ac:['C172','DA40','G36','C208'],pax:1,cargo:30,cargoLabel:`a tin of letters from the logbook's back pocket`,time:'day',dep:540,wx:'trades',
+  brief:[`Tucked in the back of the logbook is a bundle of letters addressed to "Lucille, Nevis," never posted. Eddie's last entries say the same thing every week: "Nevis. The one that matters."`,`Wilkins has found a Lucille Bain in the Nevis phone book. "Fly me there," she says. "I'm not sure what I'm going to say to her."`],
+  teach:[`Nevis Peak makes its own weather. The cloud cap and the lee-side downdrafts sit right where you join the circuit for 10.`,`On a short, sloping runway, a stabilized approach matters more than ever. If you're high and fast at 300 ft, go around.`],
+  out:{good:`Lucille Bain opens the door, reads the first letter on the doorstep, and sits down on the step. "He wrote," she says. "All this time, he wrote."`,ok:`Lucille takes the letters without a word. A day later she calls Coral Wing and asks for you by name.`,bad:`Lucille takes the letters and closes the door. Wilkins sits in the airplane for a long time before she says, "Let's go home."`},rep:{wilkins:5}},
+ {id:'LB3',arc:`The Logbook`,title:`Codrington`,chars:['lucille','wilkins'],req:{after:'LB2',ratings:['COMM']},from:'TKPN',to:'TAPH',ac:['C172','DA40','G36','C208','DA62'],pax:2,cargo:40,cargoLabel:`a suitcase and a framed photograph`,time:'day',dep:570,wx:'trades',
+  brief:[`The last letter has a postmark: Codrington, Barbuda, 1982. A year after Eddie supposedly vanished. Lucille read it twice, then called you. "Take me to Barbuda. I want to see where my father went instead of coming home."`,`Wilkins comes too. Neither of them says much at the airplane, but Lucille insists on sitting up front.`],
+  teach:[`Barbuda is flat with nothing to stop the trade winds. Expect a strong, steady wind and gusts right down to the runway.`,`In gusty air, add half the gust factor to your approach speed and keep flying the airplane all the way to the tie-down.`],
+  out:{good:`An old man at the Codrington fuel shed knew Eddie for thirty years. "He fixed every engine on this island," he says. "He talked about a daughter on Nevis. Every day." Lucille cries, and then she laughs.`,ok:`The townspeople remember "Mister Eddie the mechanic." Lucille hears stories all afternoon and buys you lunch.`,bad:`A rough arrival, but Lucille doesn't notice. She's already out of the airplane, holding the photograph up to strangers.`},rep:{wilkins:4,mari:2}},
+ {id:'LB4',arc:`The Logbook`,title:`Night Mail`,chars:['wilkins'],req:{after:'LB3',ratings:['IR'],hours:14},from:'TNCM',to:'TFFR',ac:['G36','DA62','C208','PC12','KA350'],pax:1,cargo:350,cargoLabel:`sacks of mail, the way Eddie flew it`,time:'night',dep:1230,wx:'showers',
+  brief:[`Wilkins has one more thing from the logbook: Eddie's last scheduled flight was a night mail run to Guadeloupe. He never flew it. "I was supposed to ride along that night," she says. "I was nineteen."`,`The postal service agrees to send real mail with you. Wilkins takes the right seat and doesn't touch the controls once.`],
+  teach:[`Night IFR over water: there's no horizon, so trust the attitude indicator, not your inner ear.`,`Brief the approach and the missed approach on the ground. At Pointe-à-Pitre expect vectors to the ILS, and French controllers who switch languages without warning.`],
+  out:{good:`On the ramp at Pointe-à-Pitre, Wilkins signs Eddie's logbook under his last entry: "Flown. 44 years late. G.W." Then she signs yours.`,ok:`The mail arrives on time. Wilkins writes "Delivered" next to Eddie's last entry and closes the book.`,bad:`It's a tense night, but the mail arrives. Wilkins says, "He'd have flown it better. So will you, next time."`},rep:{wilkins:6}},
+ {id:'LB5',arc:`The Logbook`,title:`Last Entry`,chars:['wilkins','lucille','mari'],req:{after:'LB4',ratings:['TURB'],hours:20},from:'TNCM',to:'TAPH',ac:['C208','DHC6','KA350','PC12'],pax:6,cargo:150,cargoLabel:`a bronze plaque and a crate of rum for afterwards`,time:'day',dep:600,wx:'trades',reward:{bonus:2500,note:`Lucille insists on paying for the flight. Mari says the plaque says something about you, too.`},
+  brief:[`Codrington is putting up a plaque at the airfield for "Eddie Bain, pilot and mechanic, 1940–2019." Lucille wants you to fly everyone in: her, Wilkins, Mari, and three of Eddie's old friends from Coral Wing's early days.`,`It's a full airplane and an emotional one. Wilkins hands you Eddie's logbook before you board. "Last page is blank," she says. "You write it."`],
+  teach:[`A full turboprop into a 3,000 ft runway in gusty trades is real work. Run the performance numbers, and use the whole runway if you need to.`,`Fly the airplane first. Passengers' emotions are their business. Yours is a stabilized approach.`],
+  out:{good:`The plaque goes up beside the fuel shed. On the last page of Eddie's logbook, under your name, Lucille writes: "Brought him home."`,ok:`A lovely ceremony. Wilkins gives a short speech and gets through all of it without crying, which she says is a first.`,bad:`It's a hard landing on a hard day. Nobody mentions it. Lucille squeezes your hand and says, "He bent a few airplanes too."`},rep:{wilkins:6,mari:4}}
+);
+
+/* ---- economy: reputation is harder to max out (it was hitting 100 by flight 25) ---- */
+const _ecApply = applyResult;
+applyResult = function(st, job, f, res){ const before=st.reputation; const r=_ecApply(st, job, f, res); const d=st.reputation-before;
+  if(d>0){ const scaled = d * Math.max(0.15, 1 - before/110); st._repFrac = (st._repFrac||0) + scaled; const whole=Math.floor(st._repFrac); st._repFrac -= whole; st.reputation = clamp(before + whole, 0, 100); }
+  return r; };

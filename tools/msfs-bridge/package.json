@@ -1,0 +1,15 @@
+{
+  "name": "msfs-bridge",
+  "version": "1.0.0",
+  "description": "Local MCP server that connects the Trade Winds career page to Microsoft Flight Simulator 2024 through SimConnect.",
+  "main": "server.js",
+  "private": true,
+  "license": "MIT",
+  "engines": { "node": ">=18" },
+  "scripts": { "start": "node server.js", "mock": "set MSFS_BRIDGE_MOCK=1&& node server.js" },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "node-simconnect": "4.2.1",
+    "zod": "4.6.7"
+  }
+}

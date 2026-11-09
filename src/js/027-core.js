@@ -1,0 +1,138 @@
+/* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
+const TW_VERSION = '0.41.0';
+
+/* ---------- live map ---------- */
+function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
+  return { W, H, X: lon => (lon - v.lon[0])/(v.lon[1]-v.lon[0])*W, Y: lat => H - (lat - v.lat[0])/(v.lat[1]-v.lat[0])*H }; }
+function liveFlightInfo(){
+  const st=S.st, a=st&&st.active, s=S.sim; if(!a || !s || S.simState!=='live' || !s.position) return null;
+  const job=a.job; const pos={lat:s.position.lat, lon:s.position.lon}; const dest = job.local ? AP[job.from] : AP[job.to];
+  const togo = distNm(pos, dest); const gs = Math.max(s.motion.gs||0, 1); const eta = s.motion.onGround ? null : Math.round(togo/gs*60);
+  const rec = simRecFor(a); return {job, pos, dest, togo, eta, gs:s.motion.gs, alt:s.position.altFt, hdg:s.position.hdg, track: rec && rec.track || []};
+}
+const _lvMap = mapView;
+mapView = function(){
+  let h=_lvMap(); const L=liveFlightInfo(); if(!L) return h; const P=mapProj();
+  const path = L.track.length>1 ? `<polyline class="flown" points="${L.track.map(p=>`${P.X(p[1]).toFixed(1)},${P.Y(p[0]).toFixed(1)}`).join(' ')}"/>` : '';
+  const px=P.X(L.pos.lon), py=P.Y(L.pos.lat);
+  const plane = `<g class="liveplane" transform="translate(${px.toFixed(1)} ${py.toFixed(1)}) rotate(${L.hdg||0})"><circle r="16" class="halo"/><path d="M0 -12 L3 -3 L12 2 L12 4 L3 2 L2 9 L5 11 L5 12 L0 11 L-5 12 L-5 11 L-2 9 L-3 2 L-12 4 L-12 2 L-3 -3Z"/></g>`;
+  h = h.replace('</svg>', path+plane+'</svg>');
+  const box = `<div class="livebox"><span class="dot-live"></span><b>Live</b><span>${esc(L.job.from)} → ${esc(L.job.local?L.job.from:L.job.to)}</span><span class="mono">${Math.round(L.togo)} nm to go</span>${L.eta!=null?`<span class="mono">ETA ${L.eta} min</span>`:''}<span class="mono">${L.gs} kt · ${L.alt.toLocaleString()} ft</span></div>`;
+  return h.replace('<div class="grid-2">', box+'<div class="grid-2">');
+};
+const _lvRender = renderSimBits;
+renderSimBits = function(){ _lvRender(); if(S.view==='map' && S.st && S.st.active && S.simState==='live'){ S.keepScroll=true; render(); } };
+
+/* ---------- replay: keep the path and approach with the result ---------- */
+const _lvApply = applyResult;
+applyResult = function(st, job, f, res){
+  const rec = st.active ? simRecFor(st.active) : null;
+  const r = _lvApply(st, job, f, res);
+  if(rec && st.last){ st.last.replay = { track:(rec.track||[]).slice(-300), approach: rec.approach||null, td: rec.touchdown||null }; }
+  return r;
+};
+function replaySvgPath(track, w, h){
+  const lats=track.map(p=>p[0]), lons=track.map(p=>p[1]); let a0=Math.min(...lats), a1=Math.max(...lats), o0=Math.min(...lons), o1=Math.max(...lons);
+  const pad=0.02; a0-=pad; a1+=pad; o0-=pad; o1+=pad; const k=Math.cos((a0+a1)/2*Math.PI/180);
+  const sx=w/((o1-o0)*k||1), sy=h/((a1-a0)||1), sc=Math.min(sx,sy); const ox=(w-(o1-o0)*k*sc)/2, oy=(h-(a1-a0)*sc)/2;
+  return track.map(p=>[ox+(p[1]-o0)*k*sc, h-(oy+(p[0]-a0)*sc)]);
+}
+function replaySection(st){
+  const R=st.last && st.last.replay; if(!R || (!(R.track&&R.track.length>1) && !R.approach)) return '';
+  let pathSvg=''; if(R.track && R.track.length>1){ const pts=replaySvgPath(R.track, 520, 300); const maxAlt=Math.max(...R.track.map(p=>p[2]),1);
+    pathSvg = `<svg viewBox="0 0 520 300" class="replay-map" role="img" aria-label="Flown path">${pts.slice(1).map((p,i)=>{ const q=pts[i]; const t=R.track[i+1][2]/maxAlt; return `<line x1="${q[0].toFixed(1)}" y1="${q[1].toFixed(1)}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="hsl(${(170-t*150).toFixed(0)} 70% 50%)" stroke-width="4" stroke-linecap="round"/>`; }).join('')}<circle cx="${pts[0][0]}" cy="${pts[0][1]}" r="7" class="r-start"/><circle cx="${pts[pts.length-1][0]}" cy="${pts[pts.length-1][1]}" r="7" class="r-end"/></svg><p class="tiny muted">Color shows altitude: teal low, orange high. Max ${maxAlt.toLocaleString()} ft.</p>`; }
+  let apSvg=''; if(R.approach && R.approach.length>5){ const A=R.approach; const W=520,H=220; const t0=A[0][0], t1=0; const maxAgl=Math.max(...A.map(x=>x[1]),100);
+    const X=t=>(t-t0)/((t1-t0)||1)*(W-40)+30, Y=v=>H-24-(v/maxAgl)*(H-40);
+    const line=A.map((x,i)=>`${i?'L':'M'}${X(x[0]).toFixed(1)} ${Y(x[1]).toFixed(1)}`).join(' ');
+    const last=A.slice(-12); const avgVs=Math.round(last.reduce((s,x)=>s+x[3],0)/last.length); const ias=A[A.length-1][2];
+    apSvg=`<svg viewBox="0 0 ${W} ${H}" class="replay-ap" role="img" aria-label="Approach profile: height above ground over the last two minutes"><line x1="30" y1="${H-24}" x2="${W-10}" y2="${H-24}" class="ax"/><text x="30" y="${H-6}" class="axl">${A[0][0]} s</text><text x="${W-40}" y="${H-6}" class="axl">touchdown</text><text x="34" y="${Y(maxAgl)-4}" class="axl">${maxAgl} ft</text><path d="${line}" class="apl"/>${A.filter((_,i)=>i%6===0).map(x=>`<circle cx="${X(x[0]).toFixed(1)}" cy="${Y(x[1]).toFixed(1)}" r="3" class="${x[3]<-1000?'bad':x[3]<-700?'warn':'ok'}"><title>${x[1]} ft · ${x[2]} kt · ${x[3]} fpm</title></circle>`).join('')}</svg>
+      <p class="small">Final 12 seconds: average <b>${avgVs} fpm</b>, crossing at <b>${ias} kt</b>. ${R.td?`Touchdown <b>${R.td.fpm} fpm</b>, ${R.td.g} G.`:''} Dots turn orange past 700 fpm down and red past 1,000.</p>`; }
+  return `<section class="panel stack replay"><div><p class="label">Flight replay</p><h3>Your path and approach</h3></div><div class="replay-grid">${pathSvg?`<div>${pathSvg}</div>`:''}${apSvg?`<div>${apSvg}</div>`:''}</div></section>`;
+}
+const _lvResult = resultView;
+resultView = function(){ const h=_lvResult(); const r=replaySection(S.st); if(!r) return h; const i=h.indexOf('<section class="panel stack share-card">'); return i>0 ? h.slice(0,i)+r+h.slice(i) : h.replace('</main>', r+'</main>'); };
+const _lvCard = drawFlightCard;
+drawFlightCard = function(st){ const cv=_lvCard(st); const R=st.last&&st.last.replay; if(!R || !R.track || R.track.length<2) return cv;
+  const g=cv.getContext('2d'); const pts=replaySvgPath(R.track, 360, 150).map(p=>[p[0]+780, p[1]+440]);
+  g.save(); g.strokeStyle='rgba(255,255,255,.9)'; g.lineWidth=4; g.lineCap='round'; g.lineJoin='round'; g.setLineDash([2,8]); g.beginPath(); pts.forEach((p,i)=> i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1])); g.stroke(); g.setLineDash([]);
+  g.fillStyle='#43d17f'; g.beginPath(); g.arc(pts[0][0],pts[0][1],7,0,7); g.fill(); g.fillStyle='#ff9470'; g.beginPath(); g.arc(pts[pts.length-1][0],pts[pts.length-1][1],7,0,7); g.fill(); g.restore(); return cv; };
+
+/* ---------- add your aircraft straight from MSFS ---------- */
+function specGuess(sp){
+  if(!sp) return null; const T=sp.engineType, n=sp.engines||1, mg=sp.maxGrossLb||0;
+  let cls = T==='jet' ? (mg>60000?'airliner':mg>30000?'regional':'jet') : T==='turboprop' ? 'turbo' : sp.floats ? 'amph' : n>=2 ? 'twin' : (sp.retractable || sp.cruiseKt>150) ? 'hp' : 'ga';
+  const tpl=CLS_TEMPLATE[cls]; const useful=Math.max(0, mg - sp.emptyLb);
+  const pax = Math.max(1, Math.min(cls==='airliner'?220:19, Math.round((useful - sp.fuelGal*6.0*0.6 - 190)/200)));
+  const fuelLb = sp.fuelGal * (T==='piston'?6:6.7); const range = Math.round(Math.min(tpl.range*2, Math.max(150, fuelLb/(tpl.burn||100) * (sp.cruiseKt||tpl.cruise) * 0.8)));
+  return { cls, pax: isFinite(pax)?pax:tpl.pax, cruise: sp.cruiseKt||tpl.cruise, range, vapp: sp.vs0Kt ? Math.round(sp.vs0Kt*1.3) : null };
+}
+const _lvHangar = hangarView;
+hangarView = function(){ const h=_lvHangar(); setTimeout(()=>{ const L=loadedAircraft(); const g=specGuess(S.sim&&S.sim.spec); if(!g || !L.title || L.id) return; const set=(id,v)=>{ const el=document.getElementById(id); if(el && !el.value && v) el.value=v; };
+  const c=document.getElementById('byo-cls'); if(c && !c.dataset.touched){ c.value=g.cls; } set('byo-pax',g.pax); set('byo-cruise',g.cruise); set('byo-range',g.range); set('byo-vapp',g.vapp);
+  const n=document.querySelector('.byo .small.muted'); if(n && !n.dataset.spec){ n.dataset.spec='1'; n.insertAdjacentHTML('afterend', `<p class="notice small">Filled in from MSFS: ${esc(L.title)}. Check the numbers, then add it.</p>`); } },0); return h; };
+
+/* ---------- problem reports ---------- */
+function errLog(){ try{ return JSON.parse(localStorage.getItem('tw.errors')||'[]'); }catch(e){ return []; } }
+function logErr(msg){ try{ const a=errLog(); a.push({t:new Date().toISOString(), msg:String(msg).slice(0,400), view:S.view}); localStorage.setItem('tw.errors', JSON.stringify(a.slice(-30))); }catch(e){} }
+window.addEventListener('error', e=>logErr(`${e.message} @ ${(e.filename||'').split('/').pop()}:${e.lineno}`));
+window.addEventListener('unhandledrejection', e=>logErr(`Promise: ${e.reason && (e.reason.message||e.reason.code||e.reason)}`));
+function buildReport(note){ const st=S.st||{}; return JSON.stringify({ app:'Trade Winds', version:TW_VERSION, standalone:!!window.TW_STANDALONE, at:new Date().toISOString(), note,
+  sim:{state:S.simState, bridge:S.sim&&S.sim.version, connected:S.sim&&S.sim.connected, aircraft:S.sim&&S.sim.aircraft&&S.sim.aircraft.title},
+  career:{day:st.day, loc:st.loc, flights:st.flights, minutes:st.minutes, difficulty:st.difficulty, active:st.active?{title:st.active.job.title, ac:st.active.job.ac, from:st.active.job.from, to:st.active.job.to}:null},
+  errors:errLog(), screen:`${innerWidth}x${innerHeight}`, ua:navigator.userAgent }, null, 2); }
+const _lvHangar2 = hangarView;
+hangarView = function(){ return _lvHangar2().replace(/<\/main>\s*$/, `<section class="panel stack" style="max-width:760px"><h3>Report a problem</h3><p class="small muted">Something broke or felt wrong? Describe it and save a report. It includes the version, recent errors (${errLog().length}) and your sim status, but not your whole save.</p><textarea id="bug-note" placeholder="What happened? What did you expect?" style="min-height:90px"></textarea><div class="row"><button class="btn sm primary" data-act="bug-save">Save report</button><button class="btn sm" data-act="bug-copy">Copy report</button><span class="tiny muted">Version ${TW_VERSION}</span></div></section>${voiceSettingsHTML()}</main>`); };
+document.addEventListener('click', async e=>{
+  const b=e.target.closest('[data-act="bug-save"],[data-act="bug-copy"]'); if(!b) return; const note=(document.getElementById('bug-note')||{}).value||''; const rep=buildReport(note);
+  if(b.dataset.act==='bug-copy'){ try{ await navigator.clipboard.writeText(rep); toast('Report copied.'); }catch(_){ toast('Copy not allowed here. Use Save.'); } return; }
+  try{ const dl=window.claude && await claude.use('downloads'); if(dl){ await dl.save({filename:`TradeWinds-report-${Date.now()}.json`, data:rep}); toast('Report saved. Thanks!'); return; } }catch(err){ if(err&&err.code==='declined') return; }
+  try{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([rep],{type:'application/json'})); a.download='TradeWinds-report.json'; a.click(); }catch(_){}
+});
+
+/* ---------- better voices: prefer natural voices, let the player pick ---------- */
+function voicePref(role){ try{ return localStorage.getItem('tw.v.'+role)||''; }catch(e){ return ''; } }
+function pickVoice(female, slot){
+  const en=_voices.filter(v=>/^en/i.test(v.lang)); if(!en.length) return null;
+  const want = voicePref(slot===1 && !female ? 'atc' : female ? 'female' : 'male'); if(want){ const v=_voices.find(x=>x.name===want); if(v) return v; }
+  const nat = en.filter(v=>/natural|neural|online|premium|enhanced/i.test(v.name));
+  const isF = v=>/female|zira|aria|jenny|samantha|susan|hazel|libby|sonia|natasha|michelle|karen|moira|tessa|serena|emma|ava|ana/i.test(v.name);
+  const isM = v=>/(^|\W)(male|david|mark|guy|george|ryan|daniel|alex|fred|thomas|christopher|eric|james|william|brian|andrew)(\W|$)/i.test(v.name) && !/female/i.test(v.name);
+  const pool = (nat.length?nat:en).filter(v=> female?isF(v):isM(v)); const fall = en.filter(v=> female?isF(v):isM(v));
+  const list = pool.length?pool:fall.length?fall:en; return list[slot % list.length];
+}
+function voiceSettingsHTML(){
+  if(!window.speechSynthesis) return ''; loadVoices(); const en=_voices.filter(v=>/^en/i.test(v.lang));
+  const sel=(role,label)=>`<label class="field"><span>${label}</span><select data-voice-role="${role}"><option value="">Automatic</option>${en.map(v=>`<option ${voicePref(role)===v.name?'selected':''}>${esc(v.name)}</option>`).join('')}</select></label>`;
+  return `<section class="panel stack" style="max-width:760px"><h3>Voices</h3><p class="small muted">${en.length} English voices found on this computer. Voices marked "Natural" or "Online" sound the most human. Windows 11 users can add more in Settings → Time &amp; language → Speech.</p><div class="form-grid">${sel('female','Women (Mari, Vivienne…)')}${sel('male','Men (Abe, Dez…)')}${sel('atc','ATC and ground')}<label class="field"><span>Volume</span><input type="range" min="0.2" max="1" step="0.1" value="${voiceVol()}" data-voice-vol></label></div><div class="row"><button class="btn sm" data-act="voice-test">Test voices</button></div></section>`;
+}
+document.addEventListener('change', e=>{ const r=e.target.dataset && e.target.dataset.voiceRole; if(r){ try{ localStorage.setItem('tw.v.'+r, e.target.value); }catch(_){} } if(e.target.dataset && e.target.dataset.voiceVol!==undefined){ try{ localStorage.setItem('tw.vol', e.target.value); }catch(_){} } });
+document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="voice-test"]') || !window.speechSynthesis) return; loadVoices(); speechSynthesis.cancel();
+  [[pickVoice(true,0),`This is Mari. Flaps up, Rookie.`],[pickVoice(false,0),`Abe here. Nice and stable.`],[pickVoice(false,1),`Coral Wing three seven one, cleared for takeoff runway one zero.`]].forEach(([v,t])=>{ const u=new SpeechSynthesisUtterance(t); if(v) u.voice=v; u.volume=voiceVol(); speechSynthesis.speak(u); }); });
+
+/* ---------- real-world calendar: events happening around now ---------- */
+function easter(y){ const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1; return new Date(y,mo-1,da); }
+function realEvents(now=new Date()){
+  const y=now.getFullYear(); const D=(m,d)=>new Date(y,m-1,d); const ash=new Date(easter(y)); ash.setDate(ash.getDate()-46);
+  const ev=[
+    {n:`Trinidad Carnival`, ap:['TTPP'], from:new Date(ash.getTime()-10*864e5), to:ash},
+    {n:`St. Maarten Heineken Regatta season`, ap:['TNCM','TFFG'], from:D(2,25), to:D(3,10)},
+    {n:`St. Barths Bucket regatta season`, ap:['TFFJ'], from:D(3,10), to:D(3,25)},
+    {n:`Antigua Sailing Week season`, ap:['TAPA'], from:D(4,24), to:D(5,6)},
+    {n:`St. Maarten Carnival season`, ap:['TNCM'], from:D(4,15), to:D(5,3)},
+    {n:`Crop Over season in Barbados`, ap:['TBPB'], from:D(7,10), to:D(8,6)},
+    {n:`Emancipation festivals in the Virgin Islands`, ap:['TUPJ','TIST'], from:D(7,25), to:D(8,8)},
+    {n:`Holiday travel rush`, ap:['TNCM','TJSJ','TBPB','TAPA','MBPV','MYNN'], from:D(12,15), to:D(12,31)},
+    {n:`Junkanoo in the Bahamas`, ap:['MYNN'], from:D(12,24), to:D(12,31)},
+    {n:`New Year's travel`, ap:['TNCM','TJSJ','TBPB'], from:D(1,1), to:D(1,4)}];
+  const t=now.getTime(); return ev.filter(e=>t>=e.from.getTime() && t<=e.to.getTime()+864e5);
+}
+const _lvEnsure = ensureJobs;
+ensureJobs = function(st){ const before=st.jobsKey; _lvEnsure(st); if(st.jobsKey!==before || !st._rwChecked){ st._rwChecked=true; const evs=realEvents(); for(const j of st.jobs){ const e=evs.find(e=>e.ap.includes(j.to)); if(e && !j.realEvent){ j.realEvent=e.n; j.pay=Math.round(j.pay*1.2/10)*10; } } } };
+const _lvChips = chipsFor;
+chipsFor = function(st, job){ return _lvChips(st, job) + (job.realEvent?`<span class="chip warn" title="Happening around this time in the real Caribbean">🌍 ${esc(job.realEvent)} +20%</span>`:''); };
+let REAL_STORMS = [];
+async function loadRealStorms(){ if(!window.twNative || !twNative.storms) return; try{ const r=await twNative.storms(); REAL_STORMS = (r||[]).filter(s=>s.lat>8 && s.lat<30 && s.lon<-55 && s.lon>-90); if(REAL_STORMS.length && S.st) render(); }catch(_){} }
+setTimeout(loadRealStorms, 3000); setInterval(loadRealStorms, 30*60000);
+const _lvWeekly = weeklyPanel;
+weeklyPanel = function(st){ const evs=realEvents(); const extra = (evs.length||REAL_STORMS.length) ? `<div class="realnow"><p class="label">In the real Caribbean right now</p>${REAL_STORMS.map(s=>`<p class="small">🌀 <b>${esc(s.name)}</b> (${esc(s.classification||'storm')}) is active, per the US National Hurricane Center. Relief work is in demand.</p>`).join('')}${evs.map(e=>`<p class="small">🌍 <b>${esc(e.n)}</b>: flights to ${e.ap.join(', ')} pay 20% more.</p>`).join('')}</div>` : '';
+  return _lvWeekly(st).replace('</section>', extra+'</section>'); };

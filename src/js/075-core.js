@@ -1,0 +1,44 @@
+/* ================= 4. in-flight story moments: thoughts, phone calls, radio ================= */
+const WHO = { self:['Your thoughts',false,0.95,0.9], radio:['Radio',false,1.12,0.85], dez:['Phone · Dez',false,1.08,1], castillo:['Phone · Castillo',false,0.92,0.8], reyes:['Phone · Reyes',true,1,1], mari:['Phone · Mari',true,1,1.05], tico:['Phone · Unknown number',false,1.1,1.05], medina:['Phone · Medina',false,0.95,0.85], hartwell:['Hartwell',false,0.95,0.9] };
+const BEATS = {
+  CW1:[['climb','self',`You keep glancing back at the box. It's just a box. Probably nothing.`],['descent','dez',`Relax, rookie. Land normal, taxi normal, smile at the man. Easy.`]],
+  CR2:[['cruise','self',`Four hundred thousand dollars behind your seat. If anyone stops you, what do you even say?`],['descent','radio',`Nevis traffic, be advised, police vehicle on the apron.|Your mouth goes dry. It's a routine patrol. Probably.`]],
+  CR3:[['descent','radio',`Coral Wing, after landing, customs requests you park at the main apron.`],['final','dez',`Hangar first. Two minutes. Breathe.`]],
+  CR4:[['cruise','self',`Castillo hasn't stopped watching your hands on the yoke. You fly like your old instructor is in the right seat.`]],
+  CR5:[['climb','self',`Passing twenty thousand feet in a jet with a million dollars in the back. You wait for the fear. It doesn't come.`],['cruise','castillo',`How does she fly? Good. Get used to it. There's a lot more where that came from.`]],
+  CR6:[['cruise','self',`The boy's breathing is getting louder. Everyone in the back is staring at the back of your head.`]],
+  CR7:[['cruise','self',`Arnaud won't stop talking about his daughter. You turn the radio up.`],['descent','castillo',`Is my lawyer comfortable? Good. Make sure he gets where he's going.`]],
+  CR8:[['climb','radio',`Coast Guard six five zero four, San Juan, returning to base due to weather.|The only other aircraft out here just turned around.`],['cruise','castillo',`You're the only plane in the sky. That's why you're worth so much.`],['descent','self',`Rain hammering the windscreen, and you're grinning. When did that start?`]],
+  CR9:[['descent','self',`Routine run. You're already thinking about what to spend this one on.`]],
+  CR10:[['cruise','self',`Fourteen hundred pounds. A 737 freighter carries forty thousand. You do the math again.`],['descent',f=>f.informant?'reyes':'self',f=>f.informant?`Nice jet. Where's it going? Text me the tail number of every plane you see on that ramp.`:`A text from an unknown number: "We know who you are." You delete it, and then you check your mirrors all the way down.`]],
+  CRM:[{at:'cruise',who:'radio',text:`Traffic, two o'clock, same altitude, no transponder.|A dark jet is sliding in next to your wing.`,opts:[{t:'Climb and outrun them',reply:`You push the power up and climb. The other jet stays with you for a minute, then peels off toward the coast.`,power:2},{t:'Call Castillo',reply:`"Medinas," Castillo says. "Ignore them. Land and do your job."`}]}],
+  CR11:[['cruise','self',`Tico won't look at you. He rode with you through the storm. He wanted to be a pilot.`]],
+  CR12:[['cruise','castillo',`Dez knew the risks. Don't get sentimental. It's bad for business.`]],
+  CR13:[['climb','self',`Mari hasn't said a word since takeoff.`]],
+  CR14:[['climb','self',`Your first airliner. A hundred and fifty thousand pounds, and every one of them feels like yours.`],['cruise','hartwell',`I built that foundation to save a reef. Then Castillo found it. Now I can't remember the last time I went diving.`]],
+  CR15:[['cruise','self',`Eighteen tons a night. Your airline. You can't stop smiling.`],['descent','castillo',`Half, my friend. We'll talk when you land.`]],
+  CRB:[['cruise','self',`Castillo hasn't been this friendly in months.`], f=>{ const who=f.dezFree?'dez':f.mari?'mari':f.ticoRan?'tico':f.informant?'reyes':null; if(!who) return {at:'descent',who:'self',text:`Something feels wrong about this one. You can't say what.`};
+      const line={dez:`Rookie, listen. Castillo sold you to the Medinas. They're waiting on the cargo ramp. Park at the passenger terminal and walk out with the tourists.`,mari:`Don't park on the cargo ramp. Castillo sold you to the Medinas. Passenger terminal, now.`,tico:`It's Tico. You let me run, so I owe you one. Castillo sold you to the Medinas. They're on the cargo ramp.`,reyes:`Our wiretap just lit up. Castillo sold you to the Medinas. Stay off the cargo ramp.`}[who];
+      return {at:'descent',who,text:line,opts:[{t:'Park at the passenger terminal',reply:`You ask ground for a stand at the passenger terminal. Your hands are steady. They shouldn't be.`,flag:'warned'},{t:'Ignore it',reply:`You land where Castillo told you to.`}]}; }],
+  CR16:[['climb','self',`Four engines. Eighty tons. Two years ago you were scared of a box in a Cessna.`],['descent',f=>f.mari?'mari':'castillo',f=>f.mari?`The trucks are in place. Bring her home, partner.`:`I hear you're flying a 747 now. Don't forget who taught you.`]],
+  CRT:[['descent','self',`Everyone at that table is looking at the sky right now.`]],
+  CR17:[['cruise',f=>f.informant||f.ledgers?'reyes':'self',f=>f.informant||f.ledgers?`We're in position at Miami. Whatever you're planning, don't.`:`Castillo is pretending to sleep in the jump seat. One hour to Miami. One hour to decide.`]]
+};
+function beatsFor(a){ const f=flagsOf(S.st); return (BEATS[a.job.story]||[]).map(b=>{ if(typeof b==='function') b=b(f); if(Array.isArray(b)) b={at:b[0],who:typeof b[1]==='function'?b[1](f):b[1],text:typeof b[2]==='function'?b[2](f):b[2]}; return b; }); }
+function beatPhase(a){ const s=S.sim; if(!s||!s.motion||!s.position||s.motion.onGround) return null; const rec=s.recorder; if(!rec||!rec.takeoff) return null;
+  const from=AP[a.job.from], to=AP[a.job.local?a.job.from:a.job.to]; const here={lat:s.position.lat,lon:s.position.lon}; const total=Math.max(1,distNm(from,to)); const togo=distNm(here,to); const frac=1-togo/total; const since=(Date.now()-rec.takeoff.t)/60000; const agl=s.position.aglFt||0;
+  return { climb: agl>800 && since>0.8, cruise: frac>=0.3 || (total<25 && since>3), descent: (frac>=0.5 || since>6) && togo<Math.max(8,Math.min(40,total*0.35)), final: togo<4 && agl<1500 }; }
+const BEAT = {last:0};
+function speakBeat(b){ if(!(typeof voiceOn==='function' && voiceOn()) || !window.speechSynthesis) return; const w=WHO[b.who]||WHO.self; try{ const u=new SpeechSynthesisUtterance(String(b.text).split('|')[0].replace(/"/g,'')); const v=pickVoice(w[1], b.who==='castillo'?1:0); if(v) u.voice=v; u.rate=w[2]; u.pitch=w[3]; u.volume=voiceVol(); speechSynthesis.speak(u); }catch(_){} }
+function showBeat(a, b, idx){ const w=WHO[b.who]||WHO.self; document.querySelectorAll('.beat').forEach(x=>x.remove()); const d=document.createElement('div'); d.className='beat beat-'+b.who; d.setAttribute('role','alertdialog');
+  d.innerHTML=`<div class="bt-in"><p class="bt-k">${b.who==='self'?'':'<span class="bt-ring"></span>'}${esc(w[0])}</p><p class="bt-t">${(()=>{ const [say,nar]=String(b.text).split('|'); return (b.who==='self'?esc(say):`“${esc(say)}”`)+(nar?` <span class="bt-nar">${esc(nar)}</span>`:''); })()}</p>${b.opts?`<div class="bt-o">${b.opts.map((o,i)=>`<button class="btn ${i?'':'primary'} sm" data-act="beat-opt" data-i="${i}">${esc(o.t)}</button>`).join('')}</div>`:''}</div>`;
+  document.body.appendChild(d); try{ crackle && b.who==='radio' && crackle(0.2,0.2); }catch(_){}
+  const close=()=>{ d.classList.add('out'); setTimeout(()=>d.remove(),400); };
+  d.addEventListener('click', e=>{ const btn=e.target.closest('[data-act="beat-opt"]'); if(!btn){ if(!b.opts) close(); return; } const o=b.opts[Number(btn.dataset.i)]; const c=crime(); if(o.flag) c.flags[o.flag]=1; if(o.heat) crBump(c,'heat',o.heat); if(o.power) crBump(c,'power',o.power); a.beatPick=a.beatPick||{}; a.beatPick[idx]=Number(btn.dataset.i); save(); d.querySelector('.bt-o').outerHTML=`<p class="bt-r">${esc(o.reply||'')}</p>`; setTimeout(close, 5000); });
+  if(!b.opts) setTimeout(close, 11000); else setTimeout(()=>{ if(d.isConnected && d.querySelector('.bt-o')) close(); }, 60000);
+  if(a.cab && a.cab.log){ a.cab.log.unshift({t:Date.now(), who:w[0].replace(/^Phone · /,''), text:String(b.text).replace('|',' '), kind:'story'}); try{ VQ.lastT=Date.now(); }catch(_){} }
+  speakBeat(b); }
+(function(){ const _rs=renderSimBits; renderSimBits=function(){ _rs(); try{ const a=S.st&&S.st.active; if(!a||!a.started||a.job.kind!=='story'||!BEATS[a.job.story]||!simRelevant(a)) return; if(Date.now()-BEAT.last<40000) return;
+  const ph=beatPhase(a); if(!ph) return; a.beatsDone=a.beatsDone||{}; const list=beatsFor(a);
+  for(let i=0;i<list.length;i++){ if(a.beatsDone[i]) continue; const b=list[i]; if(!ph[b.at]) break; a.beatsDone[i]=1; BEAT.last=Date.now(); save(); showBeat(a,b,i); break; } }catch(_){} }; })();
+

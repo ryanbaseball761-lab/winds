@@ -1,0 +1,91 @@
+/* ===================== STARLING: the Vision Jet side story ===================== */
+CAST.vivienne = {n:`Vivienne Okafor-Lang`,role:`Founder of Saltwater sunscreen · owner of a Vision Jet`,col:'#c2603a',bio:`Grew up between Lagos and London, sold sunscreen out of a beach cooler, and now sells it in forty countries. Bought a jet before she finished learning to fly it. Calls it "the Starling."`};
+CAST.abe = {n:`Captain Theo "Abe" Abernathy`,role:`Jet instructor, retired airline captain`,col:'#5b6b7c',bio:`Thirty-one years flying for an airline, three for Cirrus as a factory instructor, now freelance. Texan, patient and unhurried, and he never leaves a crossword unfinished.`};
+
+const STARLING_TAIL = 'N50VL';
+
+STORY.push(
+ {id:'VJ1',arc:`Starling`,side:true,lend:true,fee:450,title:`The Starling`,chars:['vivienne','abe'],req:{after:'CW1'},from:'TNCM',to:'TAPA',ac:['SF50'],pax:1,cargo:40,cargoLabel:`sample cases`,time:'day',dep:660,wx:'trades',
+  brief:[`A white Cirrus Vision Jet with a copper stripe has been parked outside the FBO all week, and everyone on the ramp has an opinion about it. This morning its owner walks into the Coral Wing hangar. Vivienne Okafor-Lang founded Saltwater sunscreen, so her face is on half the bottles in the island's pharmacies.`,`"My insurance company wants an instructor with me until I've flown 25 more hours in the jet," she explains. "My instructor wants a second pilot doing the flying while he teaches. Mari says you're the one who doesn't show off."`,`Her instructor, Captain Theo "Abe" Abernathy, folds his crossword and shakes your hand. "It's a training flight, so I'm pilot in command. You're on the controls, and she watches how it should be done. Antigua and back for lunch. Don't touch anything orange."`],
+  teach:[`The Vision Jet's single engine takes a few seconds to spool up. Add power early and smoothly, and don't wait until you're slow on final to fix it.`,`There are no speed brakes. Start your descent early, about 3 nm per 1,000 ft, and plan to be slow and stable by 5 nm out.`,`The orange handle on the ceiling deploys the whole-airframe parachute (CAPS). Abe means it.`],
+  out:{good:`Abe fills in "1 across" while you taxi in, which you'll later learn is the highest compliment he gives. Vivienne is already texting Mari about "borrowing" you again.`,ok:`A tidy first jet flight. Abe makes two notes on his kneeboard and shows you neither.`,bad:`Abe takes the controls for the last 500 ft without a word. Over lunch he explains the landing to you on a napkin, very kindly.`},rep:{vivienne:8,abe:6}},
+ {id:'VJ2',arc:`Starling`,side:true,lend:true,fee:700,title:`Breakfast in Barbados`,chars:['vivienne','abe'],req:{after:'VJ1'},from:'TNCM',to:'TBPB',ac:['SF50'],pax:2,cargo:60,cargoLabel:`a trade-show booth in two cases`,time:'dawn',dep:375,wx:'calm',
+  brief:[`Vivienne has a 9 a.m. meeting in Bridgetown with the island's biggest hotel group, which wants Saltwater in every room. "If I arrive by ferry I'll look like I need the deal," she says. "If I arrive by jet, I'll look like I don't."`,`It's 360 nm, the longest flight you've made so far, and the first one in the flight levels. Abe hands you a fuel log. "Cruise at FL250 or above, and you write down fuel every 20 minutes. Jets make you lazy if you let them."`],
+  teach:[`Above 18,000 ft, set the altimeter to standard (29.92 inHg or 1013 hPa) on the climb, and back to local pressure on the way down.`,`At FL250 the Vision Jet burns roughly half what it burns down low, so long legs are flown high.`,`Barbados sits alone about 100 nm east of the island chain. On the approach the trades usually favour runway 09.`],
+  out:{good:`Vivienne walks into the meeting with ten minutes to spare and comes out with the contract. She orders mimosas for the ramp crew. Yours is orange juice, and you're flying anyway.`,ok:`On time, and the deal is signed. Abe says your fuel log "looks like an honest man wrote it."`,bad:`A rough descent leaves Vivienne's coffee on her blouse. She signs the deal in a borrowed hotel T-shirt and doesn't mention it again, though Abe does.`},rep:{vivienne:6,abe:4}},
+ {id:'VJ3',arc:`Starling`,side:true,lend:true,fee:450,title:`Canouan, Quietly`,chars:['vivienne','abe'],req:{after:'VJ2'},from:'TBPB',to:'TVSC',ac:['SF50'],pax:3,cargo:80,cargoLabel:`luggage with no names on it`,time:'day',dep:690,wx:'showers',scen:'vip_change',
+  brief:[`Vivienne has two guests for the hop to Canouan. One is a famous chef with three restaurants and a television show. The other wears sunglasses indoors and won't give a name. "No photos, no tweets, no telling Dez," Vivienne says. "Especially no telling Dez."`,`It's a short run down to the Grenadines, past Mustique, where the yachts are bigger than most of the houses. Showers are sliding through on the trades this afternoon.`],
+  teach:[`Canouan's runway has rising ground on one side and the sea on the other. Expect a gusty, rolling crosswind on short final when the trades pick up.`,`On a short leg, you'll spend more time climbing and descending than cruising. Plan the top of descent before you level off.`],
+  out:{good:`The chef sends a box of pastries to the cockpit before the doors are even closed. The guest in sunglasses quietly asks whether you'd fly for a film shoot next month.`,ok:`Smooth enough. The guests disappear into a golf cart and a cloud of resort staff before the engine has spooled down.`,bad:`A bouncy approach through a shower. The chef turns a delicate shade of green, and Vivienne promises him a ferry next time.`},rep:{vivienne:5,abe:3}},
+ {id:'VJ4',arc:`Starling`,side:true,lend:true,fee:650,title:`Ahead of the Wave`,chars:['abe','vivienne'],req:{after:'VJ3'},from:'TVSC',to:'TNCM',ac:['SF50'],pax:1,cargo:30,cargoLabel:`Abe's flight bag and crossword books`,time:'day',dep:600,wx:'wave',
+  brief:[`A tropical wave is moving up the island chain, bringing low cloud, heavy rain and gusts. Vivienne is staying on Canouan for two more days, and the jet needs to be home in St. Martin before the weather closes in.`,`So it's just you and Abe. "Real clouds today," he says, unfolding an approach chart. "We file IFR, climb above it, and shoot the approach at home. Hand-fly it to the minimums. I want to see your scan."`],
+  teach:[`File IFR, and brief the approach before you descend: the minimums, the missed approach, and what you'll do if you don't see the runway.`,`In heavy rain, cross-check airspeed against groundspeed and keep your hands off the trim on short final. Fly attitude plus power.`,`If you're not stable by 1,000 ft above the runway (on speed, on glidepath, configured), go around. Abe will be happier, not angrier.`],
+  out:{good:`You break out of the cloud at 900 ft with the runway lights right in front of you. Abe nods once and writes "IFR: yes" on his crossword.`,ok:`You get in, even if the glideslope wandered a little in the gusts. Abe makes you brief the missed approach again over dinner.`,bad:`A wobbly approach that Abe nearly calls a go-around. On the ramp he says, "The airplane would have done better on autopilot. Next time, so will you."`},rep:{abe:8,vivienne:2}},
+ {id:'VJ5',arc:`Starling`,side:true,lend:true,fee:400,title:`The Night Run`,chars:['vivienne','abe'],req:{after:'VJ4'},from:'TNCM',to:'TJSJ',ac:['SF50'],pax:1,cargo:25,cargoLabel:`a transplant cooler marked HUMAN ORGAN FOR TRANSPLANT`,time:'night',dep:1290,wx:'trades',
+  brief:[`Vivienne calls at 9 p.m. A kidney has become available for a patient in San Juan. The hospital's usual charter is stuck in Miami, and the transplant team has about six hours. "The Starling's yours," she says. "Don't send me an invoice."`,`A transplant coordinator named Paloma climbs aboard with the cooler and buckles it into the seat beside her. Abe is already doing the walkaround with a flashlight. "Nobody rushes tonight," he says. "Fast is smooth."`],
+  teach:[`At night, follow the published departure and stay on instruments in the climb. There's no horizon over open water in the dark.`,`San Juan is a busy airport with airline traffic. Listen carefully, read back clearances exactly, and expect vectors for the ILS.`,`A "Lifeguard" (MEDEVAC) callsign gets you priority handling from ATC. Use it only when the flight really is medical.`],
+  out:{good:`An ambulance meets you on the ramp with its lights on. Paloma texts Vivienne a week later: the transplant worked, and the patient is home. Vivienne forwards it to you without adding a word.`,ok:`The cooler is in the ambulance 40 minutes after takeoff. Paloma squeezes your shoulder on her way down the steps.`,bad:`A firm landing jolts the cabin, but the cooler and Paloma are fine. The surgery goes ahead on time. Abe says it's the right kind of night to forgive yourself.`},rep:{vivienne:10,abe:5},reward:{bonus:500,note:`The hospital's foundation sends a $500 thank-you, though Vivienne said not to invoice.`}},
+ {id:'VJ6',arc:`Starling`,side:true,lend:true,fee:800,title:`Thirty-One Thousand Feet`,chars:['vivienne','abe'],req:{after:'VJ5'},from:'TJSJ',to:'MBPV',ac:['SF50'],pax:3,cargo:60,cargoLabel:`marketing samples`,time:'day',dep:630,wx:'trades',scen:'pressurization',
+  brief:[`Saltwater is opening its first shop in Turks and Caicos, and Vivienne is bringing her two marketing leads to Providenciales. It's the longest leg yet, 400-odd nm up the island chain, and Abe wants it flown at the Vision Jet's ceiling.`,`"Up at FL310 the air is thin and the margins are thinner," he says, tapping the pressurization page. "Everything is fine until it isn't. Know where the masks are, and know where you're going if you have to come down fast."`],
+  teach:[`Above FL250, you have only a few minutes of useful consciousness if the cabin loses pressure. Masks on first, then think.`,`An emergency descent in the Vision Jet: power to idle, nose down, and accept speeds near the top of the white arc. Turn off the airway first if ATC hasn't cleared you down.`,`Grand Turk, Puerto Plata and the Dominican coast are all along the route if you need a diversion.`],
+  out:{good:`Abe watches the whole flight with his arms folded and his crossword untouched. After you shut down he says, "That's the flight I'd want my daughter on." Vivienne asks him to repeat it, so she can quote him.`,ok:`You arrive safely, with your ears popping and your pulse still settling. The marketing leads say it was "the most exciting commute of my life."`,bad:`It's a messy recovery, but everyone walks off the airplane fine. Abe spends the evening going through the emergency checklist with you twice, then a third time.`},rep:{vivienne:5,abe:8}},
+ {id:'VJ7',arc:`Starling`,side:true,lend:true,fee:750,title:`Palm Beach Season`,chars:['vivienne','abe'],req:{after:'VJ6'},from:'MBPV',to:'KPBI',ac:['SF50'],pax:2,cargo:60,cargoLabel:`two suitcases and a hatbox`,time:'day',dep:600,wx:'north',scen:'runway_closed',
+  brief:[`Vivienne has a secret. She's flying to Palm Beach to look at a Citation CJ4. "Bigger, faster, two engines, and room for the team," she says. "Don't tell the Starling."`,`This is your first trip into the United States. You'll clear customs at Palm Beach, fly in airspace full of other business jets, and talk to some of the fastest controllers you've heard. A cold front's tail is bringing a northerly wind to Florida.`],
+  teach:[`Arriving from abroad, you have to file an eAPIS passenger manifest in advance and land at an airport of entry. Palm Beach is one.`,`Palm Beach in winter is packed with business jets. Expect speed assignments ("maintain 170 knots to the marker"), and be ready to hold.`,`With a north wind, expect a crosswind on the east–west runways, or a change of runway in use. Brief both options.`],
+  out:{good:`The CJ4's broker watches you land and asks who taught you. Vivienne answers before Abe can: "Both of us."`,ok:`Customs is quick and the hotel is lovely. Vivienne spends dinner reading the CJ4 spec sheet out loud.`,bad:`A long wait for the runway, then a rushed approach. Vivienne arrives late to meet the broker and gets a worse price. She doesn't blame you, out loud.`},rep:{vivienne:6,abe:4}},
+ {id:'VJ8',arc:`Starling`,side:true,lend:true,fee:1500,title:`Starling II`,chars:['vivienne','abe'],req:{after:'VJ7'},from:'KPBI',to:'TNCM',ac:['CJ4'],pax:4,cargo:120,cargoLabel:`the team, their bags, and a framed photo of the first Starling`,time:'day',dep:540,wx:'trades',
+  brief:[`Vivienne bought it. The CJ4 has the same copper stripe and a new name painted by the door: Starling II. The original Vision Jet is staying in Florida for a new owner, and Vivienne cried a little when she signed the papers.`,`Abe has done the CJ4 type training with you on the ground all week. Today you're bringing the new jet home: 1,075 nm, two engines, VNAV and the flight levels, with Vivienne's whole team aboard. "Last flight I teach you on," Abe says. "After this, you're the one they call."`],
+  teach:[`The CJ4's FMS will fly the whole profile, including the VNAV descent, if you build the route properly. Check every waypoint and constraint before you push the throttles up.`,`Two engines means an engine failure after V1 is a "continue" decision. Brief V1, Vr and V2 before every takeoff, out loud.`,`Unlike the Vision Jet, the CJ4 has speed brakes. Use them if the descent gets away from you, and stow them before you put the flaps out.`],
+  out:{good:`The whole Coral Wing ramp turns out to watch Starling II taxi in. Abe hands you the finished crossword: every answer filled in, plus "PILOT" written across the margin. Vivienne gives you a permanent seat on every Starling trip.`,ok:`A long flight, flown well. Vivienne's team gives you a round of applause on the ramp, and Abe gives you his card.`,bad:`You get home, though the CJ4 asked more of you than you had to give. Abe stays for one more week of lessons, free of charge. "Nobody's done learning," he says.`},rep:{vivienne:10,abe:10},reward:{bonus:2500,note:`Vivienne pays a $2,500 thank-you bonus. Starling trips in the CJ4 now appear on your job board too.`}}
+);
+
+/* Aircraft lent by the owner: no rating needed, but you need it in your MSFS hangar and a long-enough runway. */
+function storyAircraft(st, m){ return m.ac.filter(k=>(m.lend ? !!st.hangar[k] : canFly(st,k)) && apOk(st,m.to,k) && apOk(st,m.from,k)); }
+
+const _starlingStoryJob = storyJob;
+storyJob = function(st, m, acId){
+  const job = _starlingStoryJob(st, m, acId);
+  if(m.lend){ job.lend = true; job.pay = m.fee || job.pay; job.tail = acId==='CJ4'?'N52VL':STARLING_TAIL; }
+  return job;
+};
+
+/* Repeatable owner trips once you've met Vivienne */
+const STARLING_DEST = ['TAPA','TBPB','TVSC','TKPK','TKPN','TQPF','TFFR','TFFF','TLPL','TGPY','TIST','TISX','TUPJ','TJSJ','MDPC','MDLR','MBPV','MYNN','MYEF','MWCR','TNCA','TNCC','TNCB','KPBI','KFLL','KEYW'];
+const STARLING_TRIPS = [
+  {t:`Vivienne's Lunch Meeting`,p:(c)=>`Vivienne has a lunch meeting in ${c.to.isl} with a distributor who "only believes in people who show up in person." She'll work on her laptop in the back the whole way.`},
+  {t:`Saltwater Pop-Up`,p:(c)=>`Saltwater is running a beach pop-up in ${c.to.isl} this weekend. Vivienne is bringing two staff and a stack of sample cases.`},
+  {t:`The Starling Needs a Run`,p:(c)=>`Vivienne is grounded by meetings this week, and a jet that sits still gets grumpy. She asks you to take the Starling to ${c.to.isl} and back to keep it, and you, current. Abe says it counts as homework.`},
+  {t:`Sunset Dinner Run`,p:(c)=>`Vivienne and a guest have a dinner reservation in ${c.to.isl}. "Get us there before the sun goes down and I'll owe you dessert."`},
+  {t:`Investor Shuttle`,p:(c)=>`Two investors want to see Saltwater's factory partner in ${c.to.isl}. Vivienne wants them to arrive impressed. "Smooth as silk," she says. "They're paying attention to everything."`},
+  {t:`Abe's Proficiency Check`,p:(c)=>`Abe wants to see whether you've kept your jet skills sharp. He'll ride along to ${c.to.isl} with his crossword and a red pen, and he isn't planning to use the crossword.`}
+];
+function starlingTrip(st){
+  if(!st.story.done.VJ1 || st.active) return null;
+  const ac = (st.story.done.VJ8 && st.hangar.CJ4 && Math.random()<0.45) ? 'CJ4' : 'SF50';
+  if(!st.hangar[ac] || !apOk(st, st.loc, ac)) return null;
+  const opts = STARLING_DEST.filter(k=>k!==st.loc && AP[k] && apOk(st,k,ac)).filter(k=>{ const d=distNm(AP[st.loc],AP[k]); return d>=60 && d<=Math.min(AC[ac].range*0.75, 850); });
+  if(!opts.length) return null;
+  const to = pick(opts); const tr = pick(STARLING_TRIPS);
+  const ctx = {from:AP[st.loc], to:AP[to]};
+  let dep = Math.round((st.clock + ri(40,180))/5)*5;
+  const job = { id:uid(), kind:'gen', arch:'starling', label:ac==='CJ4'?'Starling II owner trip':'Starling owner trip', cat:'pax', from:st.loc, to, local:false, tourNm:0, ac, pax:ri(1, ac==='CJ4'?5:3), cargo:ri(20,90), dep, wx:genWx(st,to,null,dep), lend:true, vip:true, tail:ac==='CJ4'?'N52VL':STARLING_TAIL,
+    title:tr.t, client:CAST.vivienne.n, paras:[tr.p(ctx), `${ac==='CJ4'?'Starling II':'The Starling'} belongs to Vivienne, so there are no fuel or maintenance bills for you. She pays a flat pilot fee.`] };
+  if(Math.random()<0.06){ const sc = scenFor(job); if(sc) job.scen = sc; }
+  const p = plan(job); if(!p.range) return null;
+  job.pay = Math.round((250 + p.dist*(ac==='CJ4'?1.6:1.2))/10)*10; job.est = p.est;
+  return job;
+}
+const _starlingEnsure = ensureJobs;
+ensureJobs = function(st){
+  const before = st.jobsKey; _starlingEnsure(st);
+  if(st.jobsKey!==before || !st._starlingChecked){ st._starlingChecked = true;
+    if(!st.jobs.some(j=>j.arch==='starling') && Math.random()<0.8){ const j = starlingTrip(st); if(j) st.jobs.unshift(j); } }
+};
+
+/* Relationship bump for owner trips */
+const _starlingAfter = afterFlight;
+afterFlight = function(st, job, f, res, out){
+  const r = _starlingAfter(st, job, f, res, out);
+  if(job.arch==='starling' && !res.crash){ st.rep.vivienne = clamp((st.rep.vivienne||10) + ({A:3,B:2,C:1,D:0,F:-2}[res.grade]||0), 0, 100); if(res.grade==='A' || res.grade==='B') st.rep.abe = clamp((st.rep.abe||10)+1,0,100); }
+  return r;
+};
