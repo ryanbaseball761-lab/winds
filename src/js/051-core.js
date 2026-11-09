@@ -82,7 +82,7 @@ renderSimBits = function(){ _tfSim(); try{ autoClock(); }catch(_){} };
 const _tfInflight = inflightView;
 inflightView = function(){ let h=_tfInflight(); const a=S.st&&S.st.active; if(!a) return h; const rec=S.sim&&S.sim.recorder; const airborne = S.simState==='live' && ((S.sim.motion&&!S.sim.motion.onGround) || (rec && rec.takeoff && simRecFor(a)));
   if(airborne) return h; return h.replace(/(<main class="wrap[^>]*>[\s\S]*?<\/section>)/, m=>m+`<section class="panel stack preflight" id="preflight">${preflightHTML(a.job)}</section>`); };
-renderPreflight = function(){ const el=document.getElementById('preflight'); const a=S.st&&S.st.active; if(el && a) el.innerHTML=preflightHTML(a.job); };
+
 
 /* settings */
 const _tfHangar = hangarView;

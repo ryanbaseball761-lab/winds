@@ -74,11 +74,7 @@ inflightView = function(){ const a=S.st.active; let h=_orInflight(); if(a.job.sc
   else if(a.job.scen) h=h.replace('<section class="panel stack if-live"', `<div class="notice small">📩 Sealed orders aboard. They open automatically ${TRIG_LABEL[SCEN_TRIGGER[a.job.scen]||'mid']}.</div><section class="panel stack if-live"`); return h; };
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="orders-ok"]')){ S.ordersPop=false; S.keepScroll=true; render(); } });
 /* flights with sealed orders log themselves too, graded on what you actually did */
-function autoReady(a){
-  const rec = simRecFor(a); if(!rec || !rec.touchdown) return null;
-  const j=a.job; if(j.kind==='check' || j.request || (j.bonus && !j.bonus.auto)) return null;
-  if(j.scen && !a.opened) return null; return rec;
-}
+var autoReady; /* defined in full below (060-core.js) */
 const _orApply = applyResult;
 applyResult = function(st, job, f, res){
   const a=st.active; if(job.scen && f.auto && !f.scen && a && a.scenPlan){ const P=a.scenPlan; const landed=f.landedAt;

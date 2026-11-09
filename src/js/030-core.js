@@ -48,16 +48,7 @@ async function savePLN(job){
   try{ const dl=window.claude && await claude.use('downloads'); if(dl){ await dl.save({filename:name+'.txt', data:text}); toast('Saved as .pln.txt (the browser only allows text files). Rename it to .pln, then in MSFS: World Map → Load.'); return; } }catch(err){ if(err && err.code==='declined') return; }
   try{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'application/xml'})); a.download=name; a.click(); }catch(_){ toast('Saving isn\'t available here.'); }
 }
-async function loadIntoSim(job){
-  if(!S.mcp){ toast('MSFS isn\'t connected.'); return; } const p=plan(job);
-  const fuelGal = Math.ceil(Math.max(p.gal*1.3, p.gal+5)); const payloadLb = Math.max(0, p.payload - 170);
-  S.loading=true; renderPreflight();
-  try{ const r=await S.mcp.callTool(SIM_SERVER,'load_aircraft',{fuelGal, payloadLb},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} }
-    if(o && o.ok){ toast(`Loaded: ${o.fuel!=null?o.fuel+' gal of fuel':'fuel unchanged'}, ${o.payload!=null?o.payload+' lb of passengers and cargo':'payload unchanged'}.${o.notes&&o.notes.length?' '+o.notes[0]:''}`); }
-    else toast(o && o.error ? `Couldn't load: ${o.error}` : `Couldn't load the plane. Update the MSFS Bridge to v1.3.`);
-  }catch(e){ toast(e && (e.code==='not_in_manifest'||e.code==='tool_not_found'||/unknown|not found/i.test(e.message||'')) ? 'Your MSFS Bridge is older than v1.3. Update it to load the plane automatically.' : 'Couldn\'t reach MSFS to load the plane.'); }
-  S.loading=false; setTimeout(()=>simPoll(true), 800); renderPreflight();
-}
+var loadIntoSim; /* defined in full below (061-core.js) */
 function preflightHTML(job){
   const C=preflightChecks(job); const p=plan(job); const allOk=C.every(c=>c.ok); const live=S.simState==='live';
   return `<div class="row between"><div><p class="label">Before you start</p><h3>Pre-flight sim check ${allOk?'<span class="chip good">All set</span>':''}</h3></div><button class="btn sm ghost" data-act="pf-recheck">Check again</button></div>
@@ -65,7 +56,7 @@ function preflightHTML(job){
     <div class="row">${live?`<button class="btn sm primary" data-act="pf-load" ${S.loading?'disabled':''}>${S.loading?'Loading…':`Load ${Math.ceil(Math.max(p.gal*1.3, p.gal+5))} gal + ${Math.max(0,p.payload-170)} lb into MSFS`}</button>`:''}<button class="btn sm" data-act="pf-pln">Download MSFS flight plan (.pln)</button></div>
     <p class="tiny muted">Cruise altitude in the plan: ${cruiseAltFor(job).toLocaleString()} ft. Loading works with most default aircraft; some add-ons manage fuel and weights in their own tablet.</p>`;
 }
-function renderPreflight(){ const el=document.getElementById('preflight'); const a=S.st&&S.st.active; if(el && a) el.innerHTML=preflightHTML(a.job); }
+var renderPreflight; /* defined in full below (052-core.js) */
 const _pfFlight = flightView;
 flightView = function(){ const h=_pfFlight(); const a=S.st&&S.st.active; if(!a || a.started || S.debrief || S.showResult) return h;
   return h.replace(/(<\/section>)/, `$1<section class="panel stack preflight" id="preflight">${preflightHTML(a.job)}</section>`); };

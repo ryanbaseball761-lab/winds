@@ -9,5 +9,5 @@ const _clrKind = jobKind;
 jobKind = function(job){ const k=_clrKind(job); if(job.kind==='story'){ const m=STORY.find(x=>x.id===job.story); if(m) k.c=arcColor(m.arc); } return k; };
 const _clrHero = chapterHero;
 chapterHero = function(job){ const h=_clrHero(job); const m=STORY.find(x=>x.id===job.story); return m ? h.replace(/style="--arc:[^"]*"/, `style="--arc:${arcColor(m.arc)}"`) : h; };
-const _clrCamp = campaignCard;
-campaignCard = function(st){ const h=_clrCamp(st); const t=tpl(h); const mn=t.content.querySelector('.main-next'); if(mn){ const k=(mn.querySelector('.mn-kicker')||{}).textContent||''; const arc=Object.keys(ARC_COLORS).find(a=>k.endsWith(a)); if(arc) mn.style.setProperty('--arc', arcColor(arc)); } return t.innerHTML; };
+
+

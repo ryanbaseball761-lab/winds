@@ -1,6 +1,6 @@
 /* ===================== RANDOM JOB ARCHETYPES ===================== */
 const pick = a => a[Math.floor(Math.random()*a.length)];
-const person = () => `${pick(NAMES.first)} ${pick(NAMES.last)}`;
+
 const ARCH = [
  {id:'honeymoon',label:`Honeymoon charter`,kind:'pax',w:6,cls:['ga','hp','turbo','twin','amph','bush'],need:'PPL',pax:[2,2],cargo:[40,80],
   story:c=>{const a=pick(NAMES.first),b=pick(NAMES.first),l=pick(NAMES.last),h=pick(NAMES.home);return{title:`Honeymoon to ${c.to.isl}`,client:`${a} & ${b} ${l}`,paras:[`${a} and ${b} ${l} from ${h} got married three days ago in a barefoot ceremony on ${c.from.isl}. The second half of the honeymoon is a villa on ${c.to.isl}, and they've heard the view from a small airplane beats any ferry.`,`They've asked for "the scenic way, if it doesn't cost extra." ${b} would like the flight to be smooth. ${a} would like a low pass over a beach, which you'll politely decline at anything under 1,000 ft.`]}}},

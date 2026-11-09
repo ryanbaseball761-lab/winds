@@ -76,7 +76,7 @@ const CABIN_LINES = {
   cargoTo:[`Dez on the radio: "Wheels up. Don't break my eggs." Even when there are no eggs.`,`Dispatch: "Copy your departure. Cargo's insured, but fly like it isn't."`],
   cargoTd:[`Dispatch: "Nice arrival. Ground crew is heading out to unload."`,`Dez: "Cargo's in one piece? Good. Mari wants pictures."`]
 };
-function cabinPick(k, job){ const a=CABIN_LINES[k]; return pick(a).replace('{isl}', AP[job.to]?AP[job.to].isl:'the island'); }
+
 function cabinTick(){
   const st=S.st; const a=st && st.active; const s=S.sim; if(!a || !s || S.simState!=='live' || !s.motion) return;
   const rec = simRecFor(a); if(!rec) return;
@@ -96,14 +96,7 @@ function cabinTick(){
   job.comfort = Math.round(C.comfort);
   try{ save(); }catch(e){}
 }
-function cabinInner(){
-  const a=S.st && S.st.active; if(!a) return '';
-  const C=a.cab; const pax=a.job.pax>0; const live=S.simState==='live';
-  const meter = pax ? `<div class="row between small"><span>Passenger comfort</span><b class="mono">${C?Math.round(C.comfort):100}/100</b></div><div class="meter ${C&&C.comfort<50?'bad':C&&C.comfort<80?'warn':''}"><i style="width:${C?C.comfort:100}%"></i></div>` : '';
-  const feed = C && C.log.length ? `<ol class="feed">${C.log.map(m=>`<li><span class="who">${esc(m.who)}</span><span>${esc(m.text)}</span><time class="mono">${new Date(m.t).toTimeString().slice(0,5)}</time></li>`).join('')}</ol>`
-    : `<p class="small muted">${live ? 'Waiting for your first move. Passengers and ATC react here as you taxi, take off, hit turbulence and land.' : 'Connect the MSFS Bridge and the cabin comes alive: passengers and ATC react to your real takeoff, turbulence, descent and touchdown.'}</p>`;
-  return `<div class="row between"><h3>Cabin &amp; radio</h3><span class="chip ${live?'sea':''}">${live?'● Live':'Offline'}</span></div>${meter}${feed}${pax?`<p class="tiny muted">Smooth flying keeps passengers happy. 90+ comfort earns a bonus tip.</p>`:''}`;
-}
+
 function cabinBlock(){ return S.st && S.st.active ? `<section class="panel stack cabin-host">${cabinInner()}</section>` : ''; }
 const _shellCockpit = cockpitView;
 cockpitView = function(){ const h=_shellCockpit(); return h.replace(/<\/main>\s*$/, cabinBlock()+'</main>'); };

@@ -14,29 +14,7 @@ function chapterAction(st, m, availSet, small){
       if(cr.ok) btns.push(`<button class="btn action ${sz}" data-act="nav" data-v="pilot">Take the ${esc(RATINGS[r].n)} checkride</button>`); }
     return btns.join(' '); }
   return ''; }
-campaignCard = function(st){
-  const availSet = new Set(storyAvailable(st).map(m=>m.id)); const MC = mainChapters(); const doneMain = MC.filter(m=>st.story.done[m.id]).length;
-  const avail = MC.filter(m=>!st.story.done[m.id] && chapterStatus(st,m,availSet).k!=='locked');
-  const next = avail[0] || MC.find(m=>!st.story.done[m.id]);
-  let main = '';
-  if(next){ const s=chapterStatus(st,next,availSet); const arcCh=STORY.filter(x=>x.arc===next.arc); const art = (()=>{ try{ return islandArt(next.local?next.from+'L':next.to, next.dep, 1200, 220, next.ac[0]); }catch(_){ return ''; } })();
-    main = `<div class="main-next"><div class="mn-art" aria-hidden="true">${art}</div><div class="mn-in">
-      <p class="mn-kicker">Main story · Chapter ${MC.indexOf(next)+1} of ${MC.length} · ${esc(next.arc)}</p>
-      <h3>${esc(next.title)}</h3>
-      <p class="mn-teaser">${s.k==='locked'?'':esc(((next.brief||[])[0]||'').split(/(?<=[.!?])\s/).slice(0,2).join(' '))}</p>
-      <p class="small mn-status">${statusLine(st,s,next)}</p>
-      <div class="row" style="margin-top:4px">${chapterAction(st,next,availSet,false)}${avail.length>1?`<span class="tiny muted">${avail.length-1} more main chapter${avail.length>2?'s':''} open on the story map</span>`:''}</div>
-    </div></div>`; }
-  else main = `<div class="main-next done"><div class="mn-in"><p class="mn-kicker">Main story</p><h3>Every main chapter flown</h3><p class="small">The side stories are still out there.</p></div></div>`;
-  const sides = arcList().filter(a=>!MAIN_ORDER.includes(a)).map(a=>arcState(st,a,availSet)).filter(a=>a.status.k!=='complete' && (a.done>0 || ['ready','travel','aircraft'].includes(a.status.k)));
-  const rank={ready:0,travel:1,aircraft:2,locked:3}; sides.sort((a,b)=>rank[a.status.k]-rank[b.status.k] || a.meta.n-b.meta.n);
-  const sideRows = sides.slice(0,4).map(a=>`<div class="side-row" style="--arc:${a.meta.col}"><span class="sr-dot"></span><div style="min-width:0"><b>${esc(a.arc)}</b> <span class="tiny muted">${a.done}/${a.total}</span><p class="small">Chapter ${a.ch.indexOf(a.next)+1}: ${a.status.k==='locked'&&a.done===0?'???':esc(a.next.title)}${a.status.k==='travel'?` <span class="tiny muted">· starts at ${esc(a.status.at)}</span>`:''}</p></div><div>${chapterAction(st,a.next,availSet,true)}</div></div>`).join('');
-  return `<section class="panel campaign fade">
-    <div class="row between" style="align-items:flex-end"><div><p class="label">Your story</p><h2 style="font-size:20px">Main story: ${doneMain} of ${MC.length} chapters</h2></div><button class="btn sm ghost" data-act="nav" data-v="story">Story map →</button></div>
-    <div class="meter big" style="margin:10px 0 14px"><i style="width:${Math.round(doneMain/Math.max(1,MC.length)*100)}%"></i></div>
-    ${main}
-    ${sideRows?`<div class="side-list"><p class="label" style="margin:14px 0 6px">Side stories</p>${sideRows}</div>`:''}
-  </section>`; };
+
 /* deadhead to the start airport and open the chapter in one tap */
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="story-go"]'); if(!b||!S.st) return; e.stopImmediatePropagation(); const st=S.st; const m=STORY.find(x=>x.id===b.dataset.id); if(!m || st.active) return;
   const to=m.from; if(st.loc!==to){ const d=deadheadCost(st,to); if(st.cash<d.cost){ toast(`You need ${money(d.cost)} for the ticket to ${to}.`); return; } txn(st,-d.cost,'Travel','Deadhead to '+to); st.duty+=d.min; st.clock+=d.min; st.loc=to; st.visited[to]=true; st.jobsKey=''; addJournal(st, `Deadheaded to ${AP[to].isl}`, `Rode in the back of an airliner to ${AP[to].n} for "${m.title}".`, [], 'travel'); }
@@ -50,16 +28,8 @@ resultView = function(){ let h=_clResult(); const L=S.st.last; if(L && L.job && 
     h=h.replace('<div class="grid-2">', `<section class="panel signoff"><div><p class="label">Didn't pass this time</p><h3>Retest tomorrow, or keep the story moving</h3><p class="small muted">The examiner can sign you off now so the next chapters open. You can still retake the checkride any time for the practice.</p></div><button class="btn primary" data-act="signoff" data-r="${L.job.rating}">Sign me off and continue</button></section><div class="grid-2">`); }
   return h; };
 /* story map: main story first, side stories under their own heading; travel buttons start the chapter */
-const _clStory = storyView;
-storyView = function(){ let h=_clStory(); const t=document.createElement('template'); t.innerHTML=h; const grid=t.content.querySelector('.arc-grid'); if(!grid) return h;
-  const cards=[...grid.children]; const main=[], side=[]; cards.forEach(c=>{ const name=(c.querySelector('h3')||{}).textContent||''; (MAIN_ORDER.includes(name)?main:side).push([name,c]); });
-  main.sort((a,b)=>MAIN_ORDER.indexOf(a[0])-MAIN_ORDER.indexOf(b[0]));
-  const g1=document.createElement('div'); g1.className='arc-grid'; main.forEach(x=>g1.appendChild(x[1])); const g2=document.createElement('div'); g2.className='arc-grid side'; side.forEach(x=>g2.appendChild(x[1]));
-  const h1=document.createElement('div'); h1.className='section-title'; h1.innerHTML='<h2>Main story</h2><span class="small muted">Play these in order. This is the heart of the career.</span>';
-  const h2=document.createElement('div'); h2.className='section-title'; h2.innerHTML='<h2>Side stories</h2><span class="small muted">Optional storylines you can fly any time they open</span>';
-  grid.replaceWith(h1, g1, h2, g2);
-  t.content.querySelectorAll('li.ch.travel').forEach(li=>{ const title=(li.querySelector('.ch-t')||{}).textContent; const m=STORY.find(x=>x.title===title); const btn=li.querySelector('[data-act="deadhead"]'); if(m && btn){ btn.dataset.act='story-go'; btn.dataset.id=m.id; btn.classList.add('action'); btn.textContent = btn.textContent.replace('Deadhead to','Fly in to').replace(' · ',' & start · '); } });
-  return t.innerHTML; };
+
+
 
 /* ---- flight setup: big, obvious tiles for runway, fuel, clock, parking and weather ---- */
 function runwayPlan(job){ const dep=rwyAnalysis(job.from, job.wx, job.ac); const arr=job.local?null:rwyAnalysis(job.to, job.wx, job.ac); return {dep, arr}; }

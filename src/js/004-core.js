@@ -22,14 +22,9 @@ async function simPoll(manual){
   renderSimBits();
   if(S.simState !== 'nobridge'){ const fast = S.st && (S.st.active || (S.st.academy && S.st.academy.cur) || (S.st.cup && S.st.cup.cur)); S.simTimer = setTimeout(simPoll, fast ? ((S.view==='flight'||S.view==='cockpit'||S.view==='academy'||S.view==='cup') ? 2500 : 4000) : 15000); }
 }
-function simRecFor(active){
-  const s = S.sim; if(!s || !s.recorder || !active) return null;
-  const r = s.recorder; if(active.recId && r.id !== active.recId) return null;
-  if(!active.recId && active.started && r.armedAt && !s.mock && r.armedAt < active.started - 120000) return null;
-  return r;
-}
+
 function nearestAirport(lat, lon){ let best=null, bd=1e9; for(const k in AP){ const d=distNm({lat,lon},AP[k]); if(d<bd){bd=d;best=k;} } return {code:best, d:bd}; }
-function landingClass(fpm){ return fpm<100?'butter':fpm<200?'smooth':fpm<350?'firm':'hard'; }
+var landingClass; /* defined in full below (062-core.js) */
 function acMatches(title, acId){
   if(!title) return null; const t = title.toLowerCase(); const n = AC[acId].n.toLowerCase();
   const keys = n.match(/[a-z]*\d+[a-z0-9-]*|caravan|beaver|goose|otter|porter|cub|savage|bonanza|citation|king air|vision|skyhawk|icon|pilatus|tbm|dc-3|airbus|boeing|heart/g) || [];

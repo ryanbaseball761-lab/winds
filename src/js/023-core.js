@@ -8,7 +8,7 @@ const URG_REASONS = [
   {arch:'vip_ceo', t:`Executive needs {to} now`, d:`A CEO's meeting moved up. They'll pay double for a pilot who's rolling in 15 minutes.`},
   {arch:'catch', t:`Fresh catch, short shelf life`, d:`A restaurant at {to} needs the morning catch before lunch service. Double pay for a fast departure.`}
 ];
-function urgentOn(){ try{ return localStorage.getItem('tw.urgent')!=='off'; }catch(e){ return true; } }
+var urgentOn; /* defined in full below (055-core.js) */
 function spawnUrgent(force){
   const st=S.st; if(!st || st.active || st.urgent || (!force && !urgentOn())) return null;
   const opts = URG_REASONS.filter(r=>{ const a=ARCH.find(x=>x.id===r.arch); return a && (!a.need || hasRating(st,a.need)); });

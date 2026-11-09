@@ -8,16 +8,7 @@ const WX_ICON = {
   wind:`<path d="M3 8h11a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h8"/>`
 };
 function wxIconKey(w){ const k=w.key||''; return k==='tstorm'?'storm': k==='showers'||k==='wave'?'rain': k==='dust'?'haze': k==='north'?'wind': (w.cl&&w.cl.some(c=>c[0]==='BKN'||c[0]==='OVC'))?'cloud':'sun'; }
-function jobKind(job){
-  if(job.kind==='story') return {k:'story', t:job.label, c:'var(--sea)'};
-  if(job.kind==='check') return {k:'check', t:job.label||'Checkride', c:'var(--violet)'};
-  if(job.lend) return {k:'lend', t:job.label, c:'#c2603a'};
-  if(job.company) return {k:'company', t:job.label, c:'var(--sky)'};
-  if(job.urgent) return {k:'urgent', t:job.label, c:'var(--bad)'};
-  if(job.vip) return {k:'vip', t:job.label, c:'var(--coral)'};
-  if(job.cat==='cargo') return {k:'cargo', t:job.label, c:'var(--sky)'};
-  return {k:'pax', t:job.label, c:'#c98a1a'};
-}
+
 const ICO_PLANE = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15.5 13.5 11V5.5a1.5 1.5 0 0 0-3 0V11L3 15.5v2l7.5-2.3V19l-2 1.5V22l3.5-1 3.5 1v-1.5l-2-1.5v-3.8l7.5 2.3z"/></svg>`;
 function stripHTML(st, job, opts={}){
   const extra = opts.extra||'';

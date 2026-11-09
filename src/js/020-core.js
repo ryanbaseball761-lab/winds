@@ -19,12 +19,7 @@ function voiceVol(){ try{ return Number(localStorage.getItem('tw.vol')||'0.9'); 
 let _voices=[];
 function loadVoices(){ try{ _voices = (window.speechSynthesis && speechSynthesis.getVoices()) || []; }catch(e){ _voices=[]; } }
 if(window.speechSynthesis){ loadVoices(); try{ speechSynthesis.onvoiceschanged = loadVoices; }catch(e){} }
-function pickVoice(female, slot){
-  const en=_voices.filter(v=>/^en/i.test(v.lang)); if(!en.length) return null;
-  const f=en.filter(v=>/female|zira|aria|jenny|samantha|susan|hazel|libby|sonia|natasha|michelle|karen|moira|tessa|serena/i.test(v.name));
-  const m=en.filter(v=>/male|david|mark|guy|george|ryan|daniel|alex|fred|thomas|christopher|eric|james|william/i.test(v.name) && !/female/i.test(v.name));
-  const pool = female ? (f.length?f:en) : (m.length?m:en); return pool[slot % pool.length];
-}
+
 function speakerFor(who, job){
   if(/^(Ground|Radio|ATC|Approach|Tower)$/i.test(who)) return {voice:pickVoice(false,1), rate:1.12, pitch:0.85};
   if(/^Cabin$/i.test(who)) return {voice:pickVoice(true,1), rate:1.0, pitch:1.1};

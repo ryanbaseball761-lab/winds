@@ -61,7 +61,7 @@ function loanRate(st){ const F=fin(st); return clamp(0.04 + (800-F.score)/2500, 
 function scoreDelta(st, d){ const F=fin(st); F.score = clamp(F.score + d, 300, 850); }
 
 /* ---------- aircraft values & loans ---------- */
-function newValue(acId){ return AC[acId].price; }
+
 function fairValue(f){ return Math.round(f.value * (0.55 + 0.45*f.cond/100)); }
 function amortDaily(principal, apr, years){ const r=apr/365, n=years*365; return principal * r / (1 - Math.pow(1+r, -n)); }
 function makeListings(st){

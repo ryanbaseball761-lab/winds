@@ -63,10 +63,7 @@ function nextCeleb(st){ st.celebs = st.celebs || {}; const met = CELEB_ORDER.fil
   if(met.length && (Math.random()<0.45 || !fresh.length)) return pick(met); return fresh.length ? pick(fresh) : null; }
 
 /* ---------- plot twists (after landing) ---------- */
-const SOUVENIRS = {
-  iguana:`Iggy, a green iguana who now lives in the hangar rafters`, drawing:`a crayon drawing of your airplane by a 6-year-old passenger`, key:`a brass key to a private island the size of a parking lot`, coconut:`a coconut with your face painted on it`,
-  bottle:`a message in a bottle found on the ramp at Anegada`, cap:`a sweat-stained cap from a retired airline captain`, rum:`a bottle of 25-year-old rum with a handwritten label`, shell:`a perfect queen conch shell`, ticket:`a winning scratch card, framed`
-};
+
 const TWISTS = [
   {id:'tip', w:6, fx:(st,c)=>{ const amt=Math.round((c.job.pay*rnd(0.5,1.5))/10)*10+100; txn(st,amt,'Gifts & windfalls','Plot twist'); return {title:`An envelope on the seat`, text:`After everyone has gone, you find an envelope tucked into the seat pocket. Inside: ${money(amt)} in cash and a note: "For the smoothest flight of my life. Don't spend it on fuel."`, cash:amt}; }, ok:c=>c.good && c.job.pax},
   {id:'forgot', w:4, fx:(st,c)=>{ addFollowup(st, { from:c.landed, to:c.job.from, ac:c.job.ac, pax:0, cargo:5, title:`The forgotten passport`, client:c.job.client||`Your passenger`, mult:1.6,
@@ -200,14 +197,7 @@ function surpriseResultHTML(out){
   if(out.twist){ h += `<section class="panel twist"><p class="label">Plot twist</p><h3 style="margin-top:4px">${esc(out.twist.title)}</h3><p class="brief" style="margin-top:6px">${esc(out.twist.text)}</p></section>`; }
   return h;
 }
-function guestbookHTML(st){
-  const cs=st.celebs||{}; const met=CELEB_ORDER.filter(k=>cs[k]);
-  return `<section><div class="section-title"><h2>Celebrity guestbook</h2><span class="small muted">${met.length} of ${CELEB_ORDER.length} met · all fictional</span></div>
-    <div class="cast">${CELEB_ORDER.map(k=>{ const C=CELEBS[k], n=cs[k]||0; return n ? `<div class="person"><div class="who"><div class="avatar" style="background:${C.col}">${esc(C.n.replace(/[^A-Z]/g,'').slice(0,2))}</div><div style="min-width:0"><b>${esc(C.n)}</b><p class="tiny muted">${esc(C.what)}</p></div></div><p class="small">${n>=3?`Gave you ${esc(C.gift)}.`:`Flown ${n} time${n>1?'s':''}. ${3-n} more to earn their gift.`}</p><div class="meter"><i style="width:${Math.min(100,n/3*100)}%"></i></div></div>` : `<div class="person unknown"><div class="who"><div class="avatar" style="background:var(--line)">?</div><div><b>???</b><p class="tiny muted">Not met yet</p></div></div><p class="small muted">Someone famous is out there, booking charters under a false name.</p></div>`; }).join('')}</div></section>
-  <section><div class="section-title"><h2>Hangar wall</h2><span class="small muted">Things people leave you</span></div>
-    ${(()=>{ const items=[...Object.keys(st.souvenirs||{}).map(k=>SOUVENIRS[k]), ...Object.keys(st.gifts||{}).map(k=>CELEBS[k].gift+' (from '+CELEBS[k].n+')')]; return items.length?`<div class="cards">${items.map(t=>`<div class="cell small">${esc(t.charAt(0).toUpperCase()+t.slice(1))}</div>`).join('')}</div>`:`<p class="small muted">Empty for now. Keep flying: passengers have a way of leaving things behind.</p>`; })()}
-  </section>`;
-}
+
 
 ACH.push(
   {id:'celeb1',n:`Star Struck`,d:`Fly a celebrity.`,t:s=>Object.keys(s.celebs||{}).length>=1},

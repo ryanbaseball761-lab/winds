@@ -64,7 +64,7 @@ document.addEventListener('change', e=>{ const s=e.target.closest('[data-act="bp
 DIFF.casual.d = 'Forgiving: landings up to 450 fpm count as firm, rough rides cost less, fewer surprises. Checklist optional.';
 DIFF.standard.d = 'The career as designed. Checklist optional.';
 DIFF.expert.d = 'Stricter landing grades, mandatory checklist, the right fuel and aircraft loaded before you start, fines for landing below legal reserve, more in-flight surprises, and 15% extra pay.';
-landingClass = function(fpm){ const d=diff(); if(d==='expert') return fpm<80?'butter':fpm<170?'smooth':fpm<300?'firm':'hard'; if(d==='casual') return fpm<120?'butter':fpm<240?'smooth':fpm<450?'firm':'hard'; return fpm<100?'butter':fpm<200?'smooth':fpm<350?'firm':'hard'; };
+
 const _gpGen = genJobs;
 genJobs = function(st){ const L=_gpGen(st); const d=diff();
   for(const j of L){ if(d==='expert' && !j.scen && Math.random()<0.08){ const sc=scenFor(j); if(sc) j.scen=sc; } if(d==='casual' && j.scen && Math.random()<0.5) j.scen=null; }

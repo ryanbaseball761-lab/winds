@@ -52,9 +52,5 @@ pilotView = function(){ const h=_cmPilot(); const t=tpl(h); const main=t.content
 const _cmCabin = cabinInner;
 cabinInner = function(){ const h=_cmCabin(); if(!h) return h; const t=tpl(h); const lines=[...t.content.querySelectorAll('.feed > *, .cab-feed > *, .feed-line')]; lines.slice(4).forEach(l=>l.remove()); return t.innerHTML; };
 /* ---- story map: the storylines, then journal / guestbook / reviews / people folded ---- */
-const _cmStory = storyView;
-storyView = function(){ const h=_cmStory(); const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h; const folds=[];
-  let past=false; [...main.children].forEach(el=>{ if(el.classList.contains('arc-grid') && !el.classList.contains('side')){ past=true; return; } if(past && el.tagName==='SECTION') folds.push(el); });
-  const d=wrapDetails(folds.map(e=>{ e.remove(); return e; }), 'Journal, guestbook, reviews and the people you know'); if(d) main.appendChild(d);
-  const side=main.querySelector('.arc-grid.side'); if(side){ const head=side.previousElementSibling; const d2=wrapDetails([side], `Side stories <span class="tiny muted">${side.children.length} storylines</span>`, 'side-arcs'); if(head && head.classList.contains('section-title')) head.remove(); side.replaceWith ? null : null; main.insertBefore(d2, d && d.parentNode ? d : null); }
-  return t.innerHTML; };
+
+

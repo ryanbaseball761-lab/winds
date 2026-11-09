@@ -43,7 +43,7 @@ function cardSection(){
       <div class="row"><button class="btn primary sm" data-act="card-save">Save image</button><button class="btn sm" data-act="card-copy">Copy</button></div></div>
       <img id="flight-card" alt="Flight card image: route, grade and landing stats" style="width:100%;border-radius:14px;display:block;aspect-ratio:1200/630;background:var(--surface-2)"></section>`;
 }
-let _cardURL=null;
+
 function paintCard(){ const img=document.getElementById('flight-card'); if(!img || !S.st || !S.st.last) return; const draw=()=>{ try{ const cv=drawFlightCard(S.st); img.src=cv.toDataURL('image/png'); }catch(e){} }; if(document.fonts && document.fonts.ready) document.fonts.ready.then(draw); else draw(); }
 const _cardResult = resultView;
 resultView = function(){ const h=_cardResult(); setTimeout(paintCard,0); return h.replace(/(<\/section>)/, '$1'+cardSection()); };

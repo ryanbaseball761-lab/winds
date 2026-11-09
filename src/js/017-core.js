@@ -14,26 +14,8 @@ const _evCabin = cabinInner;
 cabinInner = function(){ const h=_evCabin(); return h ? h.replace(/(<p class="tiny muted">[^<]*riding along today\.<\/p>)/, '$1'+liveWxLine()) : h; };
 
 /* ---- (b) your phone rings: characters call with time-limited work ---- */
-const CALLERS = [
-  {k:'mari', when:()=>true, lines:[`"Rookie. I need a favor. Somebody has to get to {to} in a hurry and you're the only one not asleep. Double pay. Go."`,`"Change of plans. A client just called in a rush job to {to}. You're closest. Can you take it?"`]},
-  {k:'dez', when:()=>true, lines:[`"Ey, it's Dez. Got a box that HAS to be in {to} today. Don't ask what's in it. It's legal. Probably. It's car parts."`,`"Dez here. Ferry's broken again and somebody's grandmother needs to get to {to}. You in?"`]},
-  {k:'celeste', when:st=>st.story.done.SB1, lines:[`"Darling. A guest of mine is stuck and must be in {to} tonight. I told her you were the best. Don't make me a liar."`]},
-  {k:'rosa', when:st=>st.story.done.RS1, lines:[`"It's Rosa! A wedding in {to} forgot to order dessert. DESSERT. Can you fly my cakes? I'll pay, and I'll feed you."`]},
-  {k:'calloway', when:st=>st.story.done.CW4, lines:[`"Calloway. Don't make it weird. My airplane's down and I've got a client for {to}. You can have the job. Just this once."`]},
-  {k:'vivienne', when:st=>st.story.done.VJ1, lines:[`"It's Vivienne. My photographer missed her flight to {to}. Can you get her there? I'll cover it, generously."`]}
-];
-function maybeCall(st, chance){
-  if(st.active || st.call || Math.random() > chance) return;
-  const opts = CALLERS.filter(c=>CAST[c.k] && c.when(st)); if(!opts.length) return; const c = pick(opts);
-  const arches = ARCH.filter(a=>a.w>0 && !a.airline && !a.local && (!a.need || hasRating(st,a.need)));
-  let job=null; for(let i=0;i<8 && !job;i++) job = makeJob(st, pick(arches), false);
-  if(!job || job.local) return;
-  job.pay = Math.round(job.pay*1.6/10)*10; job.urgent=true; job.call=c.k; job.label=`Call from ${shortName(c.k)}`; job.client=CAST[c.k].n;
-  job.dep = Math.round((st.clock+25)/5)*5; job.title = `${shortName(c.k)}'s rush job to ${AP[job.to].isl.replace(/\s*\(.*\)/,'')}`;
-  const line = pick(c.lines).replace('{to}', AP[job.to].isl.replace(/\s*\(.*\)/,''));
-  job.paras = [line, ...(job.paras||[]).slice(0,1)];
-  st.call = {who:c.k, line, job, until: st.clock + 90};
-}
+
+var maybeCall; /* defined in full below (055-core.js) */
 function callHTML(st){
   const c=st.call; if(!c) return ''; if(st.clock > c.until){ st.call=null; return ''; }
   const j=c.job; const a=AC[j.ac];

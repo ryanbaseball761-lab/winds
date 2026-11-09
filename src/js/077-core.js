@@ -26,7 +26,7 @@ storyView = function(){ const st=S.st; const c=crime(st); const MC=mainChapters(
     ${sNext?`<section class="panel sh-side"><p class="label">Side story · legit work</p><h3>Starling</h3><p class="small muted">${esc(sNext.title)}: a clean charter job flying private jets. Doesn't affect the main story.</p><div class="row" style="margin-top:8px">${chapterAction(st,sNext,availSet,true)}</div></section>`:''}
   </main>`; };
 /* the story card uses the right cast, and the nerve line */
-(function(){ const _cc=campaignCard; campaignCard=function(st){ return _cc(st); }; })();
+
 /* nav: "Main story" first; the app opens on it */
 const _s3Band = band;
 band = function(){ const h=_s3Band(); try{ const t=tpl(h); const st=t.content.querySelector('[data-act="nav"][data-v="story"]'); const first=t.content.querySelector('[data-act="nav"][data-v="board"]'); if(st&&first){ const l=st.querySelector('.lbl'); if(l) l.textContent='Main story'; first.before(st); const lb=first.querySelector('.lbl'); if(lb) lb.textContent='Side jobs'; } return t.innerHTML; }catch(_){ return h; } };

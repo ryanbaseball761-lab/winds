@@ -118,16 +118,7 @@ function plan(job){
     tripLb:Math.round(tripLb), contLb:Math.round(contLb), resLb:Math.round(resLb), altLb:Math.round(altLb), fuelLb, gal:Math.round(fuelLb/density), density,
     paxLb:Math.round(paxLb), bagLb:Math.round(bagLb), payload, total, useful:a.useful, over: Math.max(0,total-a.useful), range: dist <= a.range };
 }
-function payFor(st, job){
-  const a=AC[job.ac]; const arch = job.arch ? ARCH.find(x=>x.id===job.arch) : null;
-  const dist = job.local ? (job.tourNm||40) : distNm(AP[job.from],AP[job.to]);
-  let p = (150 + dist*CLS[a.cls].rate + (job.pax||0)*(a.cls==='airliner'||a.cls==='widebody'?6:25) + (job.cargo||0)*0.4);
-  if(arch?.mult) p*=arch.mult; if(job.wx.ifr) p*=1.15; if(isNight(job.dep)) p*=1.15; if(job.urgent) p*=1.1;
-  if(!hasRating(st,'COMM') && !job.story) p*=0.55; // trainee rate
-  p *= 0.9 + clamp(st.reputation,0,100)/500;
-  if(job.story) p*=1.25;
-  return Math.round(p/10)*10;
-}
+
 
 /* ---------- Job generation ---------- */
 function pickDest(st, from, acId, arch, targetNm){
@@ -201,13 +192,8 @@ function genJobs(st){
 function ensureJobs(st){ const key = st.loc+'|'+st.day; if(st.jobsKey!==key){ st.jobs = genJobs(st); st.jobsKey=key; } }
 
 /* ---------- Story & checkride jobs ---------- */
-function storyAvailable(st){
-  return STORY.filter(m=>{ if(st.story.done[m.id]) return false; const r=m.req||{};
-    if(r.after && !st.story.done[r.after]) return false;
-    if(r.ratings && !ratingsOk(st, r.ratings)) return false;
-    if(r.hours && st.minutes/60 < r.hours) return false; return true; });
-}
-function storyAircraft(st, m){ return m.ac.filter(k=>canFly(st,k) && apOk(st,m.to,k) && apOk(st,m.from,k)); }
+var storyAvailable; /* defined in full below (050-core.js) */
+
 function storyJob(st, m, acId){
   const wx = genWx(st, m.to, m.wx, m.dep);
   const job = { id:'S-'+m.id, kind:'story', story:m.id, title:m.title, label:m.arc, cat: m.cargo>m.pax*190?'cargo':'pax', from:m.from, to:m.to, local:!!m.local, tourNm:m.local?45:0,
@@ -252,17 +238,7 @@ function checkrideJob(st, rid, acId){
 /* ---------- Company ---------- */
 function fleetTypes(st){ if(!st.company) return []; return [...new Set(st.company.fleet.filter(f=>!f.hired).map(f=>f.ac))].filter(k=>canFly(st,k)); }
 function loanTerms(price){ const down = Math.round(price*0.15); const principal = price-down; const total = principal*1.3; return { down, principal, daily: Math.round(total/1825), total:Math.round(total) }; }
-function companyTick(st){
-  const c=st.company; if(!c) return null; let net=0; const lines=[];
-  for(const f of c.fleet){
-    const a=AC[f.ac];
-    if(f.loanLeft>0){ const pmt=Math.min(f.daily, f.loanLeft); f.loanLeft-=pmt; net-=pmt; }
-    const ins = Math.round(f.price*0.00012); net-=ins;
-    if(f.hired){ const rev = Math.round(CLS[a.cls].daily*rnd(0.55,1.35)*(f.cond/100)); const w = CLS[a.cls].wage; net += rev - w; f.cond = Math.max(40, f.cond - rnd(0.3,1.2)); f.days=(f.days||0)+1; lines.push(`${f.reg}: ${money(rev-w)} after the pilot's wage`); }
-  }
-  c.ledger = c.ledger || []; c.ledger.unshift({day:st.day, net:Math.round(net), lines}); c.ledger = c.ledger.slice(0,30);
-  st.cash += Math.round(net); return Math.round(net);
-}
+
 function regFor(st){ const c=st.company; const pre = {SXM:'PJ-',MAF:'F-O',BLM:'F-O',AIA:'VP-A',ATG:'V2-',KNA:'V4-',BRB:'8P-',LCA:'J6-',VCT:'J8-',GRD:'J3-',TTO:'9Y-',ABW:'P4-',CUW:'PJ-',BES:'PJ-',MSR:'VP-M',GLP:'F-O',MTQ:'F-O',DMA:'J7-',VGB:'VP-L',BHS:'C6-',TCA:'VQ-T',CYM:'VP-C',JAM:'6Y-',DOM:'HI'}[AP[c.base].c]||'N';
   const n = c.fleet.length+1; const letters = (c.name.replace(/[^A-Za-z]/g,'').toUpperCase()+'XXX').slice(0,2);
   return pre==='N' ? `N${100+n*7}${letters}` : `${pre}${letters}${String.fromCharCode(64+((n-1)%26)+1)}`; }
@@ -349,10 +325,5 @@ function applyResult(st, job, f, res){
   return out;
 }
 function addJournal(st, title, text, chars, kind, grade){ st.journal.unshift({id:uid(), day:st.day, clock:st.clock, title, text, chars:chars||[], kind:kind||'flight', grade}); st.journal = st.journal.slice(0,200); }
-function rest(st){
-  st.day += 1; st.clock = 420; st.duty = 0; st.jobsKey = '';
-  const net = companyTick(st);
-  newDayBrief(st); checkAch(st);
-  return net;
-}
+
 function deadheadCost(st, to){ const d = distNm(AP[st.loc], AP[to]); return { cost: Math.round(60 + d*0.55), min: Math.round(d/380*60 + 75), d:Math.round(d) }; }

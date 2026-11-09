@@ -37,8 +37,8 @@ const _frPass = boardingPass;
 boardingPass = function(st, job, p, a, started){ const h=_frPass.apply(this, arguments); return started ? h : h.replace(/<button[^>]*data-act="debrief"[^>]*>[\s\S]*?<\/button>/, ''); };
 
 /* 10. free deadheads say so */
-const _frCamp = campaignCard; campaignCard = function(st){ return _frCamp(st).replace(/ &amp; start · \$0/g,' &amp; start (free)').replace(/ & start · \$0/g,' & start (free)'); };
-const _frStory = storyView; storyView = function(){ return _frStory().replace(/ &amp; start · \$0/g,' &amp; start (free)').replace(/ & start · \$0/g,' & start (free)'); };
+ 
+ 
 
 /* 11. the cabin never drops to 0 comfort from normal flying */
 const _frAuto2 = autoFinish;

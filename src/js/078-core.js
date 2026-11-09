@@ -69,29 +69,7 @@ const PRO_DYN = {
 const PRO_VOICE = { dez:[false,1.05,1], mari:[true,1,1.05], castillo:[false,0.92,0.8], hartwell:[false,0.95,0.9], tico:[false,1.12,1.05], reyes:[true,1,1], medina:[false,0.95,0.85] };
 function proFor(id){ const st=S.st; const f=crime(st).flags; return (PRO_DYN[id] && PRO_DYN[id](f)) || PRO[id]; }
 
-function playPrologue(m, done){ const shots=proFor(m.id); if(!shots){ done(); return; } const st=S.st; const MC=mainChapters(); const act=CRIME_ACTS.find(a=>a.arc===m.arc)||{col:'#c8962a'};
-  let art=''; try{ art=islandArt(m.from, m.dep, 1600, 900, m.ac[0]); }catch(_){}
-  const el=document.createElement('div'); el.className='cut'; el.style.setProperty('--arc', act.col);
-  el.innerHTML=`<div class="cut-bg">${art}</div><div class="cut-shade"></div><div class="cut-bar top"></div><div class="cut-bar bot"></div>
-    <div class="cut-stage"><p class="cut-place"></p><div class="cut-line"><div class="cut-who"></div><p class="cut-text"></p></div></div>
-    <div class="cut-ctl"><span class="cut-hint">Click or press Space</span><button class="cut-skip">Skip</button></div>`;
-  document.body.appendChild(el); requestAnimationFrame(()=>el.classList.add('on'));
-  let i=-1, typing=null, full=''; const place=el.querySelector('.cut-place'), who=el.querySelector('.cut-who'), txt=el.querySelector('.cut-text');
-  const stopVoice=()=>{ try{ speechSynthesis.cancel(); }catch(_){} };
-  const say=(k, t)=>{ if(!(typeof voiceOn==='function' && voiceOn()) || !window.speechSynthesis) return; const v=PRO_VOICE[k]||[false,0.95,0.9]; try{ stopVoice(); const u=new SpeechSynthesisUtterance(t.replace(/"/g,'')); const vv=pickVoice(v[0], k==='castillo'||k==='medina'?1:0); if(vv) u.voice=vv; u.rate=v[1]; u.pitch=v[2]; u.volume=voiceVol(); speechSynthesis.speak(u); }catch(_){} };
-  const finish=()=>{ clearInterval(typing); stopVoice(); document.removeEventListener('keydown', key, true); el.classList.add('title');
-    el.querySelector('.cut-stage').innerHTML=`<div class="cut-title"><p>Act ${CRIME_ACTS.indexOf(act)+1} · ${esc(m.arc)} · Chapter ${MC.indexOf(m)+1}</p><h1>${esc(m.title)}</h1></div>`;
-    try{ whoosh && whoosh(); }catch(_){}
-    setTimeout(()=>{ el.classList.remove('on'); setTimeout(()=>{ el.remove(); done(); }, 600); }, 2200); };
-  const show=()=>{ i++; if(i>=shots.length){ finish(); return; } const [pl,k,t]=shots[i]; place.textContent=pl; el.querySelector('.cut-line').classList.remove('in'); void el.offsetWidth; el.querySelector('.cut-line').classList.add('in');
-    who.innerHTML = k && CAST[k] ? `${avatar(k)}<b>${esc(CAST[k].n)}</b>` : ''; who.style.display = k ? '' : 'none'; txt.classList.toggle('nar', !k);
-    full = k ? `“${t}”` : t; txt.textContent=''; let n=0; clearInterval(typing); typing=setInterval(()=>{ n+=2; txt.textContent=full.slice(0,n); if(n>=full.length) clearInterval(typing); }, 22);
-    el.querySelector('.cut-bg').style.transform=`scale(${1.06+i*0.03}) translate(${(i%2?-1:1)*1.2}%, ${i*0.4}%)`; if(k) say(k, t); };
-  const next=()=>{ if(txt.textContent.length<full.length){ clearInterval(typing); txt.textContent=full; return; } show(); };
-  const key=e=>{ if(e.key===' '||e.key==='Enter'||e.key==='ArrowRight'){ e.preventDefault(); e.stopPropagation(); next(); } else if(e.key==='Escape'){ e.preventDefault(); finish(); } };
-  document.addEventListener('keydown', key, true);
-  el.addEventListener('click', e=>{ if(e.target.closest('.cut-skip')){ finish(); return; } if(el.classList.contains('title')) return; next(); });
-  setTimeout(show, 500); }
+var playPrologue; /* defined in full below (081-core.js) */
 
 /* play it the first time you start a chapter; the click goes through once it's over */
 window.addEventListener('click', e=>{ const b=e.target.closest('[data-act="accept-story"],[data-act="story-go"]'); if(!b || b.disabled || !S.st) return; if(typeof fedsWatching==='function' && crime().on && fedsWatching(S.st)) return; const id=b.dataset.id; if(!CRIME_IDS.has(id)) return; const c=crime(); c.proSeen=c.proSeen||{};

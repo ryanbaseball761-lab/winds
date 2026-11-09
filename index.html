@@ -1323,7 +1323,7 @@ const STORY = [
 
 /* ===================== RANDOM JOB ARCHETYPES ===================== */
 const pick = a => a[Math.floor(Math.random()*a.length)];
-const person = () => `${pick(NAMES.first)} ${pick(NAMES.last)}`;
+
 const ARCH = [
  {id:'honeymoon',label:`Honeymoon charter`,kind:'pax',w:6,cls:['ga','hp','turbo','twin','amph','bush'],need:'PPL',pax:[2,2],cargo:[40,80],
   story:c=>{const a=pick(NAMES.first),b=pick(NAMES.first),l=pick(NAMES.last),h=pick(NAMES.home);return{title:`Honeymoon to ${c.to.isl}`,client:`${a} & ${b} ${l}`,paras:[`${a} and ${b} ${l} from ${h} got married three days ago in a barefoot ceremony on ${c.from.isl}. The second half of the honeymoon is a villa on ${c.to.isl}, and they've heard the view from a small airplane beats any ferry.`,`They've asked for "the scenic way, if it doesn't cost extra." ${b} would like the flight to be smooth. ${a} would like a low pass over a beach, which you'll politely decline at anything under 1,000 ft.`]}}},
@@ -1482,16 +1482,7 @@ function plan(job){
     tripLb:Math.round(tripLb), contLb:Math.round(contLb), resLb:Math.round(resLb), altLb:Math.round(altLb), fuelLb, gal:Math.round(fuelLb/density), density,
     paxLb:Math.round(paxLb), bagLb:Math.round(bagLb), payload, total, useful:a.useful, over: Math.max(0,total-a.useful), range: dist <= a.range };
 }
-function payFor(st, job){
-  const a=AC[job.ac]; const arch = job.arch ? ARCH.find(x=>x.id===job.arch) : null;
-  const dist = job.local ? (job.tourNm||40) : distNm(AP[job.from],AP[job.to]);
-  let p = (150 + dist*CLS[a.cls].rate + (job.pax||0)*(a.cls==='airliner'||a.cls==='widebody'?6:25) + (job.cargo||0)*0.4);
-  if(arch?.mult) p*=arch.mult; if(job.wx.ifr) p*=1.15; if(isNight(job.dep)) p*=1.15; if(job.urgent) p*=1.1;
-  if(!hasRating(st,'COMM') && !job.story) p*=0.55; // trainee rate
-  p *= 0.9 + clamp(st.reputation,0,100)/500;
-  if(job.story) p*=1.25;
-  return Math.round(p/10)*10;
-}
+
 
 /* ---------- Job generation ---------- */
 function pickDest(st, from, acId, arch, targetNm){
@@ -1565,13 +1556,8 @@ function genJobs(st){
 function ensureJobs(st){ const key = st.loc+'|'+st.day; if(st.jobsKey!==key){ st.jobs = genJobs(st); st.jobsKey=key; } }
 
 /* ---------- Story & checkride jobs ---------- */
-function storyAvailable(st){
-  return STORY.filter(m=>{ if(st.story.done[m.id]) return false; const r=m.req||{};
-    if(r.after && !st.story.done[r.after]) return false;
-    if(r.ratings && !ratingsOk(st, r.ratings)) return false;
-    if(r.hours && st.minutes/60 < r.hours) return false; return true; });
-}
-function storyAircraft(st, m){ return m.ac.filter(k=>canFly(st,k) && apOk(st,m.to,k) && apOk(st,m.from,k)); }
+var storyAvailable; /* defined in full below (050-core.js) */
+
 function storyJob(st, m, acId){
   const wx = genWx(st, m.to, m.wx, m.dep);
   const job = { id:'S-'+m.id, kind:'story', story:m.id, title:m.title, label:m.arc, cat: m.cargo>m.pax*190?'cargo':'pax', from:m.from, to:m.to, local:!!m.local, tourNm:m.local?45:0,
@@ -1616,17 +1602,7 @@ function checkrideJob(st, rid, acId){
 /* ---------- Company ---------- */
 function fleetTypes(st){ if(!st.company) return []; return [...new Set(st.company.fleet.filter(f=>!f.hired).map(f=>f.ac))].filter(k=>canFly(st,k)); }
 function loanTerms(price){ const down = Math.round(price*0.15); const principal = price-down; const total = principal*1.3; return { down, principal, daily: Math.round(total/1825), total:Math.round(total) }; }
-function companyTick(st){
-  const c=st.company; if(!c) return null; let net=0; const lines=[];
-  for(const f of c.fleet){
-    const a=AC[f.ac];
-    if(f.loanLeft>0){ const pmt=Math.min(f.daily, f.loanLeft); f.loanLeft-=pmt; net-=pmt; }
-    const ins = Math.round(f.price*0.00012); net-=ins;
-    if(f.hired){ const rev = Math.round(CLS[a.cls].daily*rnd(0.55,1.35)*(f.cond/100)); const w = CLS[a.cls].wage; net += rev - w; f.cond = Math.max(40, f.cond - rnd(0.3,1.2)); f.days=(f.days||0)+1; lines.push(`${f.reg}: ${money(rev-w)} after the pilot's wage`); }
-  }
-  c.ledger = c.ledger || []; c.ledger.unshift({day:st.day, net:Math.round(net), lines}); c.ledger = c.ledger.slice(0,30);
-  st.cash += Math.round(net); return Math.round(net);
-}
+
 function regFor(st){ const c=st.company; const pre = {SXM:'PJ-',MAF:'F-O',BLM:'F-O',AIA:'VP-A',ATG:'V2-',KNA:'V4-',BRB:'8P-',LCA:'J6-',VCT:'J8-',GRD:'J3-',TTO:'9Y-',ABW:'P4-',CUW:'PJ-',BES:'PJ-',MSR:'VP-M',GLP:'F-O',MTQ:'F-O',DMA:'J7-',VGB:'VP-L',BHS:'C6-',TCA:'VQ-T',CYM:'VP-C',JAM:'6Y-',DOM:'HI'}[AP[c.base].c]||'N';
   const n = c.fleet.length+1; const letters = (c.name.replace(/[^A-Za-z]/g,'').toUpperCase()+'XXX').slice(0,2);
   return pre==='N' ? `N${100+n*7}${letters}` : `${pre}${letters}${String.fromCharCode(64+((n-1)%26)+1)}`; }
@@ -1713,12 +1689,7 @@ function applyResult(st, job, f, res){
   return out;
 }
 function addJournal(st, title, text, chars, kind, grade){ st.journal.unshift({id:uid(), day:st.day, clock:st.clock, title, text, chars:chars||[], kind:kind||'flight', grade}); st.journal = st.journal.slice(0,200); }
-function rest(st){
-  st.day += 1; st.clock = 420; st.duty = 0; st.jobsKey = '';
-  const net = companyTick(st);
-  newDayBrief(st); checkAch(st);
-  return net;
-}
+
 function deadheadCost(st, to){ const d = distNm(AP[st.loc], AP[to]); return { cost: Math.round(60 + d*0.55), min: Math.round(d/380*60 + 75), d:Math.round(d) }; }
 /* ===================== LIVE MSFS (via the local MSFS Bridge) ===================== */
 const SIM_SERVER = 'host:msfs-bridge';
@@ -1744,14 +1715,9 @@ async function simPoll(manual){
   renderSimBits();
   if(S.simState !== 'nobridge'){ const fast = S.st && (S.st.active || (S.st.academy && S.st.academy.cur) || (S.st.cup && S.st.cup.cur)); S.simTimer = setTimeout(simPoll, fast ? ((S.view==='flight'||S.view==='cockpit'||S.view==='academy'||S.view==='cup') ? 2500 : 4000) : 15000); }
 }
-function simRecFor(active){
-  const s = S.sim; if(!s || !s.recorder || !active) return null;
-  const r = s.recorder; if(active.recId && r.id !== active.recId) return null;
-  if(!active.recId && active.started && r.armedAt && !s.mock && r.armedAt < active.started - 120000) return null;
-  return r;
-}
+
 function nearestAirport(lat, lon){ let best=null, bd=1e9; for(const k in AP){ const d=distNm({lat,lon},AP[k]); if(d<bd){bd=d;best=k;} } return {code:best, d:bd}; }
-function landingClass(fpm){ return fpm<100?'butter':fpm<200?'smooth':fpm<350?'firm':'hard'; }
+var landingClass; /* defined in full below (062-core.js) */
 function acMatches(title, acId){
   if(!title) return null; const t = title.toLowerCase(); const n = AC[acId].n.toLowerCase();
   const keys = n.match(/[a-z]*\d+[a-z0-9-]*|caravan|beaver|goose|otter|porter|cub|savage|bonanza|citation|king air|vision|skyhawk|icon|pilatus|tbm|dc-3|airbus|boeing|heart/g) || [];
@@ -1919,17 +1885,8 @@ function newDayBrief(st){
 }
 
 /* ---------- bonus objectives ---------- */
-const LANDMARKS = { LEE:[`Saba's cliffs`,`The Quill on Statia`,`Nevis Peak`,`Shoal Bay on Anguilla`,`Maho Beach`], VI:[`The Baths on Virgin Gorda`,`Flamenco Beach on Culebra`,`El Morro in Old San Juan`,`Jost Van Dyke's White Bay`], WIN:[`the twin Pitons`,`Mont Pelée`,`the Tobago Cays`,`Kick 'em Jenny's waters (stay high)`,`Bathsheba's coast`], ABC:[`Klein Bonaire`,`Klein Curaçao's lighthouse`,`Arikok National Park`], GA:[`Seven Mile Beach`,`the Blue Mountains`,`Saona Island`], BAH:[`the Exuma Cays sandbars`,`Harbour Island's pink sand`,`Dean's Blue Hole`], FL:[`the Seven Mile Bridge`,`Miami Beach`], CAM:[`the Mayan ruins at Tulum`,`the Great Blue Hole`,`Isla Mujeres`], LONG:[`the coast below the first landfall`] };
-function makeBonus(job){
-  const kinds = ['butter','ontime','handfly','scenic','radio'];
-  const k = pick(kinds); const amt = Math.max(30, Math.round(job.pay*0.2/10)*10);
-  if(k==='butter') return { k, amt, text:`Grease it: touch down under 150 fpm`, auto:'fpm' };
-  if(k==='ontime') return { k, amt, text:`Arrive on time: block time within 10% of the plan`, auto:'block' };
-  if(k==='handfly') return { k, amt, text:`Hand-fly the whole leg. No autopilot.` };
-  if(k==='radio') return { k, amt, text:`Work ATC the whole way (MSFS ATC or VATSIM), from clearance to taxi-in` };
-  const lm = pick(LANDMARKS[AP[job.to].r] || LANDMARKS[AP[job.from].r] || [`the prettiest beach on the route`]);
-  return { k, amt, text:`Show your passengers ${lm} on the way, at a safe altitude` };
-}
+
+var makeBonus; /* defined in full below (055-core.js) */
 function archWeight(st, a){
   const storm = stormActive(st);
   if(a.id==='relief') return storm ? 8 : 2;
@@ -2188,10 +2145,7 @@ function nextCeleb(st){ st.celebs = st.celebs || {}; const met = CELEB_ORDER.fil
   if(met.length && (Math.random()<0.45 || !fresh.length)) return pick(met); return fresh.length ? pick(fresh) : null; }
 
 /* ---------- plot twists (after landing) ---------- */
-const SOUVENIRS = {
-  iguana:`Iggy, a green iguana who now lives in the hangar rafters`, drawing:`a crayon drawing of your airplane by a 6-year-old passenger`, key:`a brass key to a private island the size of a parking lot`, coconut:`a coconut with your face painted on it`,
-  bottle:`a message in a bottle found on the ramp at Anegada`, cap:`a sweat-stained cap from a retired airline captain`, rum:`a bottle of 25-year-old rum with a handwritten label`, shell:`a perfect queen conch shell`, ticket:`a winning scratch card, framed`
-};
+
 const TWISTS = [
   {id:'tip', w:6, fx:(st,c)=>{ const amt=Math.round((c.job.pay*rnd(0.5,1.5))/10)*10+100; txn(st,amt,'Gifts & windfalls','Plot twist'); return {title:`An envelope on the seat`, text:`After everyone has gone, you find an envelope tucked into the seat pocket. Inside: ${money(amt)} in cash and a note: "For the smoothest flight of my life. Don't spend it on fuel."`, cash:amt}; }, ok:c=>c.good && c.job.pax},
   {id:'forgot', w:4, fx:(st,c)=>{ addFollowup(st, { from:c.landed, to:c.job.from, ac:c.job.ac, pax:0, cargo:5, title:`The forgotten passport`, client:c.job.client||`Your passenger`, mult:1.6,
@@ -2325,14 +2279,7 @@ function surpriseResultHTML(out){
   if(out.twist){ h += `<section class="panel twist"><p class="label">Plot twist</p><h3 style="margin-top:4px">${esc(out.twist.title)}</h3><p class="brief" style="margin-top:6px">${esc(out.twist.text)}</p></section>`; }
   return h;
 }
-function guestbookHTML(st){
-  const cs=st.celebs||{}; const met=CELEB_ORDER.filter(k=>cs[k]);
-  return `<section><div class="section-title"><h2>Celebrity guestbook</h2><span class="small muted">${met.length} of ${CELEB_ORDER.length} met · all fictional</span></div>
-    <div class="cast">${CELEB_ORDER.map(k=>{ const C=CELEBS[k], n=cs[k]||0; return n ? `<div class="person"><div class="who"><div class="avatar" style="background:${C.col}">${esc(C.n.replace(/[^A-Z]/g,'').slice(0,2))}</div><div style="min-width:0"><b>${esc(C.n)}</b><p class="tiny muted">${esc(C.what)}</p></div></div><p class="small">${n>=3?`Gave you ${esc(C.gift)}.`:`Flown ${n} time${n>1?'s':''}. ${3-n} more to earn their gift.`}</p><div class="meter"><i style="width:${Math.min(100,n/3*100)}%"></i></div></div>` : `<div class="person unknown"><div class="who"><div class="avatar" style="background:var(--line)">?</div><div><b>???</b><p class="tiny muted">Not met yet</p></div></div><p class="small muted">Someone famous is out there, booking charters under a false name.</p></div>`; }).join('')}</div></section>
-  <section><div class="section-title"><h2>Hangar wall</h2><span class="small muted">Things people leave you</span></div>
-    ${(()=>{ const items=[...Object.keys(st.souvenirs||{}).map(k=>SOUVENIRS[k]), ...Object.keys(st.gifts||{}).map(k=>CELEBS[k].gift+' (from '+CELEBS[k].n+')')]; return items.length?`<div class="cards">${items.map(t=>`<div class="cell small">${esc(t.charAt(0).toUpperCase()+t.slice(1))}</div>`).join('')}</div>`:`<p class="small muted">Empty for now. Keep flying: passengers have a way of leaving things behind.</p>`; })()}
-  </section>`;
-}
+
 
 ACH.push(
   {id:'celeb1',n:`Star Struck`,d:`Fly a celebrity.`,t:s=>Object.keys(s.celebs||{}).length>=1},
@@ -2373,13 +2320,13 @@ async function connect(){
 function migrate(st){ st.celebs=st.celebs||{}; st.souvenirs=st.souvenirs||{}; st.gifts=st.gifts||{}; st.followups=st.followups||[]; st.ach=st.ach||{}; st.reviews=st.reviews||[]; if(!st.landedAt){ st.landedAt={}; (st.log||[]).forEach(l=>{ if(l.landing!=='crash') st.landedAt[l.to]=(st.landedAt[l.to]||0)+1; }); } if(!st.stats) st.stats={butter:0,smooth:0,firm:0,hard:0,crash:0,nm:0,diverts:0,scen:0}; if(!st.cooldown) st.cooldown={}; if(!st.visited) st.visited={}; Object.keys(AC).forEach(k=>{ if(st.hangar[k]===undefined) st.hangar[k]=true; }); Object.keys(CAST).forEach(k=>{ if(st.rep[k]===undefined) st.rep[k]=10; }); return finMigrate(st); }
 
 /* ---------- helpers ---------- */
-function toast(msg){ S.toast=msg; renderToast(); clearTimeout(S._tt); S._tt=setTimeout(()=>{ S.toast=null; renderToast(); }, 3200); }
-function renderToast(){ let el=document.getElementById('toast'); if(!S.toast){ if(el) el.remove(); return; } if(!el){ el=document.createElement('div'); el.id='toast'; el.className='toast'; el.setAttribute('role','status'); document.body.appendChild(el); } el.textContent=S.toast; }
+var toast; /* defined in full below (047-core.js) */
+var renderToast; /* defined in full below (047-core.js) */
 function topRating(st){ const order=['ATP','JET','TURB','IR','COMM','PPL']; for(const r of order) if(st.ratings[r]) return RATINGS[r]; return RATINGS.PPL; }
 function syncText(){ return {account:'Saved to your account', device:'Saved in this browser', full:'Account storage full: saving in this browser'}[S.sync]; }
 function renderSync(){ const el=document.getElementById('sync'); if(el) el.textContent=syncText(); }
-function apName(code){ const a=AP[code]; return a ? `${a.n}, ${a.isl}` : code; }
-function routeTxt(job){ return job.local ? `${job.from} ↺ local` : `${job.from}<span class="arr">→</span>${job.to}`; }
+
+
 function chipsFor(st, job){
   const c=[]; const a=AC[job.ac];
   if(job.mystery && !(st.active && st.active.job===job)){ c.push(`<span class="chip vio">Confidential</span>`); if(job.followup) c.push(`<span class="chip sea">Follow-up</span>`); if(job.request) c.push(`<span class="chip vio">Passenger request</span>`); if(!st.types[job.ac]) c.push(`<span class="chip new">New type</span>`); return c.join(''); }
@@ -2402,58 +2349,18 @@ function chipsFor(st, job){
   if(job.stormName) c.push(`<span class="chip bad">Hurricane ${esc(job.stormName)}</span>`);
   return c.join('');
 }
-function dutyAfter(st, job){ const wait = Math.min(60, Math.max(0, job.dep - st.clock)); return st.duty + wait + job.est + 30; }
+var dutyAfter; /* defined in full below (061-core.js) */
 function avatar(k){ const c=CAST[k]; const ini=c.n.replace(/".*?"\s*/,'').split(' ').filter(w=>/^[A-Z]/.test(w)).slice(-2).map(w=>w[0]).join(''); return `<div class="avatar" style="background:${c.col}" aria-hidden="true">${esc(ini)}</div>`; }
-function repWord(v){ return v>=80?'Close':v>=55?'Trusted':v>=35?'Friendly':v>=18?'Acquainted':'New'; }
+
 
 /* ---------- band ---------- */
-function band(){
-  const st=S.st; const r=topRating(st);
-  const emp = st.company ? esc(st.company.name) : 'Coral Wing Air';
-  const dot = v => (v==='flight' && st.active) ? '<span class="dot" aria-label="flight booked"></span>' : (v==='pilot' && RATING_ORDER.some(x=>checkrideReady(st,x).ok)) ? '<span class="dot" aria-label="checkride ready"></span>' : '';
-  return `<header class="band"><div class="wrap band-in">
-    <div class="brand">${LOGO}<b>Trade Winds</b><span>${esc(st.pilot.name)} · ${rankOf(st).name} · ${emp}</span></div>
-    <div class="stat"><span class="k">At</span><span class="v">${esc(st.loc)}</span></div>
-    <div class="stat"><span class="k">Day ${st.day}</span><span class="v">${dateTxt(st.day)} ${hhmm(st.clock)}</span></div>
-    <div class="stat"><span class="k">Cash</span><span class="v">${money(st.cash)}</span></div>
-    <div class="stat"><span class="k">Logged</span><span class="v">${fmtH(st.minutes)}</span></div>
-    <div class="stat"><span class="k">License</span><span class="v">${r.code}</span></div>
-    <span class="sync" id="sim-band">${S.simState==='live'?'● MSFS live':''}</span><span class="sync" id="sync">${syncText()}</span>
-  </div>
-  <nav class="wrap tabs" aria-label="Sections">${VIEWS.map(([k,l])=>`<button class="tab" data-act="nav" data-v="${k}" ${S.view===k?'aria-current="page"':''}>${l}${dot(k)}</button>`).join('')}</nav></header>`;
-}
+
 
 /* ---------- setup ---------- */
-function setupView(){
-  return `<main class="wrap"><div class="setup fade">
-    <p class="label">A Caribbean career for Microsoft Flight Simulator 2020 &amp; 2024</p>
-    <h1>Trade Winds</h1>
-    <div class="horizon"></div>
-    <p class="brief">You arrive in St. Martin with a fresh private license and 62 hours. Coral Wing Air takes you on as a trainee. From there: island hops, a billionaire with a secret, hurricane season, checkrides at the world's scariest runways, jets, airliners, and eventually your own company.</p>
-    <form id="setup-form" class="stack" style="margin-top:22px">
-      <div class="form-grid">
-        <label class="field"><span>Your name</span><input id="pname" type="text" value="Ryan" maxlength="40" required></label>
-        <label class="field"><span>Callsign or nickname <small>(optional)</small></span><input id="pcall" type="text" placeholder="e.g. Maverick" maxlength="30"></label>
-      </div>
-      <div class="notice small">Every flight is something you fly yourself in MSFS. The app hands you the job, the story, the weather to set and the load sheet. You fly it, then log how it went.</div>
-      <div><button class="btn action" type="submit">Start my career</button></div>
-    </form></div></main>`;
-}
+
 
 /* ---------- board ---------- */
-function stripHTML(st, job, opts={}){
-  const extra = opts.extra||'';
-  const a=AC[job.ac]; const p=plan(job); const cls = job.kind==='story'?'story':job.kind==='check'?'check':job.vip?'vip':job.cat==='cargo'?'cargo':'';
-  const duty = dutyAfter(st, job); const overDuty = duty > DUTY_MAX;
-  const load = job.pax ? `${job.pax} pax${job.cargo?` + ${job.cargo} lb`:''}` : job.cargo ? `${job.cargo} lb cargo` : 'Ferry, empty';
-  const payTxt = job.kind==='check' ? 'Checkride' : job.company ? `${money(Math.round(job.pay*2.6 - a.op*job.est/60))} est. profit` : money(job.pay);
-  const btn = opts.btn!==undefined ? opts.btn : (st.active ? `<button class="btn sm" disabled>Flight booked</button>` : overDuty ? `<span class="chip warn">Over duty limit</span>` : `<button class="btn primary sm" data-act="accept" data-id="${job.id}">Accept</button>`);
-  return `<article class="strip ${cls} ${opts.locked?'locked':''}">
-    <div class="c-id"><div class="cs">${esc(job.label)}</div><div class="route" style="font-size:14px;margin-top:4px">${job.mystery?`${job.from}<span class="arr">→</span>????`:routeTxt(job)}</div><div class="meta mono">STD ${hhmm(job.dep)}</div></div>
-    <div class="c-main"><div class="ttl">${job.mystery?(job.aiGen?esc(job.title):'Confidential charter'):esc(job.title)}</div><div class="meta">${esc(a.n)} · ${load} · ${job.mystery?'destination revealed when you accept':job.local?`${p.dist} nm loop`:`${p.dist} nm`} · ~${durTxt(p.est)}</div><div class="chips">${chipsFor(st,job)}</div>${extra}</div>
-    <div class="c-cond"><div class="label">Destination wx</div>${job.mystery?`<div class="small">Sealed until you accept</div><div class="meta">${job.celeb?'Rumor says someone famous booked it':job.aiGen?'A very odd booking':'Premium pay, no questions'}</div>`:`<div class="small">${esc(job.wx.n)}</div><div class="meta mono">${pad3(job.wx.dir)}°/${job.wx.spd}${job.wx.gust?'G'+job.wx.gust:''} kt · ${job.wx.t} °C</div>`}</div>
-    <div class="c-side side"><div class="pay">${payTxt}</div>${btn}</div></article>`;
-}
+
 function boardView(){
   const st=S.st; ensureJobs(st);
   const here=AP[st.loc];
@@ -2739,22 +2646,7 @@ function pilotView(){
 }
 
 /* ---------- story ---------- */
-function storyView(){
-  const st=S.st;
-  const arcs = [...new Set(STORY.map(m=>m.arc))];
-  const avail = new Set(storyAvailable(st).map(m=>m.id));
-  return `<main class="wrap stack fade"><div class="grid-2">
-    <section class="panel"><div class="section-title"><h2>Journal</h2><span class="small muted">${st.journal.length} entries</span></div>
-      <div class="journal">${st.journal.map(e=>`<article class="entry"><div class="when">Day ${e.day}<br>${hhmm(e.clock||0)}</div><div style="min-width:0"><h4>${esc(e.title)} ${e.grade?`<span class="chip">${e.grade}</span>`:''}${e.kind==='milestone'?' <span class="chip good">Milestone</span>':''}${e.kind==='ai'?' <span class="chip sea">Journal</span>':''}</h4><p class="${e.kind==='ai'?'ai-out':''}">${esc(e.text)}</p></div></article>`).join('')}</div></section>
-    <aside class="stack">
-      <section class="panel stack"><h3>Chapters</h3>${arcs.map(arc=>`<div><p class="label">${esc(arc)}</p><ul class="tight small" style="list-style:none;padding:0">${STORY.filter(m=>m.arc===arc).map(m=>`<li>${st.story.done[m.id]?'<span class="chip good">Done</span>':avail.has(m.id)?'<span class="chip sea">Available</span>':'<span class="chip">Locked</span>'} ${st.story.done[m.id]||avail.has(m.id)?esc(m.title):'???'}</li>`).join('')}</ul></div>`).join('')}</section>
-    </aside></div>
-    ${guestbookHTML(st)}
-    ${reviewsSection(st)}
-    <section><div class="section-title"><h2>The people</h2><span class="small muted">Relationships grow with every good flight</span></div>
-      <div class="cast">${Object.keys(CAST).map(k=>{ const c=CAST[k], v=st.rep[k]||10; return `<div class="person"><div class="who">${avatar(k)}<div style="min-width:0"><b>${esc(c.n)}</b><p class="tiny muted">${esc(c.role)}</p></div></div><p class="small">${esc(c.bio)}</p><div class="row between small"><span>${repWord(v)}</span><span class="mono">${v}/100</span></div><div class="meter"><i style="width:${v}%"></i></div></div>`; }).join('')}</div></section>
-  </main>`;
-}
+
 
 /* ---------- logbook ---------- */
 function logView(){
@@ -2767,42 +2659,7 @@ function logView(){
 }
 
 /* ---------- company ---------- */
-function companyView(){
-  const st=S.st;
-  if(!st.company){
-    const chk = checkrideReady(st,'CO'); const R=RATINGS.CO;
-    return `<main class="wrap stack fade"><section class="panel stack" style="max-width:760px">
-      <p class="label">Own wings</p><h1 style="font-size:32px">Start your own company</h1>
-      <p class="brief">With an Air Operator Certificate you can buy aircraft, take contracts under your own name and hire pilots to fly while you're busy. Revenue is bigger, and so are the bills: loan payments, insurance and wear arrive every day.</p>
-      ${st.voucher?`<div class="notice"><b>Mari's partnership discount:</b> ${Math.round(st.voucher*100)}% off your first aircraft.</div>`:`<div class="notice small">Tip: Coral Wing's story has a chapter called "Mari's Offer" with a big discount on your first aircraft.</div>`}
-      <h3>Requirements</h3>
-      <ul class="tight"><li>Commercial Pilot license ${st.ratings.COMM?'<span class="chip good">Done</span>':''}</li><li>${R.req.hours} career hours <span class="mono small">(${(st.minutes/60).toFixed(1)})</span></li><li>${money(R.req.cash)} in the bank <span class="mono small">(${money(st.cash)})</span></li><li>Certificate fee: ${money(R.fee)}</li></ul>
-      ${chk.ok ? `<form id="co-form" class="form-grid" style="align-items:end"><label class="field"><span>Company name</span><input id="coname" type="text" required maxlength="40" placeholder="e.g. Leeward Air Charter"></label><div><button class="btn action" type="submit">Apply and pay ${money(R.fee)}</button></div></form>` : `<p class="small muted">Not yet: ${esc((chk.miss||[]).join(' · '))}</p>`}
-    </section></main>`;
-  }
-  const c = st.company; const firstBuy = !c.fleet.length && !c.bought;
-  const market = Object.keys(AC).filter(k=>AC[k].price>0).map(k=>{ const a=AC[k]; const price = Math.round(a.price*(firstBuy && st.voucher? 1-st.voucher : 1)); const t=loanTerms(price);
-    return `<div class="cell stack" style="gap:6px"><div class="row between"><h4>${esc(a.n)}</h4>${canFly(st,k)?'':'<span class="chip warn">Hire-only for now</span>'}</div><p class="tiny muted">${esc(CLS[a.cls].name)} · ${a.pax} pax · ${a.cruise} kt</p>
-      <dl class="kv small"><dt>Price</dt><dd>${money(price)}${firstBuy&&st.voucher?` <span class="chip good">−${Math.round(st.voucher*100)}%</span>`:''}</dd><dt>Down payment</dt><dd>${money(t.down)}</dd><dt>Loan</dt><dd>${money(t.daily)}/day for 5 years</dd><dt>Hired pilot earns</dt><dd>~${money(CLS[a.cls].daily - CLS[a.cls].wage)}/day</dd></dl>
-      <button class="btn sm primary" data-act="buy" data-ac="${k}" ${st.cash<t.down?'disabled':''}>Buy for ${money(t.down)} down</button></div>`; }).join('');
-  const fleet = c.fleet.map(f=>{ const a=AC[f.ac]; const repair = Math.round((100-f.cond)*f.price*0.0003); const val = Math.round(f.price*0.75*(f.cond/100) - f.loanLeft);
-    return `<div class="cell stack" style="gap:6px"><div class="row between"><h4 class="mono">${esc(f.reg)}</h4>${f.hired?'<span class="chip sky">Hired pilot</span>':'<span class="chip">With you</span>'}</div><p class="small">${esc(a.n)}</p>
-      <div class="row between small"><span>Condition</span><span class="mono">${Math.round(f.cond)}%</span></div><div class="meter ${f.cond<60?'bad':f.cond<80?'warn':''}"><i style="width:${f.cond}%"></i></div>
-      <dl class="kv small"><dt>Loan left</dt><dd>${money(f.loanLeft)}</dd><dt>Daily payment</dt><dd>${money(f.loanLeft>0?f.daily:0)}</dd><dt>Flights</dt><dd>${f.flights||0}${f.days?` · ${f.days} hired days`:''}</dd></dl>
-      <div class="row">
-        <button class="btn sm" data-act="hire" data-f="${f.fid}">${f.hired?'Take it back':'Hire a pilot'}</button>
-        <button class="btn sm" data-act="repair" data-f="${f.fid}" ${f.cond>=99||st.cash<repair?'disabled':''}>Repair · ${money(repair)}</button>
-        ${S.confirm==='sell-'+f.fid ? `<button class="btn sm danger" data-act="sell-yes" data-f="${f.fid}">Sell for ${money(val)}</button><button class="btn sm" data-act="confirm-no">Keep</button>` : `<button class="btn sm ghost" data-act="sell" data-f="${f.fid}">Sell</button>`}
-      </div></div>`; }).join('');
-  const led = (c.ledger||[]).slice(0,10);
-  return `<main class="wrap stack fade">
-    <section class="panel"><div class="row between"><div><p class="label">Your company · based at ${esc(c.base)}</p><h1 style="font-size:32px">${esc(c.name)}</h1></div><div class="row" style="gap:22px"><div class="stat"><span class="label">Fleet</span><span class="mono" style="font-size:20px">${c.fleet.length}</span></div><div class="stat"><span class="label">Last day</span><span class="mono" style="font-size:20px">${led[0]?money(led[0].net):'—'}</span></div></div></div>
-      <p class="small muted" style="margin-top:8px">Aircraft you keep "with you" appear as company jobs on the board (revenue minus operating cost). Aircraft with a hired pilot earn money every day you rest. Daily loan payments and insurance are charged either way.</p></section>
-    ${c.fleet.length?`<section><div class="section-title"><h2>Fleet</h2></div><div class="cards">${fleet}</div></section>`:''}
-    ${led.length?`<section class="panel"><h3>Daily ledger</h3><div class="scroll-x"><table><thead><tr><th>Day</th><th class="num">Net</th><th>Notes</th></tr></thead><tbody>${led.map(l=>`<tr><td class="mono">${l.day}</td><td class="num">${money(l.net)}</td><td class="small" style="white-space:normal">${esc(l.lines.join(' · ')||'Loan payments and insurance')}</td></tr>`).join('')}</tbody></table></div></section>`:''}
-    <section><div class="section-title"><h2>Aircraft market</h2><span class="small muted">Prices are game-scaled. Airliners aren't for sale.</span></div><div class="cards">${market}</div></section>
-  </main>`;
-}
+
 
 /* ---------- hangar ---------- */
 function hangarView(){
@@ -2979,12 +2836,7 @@ function pilotExtras(st){
   <section><div class="section-title"><h2>Achievements</h2><span class="small muted">${got.length} of ${ACH.length}</span></div>
     <div class="achs">${ACH.map(a=>{ const on=st.ach&&st.ach[a.id]; return `<div class="ach ${on?'on':''}"><b>${esc(a.n)}</b><span class="small muted">${esc(a.d)}</span>${on?`<span class="tiny mono">Day ${on}</span>`:''}</div>`; }).join('')}</div></section>`;
 }
-function reviewsSection(st){
-  const rv=st.reviews||[]; if(!rv.length) return '';
-  const avg=(rv.reduce((s,r)=>s+r.stars,0)/rv.length).toFixed(1);
-  return `<section><div class="section-title"><h2>Passenger reviews</h2><span class="small muted">${avg} average from ${rv.length}</span></div>
-    <div class="cards">${rv.slice(0,9).map(r=>`<div class="cell stack" style="gap:4px"><p class="stars">${stars(r.stars)}</p><p>"${esc(r.text)}"</p><p class="tiny muted">${esc(r.who)} · ${esc(r.route)} · day ${r.day}</p></div>`).join('')}</div></section>`;
-}
+
 document.addEventListener('keydown', e=>{ if((e.key==='Enter'||e.key===' ') && e.target.matches && e.target.matches('g[data-act]')){ e.preventDefault(); e.target.dispatchEvent(new MouseEvent('click',{bubbles:true})); } });
 /* ===================== FINANCE: ledger, banking, housing, fuel, seasons, training, fleet finance, routes ===================== */
 const CAT_GROUP = {
@@ -3049,7 +2901,7 @@ function loanRate(st){ const F=fin(st); return clamp(0.04 + (800-F.score)/2500, 
 function scoreDelta(st, d){ const F=fin(st); F.score = clamp(F.score + d, 300, 850); }
 
 /* ---------- aircraft values & loans ---------- */
-function newValue(acId){ return AC[acId].price; }
+
 function fairValue(f){ return Math.round(f.value * (0.55 + 0.45*f.cond/100)); }
 function amortDaily(principal, apr, years){ const r=apr/365, n=years*365; return principal * r / (1 - Math.pow(1+r, -n)); }
 function makeListings(st){
@@ -3593,7 +3445,7 @@ const ARC_META = {
   'Going Abroad':    {n:10, tag:`Ferry flights north, the Mayan coast, and across the Atlantic.`, col:'#1d7f47'}
 };
 function arcMeta(arc){ return ARC_META[arc] || {n:99, tag:'', col:'#0b746f'}; }
-function arcList(){ return [...new Set(STORY.map(m=>m.arc))].sort((a,b)=>arcMeta(a).n-arcMeta(b).n); }
+
 function arcChapters(arc){ return STORY.filter(m=>m.arc===arc); }
 
 function unlockHint(st, m){
@@ -3613,49 +3465,14 @@ function chapterStatus(st, m, availSet){
   if(st.loc!==m.from) return {k:'travel', at:m.from};
   return {k:'ready', at:m.from};
 }
-function arcState(st, arc, availSet){
-  const ch = arcChapters(arc); const done = ch.filter(m=>st.story.done[m.id]).length;
-  const next = ch.find(m=>!st.story.done[m.id]) || null;
-  return {arc, ch, done, total:ch.length, next, status: next ? chapterStatus(st,next,availSet) : {k:'complete'}, meta:arcMeta(arc)};
-}
-const ST_LABEL = {ready:['Ready','ok'], travel:['Travel first','go'], aircraft:['Needs aircraft','hold'], locked:['Locked','lock'], complete:['Complete','ok'], done:['Done','ok']};
-function statusLine(st, s, m){
-  if(s.k==='ready') return `Ready to fly from <b>${esc(s.at)}</b>, where you are now.`;
-  if(s.k==='travel') return `Starts at <b>${esc(s.at)}</b> (${esc(AP[s.at].isl)}). Deadhead or fly there first.`;
-  if(s.k==='aircraft') return `Needs one of these in your MSFS hangar: ${s.ac.map(k=>esc(AC[k].n)).join(', ')}.`;
-  if(s.k==='locked') return s.miss.length ? `Unlocks with: ${s.miss.map(esc).join(' · ')}.` : `Unlocks as your career grows.`;
-  if(s.k==='complete') return `Every chapter flown.`;
-  return '';
-}
-function segsHTML(st, a){ return `<div class="segs" aria-hidden="true">${a.ch.map(m=>`<i class="${st.story.done[m.id]?'d':m===a.next?'n':''}"></i>`).join('')}</div>`; }
-function stPill(k){ const [t,c]=ST_LABEL[k]; return `<span class="stp ${c}">${t}</span>`; }
+var arcState; /* defined in full below (055-core.js) */
+
+
+
+
 
 /* ---------- board: "Your story" tracker ---------- */
-function campaignCard(st){
-  const availSet = new Set(storyAvailable(st).map(m=>m.id));
-  const all = arcList().map(a=>arcState(st,a,availSet));
-  const doneAll = all.reduce((s,a)=>s+a.done,0), totalAll = all.reduce((s,a)=>s+a.total,0);
-  const rank = {ready:0, travel:1, aircraft:2, locked:3, complete:4};
-  let show = all.filter(a=>a.status.k!=='complete' && (a.done>0 || ['ready','travel','aircraft'].includes(a.status.k)));
-  const mainNext = all.find(a=>a.meta.main && a.status.k!=='complete');
-  if(mainNext && !show.includes(mainNext)) show.push(mainNext);
-  show.sort((a,b)=>rank[a.status.k]-rank[b.status.k] || (b.meta.main?1:0)-(a.meta.main?1:0) || a.meta.n-b.meta.n);
-  show = show.slice(0,4);
-  const rows = show.map(a=>`<div class="arc-row" style="--arc:${a.meta.col}">
-      <div class="arc-mark">${a.done}<small>/${a.total}</small></div>
-      <div style="min-width:0">
-        <div class="row between" style="gap:6px"><span class="arc-name">${esc(a.arc)} <span class="tiny muted">${a.meta.main?'Main story':'Side story'}</span></span>${stPill(a.status.k)}</div>
-        ${segsHTML(st,a)}
-        <p class="small"><span class="muted">Chapter ${a.ch.indexOf(a.next)+1}:</span> <b>${a.status.k==='locked' && a.done===0 && !a.meta.main ? '???' : esc(a.next.title)}</b></p>
-        <p class="tiny muted">${statusLine(st,a.status,a.next)}</p>
-      </div></div>`).join('');
-  return `<section class="panel campaign fade">
-    <div class="row between" style="align-items:flex-end"><div><p class="label">Your story</p><h2 style="font-size:20px">${doneAll} of ${totalAll} chapters flown</h2></div>
-      <button class="btn sm ghost" data-act="nav" data-v="story">Open story map →</button></div>
-    <div class="meter big" style="margin:10px 0 14px"><i style="width:${Math.round(doneAll/totalAll*100)}%"></i></div>
-    <div class="arc-rows">${rows || `<p class="small muted">Fly jobs and earn ratings to open new chapters.</p>`}</div>
-  </section>`;
-}
+var campaignCard; /* defined in full below (085-core.js) */
 
 /* Story strips say which chapter they are */
 const _progStoryJob = storyJob;
@@ -3678,73 +3495,10 @@ const NAV_ICON = {
   hangar:`<path d="M2 20h20M4 20V11a8 8 0 0 1 16 0v9M8 20v-5h8v5"/>`
 };
 const NAV_GROUPS = [['board','map','flight','cockpit'],['pilot','story','log'],['money','company','hangar']];
-function band(){
-  const st=S.st; const r=topRating(st);
-  const emp = st.company ? esc(st.company.name) : 'Coral Wing Air';
-  const avail = storyAvailable(st).length;
-  const rides = RATING_ORDER.filter(x=>x!=='CO' && checkrideReady(st,x).ok).length;
-  const badge = v => v==='flight' && st.active ? `<span class="nb live" aria-label="flight booked">1</span>` : v==='story' && avail ? `<span class="nb" aria-label="${avail} chapters available">${avail}</span>` : v==='pilot' && rides ? `<span class="nb" aria-label="${rides} checkrides ready">${rides}</span>` : '';
-  const label = Object.fromEntries(VIEWS);
-  const tab = k => `<button class="tab" data-act="nav" data-v="${k}" ${S.view===k?'aria-current="page"':''}><svg viewBox="0 0 24 24" aria-hidden="true">${NAV_ICON[k]||''}</svg><span>${label[k]}</span>${badge(k)}</button>`;
-  return `<header class="band"><div class="wrap band-in">
-    <div class="brand">${LOGO}<b>Trade Winds</b><span>${esc(st.pilot.name)} · ${rankOf(st).name} · ${emp}</span></div>
-    <div class="stat"><span class="k">At</span><span class="v">${esc(st.loc)}</span></div>
-    <div class="stat"><span class="k">Day ${st.day}</span><span class="v">${dateTxt(st.day)} ${hhmm(st.clock)}</span></div>
-    <div class="stat"><span class="k">Cash</span><span class="v">${money(st.cash)}</span></div>
-    <div class="stat"><span class="k">Logged</span><span class="v">${fmtH(st.minutes)}</span></div>
-    <div class="stat"><span class="k">License</span><span class="v">${r.code}</span></div>
-    <span class="sync" id="sim-band">${S.simState==='live'?'● MSFS live':''}</span><span class="sync" id="sync">${syncText()}</span>
-  </div>
-  <nav class="tabs-wrap" aria-label="Sections"><div class="wrap tabs">${NAV_GROUPS.map(g=>g.filter(k=>label[k]).map(tab).join('')).join('<span class="tab-sep" aria-hidden="true"></span>')}</div></nav></header>`;
-}
+
 
 /* ---------- Story tab ---------- */
-function storyView(){
-  const st=S.st;
-  const availSet = new Set(storyAvailable(st).map(m=>m.id));
-  const arcs = arcList().map(a=>arcState(st,a,availSet));
-  const doneAll = arcs.reduce((s,a)=>s+a.done,0), totalAll = arcs.reduce((s,a)=>s+a.total,0);
-  const arcsDone = arcs.filter(a=>a.status.k==='complete').length;
-  const ready = arcs.filter(a=>['ready','travel'].includes(a.status.k));
-  const pct = Math.round(doneAll/totalAll*100);
-  const ring = `<div class="pring" style="--p:${pct}"><div><b>${pct}%</b><span>complete</span></div></div>`;
-  const chapterRow = (a, m, i) => {
-    const s = chapterStatus(st, m, availSet); const isNext = m===a.next;
-    const reveal = s.k==='done' || isNext || availSet.has(m.id);
-    let action = '';
-    if(s.k==='ready') action = st.active ? `<span class="chip">Finish your current flight first</span>` : `<button class="btn action sm" data-act="accept-story" data-id="${m.id}">Fly this chapter</button>`;
-    else if(s.k==='travel'){ const dh=deadheadCost(st,s.at); action = `<button class="btn sm" data-act="deadhead" data-to="${s.at}" ${st.active||st.cash<dh.cost?'disabled':''}>Deadhead to ${s.at} · ${money(dh.cost)}</button>`; }
-    return `<li class="ch ${s.k}${isNext?' next':''}">
-      <span class="node">${s.k==='done'?'✓':s.k==='locked'?`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3M6 11h12v9H6z"/></svg>`:i+1}</span>
-      <div style="min-width:0">
-        <p class="ch-t">${reveal?esc(m.title):'Untold chapter'}</p>
-        <p class="tiny muted">${reveal?`${esc(m.from)} → ${esc(m.local?m.from:m.to)} · ${esc(AC[m.ac[0]].n)}${m.ac.length>1?' or similar':''}`:''}${s.k==='done'?'':reveal?'<br>':''}${s.k!=='done'?statusLine(st,s,m):''}</p>
-        ${action?`<div style="margin-top:6px">${action}</div>`:''}
-      </div></li>`;
-  };
-  const arcCard = a => `<article class="arc-card" style="--arc:${a.meta.col}">
-      <header><div class="row between" style="gap:8px"><span class="label" style="color:inherit;opacity:.85">${a.meta.main?'Main story':'Side story'}</span>${stPill(a.status.k)}</div>
-        <h3>${esc(a.arc)}</h3><p class="small">${esc(a.meta.tag)}</p>
-        <div class="row between" style="margin-top:10px"><div class="segs light">${a.ch.map(m=>`<i class="${st.story.done[m.id]?'d':m===a.next?'n':''}"></i>`).join('')}</div><span class="mono small">${a.done}/${a.total}</span></div></header>
-      <ol class="chapters">${a.ch.map((m,i)=>chapterRow(a,m,i)).join('')}</ol></article>`;
-  const journal = `<section class="panel"><div class="section-title"><h2>Journal</h2><span class="small muted">${st.journal.length} entries</span></div>
-      <div class="journal">${st.journal.map(e=>`<article class="entry"><div class="when">Day ${e.day}<br>${hhmm(e.clock||0)}</div><div style="min-width:0"><h4>${esc(e.title)} ${e.grade?`<span class="chip">${e.grade}</span>`:''}${e.kind==='milestone'?' <span class="chip good">Milestone</span>':''}${e.kind==='ai'?' <span class="chip sea">Journal</span>':''}</h4><p class="${e.kind==='ai'?'ai-out':''}">${esc(e.text)}</p></div></article>`).join('')}</div></section>`;
-  const people = `<section><div class="section-title"><h2>The people</h2><span class="small muted">Relationships grow with every good flight</span></div>
-      <div class="cast">${Object.keys(CAST).map(k=>{ const c=CAST[k], v=st.rep[k]||10; return `<div class="person"><div class="who">${avatar(k)}<div style="min-width:0"><b>${esc(c.n)}</b><p class="tiny muted">${esc(c.role)}</p></div></div><p class="small">${esc(c.bio)}</p><div class="row between small"><span>${repWord(v)}</span><span class="mono">${v}/100</span></div><div class="meter"><i style="width:${v}%"></i></div></div>`; }).join('')}</div></section>`;
-  return `<main class="wrap stack fade">
-    <section class="story-hero">
-      ${ring}
-      <div style="min-width:0"><p class="label" style="color:inherit;opacity:.75">Story map</p><h1>${doneAll} of ${totalAll} chapters flown</h1>
-        <p>${arcsDone} of ${arcs.length} storylines complete. ${ready.length ? `<b>${ready.length}</b> chapter${ready.length>1?'s':''} can be flown now.` : `Earn ratings and hours to open the next chapters.`}</p>
-        <div class="row" style="margin-top:12px">${ready.slice(0,3).map(a=>`<span class="hero-chip" style="--arc:${a.meta.col}">${esc(a.arc)}: ${esc(a.next.title)}</span>`).join('')}</div></div>
-    </section>
-    <div class="arc-grid">${arcs.map(arcCard).join('')}</div>
-    ${journal}
-    ${guestbookHTML(st)}
-    ${reviewsSection(st)}
-    ${people}
-  </main>`;
-}
+var storyView; /* defined in full below (077-core.js) */
 
 /* Keep the active tab in view on narrow screens */
 (function(){ const app=document.getElementById('app'); if(!app || !window.MutationObserver) return;
@@ -3761,16 +3515,7 @@ const WX_ICON = {
   wind:`<path d="M3 8h11a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h8"/>`
 };
 function wxIconKey(w){ const k=w.key||''; return k==='tstorm'?'storm': k==='showers'||k==='wave'?'rain': k==='dust'?'haze': k==='north'?'wind': (w.cl&&w.cl.some(c=>c[0]==='BKN'||c[0]==='OVC'))?'cloud':'sun'; }
-function jobKind(job){
-  if(job.kind==='story') return {k:'story', t:job.label, c:'var(--sea)'};
-  if(job.kind==='check') return {k:'check', t:job.label||'Checkride', c:'var(--violet)'};
-  if(job.lend) return {k:'lend', t:job.label, c:'#c2603a'};
-  if(job.company) return {k:'company', t:job.label, c:'var(--sky)'};
-  if(job.urgent) return {k:'urgent', t:job.label, c:'var(--bad)'};
-  if(job.vip) return {k:'vip', t:job.label, c:'var(--coral)'};
-  if(job.cat==='cargo') return {k:'cargo', t:job.label, c:'var(--sky)'};
-  return {k:'pax', t:job.label, c:'#c98a1a'};
-}
+
 const ICO_PLANE = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15.5 13.5 11V5.5a1.5 1.5 0 0 0-3 0V11L3 15.5v2l7.5-2.3V19l-2 1.5V22l3.5-1 3.5 1v-1.5l-2-1.5v-3.8l7.5 2.3z"/></svg>`;
 function stripHTML(st, job, opts={}){
   const extra = opts.extra||'';
@@ -3880,7 +3625,7 @@ const CABIN_LINES = {
   cargoTo:[`Dez on the radio: "Wheels up. Don't break my eggs." Even when there are no eggs.`,`Dispatch: "Copy your departure. Cargo's insured, but fly like it isn't."`],
   cargoTd:[`Dispatch: "Nice arrival. Ground crew is heading out to unload."`,`Dez: "Cargo's in one piece? Good. Mari wants pictures."`]
 };
-function cabinPick(k, job){ const a=CABIN_LINES[k]; return pick(a).replace('{isl}', AP[job.to]?AP[job.to].isl:'the island'); }
+
 function cabinTick(){
   const st=S.st; const a=st && st.active; const s=S.sim; if(!a || !s || S.simState!=='live' || !s.motion) return;
   const rec = simRecFor(a); if(!rec) return;
@@ -3900,14 +3645,7 @@ function cabinTick(){
   job.comfort = Math.round(C.comfort);
   try{ save(); }catch(e){}
 }
-function cabinInner(){
-  const a=S.st && S.st.active; if(!a) return '';
-  const C=a.cab; const pax=a.job.pax>0; const live=S.simState==='live';
-  const meter = pax ? `<div class="row between small"><span>Passenger comfort</span><b class="mono">${C?Math.round(C.comfort):100}/100</b></div><div class="meter ${C&&C.comfort<50?'bad':C&&C.comfort<80?'warn':''}"><i style="width:${C?C.comfort:100}%"></i></div>` : '';
-  const feed = C && C.log.length ? `<ol class="feed">${C.log.map(m=>`<li><span class="who">${esc(m.who)}</span><span>${esc(m.text)}</span><time class="mono">${new Date(m.t).toTimeString().slice(0,5)}</time></li>`).join('')}</ol>`
-    : `<p class="small muted">${live ? 'Waiting for your first move. Passengers and ATC react here as you taxi, take off, hit turbulence and land.' : 'Connect the MSFS Bridge and the cabin comes alive: passengers and ATC react to your real takeoff, turbulence, descent and touchdown.'}</p>`;
-  return `<div class="row between"><h3>Cabin &amp; radio</h3><span class="chip ${live?'sea':''}">${live?'● Live':'Offline'}</span></div>${meter}${feed}${pax?`<p class="tiny muted">Smooth flying keeps passengers happy. 90+ comfort earns a bonus tip.</p>`:''}`;
-}
+
 function cabinBlock(){ return S.st && S.st.active ? `<section class="panel stack cabin-host">${cabinInner()}</section>` : ''; }
 const _shellCockpit = cockpitView;
 cockpitView = function(){ const h=_shellCockpit(); return h.replace(/<\/main>\s*$/, cabinBlock()+'</main>'); };
@@ -4062,7 +3800,7 @@ function cardSection(){
       <div class="row"><button class="btn primary sm" data-act="card-save">Save image</button><button class="btn sm" data-act="card-copy">Copy</button></div></div>
       <img id="flight-card" alt="Flight card image: route, grade and landing stats" style="width:100%;border-radius:14px;display:block;aspect-ratio:1200/630;background:var(--surface-2)"></section>`;
 }
-let _cardURL=null;
+
 function paintCard(){ const img=document.getElementById('flight-card'); if(!img || !S.st || !S.st.last) return; const draw=()=>{ try{ const cv=drawFlightCard(S.st); img.src=cv.toDataURL('image/png'); }catch(e){} }; if(document.fonts && document.fonts.ready) document.fonts.ready.then(draw); else draw(); }
 const _cardResult = resultView;
 resultView = function(){ const h=_cardResult(); setTimeout(paintCard,0); return h.replace(/(<\/section>)/, '$1'+cardSection()); };
@@ -4190,26 +3928,8 @@ const _evCabin = cabinInner;
 cabinInner = function(){ const h=_evCabin(); return h ? h.replace(/(<p class="tiny muted">[^<]*riding along today\.<\/p>)/, '$1'+liveWxLine()) : h; };
 
 /* ---- (b) your phone rings: characters call with time-limited work ---- */
-const CALLERS = [
-  {k:'mari', when:()=>true, lines:[`"Rookie. I need a favor. Somebody has to get to {to} in a hurry and you're the only one not asleep. Double pay. Go."`,`"Change of plans. A client just called in a rush job to {to}. You're closest. Can you take it?"`]},
-  {k:'dez', when:()=>true, lines:[`"Ey, it's Dez. Got a box that HAS to be in {to} today. Don't ask what's in it. It's legal. Probably. It's car parts."`,`"Dez here. Ferry's broken again and somebody's grandmother needs to get to {to}. You in?"`]},
-  {k:'celeste', when:st=>st.story.done.SB1, lines:[`"Darling. A guest of mine is stuck and must be in {to} tonight. I told her you were the best. Don't make me a liar."`]},
-  {k:'rosa', when:st=>st.story.done.RS1, lines:[`"It's Rosa! A wedding in {to} forgot to order dessert. DESSERT. Can you fly my cakes? I'll pay, and I'll feed you."`]},
-  {k:'calloway', when:st=>st.story.done.CW4, lines:[`"Calloway. Don't make it weird. My airplane's down and I've got a client for {to}. You can have the job. Just this once."`]},
-  {k:'vivienne', when:st=>st.story.done.VJ1, lines:[`"It's Vivienne. My photographer missed her flight to {to}. Can you get her there? I'll cover it, generously."`]}
-];
-function maybeCall(st, chance){
-  if(st.active || st.call || Math.random() > chance) return;
-  const opts = CALLERS.filter(c=>CAST[c.k] && c.when(st)); if(!opts.length) return; const c = pick(opts);
-  const arches = ARCH.filter(a=>a.w>0 && !a.airline && !a.local && (!a.need || hasRating(st,a.need)));
-  let job=null; for(let i=0;i<8 && !job;i++) job = makeJob(st, pick(arches), false);
-  if(!job || job.local) return;
-  job.pay = Math.round(job.pay*1.6/10)*10; job.urgent=true; job.call=c.k; job.label=`Call from ${shortName(c.k)}`; job.client=CAST[c.k].n;
-  job.dep = Math.round((st.clock+25)/5)*5; job.title = `${shortName(c.k)}'s rush job to ${AP[job.to].isl.replace(/\s*\(.*\)/,'')}`;
-  const line = pick(c.lines).replace('{to}', AP[job.to].isl.replace(/\s*\(.*\)/,''));
-  job.paras = [line, ...(job.paras||[]).slice(0,1)];
-  st.call = {who:c.k, line, job, until: st.clock + 90};
-}
+
+var maybeCall; /* defined in full below (055-core.js) */
 function callHTML(st){
   const c=st.call; if(!c) return ''; if(st.clock > c.until){ st.call=null; return ''; }
   const j=c.job; const a=AC[j.ac];
@@ -4392,12 +4112,7 @@ function voiceVol(){ try{ return Number(localStorage.getItem('tw.vol')||'0.9'); 
 let _voices=[];
 function loadVoices(){ try{ _voices = (window.speechSynthesis && speechSynthesis.getVoices()) || []; }catch(e){ _voices=[]; } }
 if(window.speechSynthesis){ loadVoices(); try{ speechSynthesis.onvoiceschanged = loadVoices; }catch(e){} }
-function pickVoice(female, slot){
-  const en=_voices.filter(v=>/^en/i.test(v.lang)); if(!en.length) return null;
-  const f=en.filter(v=>/female|zira|aria|jenny|samantha|susan|hazel|libby|sonia|natasha|michelle|karen|moira|tessa|serena/i.test(v.name));
-  const m=en.filter(v=>/male|david|mark|guy|george|ryan|daniel|alex|fred|thomas|christopher|eric|james|william/i.test(v.name) && !/female/i.test(v.name));
-  const pool = female ? (f.length?f:en) : (m.length?m:en); return pool[slot % pool.length];
-}
+
 function speakerFor(who, job){
   if(/^(Ground|Radio|ATC|Approach|Tower)$/i.test(who)) return {voice:pickVoice(false,1), rate:1.12, pitch:0.85};
   if(/^Cabin$/i.test(who)) return {voice:pickVoice(true,1), rate:1.0, pitch:1.1};
@@ -4536,9 +4251,9 @@ const DIFF = {
   expert:{n:'Expert', d:'Mandatory checklist before every flight, real consequences, and 15% extra pay.'}
 };
 function diff(){ return (S.st && S.st.difficulty) || 'standard'; }
-const CK_REQUIRED = 4; // Preflight, Start, Taxi, Before takeoff
-function checklistDone(a){ if(!a) return false; const ph=cockpitPhases(S.st, a.job); const ck=a.ck||{done:{}}; for(let i=0;i<Math.min(CK_REQUIRED, ph.length);i++){ for(let j=0;j<ph[i].items.length;j++){ if(!ck.done[i+'-'+j]) return false; } } return true; }
-function checklistCount(a){ const ph=cockpitPhases(S.st, a.job); const ck=a.ck||{done:{}}; let n=0,t=0; for(let i=0;i<Math.min(CK_REQUIRED, ph.length);i++) for(let j=0;j<ph[i].items.length;j++){ t++; if(ck.done[i+'-'+j]) n++; } return [n,t]; }
+ // Preflight, Start, Taxi, Before takeoff
+var checklistDone; /* defined in full below (051-core.js) */
+var checklistCount; /* defined in full below (051-core.js) */
 const _dfBand = band;
 band = function(){
   const h=_dfBand(); const d=diff();
@@ -4573,11 +4288,7 @@ afterFlight = function(st, job, f, res, out){
 };
 
 /* ---- automatic debrief from the MSFS recorder ---- */
-function autoReady(a){
-  const rec = simRecFor(a); if(!rec || !rec.touchdown) return null;
-  const j=a.job; if(j.kind==='check' || j.scen || j.request || (j.bonus && !j.bonus.auto)) return null; // these need your answers
-  return rec;
-}
+
 function autoFinish(rec, how){
   const st=S.st, a=st.active, job=a.job; if(!a || a._autoDone) return; a._autoDone=true;
   const near = nearestAirport(rec.touchdown.lat, rec.touchdown.lon);
@@ -4617,7 +4328,7 @@ const URG_REASONS = [
   {arch:'vip_ceo', t:`Executive needs {to} now`, d:`A CEO's meeting moved up. They'll pay double for a pilot who's rolling in 15 minutes.`},
   {arch:'catch', t:`Fresh catch, short shelf life`, d:`A restaurant at {to} needs the morning catch before lunch service. Double pay for a fast departure.`}
 ];
-function urgentOn(){ try{ return localStorage.getItem('tw.urgent')!=='off'; }catch(e){ return true; } }
+var urgentOn; /* defined in full below (055-core.js) */
 function spawnUrgent(force){
   const st=S.st; if(!st || st.active || st.urgent || (!force && !urgentOn())) return null;
   const opts = URG_REASONS.filter(r=>{ const a=ARCH.find(x=>x.id===r.arch); return a && (!a.need || hasRating(st,a.need)); });
@@ -5261,16 +4972,7 @@ async function savePLN(job){
   try{ const dl=window.claude && await claude.use('downloads'); if(dl){ await dl.save({filename:name+'.txt', data:text}); toast('Saved as .pln.txt (the browser only allows text files). Rename it to .pln, then in MSFS: World Map → Load.'); return; } }catch(err){ if(err && err.code==='declined') return; }
   try{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'application/xml'})); a.download=name; a.click(); }catch(_){ toast('Saving isn\'t available here.'); }
 }
-async function loadIntoSim(job){
-  if(!S.mcp){ toast('MSFS isn\'t connected.'); return; } const p=plan(job);
-  const fuelGal = Math.ceil(Math.max(p.gal*1.3, p.gal+5)); const payloadLb = Math.max(0, p.payload - 170);
-  S.loading=true; renderPreflight();
-  try{ const r=await S.mcp.callTool(SIM_SERVER,'load_aircraft',{fuelGal, payloadLb},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} }
-    if(o && o.ok){ toast(`Loaded: ${o.fuel!=null?o.fuel+' gal of fuel':'fuel unchanged'}, ${o.payload!=null?o.payload+' lb of passengers and cargo':'payload unchanged'}.${o.notes&&o.notes.length?' '+o.notes[0]:''}`); }
-    else toast(o && o.error ? `Couldn't load: ${o.error}` : `Couldn't load the plane. Update the MSFS Bridge to v1.3.`);
-  }catch(e){ toast(e && (e.code==='not_in_manifest'||e.code==='tool_not_found'||/unknown|not found/i.test(e.message||'')) ? 'Your MSFS Bridge is older than v1.3. Update it to load the plane automatically.' : 'Couldn\'t reach MSFS to load the plane.'); }
-  S.loading=false; setTimeout(()=>simPoll(true), 800); renderPreflight();
-}
+var loadIntoSim; /* defined in full below (061-core.js) */
 function preflightHTML(job){
   const C=preflightChecks(job); const p=plan(job); const allOk=C.every(c=>c.ok); const live=S.simState==='live';
   return `<div class="row between"><div><p class="label">Before you start</p><h3>Pre-flight sim check ${allOk?'<span class="chip good">All set</span>':''}</h3></div><button class="btn sm ghost" data-act="pf-recheck">Check again</button></div>
@@ -5278,7 +4980,7 @@ function preflightHTML(job){
     <div class="row">${live?`<button class="btn sm primary" data-act="pf-load" ${S.loading?'disabled':''}>${S.loading?'Loading…':`Load ${Math.ceil(Math.max(p.gal*1.3, p.gal+5))} gal + ${Math.max(0,p.payload-170)} lb into MSFS`}</button>`:''}<button class="btn sm" data-act="pf-pln">Download MSFS flight plan (.pln)</button></div>
     <p class="tiny muted">Cruise altitude in the plan: ${cruiseAltFor(job).toLocaleString()} ft. Loading works with most default aircraft; some add-ons manage fuel and weights in their own tablet.</p>`;
 }
-function renderPreflight(){ const el=document.getElementById('preflight'); const a=S.st&&S.st.active; if(el && a) el.innerHTML=preflightHTML(a.job); }
+var renderPreflight; /* defined in full below (052-core.js) */
 const _pfFlight = flightView;
 flightView = function(){ const h=_pfFlight(); const a=S.st&&S.st.active; if(!a || a.started || S.debrief || S.showResult) return h;
   return h.replace(/(<\/section>)/, `$1<section class="panel stack preflight" id="preflight">${preflightHTML(a.job)}</section>`); };
@@ -5638,27 +5340,8 @@ document.addEventListener('click', e=>{
   S.recap = { day:st.day, date:dateTxt(st.day), flights:today.length, mins:today.reduce((s,l)=>s+(l.min||0),0), net:today.reduce((s,l)=>s+(l.pay||0),0),
     best: ver.length?ver.reduce((a,b)=>a.fpm<b.fpm?a:b):null, grades:today.map(l=>l.grade), routes:today.map(l=>`${l.from}→${l.to}`).reverse(), beats:beats.map(b=>({t:b.title, x:b.text})), cash0: st.cash };
 }, true);
-function recapTeaser(st){
-  const out=[]; const avail=storyAvailable(st); const ready=avail.find(m=>m.from===st.loc) || avail[0];
-  if(ready) out.push(`📖 <b>${esc(ready.arc)}</b> continues: “${esc(ready.title)}”${ready.from!==st.loc?` (starts at ${esc(ready.from)})`:''}.`);
-  try{ const evs=realEvents(); if(evs[0]) out.push(`🌍 ${esc(evs[0].n)} is on in the real Caribbean: those islands pay 20% more.`); }catch(_){}
-  try{ const fe=festivalOn(st)[0]; if(fe) out.push(`🎉 ${esc(fe.n||'A festival')} is on today. Charter demand is up.`); }catch(_){}
-  try{ const W=weeklyState(st); const left=weekPicks(W.key).filter(c=>!W.done[c.id]); if(left[0]) out.push(`🏆 Weekly challenge still open: ${esc(left[0].n)} (${(W.prog[left[0].id]||0)}/${left[0].goal}).`); }catch(_){}
-  try{ const g=Object.keys(st.airframes||{}).filter(k=>isGrounded(st,k)); if(g.length) out.push(`🔧 Still in Dez's hangar: ${g.map(k=>esc(AC[k].n)).join(', ')}.`); }catch(_){}
-  return out.slice(0,4);
-}
-function recapHTML(st){
-  const R=S.recap; if(!R) return ''; const T=recapTeaser(st); const gcount=g=>R.grades.filter(x=>x===g).length;
-  return `<div class="overlay" role="dialog" aria-modal="true" aria-label="Day recap"><div class="panel recap">
-    <div class="recap-art">${islandArt(st.loc, 1110, 900, 160)}<div class="recap-title"><p class="label">End of day ${R.day} · ${esc(R.date)}</p><h2>That's a wrap</h2></div></div>
-    <div class="recap-body">
-      <div class="recap-stats"><div><b class="mono">${R.flights}</b><span>flight${R.flights>1?'s':''}</span></div><div><b class="mono">${durTxt(R.mins)}</b><span>logged</span></div><div><b class="mono">${money(R.net)}</b><span>earned</span></div><div><b class="mono">${R.best?R.best.fpm:'—'}</b><span>best fpm</span></div></div>
-      <p class="small"><b>Today's route:</b> <span class="mono">${R.routes.map(esc).join('  ·  ')}</span>${gcount('A')?` · ${gcount('A')} grade A`:''}</p>
-      ${R.beats.length?`<div class="recap-beats">${R.beats.map(b=>`<div><b>${esc(b.t)}</b><p class="small muted">${esc(b.x.slice(0,180))}${b.x.length>180?'…':''}</p></div>`).join('')}</div>`:''}
-      ${T.length?`<div class="recap-next"><p class="label">Tomorrow on Trade Winds</p>${T.map(x=>`<p class="small">${x}</p>`).join('')}</div>`:''}
-      <div class="row" style="justify-content:flex-end"><button class="btn action" data-act="recap-close">Start day ${st.day} ☀</button></div>
-    </div></div></div>`;
-}
+
+var recapHTML; /* defined in full below (055-core.js) */
 const _rcTour = tourHTML;
 tourHTML = function(st){ return (S.recap ? recapHTML(st) : '') + _rcTour(st); };
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="recap-close"]')){ S.recap=null; render(); try{ if(typeof chime==='function') chime(); }catch(_){} } });
@@ -5766,11 +5449,7 @@ inflightView = function(){ const a=S.st.active; let h=_orInflight(); if(a.job.sc
   else if(a.job.scen) h=h.replace('<section class="panel stack if-live"', `<div class="notice small">📩 Sealed orders aboard. They open automatically ${TRIG_LABEL[SCEN_TRIGGER[a.job.scen]||'mid']}.</div><section class="panel stack if-live"`); return h; };
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="orders-ok"]')){ S.ordersPop=false; S.keepScroll=true; render(); } });
 /* flights with sealed orders log themselves too, graded on what you actually did */
-function autoReady(a){
-  const rec = simRecFor(a); if(!rec || !rec.touchdown) return null;
-  const j=a.job; if(j.kind==='check' || j.request || (j.bonus && !j.bonus.auto)) return null;
-  if(j.scen && !a.opened) return null; return rec;
-}
+var autoReady; /* defined in full below (060-core.js) */
 const _orApply = applyResult;
 applyResult = function(st, job, f, res){
   const a=st.active; if(job.scen && f.auto && !f.scen && a && a.scenPlan){ const P=a.scenPlan; const landed=f.landedAt;
@@ -5962,7 +5641,7 @@ document.addEventListener('change', e=>{ const s=e.target.closest('[data-act="bp
 DIFF.casual.d = 'Forgiving: landings up to 450 fpm count as firm, rough rides cost less, fewer surprises. Checklist optional.';
 DIFF.standard.d = 'The career as designed. Checklist optional.';
 DIFF.expert.d = 'Stricter landing grades, mandatory checklist, the right fuel and aircraft loaded before you start, fines for landing below legal reserve, more in-flight surprises, and 15% extra pay.';
-landingClass = function(fpm){ const d=diff(); if(d==='expert') return fpm<80?'butter':fpm<170?'smooth':fpm<300?'firm':'hard'; if(d==='casual') return fpm<120?'butter':fpm<240?'smooth':fpm<450?'firm':'hard'; return fpm<100?'butter':fpm<200?'smooth':fpm<350?'firm':'hard'; };
+
 const _gpGen = genJobs;
 genJobs = function(st){ const L=_gpGen(st); const d=diff();
   for(const j of L){ if(d==='expert' && !j.scen && Math.random()<0.08){ const sc=scenFor(j); if(sc) j.scen=sc; } if(d==='casual' && j.scen && Math.random()<0.5) j.scen=null; }
@@ -6028,9 +5707,8 @@ const _dcApply = applyResult;
 applyResult = function(st, job, f, res){ const r=_dcApply(st, job, f, res); try{ checkUnlocks(); }catch(_){} return r; };
 
 /* ---- fewer interruptions ---- */
-const _dcCall = maybeCall;
-maybeCall = function(st, chance){ const ui=(st.ui=st.ui||{}); if(ui.quiet) return; if(st.flights < 2) return; if(ui.lastCallFlight!=null && st.flights - ui.lastCallFlight < 3) return;
-  const had=!!st.call; _dcCall(st, chance); if(!had && st.call) ui.lastCallFlight = st.flights; };
+
+
 const _dcUrg = spawnUrgent;
 spawnUrgent = function(force){ const st=S.st; if(!force && st && ((st.ui&&st.ui.quiet) || st.flights<3)) return null; return _dcUrg(force); };
 
@@ -6460,7 +6138,7 @@ renderSimBits = function(){ _tfSim(); try{ autoClock(); }catch(_){} };
 const _tfInflight = inflightView;
 inflightView = function(){ let h=_tfInflight(); const a=S.st&&S.st.active; if(!a) return h; const rec=S.sim&&S.sim.recorder; const airborne = S.simState==='live' && ((S.sim.motion&&!S.sim.motion.onGround) || (rec && rec.takeoff && simRecFor(a)));
   if(airborne) return h; return h.replace(/(<main class="wrap[^>]*>[\s\S]*?<\/section>)/, m=>m+`<section class="panel stack preflight" id="preflight">${preflightHTML(a.job)}</section>`); };
-renderPreflight = function(){ const el=document.getElementById('preflight'); const a=S.st&&S.st.active; if(el && a) el.innerHTML=preflightHTML(a.job); };
+
 
 /* settings */
 const _tfHangar = hangarView;
@@ -6529,29 +6207,7 @@ function chapterAction(st, m, availSet, small){
       if(cr.ok) btns.push(`<button class="btn action ${sz}" data-act="nav" data-v="pilot">Take the ${esc(RATINGS[r].n)} checkride</button>`); }
     return btns.join(' '); }
   return ''; }
-campaignCard = function(st){
-  const availSet = new Set(storyAvailable(st).map(m=>m.id)); const MC = mainChapters(); const doneMain = MC.filter(m=>st.story.done[m.id]).length;
-  const avail = MC.filter(m=>!st.story.done[m.id] && chapterStatus(st,m,availSet).k!=='locked');
-  const next = avail[0] || MC.find(m=>!st.story.done[m.id]);
-  let main = '';
-  if(next){ const s=chapterStatus(st,next,availSet); const arcCh=STORY.filter(x=>x.arc===next.arc); const art = (()=>{ try{ return islandArt(next.local?next.from+'L':next.to, next.dep, 1200, 220, next.ac[0]); }catch(_){ return ''; } })();
-    main = `<div class="main-next"><div class="mn-art" aria-hidden="true">${art}</div><div class="mn-in">
-      <p class="mn-kicker">Main story · Chapter ${MC.indexOf(next)+1} of ${MC.length} · ${esc(next.arc)}</p>
-      <h3>${esc(next.title)}</h3>
-      <p class="mn-teaser">${s.k==='locked'?'':esc(((next.brief||[])[0]||'').split(/(?<=[.!?])\s/).slice(0,2).join(' '))}</p>
-      <p class="small mn-status">${statusLine(st,s,next)}</p>
-      <div class="row" style="margin-top:4px">${chapterAction(st,next,availSet,false)}${avail.length>1?`<span class="tiny muted">${avail.length-1} more main chapter${avail.length>2?'s':''} open on the story map</span>`:''}</div>
-    </div></div>`; }
-  else main = `<div class="main-next done"><div class="mn-in"><p class="mn-kicker">Main story</p><h3>Every main chapter flown</h3><p class="small">The side stories are still out there.</p></div></div>`;
-  const sides = arcList().filter(a=>!MAIN_ORDER.includes(a)).map(a=>arcState(st,a,availSet)).filter(a=>a.status.k!=='complete' && (a.done>0 || ['ready','travel','aircraft'].includes(a.status.k)));
-  const rank={ready:0,travel:1,aircraft:2,locked:3}; sides.sort((a,b)=>rank[a.status.k]-rank[b.status.k] || a.meta.n-b.meta.n);
-  const sideRows = sides.slice(0,4).map(a=>`<div class="side-row" style="--arc:${a.meta.col}"><span class="sr-dot"></span><div style="min-width:0"><b>${esc(a.arc)}</b> <span class="tiny muted">${a.done}/${a.total}</span><p class="small">Chapter ${a.ch.indexOf(a.next)+1}: ${a.status.k==='locked'&&a.done===0?'???':esc(a.next.title)}${a.status.k==='travel'?` <span class="tiny muted">· starts at ${esc(a.status.at)}</span>`:''}</p></div><div>${chapterAction(st,a.next,availSet,true)}</div></div>`).join('');
-  return `<section class="panel campaign fade">
-    <div class="row between" style="align-items:flex-end"><div><p class="label">Your story</p><h2 style="font-size:20px">Main story: ${doneMain} of ${MC.length} chapters</h2></div><button class="btn sm ghost" data-act="nav" data-v="story">Story map →</button></div>
-    <div class="meter big" style="margin:10px 0 14px"><i style="width:${Math.round(doneMain/Math.max(1,MC.length)*100)}%"></i></div>
-    ${main}
-    ${sideRows?`<div class="side-list"><p class="label" style="margin:14px 0 6px">Side stories</p>${sideRows}</div>`:''}
-  </section>`; };
+
 /* deadhead to the start airport and open the chapter in one tap */
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="story-go"]'); if(!b||!S.st) return; e.stopImmediatePropagation(); const st=S.st; const m=STORY.find(x=>x.id===b.dataset.id); if(!m || st.active) return;
   const to=m.from; if(st.loc!==to){ const d=deadheadCost(st,to); if(st.cash<d.cost){ toast(`You need ${money(d.cost)} for the ticket to ${to}.`); return; } txn(st,-d.cost,'Travel','Deadhead to '+to); st.duty+=d.min; st.clock+=d.min; st.loc=to; st.visited[to]=true; st.jobsKey=''; addJournal(st, `Deadheaded to ${AP[to].isl}`, `Rode in the back of an airliner to ${AP[to].n} for "${m.title}".`, [], 'travel'); }
@@ -6565,16 +6221,8 @@ resultView = function(){ let h=_clResult(); const L=S.st.last; if(L && L.job && 
     h=h.replace('<div class="grid-2">', `<section class="panel signoff"><div><p class="label">Didn't pass this time</p><h3>Retest tomorrow, or keep the story moving</h3><p class="small muted">The examiner can sign you off now so the next chapters open. You can still retake the checkride any time for the practice.</p></div><button class="btn primary" data-act="signoff" data-r="${L.job.rating}">Sign me off and continue</button></section><div class="grid-2">`); }
   return h; };
 /* story map: main story first, side stories under their own heading; travel buttons start the chapter */
-const _clStory = storyView;
-storyView = function(){ let h=_clStory(); const t=document.createElement('template'); t.innerHTML=h; const grid=t.content.querySelector('.arc-grid'); if(!grid) return h;
-  const cards=[...grid.children]; const main=[], side=[]; cards.forEach(c=>{ const name=(c.querySelector('h3')||{}).textContent||''; (MAIN_ORDER.includes(name)?main:side).push([name,c]); });
-  main.sort((a,b)=>MAIN_ORDER.indexOf(a[0])-MAIN_ORDER.indexOf(b[0]));
-  const g1=document.createElement('div'); g1.className='arc-grid'; main.forEach(x=>g1.appendChild(x[1])); const g2=document.createElement('div'); g2.className='arc-grid side'; side.forEach(x=>g2.appendChild(x[1]));
-  const h1=document.createElement('div'); h1.className='section-title'; h1.innerHTML='<h2>Main story</h2><span class="small muted">Play these in order. This is the heart of the career.</span>';
-  const h2=document.createElement('div'); h2.className='section-title'; h2.innerHTML='<h2>Side stories</h2><span class="small muted">Optional storylines you can fly any time they open</span>';
-  grid.replaceWith(h1, g1, h2, g2);
-  t.content.querySelectorAll('li.ch.travel').forEach(li=>{ const title=(li.querySelector('.ch-t')||{}).textContent; const m=STORY.find(x=>x.title===title); const btn=li.querySelector('[data-act="deadhead"]'); if(m && btn){ btn.dataset.act='story-go'; btn.dataset.id=m.id; btn.classList.add('action'); btn.textContent = btn.textContent.replace('Deadhead to','Fly in to').replace(' · ',' & start · '); } });
-  return t.innerHTML; };
+
+
 
 /* ---- flight setup: big, obvious tiles for runway, fuel, clock, parking and weather ---- */
 function runwayPlan(job){ const dep=rwyAnalysis(job.from, job.wx, job.ac); const arr=job.local?null:rwyAnalysis(job.to, job.wx, job.ac); return {dep, arr}; }
@@ -6708,12 +6356,8 @@ pilotView = function(){ const h=_cmPilot(); const t=tpl(h); const main=t.content
 const _cmCabin = cabinInner;
 cabinInner = function(){ const h=_cmCabin(); if(!h) return h; const t=tpl(h); const lines=[...t.content.querySelectorAll('.feed > *, .cab-feed > *, .feed-line')]; lines.slice(4).forEach(l=>l.remove()); return t.innerHTML; };
 /* ---- story map: the storylines, then journal / guestbook / reviews / people folded ---- */
-const _cmStory = storyView;
-storyView = function(){ const h=_cmStory(); const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h; const folds=[];
-  let past=false; [...main.children].forEach(el=>{ if(el.classList.contains('arc-grid') && !el.classList.contains('side')){ past=true; return; } if(past && el.tagName==='SECTION') folds.push(el); });
-  const d=wrapDetails(folds.map(e=>{ e.remove(); return e; }), 'Journal, guestbook, reviews and the people you know'); if(d) main.appendChild(d);
-  const side=main.querySelector('.arc-grid.side'); if(side){ const head=side.previousElementSibling; const d2=wrapDetails([side], `Side stories <span class="tiny muted">${side.children.length} storylines</span>`, 'side-arcs'); if(head && head.classList.contains('section-title')) head.remove(); side.replaceWith ? null : null; main.insertBefore(d2, d && d.parentNode ? d : null); }
-  return t.innerHTML; };
+
+
 /* ===================== SIMPLER: fewer steps, fewer systems, fewer storylines ===================== */
 /* ---- bonus objectives are all checked from MSFS, so no debrief form ---- */
 makeBonus = function(job){ const amt=Math.max(30, Math.round(job.pay*0.2/10)*10); const opts=['butter','ontime','zone','center']; if(job.pax>0) opts.push('comfort');
@@ -6848,8 +6492,8 @@ const _clrKind = jobKind;
 jobKind = function(job){ const k=_clrKind(job); if(job.kind==='story'){ const m=STORY.find(x=>x.id===job.story); if(m) k.c=arcColor(m.arc); } return k; };
 const _clrHero = chapterHero;
 chapterHero = function(job){ const h=_clrHero(job); const m=STORY.find(x=>x.id===job.story); return m ? h.replace(/style="--arc:[^"]*"/, `style="--arc:${arcColor(m.arc)}"`) : h; };
-const _clrCamp = campaignCard;
-campaignCard = function(st){ const h=_clrCamp(st); const t=tpl(h); const mn=t.content.querySelector('.main-next'); if(mn){ const k=(mn.querySelector('.mn-kicker')||{}).textContent||''; const arc=Object.keys(ARC_COLORS).find(a=>k.endsWith(a)); if(arc) mn.style.setProperty('--arc', arcColor(arc)); } return t.innerHTML; };
+
+
 /* ===================== TESTING TOOLS: connection check, practice landings, calm test mode, "something's off" notes ===================== */
 function testMode(){ return !!(S.st && S.st.ui && S.st.ui.calmTest); }
 
@@ -7068,8 +6712,8 @@ const _frPass = boardingPass;
 boardingPass = function(st, job, p, a, started){ const h=_frPass.apply(this, arguments); return started ? h : h.replace(/<button[^>]*data-act="debrief"[^>]*>[\s\S]*?<\/button>/, ''); };
 
 /* 10. free deadheads say so */
-const _frCamp = campaignCard; campaignCard = function(st){ return _frCamp(st).replace(/ &amp; start · \$0/g,' &amp; start (free)').replace(/ & start · \$0/g,' & start (free)'); };
-const _frStory = storyView; storyView = function(){ return _frStory().replace(/ &amp; start · \$0/g,' &amp; start (free)').replace(/ & start · \$0/g,' & start (free)'); };
+ 
+ 
 
 /* 11. the cabin never drops to 0 comfort from normal flying */
 const _frAuto2 = autoFinish;
@@ -7251,7 +6895,7 @@ const CRIME_ACTS = [
   {arc:'The Last Run', col:'#d23b2c', tag:`A 747 full of product, and one flight that decides who runs the Caribbean.`, nerve:`Untouchable. Or so you think.`}
 ];
 const GA = ['C172','DA40','C152','G36','DA62'];
-const TURBO = ['C208','PC12','TBM','KA350','DHC6'];
+
 const BIZJ = ['SF50','CJ4'];
 const LINER = ['B38M','A320','A321'];
 const CRIME = [
@@ -7480,34 +7124,8 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="cri
   S.keepScroll=true; render(); });
 
 /* ---- the story dashboard: always the first thing on the board until the story is finished ---- */
-function crimeMeters(c){ const m=(k,v,col)=>`<div class="hq-m"><span>${k}</span><div class="hq-bar"><i style="width:${v}%;background:${col}"></i></div><b class="mono">${v}</b></div>`;
-  return `<div class="hq-meters"><span class="hq-rank">${esc(crimeRank(c))}</span>${m('Power',c.power,'#c8962a')}${m('Heat',c.heat,'#c0392b')}</div>`; }
-campaignCard = function(st){
-  const c=crime(st); const availSet=new Set(storyAvailable(st).map(m=>m.id)); const MC=mainChapters(); const done=MC.filter(m=>st.story.done[m.id]);
-  const next=MC.find(m=>!st.story.done[m.id]); const last=done[done.length-1];
-  const actOf=m=>CRIME_ACTS.findIndex(a=>a.arc===m.arc); const ai=next?actOf(next):CRIME_ACTS.length-1; const act=CRIME_ACTS[ai];
-  const acts=CRIME_ACTS.map((a,i)=>{ const ch=MC.filter(m=>m.arc===a.arc); return `<div class="hq-act ${i===ai?'on':''}" style="--c:${a.col}"><span>Act ${i+1}</span><div class="hq-dots">${ch.map(m=>`<i class="${st.story.done[m.id]?'d':m===next?'n':''}"></i>`).join('')}</div></div>`; }).join('');
-  let body='';
-  if(next){ const s=chapterStatus(st,next,availSet); const art=(()=>{ try{ return islandArt(next.to, next.dep, 1200, 220, next.ac[0]); }catch(_){ return ''; } })();
-    const acN=(storyAircraft(st,next)[0]||next.ac[0]); const est=(()=>{ try{ return plan({from:next.from,to:next.to,ac:acN,pax:next.pax,cargo:next.cargo}).est; }catch(_){ return null; } })();
-    body=`<div class="main-next"><div class="mn-art" aria-hidden="true">${art}</div><div class="mn-in">
-      <p class="mn-kicker">Chapter ${MC.indexOf(next)+1} of ${MC.length}</p><span class="hq-stamp">Classified</span>
-      <h3>${esc(next.title)}</h3>
-      <p class="mn-teaser">${esc(next.hook||'')}</p>
-      <div class="hq-chips"><span class="chip">${esc(next.from)} → ${esc(next.to)}</span><span class="chip">${esc(AC[acN]?AC[acN].n:acN)}</span>${est?`<span class="chip">~${est} min</span>`:''}<span class="chip">${esc({dawn:'Dawn',day:'Daytime',dusk:'Dusk',night:'Night'}[next.time]||'')}</span></div>
-      <div class="hq-who">${(typeof dynM==='function'?dynM(st,next):next).chars.filter(k=>CAST[k]).map(k=>`<span class="hq-p">${avatar(k)}<small>${esc({reyes:'Reyes',castillo:'Castillo'}[k]||shortName(k))}</small></span>`).join('')}</div>
-      <p class="small mn-status">${statusLine(st,s,next)}</p>
-      <div class="row" style="margin-top:6px">${chapterAction(st,next,availSet,false)}</div>
-    </div></div>`; }
-  else { const end={kingpin:['Kingpin','Every route in the islands answers to you.'],witness:['Witness','Castillo is in prison. You started over with a new name.'],ghost:['Ghost','You flew south with the money and vanished.']}[c.ending]||['The end','The main story is complete.'];
-    body=`<div class="main-next done"><div class="mn-in"><p class="mn-kicker">Story complete</p><h3>Ending: ${esc(end[0])}</h3><p class="small">${esc(end[1])} Side jobs and the Starling story are still out there.</p></div></div>`; }
-  return `<section class="panel campaign hq fade" style="--arc:${act.col}">
-    <div class="hq-top"><div><p class="label">Main story · Act ${ai+1} of ${CRIME_ACTS.length}</p><h2>${esc(act.arc)}</h2><p class="small muted">${esc(act.tag)}</p>${c.on||ai>0?`<p class="hq-nerve"><span>Your nerve</span> ${esc(act.nerve)}</p>`:`<p class="hq-nerve"><span>Your nerve</span> ${esc(act.nerve)}</p>`}</div>${c.on?crimeMeters(c):''}</div>
-    <div class="hq-acts">${acts}</div>
-    ${last?`<p class="hq-prev"><b>Previously:</b> ${esc(last.recap||'')}</p>`:''}
-    ${body}
-    ${c.on && next?`<p class="tiny muted" style="margin-top:10px">Power grows with every chapter and every hard choice. Heat rises too; legit side jobs keep it down, and above 60 customs starts searching your plane.</p>`:''}
-  </section>`.replace(/ &amp; start · \$0/g,' &amp; start (free)').replace(/ & start · \$0/g,' & start (free)'); };
+
+
 
 /* ---- side jobs grow with the story: 2 at the start, up to 6 by Act 3 ---- */
 const _crBoard = boardView;
@@ -7764,7 +7382,7 @@ storyView = function(){ const st=S.st; const c=crime(st); const MC=mainChapters(
     ${sNext?`<section class="panel sh-side"><p class="label">Side story · legit work</p><h3>Starling</h3><p class="small muted">${esc(sNext.title)}: a clean charter job flying private jets. Doesn't affect the main story.</p><div class="row" style="margin-top:8px">${chapterAction(st,sNext,availSet,true)}</div></section>`:''}
   </main>`; };
 /* the story card uses the right cast, and the nerve line */
-(function(){ const _cc=campaignCard; campaignCard=function(st){ return _cc(st); }; })();
+
 /* nav: "Main story" first; the app opens on it */
 const _s3Band = band;
 band = function(){ const h=_s3Band(); try{ const t=tpl(h); const st=t.content.querySelector('[data-act="nav"][data-v="story"]'); const first=t.content.querySelector('[data-act="nav"][data-v="board"]'); if(st&&first){ const l=st.querySelector('.lbl'); if(l) l.textContent='Main story'; first.before(st); const lb=first.querySelector('.lbl'); if(lb) lb.textContent='Side jobs'; } return t.innerHTML; }catch(_){ return h; } };
@@ -7868,29 +7486,7 @@ const PRO_DYN = {
 const PRO_VOICE = { dez:[false,1.05,1], mari:[true,1,1.05], castillo:[false,0.92,0.8], hartwell:[false,0.95,0.9], tico:[false,1.12,1.05], reyes:[true,1,1], medina:[false,0.95,0.85] };
 function proFor(id){ const st=S.st; const f=crime(st).flags; return (PRO_DYN[id] && PRO_DYN[id](f)) || PRO[id]; }
 
-function playPrologue(m, done){ const shots=proFor(m.id); if(!shots){ done(); return; } const st=S.st; const MC=mainChapters(); const act=CRIME_ACTS.find(a=>a.arc===m.arc)||{col:'#c8962a'};
-  let art=''; try{ art=islandArt(m.from, m.dep, 1600, 900, m.ac[0]); }catch(_){}
-  const el=document.createElement('div'); el.className='cut'; el.style.setProperty('--arc', act.col);
-  el.innerHTML=`<div class="cut-bg">${art}</div><div class="cut-shade"></div><div class="cut-bar top"></div><div class="cut-bar bot"></div>
-    <div class="cut-stage"><p class="cut-place"></p><div class="cut-line"><div class="cut-who"></div><p class="cut-text"></p></div></div>
-    <div class="cut-ctl"><span class="cut-hint">Click or press Space</span><button class="cut-skip">Skip</button></div>`;
-  document.body.appendChild(el); requestAnimationFrame(()=>el.classList.add('on'));
-  let i=-1, typing=null, full=''; const place=el.querySelector('.cut-place'), who=el.querySelector('.cut-who'), txt=el.querySelector('.cut-text');
-  const stopVoice=()=>{ try{ speechSynthesis.cancel(); }catch(_){} };
-  const say=(k, t)=>{ if(!(typeof voiceOn==='function' && voiceOn()) || !window.speechSynthesis) return; const v=PRO_VOICE[k]||[false,0.95,0.9]; try{ stopVoice(); const u=new SpeechSynthesisUtterance(t.replace(/"/g,'')); const vv=pickVoice(v[0], k==='castillo'||k==='medina'?1:0); if(vv) u.voice=vv; u.rate=v[1]; u.pitch=v[2]; u.volume=voiceVol(); speechSynthesis.speak(u); }catch(_){} };
-  const finish=()=>{ clearInterval(typing); stopVoice(); document.removeEventListener('keydown', key, true); el.classList.add('title');
-    el.querySelector('.cut-stage').innerHTML=`<div class="cut-title"><p>Act ${CRIME_ACTS.indexOf(act)+1} · ${esc(m.arc)} · Chapter ${MC.indexOf(m)+1}</p><h1>${esc(m.title)}</h1></div>`;
-    try{ whoosh && whoosh(); }catch(_){}
-    setTimeout(()=>{ el.classList.remove('on'); setTimeout(()=>{ el.remove(); done(); }, 600); }, 2200); };
-  const show=()=>{ i++; if(i>=shots.length){ finish(); return; } const [pl,k,t]=shots[i]; place.textContent=pl; el.querySelector('.cut-line').classList.remove('in'); void el.offsetWidth; el.querySelector('.cut-line').classList.add('in');
-    who.innerHTML = k && CAST[k] ? `${avatar(k)}<b>${esc(CAST[k].n)}</b>` : ''; who.style.display = k ? '' : 'none'; txt.classList.toggle('nar', !k);
-    full = k ? `“${t}”` : t; txt.textContent=''; let n=0; clearInterval(typing); typing=setInterval(()=>{ n+=2; txt.textContent=full.slice(0,n); if(n>=full.length) clearInterval(typing); }, 22);
-    el.querySelector('.cut-bg').style.transform=`scale(${1.06+i*0.03}) translate(${(i%2?-1:1)*1.2}%, ${i*0.4}%)`; if(k) say(k, t); };
-  const next=()=>{ if(txt.textContent.length<full.length){ clearInterval(typing); txt.textContent=full; return; } show(); };
-  const key=e=>{ if(e.key===' '||e.key==='Enter'||e.key==='ArrowRight'){ e.preventDefault(); e.stopPropagation(); next(); } else if(e.key==='Escape'){ e.preventDefault(); finish(); } };
-  document.addEventListener('keydown', key, true);
-  el.addEventListener('click', e=>{ if(e.target.closest('.cut-skip')){ finish(); return; } if(el.classList.contains('title')) return; next(); });
-  setTimeout(show, 500); }
+var playPrologue; /* defined in full below (081-core.js) */
 
 /* play it the first time you start a chapter; the click goes through once it's over */
 window.addEventListener('click', e=>{ const b=e.target.closest('[data-act="accept-story"],[data-act="story-go"]'); if(!b || b.disabled || !S.st) return; if(typeof fedsWatching==='function' && crime().on && fedsWatching(S.st)) return; const id=b.dataset.id; if(!CRIME_IDS.has(id)) return; const c=crime(); c.proSeen=c.proSeen||{};

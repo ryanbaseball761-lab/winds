@@ -6,9 +6,9 @@ const DIFF = {
   expert:{n:'Expert', d:'Mandatory checklist before every flight, real consequences, and 15% extra pay.'}
 };
 function diff(){ return (S.st && S.st.difficulty) || 'standard'; }
-const CK_REQUIRED = 4; // Preflight, Start, Taxi, Before takeoff
-function checklistDone(a){ if(!a) return false; const ph=cockpitPhases(S.st, a.job); const ck=a.ck||{done:{}}; for(let i=0;i<Math.min(CK_REQUIRED, ph.length);i++){ for(let j=0;j<ph[i].items.length;j++){ if(!ck.done[i+'-'+j]) return false; } } return true; }
-function checklistCount(a){ const ph=cockpitPhases(S.st, a.job); const ck=a.ck||{done:{}}; let n=0,t=0; for(let i=0;i<Math.min(CK_REQUIRED, ph.length);i++) for(let j=0;j<ph[i].items.length;j++){ t++; if(ck.done[i+'-'+j]) n++; } return [n,t]; }
+ // Preflight, Start, Taxi, Before takeoff
+var checklistDone; /* defined in full below (051-core.js) */
+var checklistCount; /* defined in full below (051-core.js) */
 const _dfBand = band;
 band = function(){
   const h=_dfBand(); const d=diff();
@@ -43,11 +43,7 @@ afterFlight = function(st, job, f, res, out){
 };
 
 /* ---- automatic debrief from the MSFS recorder ---- */
-function autoReady(a){
-  const rec = simRecFor(a); if(!rec || !rec.touchdown) return null;
-  const j=a.job; if(j.kind==='check' || j.scen || j.request || (j.bonus && !j.bonus.auto)) return null; // these need your answers
-  return rec;
-}
+
 function autoFinish(rec, how){
   const st=S.st, a=st.active, job=a.job; if(!a || a._autoDone) return; a._autoDone=true;
   const near = nearestAirport(rec.touchdown.lat, rec.touchdown.lon);

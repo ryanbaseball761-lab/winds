@@ -29,13 +29,13 @@ async function connect(){
 function migrate(st){ st.celebs=st.celebs||{}; st.souvenirs=st.souvenirs||{}; st.gifts=st.gifts||{}; st.followups=st.followups||[]; st.ach=st.ach||{}; st.reviews=st.reviews||[]; if(!st.landedAt){ st.landedAt={}; (st.log||[]).forEach(l=>{ if(l.landing!=='crash') st.landedAt[l.to]=(st.landedAt[l.to]||0)+1; }); } if(!st.stats) st.stats={butter:0,smooth:0,firm:0,hard:0,crash:0,nm:0,diverts:0,scen:0}; if(!st.cooldown) st.cooldown={}; if(!st.visited) st.visited={}; Object.keys(AC).forEach(k=>{ if(st.hangar[k]===undefined) st.hangar[k]=true; }); Object.keys(CAST).forEach(k=>{ if(st.rep[k]===undefined) st.rep[k]=10; }); return finMigrate(st); }
 
 /* ---------- helpers ---------- */
-function toast(msg){ S.toast=msg; renderToast(); clearTimeout(S._tt); S._tt=setTimeout(()=>{ S.toast=null; renderToast(); }, 3200); }
-function renderToast(){ let el=document.getElementById('toast'); if(!S.toast){ if(el) el.remove(); return; } if(!el){ el=document.createElement('div'); el.id='toast'; el.className='toast'; el.setAttribute('role','status'); document.body.appendChild(el); } el.textContent=S.toast; }
+var toast; /* defined in full below (047-core.js) */
+var renderToast; /* defined in full below (047-core.js) */
 function topRating(st){ const order=['ATP','JET','TURB','IR','COMM','PPL']; for(const r of order) if(st.ratings[r]) return RATINGS[r]; return RATINGS.PPL; }
 function syncText(){ return {account:'Saved to your account', device:'Saved in this browser', full:'Account storage full: saving in this browser'}[S.sync]; }
 function renderSync(){ const el=document.getElementById('sync'); if(el) el.textContent=syncText(); }
-function apName(code){ const a=AP[code]; return a ? `${a.n}, ${a.isl}` : code; }
-function routeTxt(job){ return job.local ? `${job.from} ↺ local` : `${job.from}<span class="arr">→</span>${job.to}`; }
+
+
 function chipsFor(st, job){
   const c=[]; const a=AC[job.ac];
   if(job.mystery && !(st.active && st.active.job===job)){ c.push(`<span class="chip vio">Confidential</span>`); if(job.followup) c.push(`<span class="chip sea">Follow-up</span>`); if(job.request) c.push(`<span class="chip vio">Passenger request</span>`); if(!st.types[job.ac]) c.push(`<span class="chip new">New type</span>`); return c.join(''); }
@@ -58,58 +58,18 @@ function chipsFor(st, job){
   if(job.stormName) c.push(`<span class="chip bad">Hurricane ${esc(job.stormName)}</span>`);
   return c.join('');
 }
-function dutyAfter(st, job){ const wait = Math.min(60, Math.max(0, job.dep - st.clock)); return st.duty + wait + job.est + 30; }
+var dutyAfter; /* defined in full below (061-core.js) */
 function avatar(k){ const c=CAST[k]; const ini=c.n.replace(/".*?"\s*/,'').split(' ').filter(w=>/^[A-Z]/.test(w)).slice(-2).map(w=>w[0]).join(''); return `<div class="avatar" style="background:${c.col}" aria-hidden="true">${esc(ini)}</div>`; }
-function repWord(v){ return v>=80?'Close':v>=55?'Trusted':v>=35?'Friendly':v>=18?'Acquainted':'New'; }
+
 
 /* ---------- band ---------- */
-function band(){
-  const st=S.st; const r=topRating(st);
-  const emp = st.company ? esc(st.company.name) : 'Coral Wing Air';
-  const dot = v => (v==='flight' && st.active) ? '<span class="dot" aria-label="flight booked"></span>' : (v==='pilot' && RATING_ORDER.some(x=>checkrideReady(st,x).ok)) ? '<span class="dot" aria-label="checkride ready"></span>' : '';
-  return `<header class="band"><div class="wrap band-in">
-    <div class="brand">${LOGO}<b>Trade Winds</b><span>${esc(st.pilot.name)} · ${rankOf(st).name} · ${emp}</span></div>
-    <div class="stat"><span class="k">At</span><span class="v">${esc(st.loc)}</span></div>
-    <div class="stat"><span class="k">Day ${st.day}</span><span class="v">${dateTxt(st.day)} ${hhmm(st.clock)}</span></div>
-    <div class="stat"><span class="k">Cash</span><span class="v">${money(st.cash)}</span></div>
-    <div class="stat"><span class="k">Logged</span><span class="v">${fmtH(st.minutes)}</span></div>
-    <div class="stat"><span class="k">License</span><span class="v">${r.code}</span></div>
-    <span class="sync" id="sim-band">${S.simState==='live'?'● MSFS live':''}</span><span class="sync" id="sync">${syncText()}</span>
-  </div>
-  <nav class="wrap tabs" aria-label="Sections">${VIEWS.map(([k,l])=>`<button class="tab" data-act="nav" data-v="${k}" ${S.view===k?'aria-current="page"':''}>${l}${dot(k)}</button>`).join('')}</nav></header>`;
-}
+
 
 /* ---------- setup ---------- */
-function setupView(){
-  return `<main class="wrap"><div class="setup fade">
-    <p class="label">A Caribbean career for Microsoft Flight Simulator 2020 &amp; 2024</p>
-    <h1>Trade Winds</h1>
-    <div class="horizon"></div>
-    <p class="brief">You arrive in St. Martin with a fresh private license and 62 hours. Coral Wing Air takes you on as a trainee. From there: island hops, a billionaire with a secret, hurricane season, checkrides at the world's scariest runways, jets, airliners, and eventually your own company.</p>
-    <form id="setup-form" class="stack" style="margin-top:22px">
-      <div class="form-grid">
-        <label class="field"><span>Your name</span><input id="pname" type="text" value="Ryan" maxlength="40" required></label>
-        <label class="field"><span>Callsign or nickname <small>(optional)</small></span><input id="pcall" type="text" placeholder="e.g. Maverick" maxlength="30"></label>
-      </div>
-      <div class="notice small">Every flight is something you fly yourself in MSFS. The app hands you the job, the story, the weather to set and the load sheet. You fly it, then log how it went.</div>
-      <div><button class="btn action" type="submit">Start my career</button></div>
-    </form></div></main>`;
-}
+
 
 /* ---------- board ---------- */
-function stripHTML(st, job, opts={}){
-  const extra = opts.extra||'';
-  const a=AC[job.ac]; const p=plan(job); const cls = job.kind==='story'?'story':job.kind==='check'?'check':job.vip?'vip':job.cat==='cargo'?'cargo':'';
-  const duty = dutyAfter(st, job); const overDuty = duty > DUTY_MAX;
-  const load = job.pax ? `${job.pax} pax${job.cargo?` + ${job.cargo} lb`:''}` : job.cargo ? `${job.cargo} lb cargo` : 'Ferry, empty';
-  const payTxt = job.kind==='check' ? 'Checkride' : job.company ? `${money(Math.round(job.pay*2.6 - a.op*job.est/60))} est. profit` : money(job.pay);
-  const btn = opts.btn!==undefined ? opts.btn : (st.active ? `<button class="btn sm" disabled>Flight booked</button>` : overDuty ? `<span class="chip warn">Over duty limit</span>` : `<button class="btn primary sm" data-act="accept" data-id="${job.id}">Accept</button>`);
-  return `<article class="strip ${cls} ${opts.locked?'locked':''}">
-    <div class="c-id"><div class="cs">${esc(job.label)}</div><div class="route" style="font-size:14px;margin-top:4px">${job.mystery?`${job.from}<span class="arr">→</span>????`:routeTxt(job)}</div><div class="meta mono">STD ${hhmm(job.dep)}</div></div>
-    <div class="c-main"><div class="ttl">${job.mystery?(job.aiGen?esc(job.title):'Confidential charter'):esc(job.title)}</div><div class="meta">${esc(a.n)} · ${load} · ${job.mystery?'destination revealed when you accept':job.local?`${p.dist} nm loop`:`${p.dist} nm`} · ~${durTxt(p.est)}</div><div class="chips">${chipsFor(st,job)}</div>${extra}</div>
-    <div class="c-cond"><div class="label">Destination wx</div>${job.mystery?`<div class="small">Sealed until you accept</div><div class="meta">${job.celeb?'Rumor says someone famous booked it':job.aiGen?'A very odd booking':'Premium pay, no questions'}</div>`:`<div class="small">${esc(job.wx.n)}</div><div class="meta mono">${pad3(job.wx.dir)}°/${job.wx.spd}${job.wx.gust?'G'+job.wx.gust:''} kt · ${job.wx.t} °C</div>`}</div>
-    <div class="c-side side"><div class="pay">${payTxt}</div>${btn}</div></article>`;
-}
+
 function boardView(){
   const st=S.st; ensureJobs(st);
   const here=AP[st.loc];
@@ -395,22 +355,7 @@ function pilotView(){
 }
 
 /* ---------- story ---------- */
-function storyView(){
-  const st=S.st;
-  const arcs = [...new Set(STORY.map(m=>m.arc))];
-  const avail = new Set(storyAvailable(st).map(m=>m.id));
-  return `<main class="wrap stack fade"><div class="grid-2">
-    <section class="panel"><div class="section-title"><h2>Journal</h2><span class="small muted">${st.journal.length} entries</span></div>
-      <div class="journal">${st.journal.map(e=>`<article class="entry"><div class="when">Day ${e.day}<br>${hhmm(e.clock||0)}</div><div style="min-width:0"><h4>${esc(e.title)} ${e.grade?`<span class="chip">${e.grade}</span>`:''}${e.kind==='milestone'?' <span class="chip good">Milestone</span>':''}${e.kind==='ai'?' <span class="chip sea">Journal</span>':''}</h4><p class="${e.kind==='ai'?'ai-out':''}">${esc(e.text)}</p></div></article>`).join('')}</div></section>
-    <aside class="stack">
-      <section class="panel stack"><h3>Chapters</h3>${arcs.map(arc=>`<div><p class="label">${esc(arc)}</p><ul class="tight small" style="list-style:none;padding:0">${STORY.filter(m=>m.arc===arc).map(m=>`<li>${st.story.done[m.id]?'<span class="chip good">Done</span>':avail.has(m.id)?'<span class="chip sea">Available</span>':'<span class="chip">Locked</span>'} ${st.story.done[m.id]||avail.has(m.id)?esc(m.title):'???'}</li>`).join('')}</ul></div>`).join('')}</section>
-    </aside></div>
-    ${guestbookHTML(st)}
-    ${reviewsSection(st)}
-    <section><div class="section-title"><h2>The people</h2><span class="small muted">Relationships grow with every good flight</span></div>
-      <div class="cast">${Object.keys(CAST).map(k=>{ const c=CAST[k], v=st.rep[k]||10; return `<div class="person"><div class="who">${avatar(k)}<div style="min-width:0"><b>${esc(c.n)}</b><p class="tiny muted">${esc(c.role)}</p></div></div><p class="small">${esc(c.bio)}</p><div class="row between small"><span>${repWord(v)}</span><span class="mono">${v}/100</span></div><div class="meter"><i style="width:${v}%"></i></div></div>`; }).join('')}</div></section>
-  </main>`;
-}
+
 
 /* ---------- logbook ---------- */
 function logView(){
@@ -423,42 +368,7 @@ function logView(){
 }
 
 /* ---------- company ---------- */
-function companyView(){
-  const st=S.st;
-  if(!st.company){
-    const chk = checkrideReady(st,'CO'); const R=RATINGS.CO;
-    return `<main class="wrap stack fade"><section class="panel stack" style="max-width:760px">
-      <p class="label">Own wings</p><h1 style="font-size:32px">Start your own company</h1>
-      <p class="brief">With an Air Operator Certificate you can buy aircraft, take contracts under your own name and hire pilots to fly while you're busy. Revenue is bigger, and so are the bills: loan payments, insurance and wear arrive every day.</p>
-      ${st.voucher?`<div class="notice"><b>Mari's partnership discount:</b> ${Math.round(st.voucher*100)}% off your first aircraft.</div>`:`<div class="notice small">Tip: Coral Wing's story has a chapter called "Mari's Offer" with a big discount on your first aircraft.</div>`}
-      <h3>Requirements</h3>
-      <ul class="tight"><li>Commercial Pilot license ${st.ratings.COMM?'<span class="chip good">Done</span>':''}</li><li>${R.req.hours} career hours <span class="mono small">(${(st.minutes/60).toFixed(1)})</span></li><li>${money(R.req.cash)} in the bank <span class="mono small">(${money(st.cash)})</span></li><li>Certificate fee: ${money(R.fee)}</li></ul>
-      ${chk.ok ? `<form id="co-form" class="form-grid" style="align-items:end"><label class="field"><span>Company name</span><input id="coname" type="text" required maxlength="40" placeholder="e.g. Leeward Air Charter"></label><div><button class="btn action" type="submit">Apply and pay ${money(R.fee)}</button></div></form>` : `<p class="small muted">Not yet: ${esc((chk.miss||[]).join(' · '))}</p>`}
-    </section></main>`;
-  }
-  const c = st.company; const firstBuy = !c.fleet.length && !c.bought;
-  const market = Object.keys(AC).filter(k=>AC[k].price>0).map(k=>{ const a=AC[k]; const price = Math.round(a.price*(firstBuy && st.voucher? 1-st.voucher : 1)); const t=loanTerms(price);
-    return `<div class="cell stack" style="gap:6px"><div class="row between"><h4>${esc(a.n)}</h4>${canFly(st,k)?'':'<span class="chip warn">Hire-only for now</span>'}</div><p class="tiny muted">${esc(CLS[a.cls].name)} · ${a.pax} pax · ${a.cruise} kt</p>
-      <dl class="kv small"><dt>Price</dt><dd>${money(price)}${firstBuy&&st.voucher?` <span class="chip good">−${Math.round(st.voucher*100)}%</span>`:''}</dd><dt>Down payment</dt><dd>${money(t.down)}</dd><dt>Loan</dt><dd>${money(t.daily)}/day for 5 years</dd><dt>Hired pilot earns</dt><dd>~${money(CLS[a.cls].daily - CLS[a.cls].wage)}/day</dd></dl>
-      <button class="btn sm primary" data-act="buy" data-ac="${k}" ${st.cash<t.down?'disabled':''}>Buy for ${money(t.down)} down</button></div>`; }).join('');
-  const fleet = c.fleet.map(f=>{ const a=AC[f.ac]; const repair = Math.round((100-f.cond)*f.price*0.0003); const val = Math.round(f.price*0.75*(f.cond/100) - f.loanLeft);
-    return `<div class="cell stack" style="gap:6px"><div class="row between"><h4 class="mono">${esc(f.reg)}</h4>${f.hired?'<span class="chip sky">Hired pilot</span>':'<span class="chip">With you</span>'}</div><p class="small">${esc(a.n)}</p>
-      <div class="row between small"><span>Condition</span><span class="mono">${Math.round(f.cond)}%</span></div><div class="meter ${f.cond<60?'bad':f.cond<80?'warn':''}"><i style="width:${f.cond}%"></i></div>
-      <dl class="kv small"><dt>Loan left</dt><dd>${money(f.loanLeft)}</dd><dt>Daily payment</dt><dd>${money(f.loanLeft>0?f.daily:0)}</dd><dt>Flights</dt><dd>${f.flights||0}${f.days?` · ${f.days} hired days`:''}</dd></dl>
-      <div class="row">
-        <button class="btn sm" data-act="hire" data-f="${f.fid}">${f.hired?'Take it back':'Hire a pilot'}</button>
-        <button class="btn sm" data-act="repair" data-f="${f.fid}" ${f.cond>=99||st.cash<repair?'disabled':''}>Repair · ${money(repair)}</button>
-        ${S.confirm==='sell-'+f.fid ? `<button class="btn sm danger" data-act="sell-yes" data-f="${f.fid}">Sell for ${money(val)}</button><button class="btn sm" data-act="confirm-no">Keep</button>` : `<button class="btn sm ghost" data-act="sell" data-f="${f.fid}">Sell</button>`}
-      </div></div>`; }).join('');
-  const led = (c.ledger||[]).slice(0,10);
-  return `<main class="wrap stack fade">
-    <section class="panel"><div class="row between"><div><p class="label">Your company · based at ${esc(c.base)}</p><h1 style="font-size:32px">${esc(c.name)}</h1></div><div class="row" style="gap:22px"><div class="stat"><span class="label">Fleet</span><span class="mono" style="font-size:20px">${c.fleet.length}</span></div><div class="stat"><span class="label">Last day</span><span class="mono" style="font-size:20px">${led[0]?money(led[0].net):'—'}</span></div></div></div>
-      <p class="small muted" style="margin-top:8px">Aircraft you keep "with you" appear as company jobs on the board (revenue minus operating cost). Aircraft with a hired pilot earn money every day you rest. Daily loan payments and insurance are charged either way.</p></section>
-    ${c.fleet.length?`<section><div class="section-title"><h2>Fleet</h2></div><div class="cards">${fleet}</div></section>`:''}
-    ${led.length?`<section class="panel"><h3>Daily ledger</h3><div class="scroll-x"><table><thead><tr><th>Day</th><th class="num">Net</th><th>Notes</th></tr></thead><tbody>${led.map(l=>`<tr><td class="mono">${l.day}</td><td class="num">${money(l.net)}</td><td class="small" style="white-space:normal">${esc(l.lines.join(' · ')||'Loan payments and insurance')}</td></tr>`).join('')}</tbody></table></div></section>`:''}
-    <section><div class="section-title"><h2>Aircraft market</h2><span class="small muted">Prices are game-scaled. Airliners aren't for sale.</span></div><div class="cards">${market}</div></section>
-  </main>`;
-}
+
 
 /* ---------- hangar ---------- */
 function hangarView(){
@@ -635,10 +545,5 @@ function pilotExtras(st){
   <section><div class="section-title"><h2>Achievements</h2><span class="small muted">${got.length} of ${ACH.length}</span></div>
     <div class="achs">${ACH.map(a=>{ const on=st.ach&&st.ach[a.id]; return `<div class="ach ${on?'on':''}"><b>${esc(a.n)}</b><span class="small muted">${esc(a.d)}</span>${on?`<span class="tiny mono">Day ${on}</span>`:''}</div>`; }).join('')}</div></section>`;
 }
-function reviewsSection(st){
-  const rv=st.reviews||[]; if(!rv.length) return '';
-  const avg=(rv.reduce((s,r)=>s+r.stars,0)/rv.length).toFixed(1);
-  return `<section><div class="section-title"><h2>Passenger reviews</h2><span class="small muted">${avg} average from ${rv.length}</span></div>
-    <div class="cards">${rv.slice(0,9).map(r=>`<div class="cell stack" style="gap:4px"><p class="stars">${stars(r.stars)}</p><p>"${esc(r.text)}"</p><p class="tiny muted">${esc(r.who)} · ${esc(r.route)} · day ${r.day}</p></div>`).join('')}</div></section>`;
-}
+
 document.addEventListener('keydown', e=>{ if((e.key==='Enter'||e.key===' ') && e.target.matches && e.target.matches('g[data-act]')){ e.preventDefault(); e.target.dispatchEvent(new MouseEvent('click',{bubbles:true})); } });

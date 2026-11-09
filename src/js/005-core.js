@@ -85,17 +85,8 @@ function newDayBrief(st){
 }
 
 /* ---------- bonus objectives ---------- */
-const LANDMARKS = { LEE:[`Saba's cliffs`,`The Quill on Statia`,`Nevis Peak`,`Shoal Bay on Anguilla`,`Maho Beach`], VI:[`The Baths on Virgin Gorda`,`Flamenco Beach on Culebra`,`El Morro in Old San Juan`,`Jost Van Dyke's White Bay`], WIN:[`the twin Pitons`,`Mont Pelée`,`the Tobago Cays`,`Kick 'em Jenny's waters (stay high)`,`Bathsheba's coast`], ABC:[`Klein Bonaire`,`Klein Curaçao's lighthouse`,`Arikok National Park`], GA:[`Seven Mile Beach`,`the Blue Mountains`,`Saona Island`], BAH:[`the Exuma Cays sandbars`,`Harbour Island's pink sand`,`Dean's Blue Hole`], FL:[`the Seven Mile Bridge`,`Miami Beach`], CAM:[`the Mayan ruins at Tulum`,`the Great Blue Hole`,`Isla Mujeres`], LONG:[`the coast below the first landfall`] };
-function makeBonus(job){
-  const kinds = ['butter','ontime','handfly','scenic','radio'];
-  const k = pick(kinds); const amt = Math.max(30, Math.round(job.pay*0.2/10)*10);
-  if(k==='butter') return { k, amt, text:`Grease it: touch down under 150 fpm`, auto:'fpm' };
-  if(k==='ontime') return { k, amt, text:`Arrive on time: block time within 10% of the plan`, auto:'block' };
-  if(k==='handfly') return { k, amt, text:`Hand-fly the whole leg. No autopilot.` };
-  if(k==='radio') return { k, amt, text:`Work ATC the whole way (MSFS ATC or VATSIM), from clearance to taxi-in` };
-  const lm = pick(LANDMARKS[AP[job.to].r] || LANDMARKS[AP[job.from].r] || [`the prettiest beach on the route`]);
-  return { k, amt, text:`Show your passengers ${lm} on the way, at a safe altitude` };
-}
+
+var makeBonus; /* defined in full below (055-core.js) */
 function archWeight(st, a){
   const storm = stormActive(st);
   if(a.id==='relief') return storm ? 8 : 2;

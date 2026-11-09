@@ -19,7 +19,7 @@ const CRIME_ACTS = [
   {arc:'The Last Run', col:'#d23b2c', tag:`A 747 full of product, and one flight that decides who runs the Caribbean.`, nerve:`Untouchable. Or so you think.`}
 ];
 const GA = ['C172','DA40','C152','G36','DA62'];
-const TURBO = ['C208','PC12','TBM','KA350','DHC6'];
+
 const BIZJ = ['SF50','CJ4'];
 const LINER = ['B38M','A320','A321'];
 const CRIME = [
@@ -248,34 +248,8 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="cri
   S.keepScroll=true; render(); });
 
 /* ---- the story dashboard: always the first thing on the board until the story is finished ---- */
-function crimeMeters(c){ const m=(k,v,col)=>`<div class="hq-m"><span>${k}</span><div class="hq-bar"><i style="width:${v}%;background:${col}"></i></div><b class="mono">${v}</b></div>`;
-  return `<div class="hq-meters"><span class="hq-rank">${esc(crimeRank(c))}</span>${m('Power',c.power,'#c8962a')}${m('Heat',c.heat,'#c0392b')}</div>`; }
-campaignCard = function(st){
-  const c=crime(st); const availSet=new Set(storyAvailable(st).map(m=>m.id)); const MC=mainChapters(); const done=MC.filter(m=>st.story.done[m.id]);
-  const next=MC.find(m=>!st.story.done[m.id]); const last=done[done.length-1];
-  const actOf=m=>CRIME_ACTS.findIndex(a=>a.arc===m.arc); const ai=next?actOf(next):CRIME_ACTS.length-1; const act=CRIME_ACTS[ai];
-  const acts=CRIME_ACTS.map((a,i)=>{ const ch=MC.filter(m=>m.arc===a.arc); return `<div class="hq-act ${i===ai?'on':''}" style="--c:${a.col}"><span>Act ${i+1}</span><div class="hq-dots">${ch.map(m=>`<i class="${st.story.done[m.id]?'d':m===next?'n':''}"></i>`).join('')}</div></div>`; }).join('');
-  let body='';
-  if(next){ const s=chapterStatus(st,next,availSet); const art=(()=>{ try{ return islandArt(next.to, next.dep, 1200, 220, next.ac[0]); }catch(_){ return ''; } })();
-    const acN=(storyAircraft(st,next)[0]||next.ac[0]); const est=(()=>{ try{ return plan({from:next.from,to:next.to,ac:acN,pax:next.pax,cargo:next.cargo}).est; }catch(_){ return null; } })();
-    body=`<div class="main-next"><div class="mn-art" aria-hidden="true">${art}</div><div class="mn-in">
-      <p class="mn-kicker">Chapter ${MC.indexOf(next)+1} of ${MC.length}</p><span class="hq-stamp">Classified</span>
-      <h3>${esc(next.title)}</h3>
-      <p class="mn-teaser">${esc(next.hook||'')}</p>
-      <div class="hq-chips"><span class="chip">${esc(next.from)} → ${esc(next.to)}</span><span class="chip">${esc(AC[acN]?AC[acN].n:acN)}</span>${est?`<span class="chip">~${est} min</span>`:''}<span class="chip">${esc({dawn:'Dawn',day:'Daytime',dusk:'Dusk',night:'Night'}[next.time]||'')}</span></div>
-      <div class="hq-who">${(typeof dynM==='function'?dynM(st,next):next).chars.filter(k=>CAST[k]).map(k=>`<span class="hq-p">${avatar(k)}<small>${esc({reyes:'Reyes',castillo:'Castillo'}[k]||shortName(k))}</small></span>`).join('')}</div>
-      <p class="small mn-status">${statusLine(st,s,next)}</p>
-      <div class="row" style="margin-top:6px">${chapterAction(st,next,availSet,false)}</div>
-    </div></div>`; }
-  else { const end={kingpin:['Kingpin','Every route in the islands answers to you.'],witness:['Witness','Castillo is in prison. You started over with a new name.'],ghost:['Ghost','You flew south with the money and vanished.']}[c.ending]||['The end','The main story is complete.'];
-    body=`<div class="main-next done"><div class="mn-in"><p class="mn-kicker">Story complete</p><h3>Ending: ${esc(end[0])}</h3><p class="small">${esc(end[1])} Side jobs and the Starling story are still out there.</p></div></div>`; }
-  return `<section class="panel campaign hq fade" style="--arc:${act.col}">
-    <div class="hq-top"><div><p class="label">Main story · Act ${ai+1} of ${CRIME_ACTS.length}</p><h2>${esc(act.arc)}</h2><p class="small muted">${esc(act.tag)}</p>${c.on||ai>0?`<p class="hq-nerve"><span>Your nerve</span> ${esc(act.nerve)}</p>`:`<p class="hq-nerve"><span>Your nerve</span> ${esc(act.nerve)}</p>`}</div>${c.on?crimeMeters(c):''}</div>
-    <div class="hq-acts">${acts}</div>
-    ${last?`<p class="hq-prev"><b>Previously:</b> ${esc(last.recap||'')}</p>`:''}
-    ${body}
-    ${c.on && next?`<p class="tiny muted" style="margin-top:10px">Power grows with every chapter and every hard choice. Heat rises too; legit side jobs keep it down, and above 60 customs starts searching your plane.</p>`:''}
-  </section>`.replace(/ &amp; start · \$0/g,' &amp; start (free)').replace(/ & start · \$0/g,' & start (free)'); };
+
+
 
 /* ---- side jobs grow with the story: 2 at the start, up to 6 by Act 3 ---- */
 const _crBoard = boardView;

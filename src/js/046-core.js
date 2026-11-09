@@ -20,9 +20,8 @@ const _dcApply = applyResult;
 applyResult = function(st, job, f, res){ const r=_dcApply(st, job, f, res); try{ checkUnlocks(); }catch(_){} return r; };
 
 /* ---- fewer interruptions ---- */
-const _dcCall = maybeCall;
-maybeCall = function(st, chance){ const ui=(st.ui=st.ui||{}); if(ui.quiet) return; if(st.flights < 2) return; if(ui.lastCallFlight!=null && st.flights - ui.lastCallFlight < 3) return;
-  const had=!!st.call; _dcCall(st, chance); if(!had && st.call) ui.lastCallFlight = st.flights; };
+
+
 const _dcUrg = spawnUrgent;
 spawnUrgent = function(force){ const st=S.st; if(!force && st && ((st.ui&&st.ui.quiet) || st.flights<3)) return null; return _dcUrg(force); };
 
