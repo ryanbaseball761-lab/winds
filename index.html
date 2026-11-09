@@ -5629,7 +5629,7 @@ const TAB_UNLOCK = {
   company: {t:st=>!!st.company || hasRating(st,'COMM'), why:'with your Commercial license'}
 };
 function uiPrefs(){ const st=S.st; st.ui = st.ui || {}; return st.ui; }
-function tabOpen(k){ const st=S.st; if(!st) return true; if(uiPrefs().allTabs) return true; const u=TAB_UNLOCK[k]; return !u || u.t(st) || S.view===k; }
+
 function checkUnlocks(){ const st=S.st; if(!st) return; const ui=uiPrefs(); ui.seen = ui.seen || {}; const label=Object.fromEntries(VIEWS);
   for(const k in TAB_UNLOCK){ if(ui.seen[k]) continue; if(TAB_UNLOCK[k].t(st)){ ui.seen[k]=1; if(st.flights>0) setTimeout(()=>toast(`New tab unlocked: ${label[k]||k}`), 1200); } } }
 const _dcApply = applyResult;
