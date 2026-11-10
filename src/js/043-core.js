@@ -41,8 +41,6 @@ function touchdownPanel(f){ const A=f&&f.tda; if(!A) return ''; if(A.off) return
   const zoneTxt = {aim:'Right on the aiming point. Textbook.', zone:'Inside the touchdown zone.', long:`Floated past the touchdown zone, leaving ${A.remaining.toLocaleString()} ft of runway.`, short:'Touched down before the threshold. On a real runway that can mean lights, a fence, or water.'}[A.zone];
   const clTxt = A.approx ? 'Centerline not graded at this airport (approximate runway position).' : {on:'Right on the centerline.', near:'Close to the centerline.', wide:'Well off the centerline, but on the pavement.', off:'Touched down off the runway edge.'}[A.center];
   return `<section class="panel stack"><div class="row between"><div><p class="label">Where you touched down</p><h3>Runway ${esc(A.runway)}</h3></div><span class="chip ${A.zone==='aim'||A.zone==='zone'?'good':'warn'}">${A.fromThr<0?'Short':A.fromThr.toLocaleString()+' ft'}</span></div>${runwaySVG(A)}<p class="small">${esc(zoneTxt)} ${esc(clTxt)}</p></section>`; }
-const _wResult = resultView;
-resultView = function(){ let h=_wResult(); const f=S.st.last&&S.st.last.f; const p=touchdownPanel(f); if(p) h=h.replace('<div class="grid-2">', p+'<div class="grid-2">'); return h; };
 /* the flight card shows exactly where you put it down */
 const _wCard = drawFlightCard;
 drawFlightCard = function(st){ const cv=_wCard(st); const A=st.last&&st.last.f&&st.last.f.tda; if(!A || !A.runway) return cv; const g=cv.getContext('2d');

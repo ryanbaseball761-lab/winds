@@ -55,8 +55,6 @@ function playAftermath(){ const st=S.st, L=st&&st.last; if(!L||!L.job) return; c
   } else nextCard().forEach(s=>shots.push(s));
   cutscene({shots, col:act.col, art:sceneArt(job.to, Math.min(1439,(job.dep||600)+(job.est||60)), job.ac), onEnd:()=>{ S.keepScroll=false; render(); }}); }
 /* the result screen gets a button to watch it again */
-const _csRes = resultView;
-resultView = function(){ const h=_csRes(); const L=S.st&&S.st.last; if(!L||!L.job||!CRIME_IDS.has(L.job.story)) return h; return h.replace(/(<main[^>]*>)/, `$1<div class="row" style="justify-content:flex-end;margin-bottom:8px"><button class="btn sm ghost" data-act="after-replay">▶ Replay scene</button></div>`); };
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="after-replay"]')) playAftermath(); });
 
 (function(){ const s=document.createElement('style'); s.textContent=`

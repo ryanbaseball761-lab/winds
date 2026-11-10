@@ -27,11 +27,6 @@ function debriefSummary(L){ const {res,f,out,job}=L; const parts=(res.parts||[])
     ${best?`<div class="hd good"><span>Best</span><b>${esc(best.n.replace(/\s*\(.*$/,''))}</b><small>${best.pts}/${best.max}</small></div>`:''}
     ${worst.map(w=>`<div class="hd work"><span>Work on</span><b>${esc(w.n.replace(/\s*\(.*$/,''))}</b><small>${esc(tip(w.n))}</small></div>`).join('') || `<div class="hd good"><span>Work on</span><b>Nothing major</b><small>Clean flight. Keep it up.</small></div>`}
   </div></section>`; }
-const _mrResult = resultView;
-resultView = function(){ const h=_mrResult(); const L=S.st.last; if(!L||!L.res) return h; const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h;
-  const first=main.querySelector(':scope > section'); const box=tpl(debriefSummary(L)).content.firstElementChild; if(first) first.after(box);
-  const grid=main.querySelector(':scope > .grid-2'); if(grid){ const d=wrapDetails([grid], 'Full scorecard and details'); grid.parentNode ? null : null; main.appendChild(d); }
-  return t.innerHTML; };
 
 /* ---- 2. one-tap filters on the job board ---- */
 const _mrBoard = boardView;

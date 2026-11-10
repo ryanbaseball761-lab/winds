@@ -11,10 +11,6 @@ hudHTML = function(a){ let h=_m1Hud(a); try{ const s=S.sim||{}; const job=a.job;
   if(extra.length) h=h.replace('<div class="fhud-cells">','<div class="fhud-cells">'+extra.join(''));
   if(goal) h=h.replace('</section>', goal+'</section>'); }catch(_){} return h; };
 
-const _m2Res = resultView;
-resultView = function(){ const h=_m2Res(); const L=S.st&&S.st.last; if(!L||!L.delta||!crime().on) return h; const d=L.delta, c=crime(); if(!d.power && !d.heat) return h;
-  const bar=(n,v,dv,col)=>`<div class="dbar"><span>${n}</span><div class="db-t"><i style="width:${Math.max(0,v-Math.max(0,dv))}%;background:${col}"></i><i class="db-new" style="width:${Math.abs(dv)}%;background:${dv>=0?col:'transparent'};${dv<0?`outline:1px dashed ${col}`:''}"></i></div><b>${v} <small class="${dv>0?'up':dv<0?'down':''}">${dv>0?'+':''}${dv||''}</small></b></div>`;
-  return h.replace('<div class="row next-bar">', `<section class="panel deltas">${bar('Power',c.power,d.power,'#c8962a')}${bar('Heat',c.heat,d.heat,'#c23a2b')}</section><div class="row next-bar">`); };
 
 /* ---- 3. story achievements ---- */
 ACH.push(

@@ -11,18 +11,6 @@ function rightNow(st){ if(!st) return null; const a=st.active; if(a) return {t:a
   return {t:`Chapter ${n} · ${next.title}`, b:'Story', act:'nav', v:'story'}; }
 
 /* ---- 15. result screen: one summary card, everything else folded ---- */
-const _uiRes = resultView;
-resultView = function(){ const h=_uiRes(); const st=S.st, L=st&&st.last; if(!L||!L.job) return h; const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h;
-  const kids=[...main.children]; const sum=kids.find(e=>e.tagName==='SECTION'); const bar=main.querySelector('.next-bar'); const keep=new Set([sum,bar].filter(Boolean));
-  kids.forEach(e=>{ if(e.querySelector && (e.querySelector('[data-act="after-replay"]') || e.classList.contains('choice'))) keep.add(e); });
-  const rest=kids.filter(e=>!keep.has(e) && !(e.tagName==='DIV' && e.classList.contains('row') && /Back to the job board/.test(e.textContent) && !e.classList.contains('next-bar')));
-  kids.forEach(e=>{ if(e.tagName==='DIV' && e.classList.contains('row') && !e.classList.contains('next-bar') && /Back to the job board/.test(e.textContent)) e.remove(); });
-  const c=crime(st); const extra=[]; if(c.on && L.job && (L.job.network||L.job.kind==='story')) extra.push(`<span class="chip">Power ${c.power}</span><span class="chip ${c.heat>=60?'warn':''}">Heat ${c.heat}</span>`); if(c.dirty) extra.push(`<span class="chip warn">Dirty cash ${money(c.dirty)}</span>`);
-  if(sum && extra.length){ const ch=sum.querySelector('.chips, .row'); const d=document.createElement('div'); d.className='row'; d.style.cssText='gap:6px;margin-top:8px;flex-wrap:wrap'; d.innerHTML=extra.join(''); (ch?ch.after(d):sum.appendChild(d)); }
-  const flat=[]; rest.forEach(e=>{ if(e.tagName==='DETAILS'){ [...e.children].filter(x=>x.tagName!=='SUMMARY').forEach(x=>flat.push(x)); e.remove(); } else { e.remove(); flat.push(e); } });
-  if(flat.length){ const d=wrapDetails(flat, 'Flight details: score, passengers, notes and share card'); if(d){ d.classList.add('res-more'); main.appendChild(d); } }
-  if(bar) bar.querySelectorAll('button').forEach(b=>{ if(/Back to the job board/.test(b.textContent)) b.textContent='Side jobs'; });
-  return t.innerHTML; };
 
 /* ---- 16. pilot page: the licence ladder says what each licence unlocks in the story ---- */
 const LADDER = [['PPL','Act 1 · the Cessna'],['JET','Act 2 · the Vision Jet and the CJ4'],['ATP','Act 4 · airliners and the 747']];

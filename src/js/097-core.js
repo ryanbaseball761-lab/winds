@@ -33,8 +33,6 @@ window.cutAuto = ()=>!!uiP().autoCut;
 /* 13. an empty job list offers a way forward */
 (function(){ const _b=boardView; boardView=function(){ return _b().replace(/<div class="empty"><h3>No jobs here right now<\/h3><p>[^<]*<\/p><\/div>/, `<div class="empty"><h3>No jobs here right now</h3><p>Start a new day for fresh work, or travel to a busier airport.</p><div class="row" style="gap:8px;justify-content:center;margin-top:10px"><button class="btn sm" data-act="rest">New day</button><button class="btn sm" data-act="cmd">Find an airport</button></div></div>`); }; })();
 
-/* 14. the result screen warns when Heat is getting dangerous */
-(function(){ const _r=resultView; resultView=function(){ const h=_r(); const c=crime(); if(!c.on || c.heat<60) return h; const msg = c.heat>=80 ? `Heat ${c.heat}: the feds are watching. Story chapters are on hold until it's under 80.` : `Heat ${c.heat}: customs is searching planes now. A clean landing gets you waved through; legit jobs cool it down.`; return h.replace('<div class="row next-bar">', `<div class="heat-warn">${msg}</div><div class="row next-bar">`); }; })();
 
 
 /* 16. "New day" shows the full cost: rent plus fleet and crew */

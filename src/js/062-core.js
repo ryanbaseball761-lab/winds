@@ -32,8 +32,6 @@ boardingPass = function(st, job, p, a, started){ const h=_frPass.apply(this, arg
 /* 11. the cabin never drops to 0 comfort from normal flying */
 
 /* 12. result notes: no landing league, no "airframe 100%" line, at most four, the rest folded */
-const _frRes = resultView;
-resultView = function(){ const h=_frRes(); const t=tpl(h); const box=t.content.querySelector('main .notice ul'); if(box){ const li=[...box.children]; li.forEach(x=>{ if(/Landing league|airframe health: (9\d|100)%/.test(x.textContent)) x.remove(); }); const rest=[...box.children].slice(4); if(rest.length){ const d=document.createElement('details'); d.innerHTML=`<summary class="small muted">${rest.length} more note${rest.length>1?'s':''}</summary>`; const ul=document.createElement('ul'); ul.className='tight'; rest.forEach(x=>ul.appendChild(x)); d.appendChild(ul); box.after(d); } } return t.innerHTML; };
 
 /* 13. difficulty can't be changed in the middle of a flight (it changes the grading) */
 window.addEventListener('click', e=>{ const b=e.target.closest('[data-act="diff"]'); if(!b || !S.st || !S.st.active || !S.st.active.started) return; e.stopImmediatePropagation(); e.preventDefault(); toast('Change difficulty between flights, not during one.'); }, true);

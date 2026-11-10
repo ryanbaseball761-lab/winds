@@ -13,13 +13,6 @@ stripHTML = function(st, job, opts){ let h=_p20Strip(st, job, opts); if(job.dep<
 
 
 /* 7. result: what next, right at the top; the share card folds away */
-const _p20Res = resultView;
-resultView = function(){ const h=_p20Res(); const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h; const st=S.st;
-  const availSet=new Set(storyAvailable(st).map(m=>m.id)); const next=mainChapters().find(m=>!st.story.done[m.id] && chapterStatus(st,m,availSet).k!=='locked');
-  const bar=document.createElement('div'); bar.className='row next-bar'; bar.innerHTML=`<button class="btn primary" data-act="nav" data-v="board">Back to the job board</button>${next?chapterAction(st,next,availSet,false).replace('Fly this chapter',`Next: ${esc(next.title)}`).replace(/Fly in to (\w+) &amp; start · \$0|Fly in to (\w+) & start · \$0/, (m,a1,a2)=>`Next: ${esc(next.title)} (free flight to ${a1||a2})`):''}`;
-  const first=main.querySelector(':scope > section'); if(first) first.after(bar);
-  const share=main.querySelector('.share-card'); if(share){ const d=wrapDetails([share], 'Share card: save an image of this flight'); main.appendChild(d); }
-  return t.innerHTML; };
 
 /* 8. money: cash and the ledger up front; savings, credit and the bank fold away */
 const _p20Money = moneyView;

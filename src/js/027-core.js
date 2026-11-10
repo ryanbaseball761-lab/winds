@@ -40,8 +40,6 @@ function replaySection(st){
       <p class="small">Final 12 seconds: average <b>${avgVs} fpm</b>, crossing at <b>${ias} kt</b>. ${R.td?`Touchdown <b>${R.td.fpm} fpm</b>, ${R.td.g} G.`:''} Dots turn orange past 700 fpm down and red past 1,000.</p>`; }
   return `<section class="panel stack replay"><div><p class="label">Flight replay</p><h3>Your path and approach</h3></div><div class="replay-grid">${pathSvg?`<div>${pathSvg}</div>`:''}${apSvg?`<div>${apSvg}</div>`:''}</div></section>`;
 }
-const _lvResult = resultView;
-resultView = function(){ const h=_lvResult(); const r=replaySection(S.st); if(!r) return h; const i=h.indexOf('<section class="panel stack share-card">'); return i>0 ? h.slice(0,i)+r+h.slice(i) : h.replace('</main>', r+'</main>'); };
 const _lvCard = drawFlightCard;
 drawFlightCard = function(st){ const cv=_lvCard(st); const R=st.last&&st.last.replay; if(!R || !R.track || R.track.length<2) return cv;
   const g=cv.getContext('2d'); const pts=replaySvgPath(R.track, 360, 150).map(p=>[p[0]+780, p[1]+440]);

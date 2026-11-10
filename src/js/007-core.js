@@ -268,34 +268,6 @@ function debriefView(job, p){
     <div class="row"><button class="btn action" type="submit">Submit debrief</button><button class="btn" type="button" data-act="debrief-back">Back to briefing</button></div>
   </form></main>`;
 }
-function resultView(){
-  const st=S.st; const {job,res,out} = st.last; const sc = job.scen?SCEN[job.scen]:null;
-  const passFail = job.kind==='check' ? (out.pass?`<span class="chip good">Passed</span>`:`<span class="chip bad">Not passed</span>`) : '';
-  return `<main class="wrap stack fade">
-    <section class="panel"><div class="row" style="gap:24px;align-items:center">
-      ${scoreRing(res)}
-      <div class="stack" style="gap:4px;min-width:0;flex:1">
-        <p class="label">Flight complete · score ${res.score}/100</p>
-        <h1 style="font-size:28px">${esc(job.title)}</h1>
-        <p class="muted">${esc(job.from)} → ${esc(st.log[0]?.to||job.to)} · ${esc(AC[job.ac].n)} · ${durTxt(res.block)}</p>
-        <div class="row">${st.last.f && st.last.f.verified?`<span class="chip sea">Verified by MSFS · ${st.last.f.simFpm} fpm</span>`:''}${passFail}${out.pay?`<span class="chip good">+${money(out.pay)}</span>`:''}${out.costs?`<span class="chip bad">−${money(out.costs)}</span>`:''}<span class="chip">Reputation ${st.reputation}/100</span></div>
-      </div></div></section>
-    ${out.story?`<section class="panel"><p class="label">Outcome</p><div class="brief" style="margin-top:6px"><p>${esc(out.story)}</p></div></section>`:''}
-    ${surpriseResultHTML(out)}
-    ${out.ach&&out.ach.length?`<section class="panel ach-pop"><p class="label">Achievement unlocked</p><div class="row" style="margin-top:6px">${out.ach.map(a=>`<div class="medal"><b>${esc(a.n)}</b><span class="small muted">${esc(a.d)}</span></div>`).join('')}</div></section>`:''}
-    ${out.review?`<section class="panel"><p class="label">Passenger review</p><p class="stars" aria-label="${out.review.stars} of 5 stars">${stars(out.review.stars)}</p><p class="brief" style="margin-top:4px">"${esc(out.review.text)}"</p><p class="small muted">${esc(out.review.who)}</p></section>`:''}
-    ${out.notes.length?`<section class="notice"><ul class="tight">${out.notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul></section>`:''}
-    <div class="grid-2">
-      <section class="panel"><h2>Scorecard</h2><div class="scroll-x" style="margin-top:8px"><table><thead><tr><th>Item</th><th class="num">Points</th><th class="num">Max</th></tr></thead><tbody>${res.parts.map(p=>`<tr><td style="white-space:normal">${esc(p[0])}</td><td class="num">${p[1]}</td><td class="num">${p[2]}</td></tr>`).join('')}</tbody></table></div></section>
-      ${sc?`<section class="teach"><h3>By the book: ${esc(sc.n)}</h3><ul class="tight small">${sc.book.map(b=>`<li>${esc(b)}</li>`).join('')}</ul></section>`:'<div></div>'}
-    </div>
-    <div class="row">
-      <button class="btn primary" data-act="done-result">Back to the job board</button>
-      ${S.sample && !S.sampleOff ? `<button class="btn" data-act="ai-journal" ${S.busy.journal?'disabled':''}>${S.busy.journal?'Writing…':'Write a journal entry with Claude'}</button>`:''}
-      ${S.busy.journalDone?`<span class="small" style="color:var(--good)">Added to your Story journal.</span>`:''}
-      ${S.busy.journalErr?`<span class="small" style="color:var(--bad)">${esc(S.busy.journalErr)}</span>`:''}
-    </div></main>`;
-}
 
 /* ---------- pilot ---------- */
 function pilotView(){

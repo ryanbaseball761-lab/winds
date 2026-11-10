@@ -45,8 +45,6 @@ function cardSection(){
 }
 
 function paintCard(){ const img=document.getElementById('flight-card'); if(!img || !S.st || !S.st.last) return; const draw=()=>{ try{ const cv=drawFlightCard(S.st); img.src=cv.toDataURL('image/png'); }catch(e){} }; if(document.fonts && document.fonts.ready) document.fonts.ready.then(draw); else draw(); }
-const _cardResult = resultView;
-resultView = function(){ const h=_cardResult(); setTimeout(paintCard,0); return h.replace(/(<\/section>)/, '$1'+cardSection()); };
 document.addEventListener('click', async e=>{
   const b=e.target.closest('[data-act="card-save"],[data-act="card-copy"]'); if(!b || !S.st || !S.st.last) return;
   const cv=drawFlightCard(S.st); const blob = await new Promise(r=>cv.toBlob(r,'image/png'));

@@ -51,8 +51,6 @@ function choiceHTML(st){
   const c=CHOICES[j.story];
   return `<section class="panel choice"><p class="label">Your call</p><p class="brief" style="margin:6px 0 12px">${esc(c.q)}</p><div class="choice-btns"><button class="btn primary" data-act="choose" data-v="a">${esc(c.a.t)}</button><button class="btn" data-act="choose" data-v="b">${esc(c.b.t)}</button></div><p class="tiny muted" style="margin-top:8px">Choices stick. People remember, and some chapters end differently because of them.</p></section>`;
 }
-const _evResult = resultView;
-resultView = function(){ const h=_evResult(); const c=choiceHTML(S.st); if(!c) return h; const i=h.indexOf('<section class="panel stack share-card">'); return i>0 ? h.slice(0,i)+c+h.slice(i) : h.replace('</main>', c+'</main>'); };
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="choose"]'); if(!b || !S.st || !S.st.last) return; const st=S.st; const id=st.last.job.story; const C=CHOICES[id]; if(!C || st.story.flags[id]) return;
   const v=b.dataset.v; const o=C[v]; st.story.flags[id]=v;

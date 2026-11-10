@@ -23,10 +23,6 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="sto
 /* a failed checkride shouldn't stop the story */
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="signoff"]'); if(!b||!S.st) return; const r=b.dataset.r, st=S.st; if(!RATINGS[r]) return;
   st.ratings[r]=true; if(st.cooldown) delete st.cooldown[r]; addJournal(st, `Signed off: ${RATINGS[r].n}`, `After a long talk and a few extra circuits, the examiner signs your ${RATINGS[r].n}. "Keep practicing," she says. "The sky will test you again."`, ['wilkins'], 'milestone'); save(); toast(`${RATINGS[r].n} signed off. The story continues.`); S.keepScroll=true; render(); });
-const _clResult = resultView;
-resultView = function(){ let h=_clResult(); const L=S.st.last; if(L && L.job && L.job.kind==='check' && L.out && !L.out.pass && !S.st.ratings[L.job.rating]){
-    h=h.replace('<div class="grid-2">', `<section class="panel signoff"><div><p class="label">Didn't pass this time</p><h3>Retest tomorrow, or keep the story moving</h3><p class="small muted">The examiner can sign you off now so the next chapters open. You can still retake the checkride any time for the practice.</p></div><button class="btn primary" data-act="signoff" data-r="${L.job.rating}">Sign me off and continue</button></section><div class="grid-2">`); }
-  return h; };
 /* story map: main story first, side stories under their own heading; travel buttons start the chapter */
 
 

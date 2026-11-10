@@ -104,5 +104,6 @@ game-flow.js
 jobs.js
 sim-live.js
 page-hangar.js
+page-result.js
 ui-render.js
 zz-boot.js

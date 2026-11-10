@@ -2417,34 +2417,6 @@ function debriefView(job, p){
     <div class="row"><button class="btn action" type="submit">Submit debrief</button><button class="btn" type="button" data-act="debrief-back">Back to briefing</button></div>
   </form></main>`;
 }
-function resultView(){
-  const st=S.st; const {job,res,out} = st.last; const sc = job.scen?SCEN[job.scen]:null;
-  const passFail = job.kind==='check' ? (out.pass?`<span class="chip good">Passed</span>`:`<span class="chip bad">Not passed</span>`) : '';
-  return `<main class="wrap stack fade">
-    <section class="panel"><div class="row" style="gap:24px;align-items:center">
-      ${scoreRing(res)}
-      <div class="stack" style="gap:4px;min-width:0;flex:1">
-        <p class="label">Flight complete · score ${res.score}/100</p>
-        <h1 style="font-size:28px">${esc(job.title)}</h1>
-        <p class="muted">${esc(job.from)} → ${esc(st.log[0]?.to||job.to)} · ${esc(AC[job.ac].n)} · ${durTxt(res.block)}</p>
-        <div class="row">${st.last.f && st.last.f.verified?`<span class="chip sea">Verified by MSFS · ${st.last.f.simFpm} fpm</span>`:''}${passFail}${out.pay?`<span class="chip good">+${money(out.pay)}</span>`:''}${out.costs?`<span class="chip bad">−${money(out.costs)}</span>`:''}<span class="chip">Reputation ${st.reputation}/100</span></div>
-      </div></div></section>
-    ${out.story?`<section class="panel"><p class="label">Outcome</p><div class="brief" style="margin-top:6px"><p>${esc(out.story)}</p></div></section>`:''}
-    ${surpriseResultHTML(out)}
-    ${out.ach&&out.ach.length?`<section class="panel ach-pop"><p class="label">Achievement unlocked</p><div class="row" style="margin-top:6px">${out.ach.map(a=>`<div class="medal"><b>${esc(a.n)}</b><span class="small muted">${esc(a.d)}</span></div>`).join('')}</div></section>`:''}
-    ${out.review?`<section class="panel"><p class="label">Passenger review</p><p class="stars" aria-label="${out.review.stars} of 5 stars">${stars(out.review.stars)}</p><p class="brief" style="margin-top:4px">"${esc(out.review.text)}"</p><p class="small muted">${esc(out.review.who)}</p></section>`:''}
-    ${out.notes.length?`<section class="notice"><ul class="tight">${out.notes.map(n=>`<li>${esc(n)}</li>`).join('')}</ul></section>`:''}
-    <div class="grid-2">
-      <section class="panel"><h2>Scorecard</h2><div class="scroll-x" style="margin-top:8px"><table><thead><tr><th>Item</th><th class="num">Points</th><th class="num">Max</th></tr></thead><tbody>${res.parts.map(p=>`<tr><td style="white-space:normal">${esc(p[0])}</td><td class="num">${p[1]}</td><td class="num">${p[2]}</td></tr>`).join('')}</tbody></table></div></section>
-      ${sc?`<section class="teach"><h3>By the book: ${esc(sc.n)}</h3><ul class="tight small">${sc.book.map(b=>`<li>${esc(b)}</li>`).join('')}</ul></section>`:'<div></div>'}
-    </div>
-    <div class="row">
-      <button class="btn primary" data-act="done-result">Back to the job board</button>
-      ${S.sample && !S.sampleOff ? `<button class="btn" data-act="ai-journal" ${S.busy.journal?'disabled':''}>${S.busy.journal?'Writing…':'Write a journal entry with Claude'}</button>`:''}
-      ${S.busy.journalDone?`<span class="small" style="color:var(--good)">Added to your Story journal.</span>`:''}
-      ${S.busy.journalErr?`<span class="small" style="color:var(--bad)">${esc(S.busy.journalErr)}</span>`:''}
-    </div></main>`;
-}
 
 /* ---------- pilot ---------- */
 function pilotView(){
@@ -3485,8 +3457,6 @@ function cardSection(){
 }
 
 function paintCard(){ const img=document.getElementById('flight-card'); if(!img || !S.st || !S.st.last) return; const draw=()=>{ try{ const cv=drawFlightCard(S.st); img.src=cv.toDataURL('image/png'); }catch(e){} }; if(document.fonts && document.fonts.ready) document.fonts.ready.then(draw); else draw(); }
-const _cardResult = resultView;
-resultView = function(){ const h=_cardResult(); setTimeout(paintCard,0); return h.replace(/(<\/section>)/, '$1'+cardSection()); };
 document.addEventListener('click', async e=>{
   const b=e.target.closest('[data-act="card-save"],[data-act="card-copy"]'); if(!b || !S.st || !S.st.last) return;
   const cv=drawFlightCard(S.st); const blob = await new Promise(r=>cv.toBlob(r,'image/png'));
@@ -3632,8 +3602,6 @@ function choiceHTML(st){
   const c=CHOICES[j.story];
   return `<section class="panel choice"><p class="label">Your call</p><p class="brief" style="margin:6px 0 12px">${esc(c.q)}</p><div class="choice-btns"><button class="btn primary" data-act="choose" data-v="a">${esc(c.a.t)}</button><button class="btn" data-act="choose" data-v="b">${esc(c.b.t)}</button></div><p class="tiny muted" style="margin-top:8px">Choices stick. People remember, and some chapters end differently because of them.</p></section>`;
 }
-const _evResult = resultView;
-resultView = function(){ const h=_evResult(); const c=choiceHTML(S.st); if(!c) return h; const i=h.indexOf('<section class="panel stack share-card">'); return i>0 ? h.slice(0,i)+c+h.slice(i) : h.replace('</main>', c+'</main>'); };
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="choose"]'); if(!b || !S.st || !S.st.last) return; const st=S.st; const id=st.last.job.story; const C=CHOICES[id]; if(!C || st.story.flags[id]) return;
   const v=b.dataset.v; const o=C[v]; st.story.flags[id]=v;
@@ -4249,8 +4217,6 @@ function replaySection(st){
       <p class="small">Final 12 seconds: average <b>${avgVs} fpm</b>, crossing at <b>${ias} kt</b>. ${R.td?`Touchdown <b>${R.td.fpm} fpm</b>, ${R.td.g} G.`:''} Dots turn orange past 700 fpm down and red past 1,000.</p>`; }
   return `<section class="panel stack replay"><div><p class="label">Flight replay</p><h3>Your path and approach</h3></div><div class="replay-grid">${pathSvg?`<div>${pathSvg}</div>`:''}${apSvg?`<div>${apSvg}</div>`:''}</div></section>`;
 }
-const _lvResult = resultView;
-resultView = function(){ const h=_lvResult(); const r=replaySection(S.st); if(!r) return h; const i=h.indexOf('<section class="panel stack share-card">'); return i>0 ? h.slice(0,i)+r+h.slice(i) : h.replace('</main>', r+'</main>'); };
 const _lvCard = drawFlightCard;
 drawFlightCard = function(st){ const cv=_lvCard(st); const R=st.last&&st.last.replay; if(!R || !R.track || R.track.length<2) return cv;
   const g=cv.getContext('2d'); const pts=replaySvgPath(R.track, 360, 150).map(p=>[p[0]+780, p[1]+440]);
@@ -4785,10 +4751,6 @@ function paxVerdict(p, job, f, res, t){
   if(p.trait==='vip'){ s = res.grade==='A' && comfort>=90 ? 5 : res.grade<='B' ? 4 : 2; line = s===5?`"Flawless. I'll ask for you next time."`:s===4?`"Acceptable."`:`"My assistant will be in touch."`; }
   return {s, line};
 }
-const _mfResult = resultView;
-resultView = function(){ const h=_mfResult(); const v=S.st.last&&S.st.last.out&&S.st.last.out.manifest; if(!v) return h;
-  const sec=`<section class="panel stack"><p class="label">Your passengers</p><div class="mf-list">${v.map(x=>`<div class="mf"><span class="mf-ic">${TRAITS[x.p.trait].i}</span><div><b>${esc(x.p.name)}</b> <span class="stars small">${'★'.repeat(x.s)}${'☆'.repeat(5-x.s)}</span><span class="small">${esc(x.line)}</span></div></div>`).join('')}</div></section>`;
-  const i=h.indexOf('<section class="panel stack share-card">'); return i>0 ? h.slice(0,i)+sec+h.slice(i) : h.replace('</main>', sec+'</main>'); };
 /* ===================== END-OF-DAY RECAP ("previously on Trade Winds") ===================== */
 document.addEventListener('click', e=>{
   if(!e.target.closest('[data-act="rest"]') || !S.st) return; const st=S.st;
@@ -4949,8 +4911,6 @@ function touchdownPanel(f){ const A=f&&f.tda; if(!A) return ''; if(A.off) return
   const zoneTxt = {aim:'Right on the aiming point. Textbook.', zone:'Inside the touchdown zone.', long:`Floated past the touchdown zone, leaving ${A.remaining.toLocaleString()} ft of runway.`, short:'Touched down before the threshold. On a real runway that can mean lights, a fence, or water.'}[A.zone];
   const clTxt = A.approx ? 'Centerline not graded at this airport (approximate runway position).' : {on:'Right on the centerline.', near:'Close to the centerline.', wide:'Well off the centerline, but on the pavement.', off:'Touched down off the runway edge.'}[A.center];
   return `<section class="panel stack"><div class="row between"><div><p class="label">Where you touched down</p><h3>Runway ${esc(A.runway)}</h3></div><span class="chip ${A.zone==='aim'||A.zone==='zone'?'good':'warn'}">${A.fromThr<0?'Short':A.fromThr.toLocaleString()+' ft'}</span></div>${runwaySVG(A)}<p class="small">${esc(zoneTxt)} ${esc(clTxt)}</p></section>`; }
-const _wResult = resultView;
-resultView = function(){ let h=_wResult(); const f=S.st.last&&S.st.last.f; const p=touchdownPanel(f); if(p) h=h.replace('<div class="grid-2">', p+'<div class="grid-2">'); return h; };
 /* the flight card shows exactly where you put it down */
 const _wCard = drawFlightCard;
 drawFlightCard = function(st){ const cv=_wCard(st); const A=st.last&&st.last.f&&st.last.f.tda; if(!A || !A.runway) return cv; const g=cv.getContext('2d');
@@ -5551,10 +5511,6 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="sto
 /* a failed checkride shouldn't stop the story */
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="signoff"]'); if(!b||!S.st) return; const r=b.dataset.r, st=S.st; if(!RATINGS[r]) return;
   st.ratings[r]=true; if(st.cooldown) delete st.cooldown[r]; addJournal(st, `Signed off: ${RATINGS[r].n}`, `After a long talk and a few extra circuits, the examiner signs your ${RATINGS[r].n}. "Keep practicing," she says. "The sky will test you again."`, ['wilkins'], 'milestone'); save(); toast(`${RATINGS[r].n} signed off. The story continues.`); S.keepScroll=true; render(); });
-const _clResult = resultView;
-resultView = function(){ let h=_clResult(); const L=S.st.last; if(L && L.job && L.job.kind==='check' && L.out && !L.out.pass && !S.st.ratings[L.job.rating]){
-    h=h.replace('<div class="grid-2">', `<section class="panel signoff"><div><p class="label">Didn't pass this time</p><h3>Retest tomorrow, or keep the story moving</h3><p class="small muted">The examiner can sign you off now so the next chapters open. You can still retake the checkride any time for the practice.</p></div><button class="btn primary" data-act="signoff" data-r="${L.job.rating}">Sign me off and continue</button></section><div class="grid-2">`); }
-  return h; };
 /* story map: main story first, side stories under their own heading; travel buttons start the chapter */
 
 
@@ -5719,11 +5675,6 @@ function debriefSummary(L){ const {res,f,out,job}=L; const parts=(res.parts||[])
     ${best?`<div class="hd good"><span>Best</span><b>${esc(best.n.replace(/\s*\(.*$/,''))}</b><small>${best.pts}/${best.max}</small></div>`:''}
     ${worst.map(w=>`<div class="hd work"><span>Work on</span><b>${esc(w.n.replace(/\s*\(.*$/,''))}</b><small>${esc(tip(w.n))}</small></div>`).join('') || `<div class="hd good"><span>Work on</span><b>Nothing major</b><small>Clean flight. Keep it up.</small></div>`}
   </div></section>`; }
-const _mrResult = resultView;
-resultView = function(){ const h=_mrResult(); const L=S.st.last; if(!L||!L.res) return h; const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h;
-  const first=main.querySelector(':scope > section'); const box=tpl(debriefSummary(L)).content.firstElementChild; if(first) first.after(box);
-  const grid=main.querySelector(':scope > .grid-2'); if(grid){ const d=wrapDetails([grid], 'Full scorecard and details'); grid.parentNode ? null : null; main.appendChild(d); }
-  return t.innerHTML; };
 
 /* ---- 2. one-tap filters on the job board ---- */
 const _mrBoard = boardView;
@@ -5816,8 +5767,6 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="not
 const NOTE_BTN = `<button class="btn sm ghost note-btn" data-act="note-open">Something's off?</button>`;
 const _tsIf = inflightView;
 inflightView = function(){ return _tsIf().replace(/(<div class="row"><span class="if-timer)/, NOTE_BTN+'$1'); };
-const _tsRes = resultView;
-resultView = function(){ const h=_tsRes(); return h.replace(/(<section class="panel how-did">)/, `<div class="row" style="justify-content:flex-end">${NOTE_BTN}</div>$1`); };
 /* ===================== QUICK WINS BEFORE TESTING ===================== */
 
 /* 2 + 3 + 5. copilot safety calls: too fast, flaps too fast, sim rate on approach, fuel */
@@ -5940,8 +5889,6 @@ boardingPass = function(st, job, p, a, started){ const h=_frPass.apply(this, arg
 /* 11. the cabin never drops to 0 comfort from normal flying */
 
 /* 12. result notes: no landing league, no "airframe 100%" line, at most four, the rest folded */
-const _frRes = resultView;
-resultView = function(){ const h=_frRes(); const t=tpl(h); const box=t.content.querySelector('main .notice ul'); if(box){ const li=[...box.children]; li.forEach(x=>{ if(/Landing league|airframe health: (9\d|100)%/.test(x.textContent)) x.remove(); }); const rest=[...box.children].slice(4); if(rest.length){ const d=document.createElement('details'); d.innerHTML=`<summary class="small muted">${rest.length} more note${rest.length>1?'s':''}</summary>`; const ul=document.createElement('ul'); ul.className='tight'; rest.forEach(x=>ul.appendChild(x)); d.appendChild(ul); box.after(d); } } return t.innerHTML; };
 
 /* 13. difficulty can't be changed in the middle of a flight (it changes the grading) */
 window.addEventListener('click', e=>{ const b=e.target.closest('[data-act="diff"]'); if(!b || !S.st || !S.st.active || !S.st.active.started) return; e.stopImmediatePropagation(); e.preventDefault(); toast('Change difficulty between flights, not during one.'); }, true);
@@ -5969,13 +5916,6 @@ stripHTML = function(st, job, opts){ let h=_p20Strip(st, job, opts); if(job.dep<
 
 
 /* 7. result: what next, right at the top; the share card folds away */
-const _p20Res = resultView;
-resultView = function(){ const h=_p20Res(); const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h; const st=S.st;
-  const availSet=new Set(storyAvailable(st).map(m=>m.id)); const next=mainChapters().find(m=>!st.story.done[m.id] && chapterStatus(st,m,availSet).k!=='locked');
-  const bar=document.createElement('div'); bar.className='row next-bar'; bar.innerHTML=`<button class="btn primary" data-act="nav" data-v="board">Back to the job board</button>${next?chapterAction(st,next,availSet,false).replace('Fly this chapter',`Next: ${esc(next.title)}`).replace(/Fly in to (\w+) &amp; start · \$0|Fly in to (\w+) & start · \$0/, (m,a1,a2)=>`Next: ${esc(next.title)} (free flight to ${a1||a2})`):''}`;
-  const first=main.querySelector(':scope > section'); if(first) first.after(bar);
-  const share=main.querySelector('.share-card'); if(share){ const d=wrapDetails([share], 'Share card: save an image of this flight'); main.appendChild(d); }
-  return t.innerHTML; };
 
 /* 8. money: cash and the ledger up front; savings, credit and the bank fold away */
 const _p20Money = moneyView;
@@ -6715,8 +6655,6 @@ function playAftermath(){ const st=S.st, L=st&&st.last; if(!L||!L.job) return; c
   } else nextCard().forEach(s=>shots.push(s));
   cutscene({shots, col:act.col, art:sceneArt(job.to, Math.min(1439,(job.dep||600)+(job.est||60)), job.ac), onEnd:()=>{ S.keepScroll=false; render(); }}); }
 /* the result screen gets a button to watch it again */
-const _csRes = resultView;
-resultView = function(){ const h=_csRes(); const L=S.st&&S.st.last; if(!L||!L.job||!CRIME_IDS.has(L.job.story)) return h; return h.replace(/(<main[^>]*>)/, `$1<div class="row" style="justify-content:flex-end;margin-bottom:8px"><button class="btn sm ghost" data-act="after-replay">▶ Replay scene</button></div>`); };
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="after-replay"]')) playAftermath(); });
 
 (function(){ const s=document.createElement('style'); s.textContent=`
@@ -7001,18 +6939,6 @@ function rightNow(st){ if(!st) return null; const a=st.active; if(a) return {t:a
   return {t:`Chapter ${n} · ${next.title}`, b:'Story', act:'nav', v:'story'}; }
 
 /* ---- 15. result screen: one summary card, everything else folded ---- */
-const _uiRes = resultView;
-resultView = function(){ const h=_uiRes(); const st=S.st, L=st&&st.last; if(!L||!L.job) return h; const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h;
-  const kids=[...main.children]; const sum=kids.find(e=>e.tagName==='SECTION'); const bar=main.querySelector('.next-bar'); const keep=new Set([sum,bar].filter(Boolean));
-  kids.forEach(e=>{ if(e.querySelector && (e.querySelector('[data-act="after-replay"]') || e.classList.contains('choice'))) keep.add(e); });
-  const rest=kids.filter(e=>!keep.has(e) && !(e.tagName==='DIV' && e.classList.contains('row') && /Back to the job board/.test(e.textContent) && !e.classList.contains('next-bar')));
-  kids.forEach(e=>{ if(e.tagName==='DIV' && e.classList.contains('row') && !e.classList.contains('next-bar') && /Back to the job board/.test(e.textContent)) e.remove(); });
-  const c=crime(st); const extra=[]; if(c.on && L.job && (L.job.network||L.job.kind==='story')) extra.push(`<span class="chip">Power ${c.power}</span><span class="chip ${c.heat>=60?'warn':''}">Heat ${c.heat}</span>`); if(c.dirty) extra.push(`<span class="chip warn">Dirty cash ${money(c.dirty)}</span>`);
-  if(sum && extra.length){ const ch=sum.querySelector('.chips, .row'); const d=document.createElement('div'); d.className='row'; d.style.cssText='gap:6px;margin-top:8px;flex-wrap:wrap'; d.innerHTML=extra.join(''); (ch?ch.after(d):sum.appendChild(d)); }
-  const flat=[]; rest.forEach(e=>{ if(e.tagName==='DETAILS'){ [...e.children].filter(x=>x.tagName!=='SUMMARY').forEach(x=>flat.push(x)); e.remove(); } else { e.remove(); flat.push(e); } });
-  if(flat.length){ const d=wrapDetails(flat, 'Flight details: score, passengers, notes and share card'); if(d){ d.classList.add('res-more'); main.appendChild(d); } }
-  if(bar) bar.querySelectorAll('button').forEach(b=>{ if(/Back to the job board/.test(b.textContent)) b.textContent='Side jobs'; });
-  return t.innerHTML; };
 
 /* ---- 16. pilot page: the licence ladder says what each licence unlocks in the story ---- */
 const LADDER = [['PPL','Act 1 · the Cessna'],['JET','Act 2 · the Vision Jet and the CJ4'],['ATP','Act 4 · airliners and the 747']];
@@ -7189,10 +7115,6 @@ hudHTML = function(a){ let h=_m1Hud(a); try{ const s=S.sim||{}; const job=a.job;
   if(extra.length) h=h.replace('<div class="fhud-cells">','<div class="fhud-cells">'+extra.join(''));
   if(goal) h=h.replace('</section>', goal+'</section>'); }catch(_){} return h; };
 
-const _m2Res = resultView;
-resultView = function(){ const h=_m2Res(); const L=S.st&&S.st.last; if(!L||!L.delta||!crime().on) return h; const d=L.delta, c=crime(); if(!d.power && !d.heat) return h;
-  const bar=(n,v,dv,col)=>`<div class="dbar"><span>${n}</span><div class="db-t"><i style="width:${Math.max(0,v-Math.max(0,dv))}%;background:${col}"></i><i class="db-new" style="width:${Math.abs(dv)}%;background:${dv>=0?col:'transparent'};${dv<0?`outline:1px dashed ${col}`:''}"></i></div><b>${v} <small class="${dv>0?'up':dv<0?'down':''}">${dv>0?'+':''}${dv||''}</small></b></div>`;
-  return h.replace('<div class="row next-bar">', `<section class="panel deltas">${bar('Power',c.power,d.power,'#c8962a')}${bar('Heat',c.heat,d.heat,'#c23a2b')}</section><div class="row next-bar">`); };
 
 /* ---- 3. story achievements ---- */
 ACH.push(
@@ -7497,8 +7419,6 @@ window.cutAuto = ()=>!!uiP().autoCut;
 /* 13. an empty job list offers a way forward */
 (function(){ const _b=boardView; boardView=function(){ return _b().replace(/<div class="empty"><h3>No jobs here right now<\/h3><p>[^<]*<\/p><\/div>/, `<div class="empty"><h3>No jobs here right now</h3><p>Start a new day for fresh work, or travel to a busier airport.</p><div class="row" style="gap:8px;justify-content:center;margin-top:10px"><button class="btn sm" data-act="rest">New day</button><button class="btn sm" data-act="cmd">Find an airport</button></div></div>`); }; })();
 
-/* 14. the result screen warns when Heat is getting dangerous */
-(function(){ const _r=resultView; resultView=function(){ const h=_r(); const c=crime(); if(!c.on || c.heat<60) return h; const msg = c.heat>=80 ? `Heat ${c.heat}: the feds are watching. Story chapters are on hold until it's under 80.` : `Heat ${c.heat}: customs is searching planes now. A clean landing gets you waved through; legit jobs cool it down.`; return h.replace('<div class="row next-bar">', `<div class="heat-warn">${msg}</div><div class="row next-bar">`); }; })();
 
 
 /* 16. "New day" shows the full cost: rent plus fleet and crew */
@@ -7567,8 +7487,6 @@ document.addEventListener('click', e=>{ const s=e.target.closest('.cut-skip'); i
 document.addEventListener('keydown', e=>{ if(e.key.toLowerCase()!=='m' || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || e.ctrlKey||e.metaKey||e.altKey) return; if(document.body.classList.contains('flying') || S.fmMenu){ S.fmMenu=!S.fmMenu; S.keepScroll=true; render(); } });
 
 
-/* 19. the result screen's Next button for a story chapter says which chapter */
-(function(){ const _r=resultView; resultView=function(){ const h=_r(); try{ const MC=mainChapters(); const nx=MC.find(m=>!S.st.story.done[m.id]); if(!nx) return h; const n=MC.indexOf(nx)+1; return h.replace(/(<div class="row next-bar">[\s\S]*?)Next: ([^<(]+)/, `$1Chapter ${n}: $2`); }catch(_){ return h; } }; })();
 
 
 (function(){ const s=document.createElement('style'); s.textContent=`.launder-mini{gap:12px}.launder-mini .btn{margin-left:auto}`; document.head.appendChild(s); })();
@@ -7691,8 +7609,6 @@ document.addEventListener('click', e=>{ const li=e.target.closest('.sh-time li')
 /* 17 + 18 + 19. phone-width fixes: tabs scroll, the flight display wraps, the bottom menu is dark */
 /* (CSS below) */
 
-/* 20. the result screen's aircraft button says what's needed */
-(function(){ const _r=resultView; resultView=function(){ const h=_r(); try{ const MC=mainChapters(); const nx=MC.find(m=>!S.st.story.done[m.id]); if(!nx) return h; return h.replace(/>Add an aircraft in the Hangar</, `>Chapter ${MC.indexOf(nx)+1} needs the ${esc(AC[nx.ac[0]]?AC[nx.ac[0]].n:nx.ac[0])}: open Hangar<`); }catch(_){ return h; } }; })();
 
 /* 21. story card: if a chapter needs an aircraft you own in MSFS, one click adds it */
 (function(){ const _pa=playAction; playAction=function(st,m,availSet,n){ const r=_pa(st,m,availSet,n); if(chapterStatus(st,m,availSet).k==='aircraft'){ const opts=m.ac.filter(k=>AC[k] && canFly(st,k)).slice(0,3); if(opts.length) r.btn=opts.map(k=>`<button class="btn sm" data-act="own-ac" data-v="${k}">I own the ${esc(AC[k].n)}</button>`).join('')+r.btn; } return r; }; })();
@@ -8726,6 +8642,81 @@ function hangarView(){
     ${ownedAircraftList(st)}</main>`;
   const body = cur==='settings' ? hangarSettingsTab(st) : cur==='msfs' ? hangarMsfsTab() : cur==='save' ? hangarSaveTab(st) : '';
   return `<main class="wrap stack fade">${tabs}${body}</main>`;
+}
+/* ===================== RESULT PAGE =====================
+   Shown on the Flight page right after a flight (S.showResult). From the top:
+     the summary (grade, pay, Power and Heat), what changed, the next step, your decision if the
+     chapter has one, then everything else folded under "Flight details". */
+
+/* The flight's notes: the first four, and the rest folded away. Routine notes are left out. */
+function resultNotes(out){
+  if(!out.notes.length) return '';
+  const notes=out.notes.filter(n=>!/Landing league|airframe health: (9\d|100)%/.test(n)); const more=notes.slice(4);
+  const li=n=>`<li>${esc(n)}</li>`;
+  return `<section class="notice"><ul class="tight">${notes.slice(0,4).map(li).join('')}</ul>${more.length?`<details><summary class="small muted">${more.length} more note${more.length>1?'s':''}</summary><ul class="tight">${more.map(li).join('')}</ul></details>`:''}</section>`;
+}
+/* Power and Heat: where they are now and what this flight changed. */
+function resultDeltas(st){
+  const L=st.last; const c=crime(st); if(!L.delta || !c.on) return ''; const d=L.delta; if(!d.power && !d.heat) return '';
+  const bar=(n,v,dv,col)=>`<div class="dbar"><span>${n}</span><div class="db-t"><i style="width:${Math.max(0,v-Math.max(0,dv))}%;background:${col}"></i><i class="db-new" style="width:${Math.abs(dv)}%;background:${dv>=0?col:'transparent'};${dv<0?`outline:1px dashed ${col}`:''}"></i></div><b>${v} <small class="${dv>0?'up':dv<0?'down':''}">${dv>0?'+':''}${dv||''}</small></b></div>`;
+  return `<section class="panel deltas">${bar('Power',c.power,d.power,'#c8962a')}${bar('Heat',c.heat,d.heat,'#c23a2b')}</section>`;
+}
+function resultHeatWarning(st){
+  const c=crime(st); if(!c.on || c.heat<60) return '';
+  return `<div class="heat-warn">${c.heat>=80 ? `Heat ${c.heat}: the feds are watching. Story chapters are on hold until it's under 80.` : `Heat ${c.heat}: customs is searching planes now. A clean landing gets you waved through; legit jobs cool it down.`}</div>`;
+}
+/* "Side jobs" and the button for the next chapter you can act on. */
+function resultNextBar(st){
+  const MC=mainChapters(); const availSet=new Set(storyAvailable(st).map(m=>m.id));
+  const next=MC.find(m=>!st.story.done[m.id] && chapterStatus(st,m,availSet).k!=='locked');
+  const upNext=MC.find(m=>!st.story.done[m.id]); const n=MC.indexOf(upNext)+1;
+  let btn='';
+  if(next){ const lead = upNext ? `Chapter ${n}: ` : 'Next: ';
+    btn=chapterAction(st,next,availSet,false).replace('Fly this chapter',`${lead}${esc(next.title)}`).replace(/Fly in to (\w+) &amp; start · \$0/, (m,ap)=>`${lead}${esc(next.title)} (free flight to ${ap})`);
+    if(upNext) btn=btn.replace('>Add an aircraft in the Hangar<', `>Chapter ${n} needs the ${esc(AC[upNext.ac[0]]?AC[upNext.ac[0]].n:upNext.ac[0])}: open Hangar<`); }
+  return `<div class="row next-bar"><button class="btn primary" data-act="nav" data-v="board">Side jobs</button>${btn}</div>`;
+}
+
+function resultView(){
+  const st=S.st; const L=st.last; const {job,res,out}=L; const f=L.f; const c=crime(st);
+  const sc = job.scen?SCEN[job.scen]:null;
+  const isChapter = CRIME_IDS.has(job.story);
+  setTimeout(paintCard,0);
+  const passFail = job.kind==='check' ? (out.pass?`<span class="chip good">Passed</span>`:`<span class="chip bad">Not passed</span>`) : '';
+  const crimeChips = (c.on && (job.network||job.kind==='story') ? `<span class="chip">Power ${c.power}</span><span class="chip ${c.heat>=60?'warn':''}">Heat ${c.heat}</span>` : '') + (c.dirty ? `<span class="chip warn">Dirty cash ${money(c.dirty)}</span>` : '');
+  const choice = choiceHTML(st) || '';
+  const manifest = out.manifest ? `<section class="panel stack"><p class="label">Your passengers</p><div class="mf-list">${out.manifest.map(x=>`<div class="mf"><span class="mf-ic">${TRAITS[x.p.trait].i}</span><div><b>${esc(x.p.name)}</b> <span class="stars small">${'★'.repeat(x.s)}${'☆'.repeat(5-x.s)}</span><span class="small">${esc(x.line)}</span></div></div>`).join('')}</div></section>` : '';
+  const failedCheckride = job.kind==='check' && !out.pass && !st.ratings[job.rating];
+  return `<main class="wrap stack fade">
+    ${isChapter?`<div class="row" style="justify-content:flex-end;margin-bottom:8px"><button class="btn sm ghost" data-act="after-replay">▶ Replay scene</button></div>`:''}
+    <section class="panel"><div class="row" style="gap:24px;align-items:center">
+      ${scoreRing(res)}
+      <div class="stack" style="gap:4px;min-width:0;flex:1">
+        <p class="label">Flight complete · score ${res.score}/100</p>
+        <h1 style="font-size:28px">${esc(job.title)}</h1>
+        <p class="muted">${esc(job.from)} → ${esc(st.log[0]?.to||job.to)} · ${esc(AC[job.ac].n)} · ${durTxt(res.block)}</p>
+        <div class="row">${f && f.verified?`<span class="chip sea">Verified by MSFS · ${f.simFpm} fpm</span>`:''}${passFail}${out.pay?`<span class="chip good">+${money(out.pay)}</span>`:''}${out.costs?`<span class="chip bad">−${money(out.costs)}</span>`:''}<span class="chip">Reputation ${st.reputation}/100</span></div>
+      </div></div>${crimeChips?`<div class="row" style="gap: 6px; margin-top: 8px; flex-wrap: wrap;">${crimeChips}</div>`:''}</section>
+    ${resultDeltas(st)}${resultHeatWarning(st)}${resultNextBar(st)}
+    ${choice}
+    <details class="calm-more res-more"><summary>Flight details: score, passengers, notes and share card</summary><div class="calm-more-in">
+      <div class="row" style="justify-content:flex-end">${NOTE_BTN}</div>
+      ${debriefSummary(L)}
+      ${replaySection(st)||''}
+      ${manifest}
+      ${out.story?`<section class="panel"><p class="label">Outcome</p><div class="brief" style="margin-top:6px"><p>${esc(out.story)}</p></div></section>`:''}
+      ${surpriseResultHTML(out)}
+      ${out.ach&&out.ach.length?`<section class="panel ach-pop"><p class="label">Achievement unlocked</p><div class="row" style="margin-top:6px">${out.ach.map(a=>`<div class="medal"><b>${esc(a.n)}</b><span class="small muted">${esc(a.d)}</span></div>`).join('')}</div></section>`:''}
+      ${out.review?`<section class="panel"><p class="label">Passenger review</p><p class="stars" aria-label="${out.review.stars} of 5 stars">${stars(out.review.stars)}</p><p class="brief" style="margin-top:4px">"${esc(out.review.text)}"</p><p class="small muted">${esc(out.review.who)}</p></section>`:''}
+      ${resultNotes(out)}
+      ${touchdownPanel(f)||''}
+      ${failedCheckride?`<section class="panel signoff"><div><p class="label">Didn't pass this time</p><h3>Retest tomorrow, or keep the story moving</h3><p class="small muted">The examiner can sign you off now so the next chapters open. You can still retake the checkride any time for the practice.</p></div><button class="btn primary" data-act="signoff" data-r="${job.rating}">Sign me off and continue</button></section>`:''}
+      <div class="calm-more-in"><div class="grid-2">
+        <section class="panel"><h2>Scorecard</h2><div class="scroll-x" style="margin-top:8px"><table><thead><tr><th>Item</th><th class="num">Points</th><th class="num">Max</th></tr></thead><tbody>${res.parts.map(p=>`<tr><td style="white-space:normal">${esc(p[0])}</td><td class="num">${p[1]}</td><td class="num">${p[2]}</td></tr>`).join('')}</tbody></table></div></section>
+        ${sc?`<section class="teach"><h3>By the book: ${esc(sc.n)}</h3><ul class="tight small">${sc.book.map(b=>`<li>${esc(b)}</li>`).join('')}</ul></section>`:'<div></div>'}
+      </div></div>
+      <div class="calm-more-in">${cardSection()}</div>
+    </div></details></main>`;
 }
 /* ===================== RENDER =====================
    render() redraws the whole page from S (what's on screen) and S.st (the career).

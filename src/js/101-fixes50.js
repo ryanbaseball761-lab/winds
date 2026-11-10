@@ -27,8 +27,6 @@
 /* 17 + 18 + 19. phone-width fixes: tabs scroll, the flight display wraps, the bottom menu is dark */
 /* (CSS below) */
 
-/* 20. the result screen's aircraft button says what's needed */
-(function(){ const _r=resultView; resultView=function(){ const h=_r(); try{ const MC=mainChapters(); const nx=MC.find(m=>!S.st.story.done[m.id]); if(!nx) return h; return h.replace(/>Add an aircraft in the Hangar</, `>Chapter ${MC.indexOf(nx)+1} needs the ${esc(AC[nx.ac[0]]?AC[nx.ac[0]].n:nx.ac[0])}: open Hangar<`); }catch(_){ return h; } }; })();
 
 /* 21. story card: if a chapter needs an aircraft you own in MSFS, one click adds it */
 (function(){ const _pa=playAction; playAction=function(st,m,availSet,n){ const r=_pa(st,m,availSet,n); if(chapterStatus(st,m,availSet).k==='aircraft'){ const opts=m.ac.filter(k=>AC[k] && canFly(st,k)).slice(0,3); if(opts.length) r.btn=opts.map(k=>`<button class="btn sm" data-act="own-ac" data-v="${k}">I own the ${esc(AC[k].n)}</button>`).join('')+r.btn; } return r; }; })();
