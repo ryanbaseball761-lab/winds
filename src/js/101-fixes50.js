@@ -78,3 +78,4 @@ WHATS_NEW.unshift(['0.43','50 fixes: the new-career screen fits the story, Heat 
 @keyframes heatp{50%{box-shadow:0 0 0 4px rgba(229,83,61,.18)}}.heat-chip.hot{animation:heatp 1.6s ease-in-out infinite}
 .jr-m{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}`; document.head.appendChild(s); })();
 WHATS_NEW.unshift(['0.50','Every story choice now comes back later, a fuller epilogue, Caribe Cargo becomes your own airline (Pilot → Airline), smuggling pays more and draws more Heat, and many fixes.']);
+WHATS_NEW.unshift(['0.51','Clearer story: "Previously" remembers your choices, no spoilers before takeoff, consistent chapter numbers. Castillo pays for your jet rating, and the MSFS clock is set correctly.']);

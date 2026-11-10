@@ -4228,7 +4228,7 @@ document.addEventListener('click', e=>{
   else if(act==='wiz-back'){ S.wiz=Math.max(0,(S.wiz||0)-1); render(); }
   else if(act==='wiz-recheck'){ simPoll(true); setTimeout(render,1200); }
   else if(act==='wiz-academy'){ S.st.tourDone=true; S.wizOpen=false; S.wiz=0; save(); go('academy'); }
-  else if(act==='wiz-fly'){ S.st.tourDone=true; S.wizOpen=false; S.wiz=0; save(); const m=STORY.find(x=>x.id==='CW1'); const acs=storyAircraft(S.st,m); if(acs.length && !S.st.active){ S.st.active={job:storyJob(S.st,m,acs[0]), accepted:Date.now()}; save(); } go('flight'); }
+  else if(act==='wiz-fly'){ S.st.tourDone=true; S.wizOpen=false; S.wiz=0; save(); render(); if(!S.st.active){ const bt=document.createElement('button'); bt.dataset.act='accept-story'; bt.dataset.id='CW1'; bt.style.display='none'; document.body.appendChild(bt); bt.click(); bt.remove(); } else go('flight'); }
   else if(act==='wiz-open'){ S.wizOpen=true; S.wiz=2; render(); }
 });
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="tour-skip"]') && S.st){ S.st.tourDone=true; S.wizOpen=false; save(); render(); } });
@@ -5583,9 +5583,9 @@ const CRIME = [
  {id:'CR4',arc:'Clean Hands',title:`The Offer`,chars:['castillo','dez'],req:{after:'CR3'},from:'TNCM',to:'TAPA',ac:['C172','DA40','G36','DA62','C208'],pax:2,cargo:30,cargoLabel:`two leather briefcases`,time:'dusk',dep:1020,wx:'trades',
   hook:`A charter to Antigua for a polite man in a linen suit, who has a jet with no pilot.`,
   recap:`Mateo Castillo, the man behind Dez's "friend", offered you a place in his network, and a Vision Jet if you get your jet rating. You said yes.`,
-  brief:[`A charter for two men in linen suits. The quiet one sits up front, asks good questions about flying, and seems to know a lot about you already: where you trained, where you live, how far behind Coral Wing is on its loans.`,`At the Antigua FBO, he buys you a coffee. "My name is Mateo Castillo. Dez works for me. Now and then, so does Coral Wing. I'd like you to work for me too. Not as a favor. As a career. I have a Vision Jet in San Juan with no pilot. Get your jet rating, and I'll pay for every hour of it."`],
+  brief:[`The quiet one sits up front, asks good questions about flying, and seems to know a lot about you already: where you trained, where you live, how far behind Coral Wing is on its loans.`,`At the Antigua FBO, he buys you a coffee. "My name is Mateo Castillo. Dez works for me. Now and then, so does Coral Wing. I'd like you to work for me too. Not as a favor. As a career. I have a Vision Jet in San Juan with no pilot. Get your jet rating, and I'll pay for every hour of it."`],
   teach:[`Antigua is a big international field. Expect a long straight-in at dusk, and turn on your landing light early.`],
-  out:{good:`Castillo watched you fly the whole way. "Smooth," he says. "Calm hands. That's rare."`,ok:`"Good enough," Castillo says. "We'll make it better."`,bad:`Castillo straightens his cuffs after the landing. "We'll work on that."`},rep:{castillo:8},
+  out:{good:`Castillo watched you fly the whole way. "Smooth," he says. "Calm hands. That's rare." At the Antigua FBO he buys you a coffee. "My name is Mateo Castillo. Dez works for me. Now and then, so does Coral Wing. I'd like you to work for me too. Not as a favor. As a career." He lets that sit. "I have a Vision Jet in San Juan with no pilot. Get your jet rating, and I'll pay for every hour of it."`,ok:`"Good enough," Castillo says. "We'll make it better." At the Antigua FBO he buys you a coffee. "My name is Mateo Castillo. Dez works for me. I'd like you to work for me too. Not as a favor. As a career. I have a Vision Jet in San Juan with no pilot. Get your jet rating, and I'll pay for every hour of it."`,bad:`Castillo straightens his cuffs after the landing. "We'll work on that." Then, at the FBO, he buys you a coffee anyway. "My name is Mateo Castillo. Dez works for me. I'd like you to work for me too. I have a Vision Jet in San Juan with no pilot. Get your jet rating, and I'll pay for every hour of it."`},rep:{castillo:8},
   choice:{q:`Castillo slides an envelope across the table. "Ten thousand. A welcome. Fly for me, and one day you won't need me at all."`,opts:[
     {t:`Take the envelope`,out:`"Good," he says. "I like people who know what they want." By the time you reach the plane, there's a new number in your phone with no name on it.`,cash:10000,power:6,heat:5},
     {t:`Ask for a cut instead`,out:`Castillo laughs, genuinely. "You haven't moved a single box for me yet." Then he writes 5% on a napkin and slides it back. You've just become part of the business.`,power:10,heat:5}]}},
@@ -5646,25 +5646,25 @@ const CRIME = [
     {t:`Take his money, keep both doors open`,flag:'medinaDeal',out:`$50,000 in a gym bag, and now two dangerous men think you work for them. Tico watches you take the bag and says nothing.`,cash:50000,heat:8,power:4}]}},
  {id:'CR11',arc:'Bigger Wings',title:`The Rat`,chars:['castillo','tico'],req:{after:'CRM'},from:'MKJS',to:'MWCR',ac:BIZJ,pax:2,cargo:0,cargoLabel:`two passengers`,time:'night',dep:1260,wx:'calm',
   hook:`Someone in the crew is talking. Castillo wants you to fly him out.`,
-  recap:`One of Castillo's men, Tico, was talking to the DEA. You were the one who flew him to Grand Cayman.`,
+  recap:`Castillo decided Tico was the one talking to the DEA, and you flew him to Grand Cayman, where a car was waiting.`,
   brief:[`Someone has been talking to the DEA, and Castillo thinks it's Tico, your loader, the kid who wants to be a pilot. "Fly him to Grand Cayman," Castillo says. "Someone will meet him there to talk."`,`Tico sits in the back next to Castillo's driver. He knows. You can see it in his face.`],
   teach:[`Grand Cayman at night is a small island and a lot of black water. Fly the approach on instruments and trust them.`],
-  out:{good:`A smooth landing at Grand Cayman.`,ok:`A firm landing at Grand Cayman.`,bad:`A rough landing at Grand Cayman. Tico is shaking.`},rep:{castillo:2},
-  choice:{q:`Over the water, Castillo's driver falls asleep. Tico leans forward and whispers: "I talked to them once. Once. I have a daughter. Please."`,opts:[
+  out:{good:`A smooth landing at Grand Cayman. At the far end of the ramp, a black car is waiting with its lights off.`,ok:`A firm landing at Grand Cayman. At the far end of the ramp, a black car is waiting with its lights off.`,bad:`A rough landing at Grand Cayman. Tico is shaking. At the far end of the ramp, a black car is waiting with its lights off.`},rep:{castillo:2},
+  choice:{q:`Castillo's driver steps off the jet to call the men in the car. Tico grabs your sleeve and whispers: "I talked to them once. Once. I have a daughter. Please."`,opts:[
     {t:`Give Tico a chance to run`,flag:'ticoRan',out:`You park on the far ramp "for fuel". Tico is over the fence before the engines spool down. Castillo will ask questions you'll have to answer.`,heat:8,con:1,power:-6},
     {t:`Deliver him as ordered`,out:`Tico gets into a car at Grand Cayman, and you never see him again. Castillo sends a case of rum and a note with one word on it: "Loyalty."`,power:10,con:-1}]}},
  {id:'CR12',arc:'Bigger Wings',title:`Dez`,chars:['dez','mari'],req:{after:'CR11'},from:'MWCR',to:'TNCM',ac:BIZJ,pax:1,cargo:20,cargoLabel:`a lawyer and her files`,time:'day',dep:600,wx:'trades',
   hook:`Dez was arrested at Juliana, and he's the one who got you into this.`,
-  recap:`Dez was arrested at Juliana with a cooler that wasn't full of fish. You decided what happened to him.`,
+  recap:`Dez was arrested at Juliana with a cooler that wasn't full of fish.`,
   brief:[`Customs finally opened one of Dez's coolers. It wasn't fish. He's in a cell on Sint Maarten, and he hasn't said a word.`,`You're flying Castillo's best lawyer home to Juliana. On the way, she asks you a simple question: "How much is Dez worth to you?"`],
   teach:[`Home to Juliana. Runway 10, over Maho Beach, and try not to blow anyone into the water.`],
-  out:{good:`The lawyer walks into the courthouse two hours later.`,ok:`The lawyer walks into the courthouse two hours later.`,bad:`The lawyer walks into the courthouse two hours later, still pale from the landing.`},
+  out:{good:`Two hours after you land, the lawyer walks into the courthouse in Philipsburg. Dez's bail hearing is tomorrow morning.`,ok:`Two hours after you land, the lawyer is in the courthouse. Dez's bail hearing is tomorrow morning.`,bad:`The lawyer walks into the courthouse still pale from the landing. Dez's bail hearing is tomorrow morning.`},
   choice:{q:`The lawyer can get Dez out on bail, but someone has to pay, and Castillo won't.`,opts:[
     {t:`Pay for Dez's defense yourself`,flag:'dezFree',out:`Dez is out on bail within the week. He finds you in the hangar and hugs you hard. "I don't forget," he says. Neither does anyone else in the hangar.`,cash:-15000,power:5,rep:{dez:20}},
     {t:`Let him take the fall`,flag:'dezJail',out:`Dez gets eight years and never says your name. The heat around Juliana dies down. You tell yourself it's business.`,power:8,heat:-15,rep:{dez:-30,mari:-10}}]}},
  {id:'CR13',arc:'Bigger Wings',title:`Mari`,chars:['mari'],req:{after:'CR12'},from:'TNCM',to:'TFFG',ac:BIZJ.concat(GA),pax:1,cargo:0,cargoLabel:`Mari`,time:'dusk',dep:1050,wx:'calm',
   hook:`Mari found the money. She wants to go flying, just the two of you.`,
-  recap:`Mari found out about everything. You decided whether she stayed or walked away.`,
+  recap:`Mari found the money in hangar three, and you took her flying to Grand Case to give her an answer.`,
   brief:[`Mari found the cash in hangar three. All of it.`,`She doesn't yell. She asks if you'll take her flying, just the two of you, over to Grand Case like when you were new. She doesn't say a word until you're on final.`],
   teach:[`Grand Case has a hill right off the end of runway 30. A short hop. Keep it slow and stable.`],
   out:{good:`You land softly at Grand Case. Mari watches the sunset for a long time before she speaks.`,ok:`You land at Grand Case. Mari watches the sunset for a long time before she speaks.`,bad:`You land hard at Grand Case, and Mari doesn't comment. She has bigger things on her mind.`},
@@ -5685,7 +5685,7 @@ const CRIME = [
  {id:'CR15',arc:'Heavy Metal',title:`Caribe Cargo`,chars:['castillo','mari'],req:{after:'CR14'},from:'MDSD',to:'MPTO',ac:LINER,pax:0,cargo:36000,cargoLabel:`18 tons of "fresh flowers"`,time:'night',dep:1230,wx:'trades',
   hook:`Your own cargo airline, eighteen tons a night, and a partner who wants half.`,
   recap:`You launched Caribe Cargo, your own airline, and flew eighteen tons of "flowers" to Panama.`,
-  brief:[`With Hartwell's money you buy a struggling freight company and paint a new name on the tails: Caribe Cargo. On paper it flies flowers and fish. In reality it flies eighteen tons a night of whatever pays.`,`Castillo comes to the hangar for the first flight. He walks around the 737 slowly, like he's pricing it. "Nice airline," he says. "I'll take half."`],
+  brief:[`With the money you've made, you buy a struggling freight company and paint a new name on the tails: Caribe Cargo. On paper it flies flowers and fish. In reality it flies eighteen tons a night of whatever pays.`,`Castillo comes to the hangar for the first flight. He walks around the 737 slowly, like he's pricing it. "Nice airline," he says. "I'll take half."`],
   teach:[`A long night leg to Panama City. Plan your fuel with a real reserve, and expect thunderstorms near the coast.`],
   out:{good:`Eighteen tons of "flowers" land at Tocumen right on schedule. Customs waves the pallets through without looking. It's your airline now.`,ok:`The flowers land in Panama. Customs barely looks. It's your airline now.`,bad:`A rough night and a firm landing, but the pallets are in Panama. It's your airline now.`},rep:{castillo:4},
   choice:{q:`Castillo wants half of Caribe Cargo. He's smiling, but his driver isn't.`,opts:[
@@ -5694,7 +5694,7 @@ const CRIME = [
 
  {id:'CRB',arc:'Heavy Metal',title:`The Setup`,chars:['castillo','medina'],req:{after:'CR15'},from:'MPTO',to:'MMUN',ac:LINER,pax:0,cargo:34000,cargoLabel:`17 tons for Castillo's buyers`,time:'night',dep:1200,wx:'trades',
   hook:`Castillo booked this run himself. That should have been your first warning.`,
-  recap:`Castillo sold you out to the Medinas at Cancún. Now it's war.`,
+  recap:`Castillo sold you out to the Medinas at Cancún. Medina's men took the whole load.`,
   brief:[`Since the fight over Caribe Cargo, Castillo is suddenly friendly again. He books you a run himself: seventeen tons to Cancún for his Mexican buyers. "Like old times," he says.`,`It's the nicest he's been in months. That bothers you all the way up to cruising altitude.`],
   teach:[`Cancún is long and wide. A good place for a smooth landing, whatever is waiting on the ramp.`],
   out:{good:`On the cargo ramp, three trucks box the airliner in. Medina's men take the whole load at gunpoint. "Castillo sold you to me," Medina says. "I just wanted you to know."`,ok:`On the cargo ramp, three trucks box you in. Medina's men take the whole load. "Castillo sold you to me," Medina says.`,bad:`On the cargo ramp, three trucks box you in. Medina's men take the whole load. "Castillo sold you to me," Medina says.`},rep:{castillo:-30},
@@ -5935,9 +5935,9 @@ const BEATS = {
   CR10:[['cruise','self',`Fourteen hundred pounds. A 737 freighter carries forty thousand. You do the math again.`],['descent',f=>f.informant?'reyes':'self',f=>f.informant?`Nice jet. Where's it going? Text me the tail number of every plane you see on that ramp.`:`A text from an unknown number: "We know who you are." You delete it, and then you check your mirrors all the way down.`]],
   CRM:[{at:'cruise',who:'radio',text:`Traffic, two o'clock, same altitude, no transponder.|A dark jet is sliding in next to your wing.`,opts:[{t:'Climb and outrun them',reply:`You push the power up and climb. The other jet stays with you for a minute, then peels off toward the coast.`,power:2},{t:'Call Castillo',reply:`"Medinas," Castillo says. "Ignore them. Land and do your job."`}]}],
   CR11:[['cruise','self',`Tico won't look at you. He rode with you through the storm. He wanted to be a pilot.`]],
-  CR12:[f=>f.informant?{at:'climb',who:'reyes',text:`Dez won't talk to us. He's protecting someone. If it's you, now would be a good time to tell me.`}:null, ['cruise','castillo',`Dez knew the risks. Don't get sentimental. It's bad for business.`]],
+  CR12:[['climb','self',`Castillo's lawyer finally looks up from Dez's file. "How much is Dez worth to you?"`], f=>f.informant?{at:'climb',who:'reyes',text:`Dez won't talk to us. He's protecting someone. If it's you, now would be a good time to tell me.`}:null, ['cruise','castillo',`Dez knew the risks. Don't get sentimental. It's bad for business.`]],
   CR13:[['climb','self',`Mari hasn't said a word since takeoff.`]],
-  CR14:[['climb','self',`Your first airliner. A hundred and fifty thousand pounds, and every one of them feels like yours.`],['cruise','hartwell',`I built that foundation to save a reef. Then Castillo found it. Now I can't remember the last time I went diving.`]],
+  CR14:[['climb','self',`Your first airliner. A hundred and fifty thousand pounds, and every one of them feels like yours.`],['cruise','hartwell',`My foundation has been washing Castillo's money for years. I built it to save a reef. I want out.|He sets a locked case on the console: the ledgers. Every account Castillo has.`]],
   CR15:[f=>f.informant?{at:'climb',who:'reyes',text:`An airline. That's ambitious. Every invoice, every tail number. Send it all to me.`}:null, ['cruise','self',`Eighteen tons a night. Your airline. You can't stop smiling.`],['descent','castillo',`Half, my friend. We'll talk when you land.`]],
   CRB:[['cruise','self',`Castillo hasn't been this friendly in months.`], f=>{ const who=f.dezFree?'dez':f.mari?'mari':f.ticoRan?'tico':f.informant?'reyes':null; if(!who) return {at:'descent',who:'self',text:`Something feels wrong about this one. You can't say what.`};
       const line={dez:`Rookie, listen. Castillo sold you to the Medinas. They're waiting on the cargo ramp. Park at the passenger terminal and walk out with the tourists.`,mari:`Don't park on the cargo ramp. Castillo sold you to the Medinas. Passenger terminal, now.`,tico:`It's Tico. You let me run, so I owe you one. Castillo sold you to the Medinas. They're on the cargo ramp.`,reyes:`Our wiretap just lit up. Castillo sold you to the Medinas. Stay off the cargo ramp.`}[who];
@@ -6025,7 +6025,7 @@ const PRO = {
       [`The ramp`,'dez',`Be nice to this one, rookie. Real nice.`]],
  CR5:[[`Private hangar · San Juan · 9:30 AM`,null,`The hangar door rolls up. A white Vision Jet sits under the lights, polished like jewelry.`],
       [`Hangar office`,'hartwell',`Lionel Hartwell. My foundation owns her, on paper. Mateo says you're the best he's found.`],
-      [`Phone call`,'castillo',`Nine bags. Don't count them this time. Just fly.`],
+      [`Phone call`,'castillo',`Nine bags. Don't count them this time. It's only money, and money isn't a crime until somebody asks where it came from.`],
       [`Cockpit`,null,`You run your hand along the glareshield. Last month you were flying a Cessna with a cracked seat.`]],
  CR6:[[`Juliana · 10:50 PM`,null,`A van pulls up to the jet with its lights off.`],
       [`The ramp`,null,`Four people climb out. A mother. Her brother. A young man. A boy, maybe ten, holding an inhaler like a toy.`],
@@ -6034,7 +6034,7 @@ const PRO = {
       [`The ramp`,null,`"Philippe Arnaud. I'm Mr. Castillo's lawyer. The police are at my office at noon. Please, can we go?"`],
       [`Cockpit`,null,`He's sweating through his shirt. You start the engine before he's finished buckling in.`]],
  CR8:[[`San Juan · 3:30 PM`,null,`The sky to the east is a wall of grey. The Coast Guard helicopters are being towed into their hangar.`],
-      [`Phone call`,'castillo',`Nobody else will fly today. That's the point.`],
+      [`Phone call`,'castillo',`Nobody else will fly today. That's the point. Name your price, and I'll double it.`],
       [`The ramp`,'tico',`You're the pilot? Tico. I load the bags. Someday I'm gonna fly one of these, boss. Watch.`]],
  CR9:[[`Punta Cana · 9:40 AM`,null,`A routine run. A sealed case, a contact on St. Croix. You've done twenty of these.`],
       [`Cockpit`,null,`You don't notice the man in the terminal window, taking pictures of your tail number.`]],
@@ -6051,7 +6051,7 @@ const PRO = {
       [`Phone call`,'castillo',`Dez knew the risks. My lawyer will ride with you. Don't get sentimental.`],
       [`The ramp`,null,`The lawyer is already on board, reading Dez's file. She doesn't look up.`]],
  CR13:[[`Coral Wing hangar · 5:10 PM`,null,`Hangar three. A toolbox on the floor, lid open. Inside, under the trays, the money.`],
-      [`The hangar`,'mari',`Don't. Don't explain. Just take me flying. Like when you were new.`]],
+      [`The hangar`,'mari',`Don't. Don't explain. Just take me flying. Grand Case, like when you were new.`]],
  CR14:[[`Juliana · 10:30 AM`,null,`Your airline licence is three days old. The 737 on the cargo ramp is twenty-two years older.`],
       [`The jet bridge`,'hartwell',`I'll ride in the jump seat, if you don't mind. I have something to give you, and I don't trust phones.`],
       [`Cockpit`,null,`Fifteen tons in the hold. You've never felt calmer.`]],
@@ -6073,7 +6073,7 @@ const PRO = {
 const PRO_DYN = {
   /* The Rat: if you took Reyes's deal, you know who the real rat is; Tico remembers the right seat */
   CR11:f=>{ const L=PRO.CR11.slice(0,2); if(f.informant) L.push([`The villa`,null,`You know exactly who's been talking to the DEA. It isn't Tico. Your burner phone feels very heavy in your pocket.`]); L.push(PRO.CR11[2]); if(f.ticoSeat) L.push([`The ramp`,'tico',`Boss. You let me sit up front once, remember? Best ten minutes of my life.`]); return L; },
-  CR13:f=>f.dezJail?[[`Coral Wing hangar · 5:10 PM`,null,`With Dez gone, the hangar is quiet. Mari has been going through his toolboxes.`],[`Hangar three`,null,`Under the trays, the money. All of it.`],[`The hangar`,'mari',`Don't. Don't explain. Just take me flying. Like when you were new.`]]:null,
+  CR13:f=>f.dezJail?[[`Coral Wing hangar · 5:10 PM`,null,`With Dez gone, the hangar is quiet. Mari has been going through his toolboxes.`],[`Hangar three`,null,`Under the trays, the money. All of it.`],[`The hangar`,'mari',`Don't. Don't explain. Just take me flying. Grand Case, like when you were new.`]]:null,
   /* The Setup: Castillo heard what you told his lawyer */
   CRB:f=>f.toldLawyer?[PRO.CRB[0],[`The ramp`,'castillo',`My lawyer tells me you had a lot to say about Dez. Never mind. We're friends.`]].concat(PRO.CRB.slice(1)):null,
   /* Heavy: who's with you on the ramp, and what you've been doing since Cancún */
@@ -6584,7 +6584,7 @@ function showTitle(){ if(document.querySelector('.title-screen')) return; const 
     if(a==='new') close(()=>{ if(S.st){ try{ backupLabeled(S.st,'Before starting a new game'); }catch(_){} } S.st=null; try{ localStorage.removeItem(KEY); }catch(_){} S.view='board'; render(); }); }); }
 function playRecapNow(){ try{ const st=S.st; if(!st || uiP().noRecap || uiP().skipCuts || !uiP().walk3) return; const MC=mainChapters(); const dn=MC.filter(m=>st.story.done[m.id]); if(!dn.length || (st.active&&st.active.started)) return;
   const next=MC.find(m=>!st.story.done[m.id]); const act=next?CRIME_ACTS.find(a=>a.arc===next.arc):CRIME_ACTS[CRIME_ACTS.length-1];
-  const shots=[{card:true,kicker:'Previously on',title:'Trade Winds',auto:1600}].concat(dn.slice(-3).map(m=>[`Chapter ${MC.indexOf(m)+1} · ${m.title}`, null, m.recap||''])); if(next) shots.push({card:true,kicker:`Up next · Chapter ${MC.indexOf(next)+1}`,title:next.title,sub:`<p>${esc(next.hook||'')}</p>`});
+  const shots=[{card:true,kicker:'Previously on',title:'Trade Winds',auto:1600}].concat(dn.slice(-3).map(m=>[`Chapter ${MC.indexOf(m)+1} · ${m.title}`, null, recapOf(st,m)])); if(next) shots.push({card:true,kicker:`Up next · Chapter ${MC.indexOf(next)+1}`,title:next.title,sub:`<p>${esc(next.hook||'')}</p>`});
   cutscene({shots, col:act.col, art:SCENES.office(), onEnd:()=>{}}); }catch(_){} }
 
 /* ---- cold open for a brand-new career: a flash-forward, then "two years earlier" ---- */
@@ -6918,6 +6918,7 @@ WHATS_NEW.unshift(['0.43','50 fixes: the new-career screen fits the story, Heat 
 @keyframes heatp{50%{box-shadow:0 0 0 4px rgba(229,83,61,.18)}}.heat-chip.hot{animation:heatp 1.6s ease-in-out infinite}
 .jr-m{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}`; document.head.appendChild(s); })();
 WHATS_NEW.unshift(['0.50','Every story choice now comes back later, a fuller epilogue, Caribe Cargo becomes your own airline (Pilot → Airline), smuggling pays more and draws more Heat, and many fixes.']);
+WHATS_NEW.unshift(['0.51','Clearer story: "Previously" remembers your choices, no spoilers before takeoff, consistent chapter numbers. Castillo pays for your jet rating, and the MSFS clock is set correctly.']);
 /* ===================== PAGE CHROME =====================
    The parts of the screen that surround every page: the side menu, the top bar with its
    status chips, and the phone-width menu. band() returns all of it as one piece of HTML. */
@@ -7513,7 +7514,7 @@ function storyJob(st, chapter, acId){
     ac:acId, pax:m.pax, cargo:m.cargo, cargoLabel:m.cargoLabel, dep:m.dep, wx, scen:m.scen||null, paras:m.brief, teachStory:m.teach, chars:m.chars, airline:!!m.airline, client:CAST[m.chars[0]]?.n||'' };
   job.pay = payFor(st, job); job.est = plan(job).est;
   if(m.lend){ job.lend = true; job.pay = m.fee || job.pay; job.tail = acId==='CJ4'?'N52VL':STARLING_TAIL; }
-  const ch = arcChapters(chapter.arc); job.label = `${chapter.arc} · Ch ${ch.indexOf(chapter)+1}/${ch.length}`;
+  const ch = arcChapters(chapter.arc); job.label = CRIME_IDS.has(chapter.id) ? `${chapter.arc} · Chapter ${mainChapters().indexOf(chapter)+1} of ${mainChapters().length}` : `${chapter.arc} · Ch ${ch.indexOf(chapter)+1}/${ch.length}`;
   return job;
 }
 
@@ -7994,8 +7995,8 @@ function chapterHero(job, lead=''){
   const art = typeof islandArt==='function' ? (()=>{ try{ return islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 300, job.ac); }catch(_){ return ''; } })() : '';
   const g=CH_GOAL[job.story];
   return `<section class="chapter-hero" style="--arc:${arcColor(m.arc)}">${lead}${art?`<div class="ch-art" aria-hidden="true">${art}</div>`:''}<div class="ch-in">
-    <div class="row between"><p class="ch-kicker">${esc(m.arc)} · Chapter ${idx} of ${chs.length}${m.side?' · side story':''}</p><div class="row ch-cast">${(m.chars||[]).filter(k=>CAST[k]).map(k=>avatar(k)).join('')}</div></div>
-    <h1>${esc(m.title)}</h1>${g?`<div class="ch-goal"><p class="ch-prev"><span>Previously</span> ${esc(g[1])}</p><p class="ch-obj"><span>Your goal</span> ${esc(g[0])}</p></div>`:''}
+    <div class="row between"><p class="ch-kicker">${CRIME_IDS.has(m.id)?`Act ${CRIME_ACTS.findIndex(a=>a.arc===m.arc)+1} · ${esc(m.arc)} · Chapter ${mainChapters().indexOf(m)+1} of ${mainChapters().length}`:`${esc(m.arc)} · Chapter ${idx} of ${chs.length}${m.side?' · side story':''}`}</p><div class="row ch-cast">${(m.chars||[]).filter(k=>CAST[k]).map(k=>avatar(k)).join('')}</div></div>
+    <h1>${esc(m.title)}</h1>${g?`<div class="ch-goal"><p class="ch-prev">${CRIME_IDS.has(m.id)&&prevChapter(m)?`<span>Previously</span> ${esc(recapOf(S.st,prevChapter(m)))}`:`<span>${CRIME_IDS.has(m.id)?'The setup':'Previously'}</span> ${esc(g[1])}`}</p><p class="ch-obj"><span>Your goal</span> ${esc(g[0])}</p></div>`:''}
     ${CRIME_IDS.has(job.story) ? '' : `<div class="ch-brief">${(job.paras||m.brief||[]).map(t=>`<p>${esc(t)}</p>`).join('')}</div>`}
     <div class="ch-feature"><div><span class="label">Featured flight</span><b class="mono">${esc(job.from)} → ${esc(job.local?job.from:job.to)}</b><span class="small">${esc(to.n)}, ${esc(to.isl)} · ${d.toLocaleString()} nm</span></div>${feat?`<p class="small">${esc(feat)}</p>`:''}</div>
   </div></section>`;
@@ -8377,7 +8378,7 @@ function campaignCard(st){ const c=crime(st); const MC=mainChapters(); const ava
   return `<section class="panel campaign story-card fade" style="--arc:${act.col}">
     <div class="sc-top"><p class="sc-act">Act ${ai+1} · ${esc(act.arc)}</p>${meters}</div>
     <div class="sc-bar">${bar}</div>
-    ${last?`<p class="sc-prev"><span>Previously</span> ${esc(last.recap||'')}</p>`:''}
+    ${last?`<p class="sc-prev"><span>Previously</span> ${esc(recapOf(st,last))}</p>`:''}
     ${body}
   </section>`;
 }
@@ -8490,9 +8491,28 @@ function sceneArt(code, dep, ac){ try{ return islandArt(code, dep, 1600, 900, ac
 
 /* ---------- a chapter's scenes ---------- */
 
+/* What each after-flight choice adds to the chapter's recap, by option. */
+const CHOICE_RECAP = {
+  CR2:['You handed the money over untouched.','You kept a $10,000 bundle for yourself.'],
+  CR4:['You took his $10,000 welcome envelope.','You asked for a 5% cut instead of an envelope.'],
+  CR6:['You called an ambulance for the boy, against Castillo\'s orders.','You put them all in the van, the boy too.'],
+  CR9:['You took Reyes\'s deal. You report to the DEA now.','You said nothing, and Castillo\'s lawyers got you out.'],
+  CRM:['You turned Medina down.','You took Medina\'s $50,000 and kept both doors open.'],
+  CR11:['You let Tico run.','You handed Tico over, as ordered.'],
+  CR12:['You paid for Dez\'s defense, and he\'s out on bail.','You let Dez take the fall. He got eight years.'],
+  CR13:['Mari is your partner now.','Mari walked away and left you Coral Wing.'],
+  CR14:['You kept the ledgers.','You gave the ledgers to Reyes.'],
+  CR15:['You gave Castillo 30% of the airline.','You told Castillo the airline is yours.'],
+  CRB:['You went to war with Castillo.','You smiled, said nothing, and started writing everything down.'],
+  CRT:['You shook Medina\'s hand.','You handed Medina\'s routes to the DEA.'] };
+/* A finished chapter's recap, with what you chose. */
+function recapOf(st, m){ if(!m) return ''; const i=crime(st).choice[m.id]; const add=(i!=null && CHOICE_RECAP[m.id]) ? CHOICE_RECAP[m.id][i] : ''; return [m.recap||'', add||''].filter(Boolean).join(' '); }
+/* The chapter before this one, in story order. */
+function prevChapter(m){ const MC=mainChapters(); const i=MC.indexOf(m); return i>0 ? MC[i-1] : null; }
+
 /* Which briefing paragraphs are read out after each prologue (by index). The rest repeat what the
    scene already showed, or would give away something that happens in flight. Chapters not listed read all. */
-const PRO_BRIEF = { CW1:[1], CR2:[1], CR3:[], CR4:[0,1], CR5:[0,1], CR6:[], CR7:[], CR8:[0,1], CR9:[], CR10:[0], CRM:[0], CR11:[], CR12:[0,1], CR13:[1], CR14:[0,1], CR15:[0], CRB:[], CR16:[], CRT:[0], CR17:[1] };
+const PRO_BRIEF = { CW1:[1], CR2:[1], CR3:[], CR4:[0], CR5:[0], CR6:[], CR7:[], CR8:[0], CR9:[], CR10:[0], CRM:[0], CR11:[], CR12:[0], CR13:[], CR14:[0], CR15:[0], CRB:[], CR16:[], CRT:[0], CR17:[1] };
 
 /* The lines of a chapter's prologue: an echo of your last mid-flight choice, the scripted prologue
    (which can change with earlier choices), then the briefing as narration. */
@@ -8699,7 +8719,7 @@ const AFTER_RENDER = [
   /* "Previously on Trade Winds" when you open the app mid-story */
   function previouslyOn(){ if(RENDER_ONCE.recap || !S.st) return; RENDER_ONCE.recap=true; const st=S.st; const MC=mainChapters(); const dn=MC.filter(m=>st.story.done[m.id]);
     if(dn.length && !S._walk && !S._title && !(st.active&&st.active.started) && !S.showResult && !(st.ui&&st.ui.noRecap)){ const last3=dn.slice(-3); const next=MC.find(m=>!st.story.done[m.id]); const act=next?CRIME_ACTS.find(a=>a.arc===next.arc):CRIME_ACTS[CRIME_ACTS.length-1];
-      const shots=[{card:true,kicker:'Previously on',title:'Trade Winds',auto:1600}].concat(last3.map(m=>[`Chapter ${MC.indexOf(m)+1} · ${m.title}`, null, m.recap||''])); if(next) shots.push({card:true,kicker:`Up next · Chapter ${MC.indexOf(next)+1}`,title:next.title,sub:`<p>${esc(next.hook||'')}</p>`});
+      const shots=[{card:true,kicker:'Previously on',title:'Trade Winds',auto:1600}].concat(last3.map(m=>[`Chapter ${MC.indexOf(m)+1} · ${m.title}`, null, recapOf(st,m)])); if(next) shots.push({card:true,kicker:`Up next · Chapter ${MC.indexOf(next)+1}`,title:next.title,sub:`<p>${esc(next.hook||'')}</p>`});
       setTimeout(()=>{ if(!document.querySelector('.cut')) cutscene({shots, col:act.col, art:SCENES.office(), onEnd:()=>{}}); }, 900); } },
   /* the test-session banner */
   function testBanner(){ if(testSession() && !document.querySelector('.test-banner')){ const d=document.createElement('div'); d.className='test-banner'; d.innerHTML=`Test session: changes will be thrown away <button class="btn sm" data-act="test-session">End and restore</button>`; document.body.appendChild(d); } if(!testSession()) document.querySelectorAll('.test-banner').forEach(e=>e.remove()); },

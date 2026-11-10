@@ -8,6 +8,14 @@
 - The Witness ending also opens if you kept Arnaud's drive or quietly wrote everything down.
 - Prologues no longer repeat themselves, and two chapters no longer give away their twist before takeoff (Reyes now meets you on the St. Croix ramp).
 
+## Clearer story
+- "Previously" now tells you what you chose last chapter, not just where you flew.
+- Scenes no longer give away what happens in flight: Castillo makes his offer after you land in Antigua, and Hartwell hands over the ledgers in the air.
+- The Rat: Tico's plea now happens on the Grand Cayman ramp, with the car waiting.
+- Chapters are numbered the same everywhere (Chapter 9 of 20).
+- New players see chapter 1's opening scene even if they start it from the setup screen.
+- Castillo pays for your jet rating right after The Offer, as he promised.
+
 ## Your airline and the economy
 - **Caribe Cargo is now a real airline.** When you launch it in chapter 16, it becomes your company: buy aircraft (new or used, with loans), hire pilots and put them on routes that earn while you rest. Find it under **Pilot → Airline**.
 - **Smuggling pays, and it's risky.** Network runs pay 2.4x a legit job (was 1.6x) and add more Heat. Players who take every run now reach customs-search Heat (60) and earn more than honest pilots; before, Heat never went past about 25 and crime paid no better than honest work.

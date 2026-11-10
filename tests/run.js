@@ -50,7 +50,7 @@ const results=[]; const ok=(n,c,info)=>{ results.push([n,!!c,info||'']); };
     /* a double click on New day only starts one day */
     S.view='board'; render(); const day=st.day; const b=document.querySelector('[data-act="rest"]'); b.click(); b.click(); out.days=st.day-day;
     return out; });
-  ok('chapter label survives earlier choices', /Ch [1-9]/.test(g.label), g.label);
+  ok('chapter label survives earlier choices', /Chapter [1-9]\d* of 20/.test(g.label), g.label);
   ok('Expert checklist penalty is not lost', g.expert, String(g.expert));
   ok('wear is capped at 12% per flight, no grounding above 25%', g.wear===48 && !g.grounded, JSON.stringify(g));
   ok('double click on New day counts once', g.days===1, String(g.days));

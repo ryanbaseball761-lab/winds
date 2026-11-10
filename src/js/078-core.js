@@ -16,7 +16,7 @@ const PRO = {
       [`The ramp`,'dez',`Be nice to this one, rookie. Real nice.`]],
  CR5:[[`Private hangar · San Juan · 9:30 AM`,null,`The hangar door rolls up. A white Vision Jet sits under the lights, polished like jewelry.`],
       [`Hangar office`,'hartwell',`Lionel Hartwell. My foundation owns her, on paper. Mateo says you're the best he's found.`],
-      [`Phone call`,'castillo',`Nine bags. Don't count them this time. Just fly.`],
+      [`Phone call`,'castillo',`Nine bags. Don't count them this time. It's only money, and money isn't a crime until somebody asks where it came from.`],
       [`Cockpit`,null,`You run your hand along the glareshield. Last month you were flying a Cessna with a cracked seat.`]],
  CR6:[[`Juliana · 10:50 PM`,null,`A van pulls up to the jet with its lights off.`],
       [`The ramp`,null,`Four people climb out. A mother. Her brother. A young man. A boy, maybe ten, holding an inhaler like a toy.`],
@@ -25,7 +25,7 @@ const PRO = {
       [`The ramp`,null,`"Philippe Arnaud. I'm Mr. Castillo's lawyer. The police are at my office at noon. Please, can we go?"`],
       [`Cockpit`,null,`He's sweating through his shirt. You start the engine before he's finished buckling in.`]],
  CR8:[[`San Juan · 3:30 PM`,null,`The sky to the east is a wall of grey. The Coast Guard helicopters are being towed into their hangar.`],
-      [`Phone call`,'castillo',`Nobody else will fly today. That's the point.`],
+      [`Phone call`,'castillo',`Nobody else will fly today. That's the point. Name your price, and I'll double it.`],
       [`The ramp`,'tico',`You're the pilot? Tico. I load the bags. Someday I'm gonna fly one of these, boss. Watch.`]],
  CR9:[[`Punta Cana · 9:40 AM`,null,`A routine run. A sealed case, a contact on St. Croix. You've done twenty of these.`],
       [`Cockpit`,null,`You don't notice the man in the terminal window, taking pictures of your tail number.`]],
@@ -42,7 +42,7 @@ const PRO = {
       [`Phone call`,'castillo',`Dez knew the risks. My lawyer will ride with you. Don't get sentimental.`],
       [`The ramp`,null,`The lawyer is already on board, reading Dez's file. She doesn't look up.`]],
  CR13:[[`Coral Wing hangar · 5:10 PM`,null,`Hangar three. A toolbox on the floor, lid open. Inside, under the trays, the money.`],
-      [`The hangar`,'mari',`Don't. Don't explain. Just take me flying. Like when you were new.`]],
+      [`The hangar`,'mari',`Don't. Don't explain. Just take me flying. Grand Case, like when you were new.`]],
  CR14:[[`Juliana · 10:30 AM`,null,`Your airline licence is three days old. The 737 on the cargo ramp is twenty-two years older.`],
       [`The jet bridge`,'hartwell',`I'll ride in the jump seat, if you don't mind. I have something to give you, and I don't trust phones.`],
       [`Cockpit`,null,`Fifteen tons in the hold. You've never felt calmer.`]],
@@ -64,7 +64,7 @@ const PRO = {
 const PRO_DYN = {
   /* The Rat: if you took Reyes's deal, you know who the real rat is; Tico remembers the right seat */
   CR11:f=>{ const L=PRO.CR11.slice(0,2); if(f.informant) L.push([`The villa`,null,`You know exactly who's been talking to the DEA. It isn't Tico. Your burner phone feels very heavy in your pocket.`]); L.push(PRO.CR11[2]); if(f.ticoSeat) L.push([`The ramp`,'tico',`Boss. You let me sit up front once, remember? Best ten minutes of my life.`]); return L; },
-  CR13:f=>f.dezJail?[[`Coral Wing hangar · 5:10 PM`,null,`With Dez gone, the hangar is quiet. Mari has been going through his toolboxes.`],[`Hangar three`,null,`Under the trays, the money. All of it.`],[`The hangar`,'mari',`Don't. Don't explain. Just take me flying. Like when you were new.`]]:null,
+  CR13:f=>f.dezJail?[[`Coral Wing hangar · 5:10 PM`,null,`With Dez gone, the hangar is quiet. Mari has been going through his toolboxes.`],[`Hangar three`,null,`Under the trays, the money. All of it.`],[`The hangar`,'mari',`Don't. Don't explain. Just take me flying. Grand Case, like when you were new.`]]:null,
   /* The Setup: Castillo heard what you told his lawyer */
   CRB:f=>f.toldLawyer?[PRO.CRB[0],[`The ramp`,'castillo',`My lawyer tells me you had a lot to say about Dez. Never mind. We're friends.`]].concat(PRO.CRB.slice(1)):null,
   /* Heavy: who's with you on the ramp, and what you've been doing since Cancún */

@@ -60,9 +60,28 @@ function sceneArt(code, dep, ac){ try{ return islandArt(code, dep, 1600, 900, ac
 
 /* ---------- a chapter's scenes ---------- */
 
+/* What each after-flight choice adds to the chapter's recap, by option. */
+const CHOICE_RECAP = {
+  CR2:['You handed the money over untouched.','You kept a $10,000 bundle for yourself.'],
+  CR4:['You took his $10,000 welcome envelope.','You asked for a 5% cut instead of an envelope.'],
+  CR6:['You called an ambulance for the boy, against Castillo\'s orders.','You put them all in the van, the boy too.'],
+  CR9:['You took Reyes\'s deal. You report to the DEA now.','You said nothing, and Castillo\'s lawyers got you out.'],
+  CRM:['You turned Medina down.','You took Medina\'s $50,000 and kept both doors open.'],
+  CR11:['You let Tico run.','You handed Tico over, as ordered.'],
+  CR12:['You paid for Dez\'s defense, and he\'s out on bail.','You let Dez take the fall. He got eight years.'],
+  CR13:['Mari is your partner now.','Mari walked away and left you Coral Wing.'],
+  CR14:['You kept the ledgers.','You gave the ledgers to Reyes.'],
+  CR15:['You gave Castillo 30% of the airline.','You told Castillo the airline is yours.'],
+  CRB:['You went to war with Castillo.','You smiled, said nothing, and started writing everything down.'],
+  CRT:['You shook Medina\'s hand.','You handed Medina\'s routes to the DEA.'] };
+/* A finished chapter's recap, with what you chose. */
+function recapOf(st, m){ if(!m) return ''; const i=crime(st).choice[m.id]; const add=(i!=null && CHOICE_RECAP[m.id]) ? CHOICE_RECAP[m.id][i] : ''; return [m.recap||'', add||''].filter(Boolean).join(' '); }
+/* The chapter before this one, in story order. */
+function prevChapter(m){ const MC=mainChapters(); const i=MC.indexOf(m); return i>0 ? MC[i-1] : null; }
+
 /* Which briefing paragraphs are read out after each prologue (by index). The rest repeat what the
    scene already showed, or would give away something that happens in flight. Chapters not listed read all. */
-const PRO_BRIEF = { CW1:[1], CR2:[1], CR3:[], CR4:[0,1], CR5:[0,1], CR6:[], CR7:[], CR8:[0,1], CR9:[], CR10:[0], CRM:[0], CR11:[], CR12:[0,1], CR13:[1], CR14:[0,1], CR15:[0], CRB:[], CR16:[], CRT:[0], CR17:[1] };
+const PRO_BRIEF = { CW1:[1], CR2:[1], CR3:[], CR4:[0], CR5:[0], CR6:[], CR7:[], CR8:[0], CR9:[], CR10:[0], CRM:[0], CR11:[], CR12:[0], CR13:[], CR14:[0], CR15:[0], CRB:[], CR16:[], CRT:[0], CR17:[1] };
 
 /* The lines of a chapter's prologue: an echo of your last mid-flight choice, the scripted prologue
    (which can change with earlier choices), then the briefing as narration. */

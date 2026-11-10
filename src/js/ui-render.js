@@ -101,7 +101,7 @@ const AFTER_RENDER = [
   /* "Previously on Trade Winds" when you open the app mid-story */
   function previouslyOn(){ if(RENDER_ONCE.recap || !S.st) return; RENDER_ONCE.recap=true; const st=S.st; const MC=mainChapters(); const dn=MC.filter(m=>st.story.done[m.id]);
     if(dn.length && !S._walk && !S._title && !(st.active&&st.active.started) && !S.showResult && !(st.ui&&st.ui.noRecap)){ const last3=dn.slice(-3); const next=MC.find(m=>!st.story.done[m.id]); const act=next?CRIME_ACTS.find(a=>a.arc===next.arc):CRIME_ACTS[CRIME_ACTS.length-1];
-      const shots=[{card:true,kicker:'Previously on',title:'Trade Winds',auto:1600}].concat(last3.map(m=>[`Chapter ${MC.indexOf(m)+1} · ${m.title}`, null, m.recap||''])); if(next) shots.push({card:true,kicker:`Up next · Chapter ${MC.indexOf(next)+1}`,title:next.title,sub:`<p>${esc(next.hook||'')}</p>`});
+      const shots=[{card:true,kicker:'Previously on',title:'Trade Winds',auto:1600}].concat(last3.map(m=>[`Chapter ${MC.indexOf(m)+1} · ${m.title}`, null, recapOf(st,m)])); if(next) shots.push({card:true,kicker:`Up next · Chapter ${MC.indexOf(next)+1}`,title:next.title,sub:`<p>${esc(next.hook||'')}</p>`});
       setTimeout(()=>{ if(!document.querySelector('.cut')) cutscene({shots, col:act.col, art:SCENES.office(), onEnd:()=>{}}); }, 900); } },
   /* the test-session banner */
   function testBanner(){ if(testSession() && !document.querySelector('.test-banner')){ const d=document.createElement('div'); d.className='test-banner'; d.innerHTML=`Test session: changes will be thrown away <button class="btn sm" data-act="test-session">End and restore</button>`; document.body.appendChild(d); } if(!testSession()) document.querySelectorAll('.test-banner').forEach(e=>e.remove()); },

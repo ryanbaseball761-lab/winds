@@ -49,7 +49,7 @@ function campaignCard(st){ const c=crime(st); const MC=mainChapters(); const ava
   return `<section class="panel campaign story-card fade" style="--arc:${act.col}">
     <div class="sc-top"><p class="sc-act">Act ${ai+1} · ${esc(act.arc)}</p>${meters}</div>
     <div class="sc-bar">${bar}</div>
-    ${last?`<p class="sc-prev"><span>Previously</span> ${esc(last.recap||'')}</p>`:''}
+    ${last?`<p class="sc-prev"><span>Previously</span> ${esc(recapOf(st,last))}</p>`:''}
     ${body}
   </section>`;
 }

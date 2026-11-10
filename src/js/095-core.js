@@ -27,7 +27,7 @@ function showTitle(){ if(document.querySelector('.title-screen')) return; const 
     if(a==='new') close(()=>{ if(S.st){ try{ backupLabeled(S.st,'Before starting a new game'); }catch(_){} } S.st=null; try{ localStorage.removeItem(KEY); }catch(_){} S.view='board'; render(); }); }); }
 function playRecapNow(){ try{ const st=S.st; if(!st || uiP().noRecap || uiP().skipCuts || !uiP().walk3) return; const MC=mainChapters(); const dn=MC.filter(m=>st.story.done[m.id]); if(!dn.length || (st.active&&st.active.started)) return;
   const next=MC.find(m=>!st.story.done[m.id]); const act=next?CRIME_ACTS.find(a=>a.arc===next.arc):CRIME_ACTS[CRIME_ACTS.length-1];
-  const shots=[{card:true,kicker:'Previously on',title:'Trade Winds',auto:1600}].concat(dn.slice(-3).map(m=>[`Chapter ${MC.indexOf(m)+1} · ${m.title}`, null, m.recap||''])); if(next) shots.push({card:true,kicker:`Up next · Chapter ${MC.indexOf(next)+1}`,title:next.title,sub:`<p>${esc(next.hook||'')}</p>`});
+  const shots=[{card:true,kicker:'Previously on',title:'Trade Winds',auto:1600}].concat(dn.slice(-3).map(m=>[`Chapter ${MC.indexOf(m)+1} · ${m.title}`, null, recapOf(st,m)])); if(next) shots.push({card:true,kicker:`Up next · Chapter ${MC.indexOf(next)+1}`,title:next.title,sub:`<p>${esc(next.hook||'')}</p>`});
   cutscene({shots, col:act.col, art:SCENES.office(), onEnd:()=>{}}); }catch(_){} }
 
 /* ---- cold open for a brand-new career: a flash-forward, then "two years earlier" ---- */

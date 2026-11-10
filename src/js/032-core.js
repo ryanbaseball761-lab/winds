@@ -28,7 +28,7 @@ document.addEventListener('click', e=>{
   else if(act==='wiz-back'){ S.wiz=Math.max(0,(S.wiz||0)-1); render(); }
   else if(act==='wiz-recheck'){ simPoll(true); setTimeout(render,1200); }
   else if(act==='wiz-academy'){ S.st.tourDone=true; S.wizOpen=false; S.wiz=0; save(); go('academy'); }
-  else if(act==='wiz-fly'){ S.st.tourDone=true; S.wizOpen=false; S.wiz=0; save(); const m=STORY.find(x=>x.id==='CW1'); const acs=storyAircraft(S.st,m); if(acs.length && !S.st.active){ S.st.active={job:storyJob(S.st,m,acs[0]), accepted:Date.now()}; save(); } go('flight'); }
+  else if(act==='wiz-fly'){ S.st.tourDone=true; S.wizOpen=false; S.wiz=0; save(); render(); if(!S.st.active){ const bt=document.createElement('button'); bt.dataset.act='accept-story'; bt.dataset.id='CW1'; bt.style.display='none'; document.body.appendChild(bt); bt.click(); bt.remove(); } else go('flight'); }
   else if(act==='wiz-open'){ S.wizOpen=true; S.wiz=2; render(); }
 });
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="tour-skip"]') && S.st){ S.st.tourDone=true; S.wizOpen=false; save(); render(); } });

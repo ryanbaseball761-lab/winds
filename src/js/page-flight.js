@@ -38,8 +38,8 @@ function chapterHero(job, lead=''){
   const art = typeof islandArt==='function' ? (()=>{ try{ return islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 300, job.ac); }catch(_){ return ''; } })() : '';
   const g=CH_GOAL[job.story];
   return `<section class="chapter-hero" style="--arc:${arcColor(m.arc)}">${lead}${art?`<div class="ch-art" aria-hidden="true">${art}</div>`:''}<div class="ch-in">
-    <div class="row between"><p class="ch-kicker">${esc(m.arc)} · Chapter ${idx} of ${chs.length}${m.side?' · side story':''}</p><div class="row ch-cast">${(m.chars||[]).filter(k=>CAST[k]).map(k=>avatar(k)).join('')}</div></div>
-    <h1>${esc(m.title)}</h1>${g?`<div class="ch-goal"><p class="ch-prev"><span>Previously</span> ${esc(g[1])}</p><p class="ch-obj"><span>Your goal</span> ${esc(g[0])}</p></div>`:''}
+    <div class="row between"><p class="ch-kicker">${CRIME_IDS.has(m.id)?`Act ${CRIME_ACTS.findIndex(a=>a.arc===m.arc)+1} · ${esc(m.arc)} · Chapter ${mainChapters().indexOf(m)+1} of ${mainChapters().length}`:`${esc(m.arc)} · Chapter ${idx} of ${chs.length}${m.side?' · side story':''}`}</p><div class="row ch-cast">${(m.chars||[]).filter(k=>CAST[k]).map(k=>avatar(k)).join('')}</div></div>
+    <h1>${esc(m.title)}</h1>${g?`<div class="ch-goal"><p class="ch-prev">${CRIME_IDS.has(m.id)&&prevChapter(m)?`<span>Previously</span> ${esc(recapOf(S.st,prevChapter(m)))}`:`<span>${CRIME_IDS.has(m.id)?'The setup':'Previously'}</span> ${esc(g[1])}`}</p><p class="ch-obj"><span>Your goal</span> ${esc(g[0])}</p></div>`:''}
     ${CRIME_IDS.has(job.story) ? '' : `<div class="ch-brief">${(job.paras||m.brief||[]).map(t=>`<p>${esc(t)}</p>`).join('')}</div>`}
     <div class="ch-feature"><div><span class="label">Featured flight</span><b class="mono">${esc(job.from)} → ${esc(job.local?job.from:job.to)}</b><span class="small">${esc(to.n)}, ${esc(to.isl)} · ${d.toLocaleString()} nm</span></div>${feat?`<p class="small">${esc(feat)}</p>`:''}</div>
   </div></section>`;
