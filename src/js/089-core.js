@@ -13,15 +13,6 @@ function navGroup(v){ return NAV5.find(g=>g.v===v || (g.tabs||[]).some(t=>t[0]==
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="fm-menu"]')) return; S.fmMenu=!S.fmMenu; S.keepScroll=true; render(); });
 
 /* ---- 4. command bar: Ctrl+K (or /) to jump anywhere ---- */
-function cmdItems(){ const st=S.st; const L=[]; if(!st) return L; const pg=(n,v,k)=>L.push({n, k:k||'Page', run:()=>go(v)});
-  pg('Main story','story'); pg('Jobs','board'); pg('Map','map'); pg('Flight','flight'); pg('Pilot & licences','pilot'); pg('Money','money'); pg('Hangar','hangar'); pg('Butter Cup','cup'); pg('Academy','academy'); pg('Logbook','log'); pg('Settings','hangar','Page · Hangar → Settings');
-  const r=rightNow(st); if(r) L.push({n:`${r.b.replace('▶ ','')}: ${r.t}`, k:'Right now', run:()=>clickAct(r.act, r.v, r.id)});
-  RATING_ORDER.filter(x=>!st.ratings[x] && checkrideReady(st,x).ok).forEach(x=>L.push({n:`Book checkride: ${RATINGS[x].n}`, k:'Pilot', run:()=>{ go('pilot'); setTimeout(()=>{ const b=document.querySelector(`[data-act="book-check"][data-r="${x}"]`); if(b) b.scrollIntoView({block:'center'}); },200); }}));
-  if(crime(st).dirty) L.push({n:'Launder dirty cash', k:'Money', run:()=>go('money')});
-  if(st.active) L.push({n:'Load fuel into MSFS', k:'Flight', run:()=>{ go('flight'); setTimeout(()=>clickAct('pf-load'),200); }});
-  L.push({n:'New day', k:'Action', run:()=>clickAct('rest')}, {n:'Practice landing', k:'Action', run:()=>clickAct('practice')}, {n:testSession()?'End test session':'Start test session', k:'Action', run:()=>clickAct('test-session')}, {n:'Travel as a passenger', k:'Action', run:()=>{ go('board'); setTimeout(()=>{ const d=document.querySelector('.b2-more'); if(d){ d.open=true; d.scrollIntoView({block:'center'}); } },200); }});
-  Object.keys(AP).filter(k=>!AP[k].water).forEach(k=>L.push({n:`${k} · ${AP[k].n}`, k:`Airport · ${AP[k].isl}`, run:()=>{ S.mapSel=k; go('map'); }}));
-  return L; }
 function clickAct(act, v, id){ const b=document.createElement('button'); b.dataset.act=act; if(v) b.dataset.v=v; if(id) b.dataset.id=id; b.style.display='none'; document.body.appendChild(b); b.click(); b.remove(); }
 function openCmd(){ if(document.querySelector('.cmd')) return; const el=document.createElement('div'); el.className='cmd'; el.innerHTML=`<div class="cmd-box" role="dialog" aria-label="Go to"><input type="text" placeholder="Go to a page, airport or action…" aria-label="Search"><ul></ul><p class="cmd-foot"><kbd>↑</kbd><kbd>↓</kbd> move · <kbd>Enter</kbd> open · <kbd>Esc</kbd> close</p></div>`; document.body.appendChild(el);
   const inp=el.querySelector('input'), ul=el.querySelector('ul'); const all=cmdItems(); let sel=0, list=[];
@@ -42,7 +33,6 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="job
 
 /* ---- 8. notifications: one stack at the bottom right, plus a history in the header ---- */
 S.notifs=S.notifs||[]; S.notifSeen=0;
-(function(){ const _t=toast; toast=function(msg){ try{ if(!S._cabMute && msg){ S.notifs.unshift({t:Date.now(), m:String(msg)}); S.notifs=S.notifs.slice(0,40); const b=document.querySelector('.bell b'); if(b){ b.textContent=S.notifs.length-S.notifSeen; b.style.display=''; } } }catch(_){} return _t.apply(this, arguments); }; })();
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="cmd"]')){ openCmd(); return; } const b=e.target.closest('[data-act="bell"]'); if(!b) { if(!e.target.closest('.notif-pane')) document.querySelectorAll('.notif-pane').forEach(p=>p.remove()); return; } const open=document.querySelector('.notif-pane'); if(open){ open.remove(); return; }
   S.notifSeen=S.notifs.length; const c=b.querySelector('b'); if(c) c.style.display='none'; const p=document.createElement('div'); p.className='notif-pane'; p.innerHTML=`<p class="label">Notifications</p>${S.notifs.length?`<ul>${S.notifs.map(n=>`<li><span>${new Date(n.t).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>${esc(n.m)}</li>`).join('')}</ul>`:'<p class="small muted">Nothing yet this session.</p>'}`; document.body.appendChild(p); });
 

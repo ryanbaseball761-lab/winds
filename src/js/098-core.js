@@ -6,8 +6,6 @@ try{ const g=NAV5.find(x=>x.v==='pilot'); g.tabs=[['pilot','Licences'],['profile
 
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="open-settings"]')) return; S.hangarTab='settings'; go('hangar'); });
 
-/* 4. command bar: search story chapters and achievements too */
-(function(){ const _ci=cmdItems; cmdItems=function(){ const L=_ci(); try{ const st=S.st; const MC=mainChapters(); MC.forEach((m,i)=>{ if(st.story.done[m.id]) L.push({n:`Chapter ${i+1}: ${m.title}`, k:'Story · replay the opening', run:()=>{ go('story'); setTimeout(()=>playPrologue(m,()=>{}),200); }}); }); ACH.forEach(a=>L.push({n:`${a.n}`, k:st.ach&&st.ach[a.id]?'Achievement · unlocked':'Achievement · '+a.d, run:()=>go('profile')})); }catch(_){} return L; }; })();
 
 
 
@@ -27,9 +25,6 @@ document.addEventListener('click', e=>{ const s=e.target.closest('.cut-skip'); i
 
 /* 15. achievements wait until a cutscene has finished before popping up */
 (function(){ const _ap=achPop; achPop=function(a){ if(document.querySelector('.cut')){ setTimeout(()=>achPop(a), 1500); return; } return _ap(a); }; })();
-
-/* 16. the same for normal pop-ups: they queue during cutscenes instead of hiding behind them */
-(function(){ const _t=toast; const Q=[]; toast=function(msg){ if(document.querySelector('.cut,.title-screen') && !S._cabMute){ Q.push(msg); return; } return _t.apply(this, arguments); }; setInterval(()=>{ if(Q.length && !document.querySelector('.cut,.title-screen')) _t(Q.shift()); }, 1200); })();
 
 /* 17. M shows or hides the menu in flight mode */
 document.addEventListener('keydown', e=>{ if(e.key.toLowerCase()!=='m' || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || e.ctrlKey||e.metaKey||e.altKey) return; if(document.body.classList.contains('flying') || S.fmMenu){ S.fmMenu=!S.fmMenu; S.keepScroll=true; render(); } });

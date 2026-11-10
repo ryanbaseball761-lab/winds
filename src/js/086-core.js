@@ -17,11 +17,7 @@ const MID = {
 Object.keys(MID).forEach(id=>{ if(BEATS[id]) BEATS[id].push(MID[id]); else BEATS[id]=[MID[id]]; });
 /* echoes: the next prologue opens with what you did last time */
 (function(){ const _sb=showBeat; showBeat=function(a,b,idx){ const r=_sb(a,b,idx); try{ const d=document.querySelector('.beat'); if(d && b.opts) d.addEventListener('click', e=>{ const btn=e.target.closest('[data-act="beat-opt"]'); if(!btn) return; const o=b.opts[Number(btn.dataset.i)]; const c=crime(); if(o.cash) txn(S.st,o.cash,'Story',a.job.title); if(o.echo){ c.echo={text:o.echo, from:a.job.story}; save(); } }); }catch(_){} return r; }; })();
-(function(){ const _pf=proFor; proFor=function(id){ const base=_pf(id)||[]; const e=crime().echo; return (e && e.from!==id) ? [[`Last time`, null, e.text]].concat(base) : base; }; })();
 
-(function(){ const _pa=playAftermath; playAftermath=function(){ const st=S.st, L=st&&st.last; if(!L||!L.job) return _pa(); const m=CRIME.find(x=>x.id===L.job.story); if(!m) return _pa(); const act=CRIME_ACTS.find(a=>a.arc===m.arc)||CRIME_ACTS[0];
-  if(L.failed){ const boss=crime(st).on?'castillo':'dez'; cutscene({col:act.col, art:SCENES.ramp(), shots:[{card:true,kicker:m.title,title:'It went wrong',auto:1800},[`Phone call`, boss, boss==='castillo'?`I don't pay for wreckage. Get yourself together and do it again. Properly.`:`Rookie, what happened out there? Breathe. We'll try it again.`],{card:true,kicker:'Chapter failed',title:'Try again',sub:`<p>Power −5, Heat +8. Play the chapter again from the Main story page.</p>`}], onEnd:()=>render()}); return; }
-  return _pa(); }; })();
 
 /* ---- 6 + 9 + 13. network runs: night drops at closed strips, hot airports, rank rewards ---- */
 const DROP_STRIPS = ['TAPH','TUPA','TNCE','TRPG','TFFS','TFFM','TQPF','TNCS','MBGT','MYAN'];

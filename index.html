@@ -4815,12 +4815,6 @@ function passPlane(){ const a=S.st&&S.st.active; let pct=null; try{ if(a && a.st
 
 /* 9. toasts: stacked, with an icon, slide in, and a timer bar */
 function toastKind(msg){ const m=String(msg).toLowerCase(); if(/couldn|can't|cannot|not connected|fail|error|expert mode|grounded|fine/.test(m)) return 'warn'; if(/unlocked|saved|logged|loaded|matches|repaired|moved|welcome|you're now|passed|earned/.test(m)) return 'ok'; return 'info'; }
-toast = function(msg){ S.toast=msg; let host=document.getElementById('toasts'); if(!host){ host=document.createElement('div'); host.id='toasts'; host.setAttribute('role','status'); host.setAttribute('aria-live','polite'); document.body.appendChild(host); }
-  const k=toastKind(msg); const el=document.createElement('div'); el.className='toast2 '+k; el.innerHTML=`<span class="ti">${k==='ok'?'✓':k==='warn'?'!':'✈'}</span><span class="tt"></span><i class="tbar"></i>`; el.querySelector('.tt').textContent=msg;
-  host.appendChild(el); while(host.children.length>3) host.firstElementChild.remove();
-  if(k==='warn') softTone(330,.08); else if(k==='ok') softTone(880,.05);
-  const ttl = Math.min(7000, 2800 + String(msg).length*25); el.style.setProperty('--ttl', ttl+'ms');
-  setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>{ el.remove(); if(!host.children.length) S.toast=null; }, 350); }, ttl); };
 renderToast = function(){};
 
 /* 10. UI sound: soft ticks, a whoosh on departure, a till on payday */
@@ -5454,8 +5448,6 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="use-loa
 /* 15. sealed orders only on flights long enough to need them, and never on checkrides or first flights */
 /* ===================== 20 MORE FIXES ===================== */
 /* 1. the same message never pops twice in a row; tab-unlock messages for tabs that live elsewhere are dropped */
-const _p20Toast = toast;
-toast = function(msg){ const m=String(msg); if(/^New tab unlocked: (Logbook|Profile|Company|Cockpit)/.test(m)) return; const now=Date.now(); if(S._lt===m && now-(S._ltT||0)<20000) return; S._lt=m; S._ltT=now; return _p20Toast(msg); };
 
 /* 2. a past departure time reads "Ready now" */
 
@@ -5877,7 +5869,6 @@ try{ const r=RIVALS.find(x=>/^Ana Reyes/.test(x.n)); if(r) r.n='Ana Ruiz (Winair
 
 /* ================= 1. the cabin goes quiet: no passenger chatter or cabin requests; safety calls stay ================= */
 (function(){ const _ct=cabinTick; cabinTick=function(){ const a=S.st&&S.st.active; S._cabMute=true; try{ return _ct.apply(this, arguments); } finally { S._cabMute=false; if(a&&a.cab&&a.cab.log) a.cab.log=a.cab.log.filter(m=>m.kind); } }; })();
-(function(){ const _t=toast; toast=function(msg){ if(S._cabMute) return; return _t.apply(this, arguments); }; })();
 (function(){ const _sp=spokenText; spokenText=function(m){ if(!m.kind) return null; return _sp(m); }; })();
 
 /* ================= 2. choices carry forward ================= */
@@ -6060,7 +6051,6 @@ const PRO_DYN = {
   CR17:f=>(f.informant||f.ledgers)?PRO.CR17.concat([[`Text message`,'reyes',`We're in position. Whatever you're planning, don't.`]]):null
 };
 const PRO_VOICE = { dez:[false,1.05,1], mari:[true,1,1.05], castillo:[false,0.92,0.8], hartwell:[false,0.95,0.9], tico:[false,1.12,1.05], reyes:[true,1,1], medina:[false,0.95,0.85] };
-function proFor(id){ const st=S.st; const f=crime(st).flags; return (PRO_DYN[id] && PRO_DYN[id](f)) || PRO[id]; }
 
 var playPrologue; /* defined in full below (081-core.js) */
 
@@ -6091,8 +6081,6 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="pro-rep
 @media (prefers-reduced-motion:reduce){.cut-bg{transition:none}.cut-line.in{transition:none}}`;
   const s=document.createElement('style'); s.textContent=css; document.head.appendChild(s); })();
 /* ===================== the chapter story lives in the cutscene; the flight screen stays short ===================== */
-(function(){ const _pf=proFor; proFor=function(id){ const base=_pf(id); const m=CRIME.find(x=>x.id===id); if(!m) return base; const mm=(typeof dynM==='function'&&S.st)?dynM(S.st,m):m;
-  const here=AP[m.from]?`${AP[m.from].n}`:''; const brief=(mm.brief||[]).map(t=>[here, null, t]); return (base||[]).concat(brief); }; })();
 
 /* ===================== TESTING: skip any flight with a perfect grade ===================== */
 function testSkip(){ const st=S.st, a=st&&st.active; if(!a) return; const job=a.job; a.started=a.started||Date.now();
@@ -6108,57 +6096,14 @@ const SKIP_BTN = `<button class="btn sm test-skip" data-act="test-skip" title="T
    [place, speaker|null, text]                          line or narration
    {card:true, kicker, title, sub}                      big title card
    {choice:true, q, opts:[{t, why}], pick:i=>shots}     a decision; pick() returns the shots that follow */
-function cutscene(opt){ const shots=opt.shots.slice(); const col=opt.col||'#c8962a';
-  const el=document.createElement('div'); el.className='cut'; el.style.setProperty('--arc', col);
-  el.innerHTML=`<div class="cut-bg">${opt.art||''}</div><div class="cut-shade"></div><div class="cut-bar top"></div><div class="cut-bar bot"></div>
-    <div class="cut-stage"></div><div class="cut-ctl"><span class="cut-hint">Click or press Space</span><button class="cut-skip">Skip</button></div>`;
-  document.body.appendChild(el); requestAnimationFrame(()=>el.classList.add('on')); try{ window.cutHook && cutHook.start(el, opt); }catch(_){}
-  const stage=el.querySelector('.cut-stage'); let i=-1, typing=null, full='', txt=null, waiting=false, ended=false;
-  const stopVoice=()=>{ try{ speechSynthesis.cancel(); }catch(_){} };
-  const say=(k,t)=>{ if(!(typeof voiceOn==='function'&&voiceOn())||!window.speechSynthesis) return; const v=PRO_VOICE[k]||[false,0.95,0.9]; try{ stopVoice(); const u=new SpeechSynthesisUtterance(String(t).replace(/"/g,'')); const vv=pickVoice(v[0], k==='castillo'||k==='medina'?1:0); if(vv) u.voice=vv; u.rate=v[1]; u.pitch=v[2]; u.volume=voiceVol(); speechSynthesis.speak(u); }catch(_){} };
-  const end=()=>{ if(ended) return; ended=true; try{ window.cutHook && cutHook.end(el, opt); }catch(_){} clearInterval(typing); stopVoice(); document.removeEventListener('keydown', key, true); el.classList.remove('on'); setTimeout(()=>{ el.remove(); opt.onEnd&&opt.onEnd(); }, 600); };
-  const bg=()=>{ el.querySelector('.cut-bg').style.transform=`scale(${1.06+Math.max(0,i)*0.025}) translate(${(i%2?-1:1)*1.2}%, ${Math.max(0,i)*0.35}%)`; };
-  const show=()=>{ i++; waiting=false; el.classList.remove('choosing','carding'); if(i>=shots.length){ end(); return; } const s=shots[i]; bg(); try{ window.cutHook && cutHook.shot(s, el, i, opt); }catch(_){}
-    if(s.card){ el.classList.add('carding'); stage.innerHTML=`<div class="cut-title"><p>${esc(s.kicker||'')}</p><h1>${esc(s.title||'')}</h1>${s.sub?`<div class="cut-sub">${s.sub}</div>`:''}</div>`; txt=null; full=''; try{ whoosh&&whoosh(); }catch(_){} if(s.auto) setTimeout(()=>{ if(shots[i]===s) show(); }, s.auto); return; }
-    if(s.choice){ el.classList.add('choosing'); waiting=true; stage.innerHTML=`<p class="cut-place">Your call</p><p class="cut-text cut-q">${esc(s.q)}</p><div class="cut-opts">${s.opts.map((o,k)=>`<button class="cut-opt" data-k="${k}" ${o.why?'disabled':''}>${esc(o.t)}${o.why?`<small>${esc(o.why)}</small>`:''}</button>`).join('')}</div>`; txt=null; full=''; return; }
-    const [pl,k,t]=s; stage.innerHTML=`<p class="cut-place">${esc(pl||'')}</p><div class="cut-line in">${k&&CAST[k]?`<div class="cut-who">${avatar(k)}<b>${esc(CAST[k].n)}</b></div>`:''}<p class="cut-text ${k?'':'nar'}"></p></div>`;
-    txt=stage.querySelector('.cut-text'); full=k?`“${t}”`:t; let n=0; clearInterval(typing); const me=s; typing=setInterval(()=>{ n+=2; txt.textContent=full.slice(0,n); if(n>=full.length){ clearInterval(typing); if(window.cutAuto && cutAuto()){ clearTimeout(el._auto); el._auto=setTimeout(()=>{ if(shots[i]===me && !waiting) show(); }, 1800+full.length*28); } } }, 22); if(k) say(k,t); };
-  const next=()=>{ if(waiting) return; if(txt && txt.textContent.length<full.length){ clearInterval(typing); txt.textContent=full; return; } show(); };
-  const key=e=>{ if(e.key===' '||e.key==='Enter'||e.key==='ArrowRight'){ e.preventDefault(); e.stopPropagation(); next(); } else if(e.key==='ArrowLeft'){ e.preventDefault(); e.stopPropagation(); if(!waiting){ let j=i-1; while(j>=0 && shots[j].card) j--; if(j>=0 && !shots.slice(j,i+1).some(x=>x.choice)){ clearInterval(typing); i=j-1; show(); } } } else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); skip(); } };
-  /* Skip jumps to the next decision (decisions can't be skipped), or to the end */
-  const skip=()=>{ clearInterval(typing); const j=shots.findIndex((s,k)=>k>i && s.choice); if(shots[i]&&shots[i].choice) return; if(j>=0){ i=j-1; show(); } else end(); };
-  document.addEventListener('keydown', key, true);
-  el.addEventListener('click', e=>{ if(e.target.closest('.cut-skip')){ skip(); return; } const b=e.target.closest('.cut-opt'); if(b){ if(b.disabled) return; const s=shots[i]; const more=s.pick(Number(b.dataset.k))||[]; shots.splice(i+1, 0, ...more); waiting=false; show(); return; } next(); });
-  setTimeout(show, 450); return el; }
 
 /* the art behind a scene */
-function sceneArt(code, dep, ac){ try{ return islandArt(code, dep, 1600, 900, ac); }catch(_){ return ''; } }
 
-/* ---- prologues now run on the engine, and the first chapter of each act opens with the act card ---- */
-playPrologue = function(m, done){ const st=S.st; const MC=mainChapters(); const act=CRIME_ACTS.find(a=>a.arc===m.arc)||CRIME_ACTS[0]; const ai=CRIME_ACTS.indexOf(act); const shots=[];
-  const firstOfAct = MC.filter(x=>x.arc===m.arc)[0]===m;
-  if(firstOfAct) shots.push({card:true, kicker:`Act ${ai+1} of ${CRIME_ACTS.length}`, title:act.arc, sub:`<p>${esc(act.tag)}</p><p class="cut-nerve"><span>Your nerve</span> ${esc(act.nerve)}</p>`});
-  (proFor(m.id)||[]).forEach(s=>shots.push(s));
-  shots.push({card:true, kicker:`Chapter ${MC.indexOf(m)+1} of ${MC.length}`, title:m.title, sub:`<p>${esc((CH_GOAL[m.id]||[])[0]||'')}</p>`, auto:2600});
-  cutscene({shots, col:act.col, art:sceneArt(m.from, m.dep, m.ac[0]), onEnd:done}); };
 
 
 /* ---- after a chapter: what happened, your decision, and what it led to, all as one scene ---- */
 function fxSub(o){ const b=[]; if(o.power) b.push(`Power ${o.power>0?'+':''}${o.power>=100?'max':o.power}`); if(o.heat) b.push(`Heat ${o.heat>0?'+':''}${o.heat<=-100?'cleared':o.heat}`); if(o.cash) b.push(`${o.cash>0?'+':'−'}${money(Math.abs(o.cash))}`); return b.join(' · '); }
 function splitOut(text){ return String(text||'').split(/(?<=[.!?”"])\s+(?=[A-Z"“])/).reduce((acc,s)=>{ const last=acc[acc.length-1]; if(last && (last+' '+s).length<170) acc[acc.length-1]=last+' '+s; else acc.push(s); return acc; }, []); }
-function playAftermath(){ const st=S.st, L=st&&st.last; if(!L||!L.job) return; const job=L.job, m=CRIME.find(x=>x.id===job.story); if(!m) return; const c=crime(st); const MC=mainChapters(); const act=CRIME_ACTS.find(a=>a.arc===m.arc)||CRIME_ACTS[0];
-  const here=AP[job.to]?AP[job.to].n:''; const shots=[];
-  shots.push({card:true, kicker:`${m.title} · ${here}`, title:`Grade ${L.res.grade}`, sub:`<p>${esc(L.out.pay?`You earned ${money(L.out.pay)}`:'')}</p>`, auto:1800});
-  splitOut(L.out.story).forEach(t=>shots.push([here, null, t]));
-  const nextCard=()=>{ const nx=MC.find(x=>!st.story.done[x.id]); const cc=crime(st); const out=[];
-    if(cc.ending){ epilogue(st).forEach(t=>out.push(['Years later', null, t])); out.push({card:true, kicker:'The end', title:{kingpin:'Kingpin',witness:'Witness',ghost:'Ghost'}[cc.ending]||'The end', sub:`<p>Thank you for playing the main story. Side jobs and the Starling story are still out there.</p>`}); return out; }
-    out.push({card:true, kicker:'Chapter complete', title:m.title, sub:`${cc.on?`<p class="cut-meters"><span>Power ${cc.power}</span><span>Heat ${cc.heat}</span><span>${esc(crimeRank(cc))}</span></p>`:''}${nx?`<p>Next: <b>${esc(nx.title)}</b> · ${esc(nx.hook||'')}</p>`:''}`}); return out; };
-  if(m.choice && c.choice[m.id]==null && !L.res.crash){
-    const opts=m.choice.opts.map(o=>({t:o.t, why: (m.id==='CR17' && o.ending && typeof ENDING_REQ!=='undefined') ? ENDING_REQ[o.ending](c) : null}));
-    shots.push({choice:true, q:m.choice.q, opts, pick:i=>{ const btn=document.createElement('button'); btn.dataset.act='crime-choose'; btn.dataset.i=i; btn.style.display='none'; document.body.appendChild(btn); btn.click(); btn.remove();
-      const o=m.choice.opts[i]; const after=splitOut(o.out).map(t=>[here, null, t]); const fx=fxSub(o); if(fx) after.push({card:true, kicker:'Your choice', title:o.t, sub:`<p>${esc(fx)}</p>`, auto:2200}); return after.concat(nextCard()); }});
-  } else nextCard().forEach(s=>shots.push(s));
-  cutscene({shots, col:act.col, art:sceneArt(job.to, Math.min(1439,(job.dep||600)+(job.est||60)), job.ac), onEnd:()=>{ S.keepScroll=false; render(); }}); }
 /* the result screen gets a button to watch it again */
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="after-replay"]')) playAftermath(); });
 
@@ -6257,11 +6202,7 @@ const MID = {
 Object.keys(MID).forEach(id=>{ if(BEATS[id]) BEATS[id].push(MID[id]); else BEATS[id]=[MID[id]]; });
 /* echoes: the next prologue opens with what you did last time */
 (function(){ const _sb=showBeat; showBeat=function(a,b,idx){ const r=_sb(a,b,idx); try{ const d=document.querySelector('.beat'); if(d && b.opts) d.addEventListener('click', e=>{ const btn=e.target.closest('[data-act="beat-opt"]'); if(!btn) return; const o=b.opts[Number(btn.dataset.i)]; const c=crime(); if(o.cash) txn(S.st,o.cash,'Story',a.job.title); if(o.echo){ c.echo={text:o.echo, from:a.job.story}; save(); } }); }catch(_){} return r; }; })();
-(function(){ const _pf=proFor; proFor=function(id){ const base=_pf(id)||[]; const e=crime().echo; return (e && e.from!==id) ? [[`Last time`, null, e.text]].concat(base) : base; }; })();
 
-(function(){ const _pa=playAftermath; playAftermath=function(){ const st=S.st, L=st&&st.last; if(!L||!L.job) return _pa(); const m=CRIME.find(x=>x.id===L.job.story); if(!m) return _pa(); const act=CRIME_ACTS.find(a=>a.arc===m.arc)||CRIME_ACTS[0];
-  if(L.failed){ const boss=crime(st).on?'castillo':'dez'; cutscene({col:act.col, art:SCENES.ramp(), shots:[{card:true,kicker:m.title,title:'It went wrong',auto:1800},[`Phone call`, boss, boss==='castillo'?`I don't pay for wreckage. Get yourself together and do it again. Properly.`:`Rookie, what happened out there? Breathe. We'll try it again.`],{card:true,kicker:'Chapter failed',title:'Try again',sub:`<p>Power −5, Heat +8. Play the chapter again from the Main story page.</p>`}], onEnd:()=>render()}); return; }
-  return _pa(); }; })();
 
 /* ---- 6 + 9 + 13. network runs: night drops at closed strips, hot airports, rank rewards ---- */
 const DROP_STRIPS = ['TAPH','TUPA','TNCE','TRPG','TFFS','TFFM','TQPF','TNCS','MBGT','MYAN'];
@@ -6323,14 +6264,6 @@ function ambStart(kind, vol){ const ctx=typeof actx==='function'?actx():null; if
   g.gain.linearRampToValueAtTime(vol, ctx.currentTime+1.5); AMB.nodes.push({kind, parts, g}); }
 function ambStop(kind){ const ctx=typeof actx==='function'?actx():null; AMB.nodes=AMB.nodes.filter(n=>{ if(kind && n.kind!==kind) return true; try{ n.g.gain.linearRampToValueAtTime(0, ctx.currentTime+0.8); setTimeout(()=>n.parts.forEach(p=>{ try{ p.stop&&p.stop(); }catch(_){} try{ p.disconnect(); }catch(_){} }), 1000); }catch(_){} return false; }); }
 function ambRing(){ const ctx=typeof actx==='function'?actx():null; if(!ctx || !sfxOn()) return; const t0=ctx.currentTime; [0,0.5].forEach(off=>{ [440,480].forEach(f=>{ const o=ctx.createOscillator(); const g=ctx.createGain(); o.frequency.value=f; g.gain.setValueAtTime(0,t0+off); g.gain.linearRampToValueAtTime(0.035,t0+off+0.02); g.gain.setValueAtTime(0.035,t0+off+0.35); g.gain.linearRampToValueAtTime(0,t0+off+0.4); o.connect(g); g.connect(ctx.destination); o.start(t0+off); o.stop(t0+off+0.45); }); }); }
-window.cutHook = {
-  start(el, opt){ ambStart('bed', 0.035); if(opt && opt.rain) ambStart('rain', 0.05); el.dataset.scene=''; },
-  shot(s, el, i, opt){ const sc=sceneFor(s, opt); const bgEl=el.querySelector('.cut-bg'); if(sc && el.dataset.scene!==sc){ el.dataset.scene=sc; bgEl.classList.add('swap'); setTimeout(()=>{ bgEl.innerHTML=SCENES[sc](); bgEl.classList.remove('swap'); }, 250); }
-    if(Array.isArray(s)){ const p=String(s[0]||''); if(/phone|text message/i.test(p)) ambRing(); const wantJet=sc==='ramp'||sc==='hangar'||sc==='cockpit'; const hasJet=AMB.nodes.some(n=>n.kind==='jet'); if(wantJet&&!hasJet) ambStart('jet',0.018); if(!wantJet&&hasJet) ambStop('jet'); } },
-  end(){ ambStop(); }
-};
-/* pass rain for stormy chapters */
-(function(){ const _cs=cutscene; cutscene=function(opt){ try{ const a=S.st&&S.st.active, L=S.st&&S.st.last; const wx=(a&&a.job.wx)||(L&&L.job&&L.job.wx)||{}; if(/wave|storm|shower|rain/i.test(String(wx.k||wx.id||wx.type||wx.name||''))) opt.rain=true; }catch(_){} return _cs(opt); }; })();
 
 
 (function(){ const s=document.createElement('style'); s.textContent=`.cut-bg{transition:transform 7s ease-out, opacity .25s}.cut-bg.swap{opacity:0}`; document.head.appendChild(s); })();
@@ -6403,15 +6336,6 @@ function navGroup(v){ return NAV5.find(g=>g.v===v || (g.tabs||[]).some(t=>t[0]==
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="fm-menu"]')) return; S.fmMenu=!S.fmMenu; S.keepScroll=true; render(); });
 
 /* ---- 4. command bar: Ctrl+K (or /) to jump anywhere ---- */
-function cmdItems(){ const st=S.st; const L=[]; if(!st) return L; const pg=(n,v,k)=>L.push({n, k:k||'Page', run:()=>go(v)});
-  pg('Main story','story'); pg('Jobs','board'); pg('Map','map'); pg('Flight','flight'); pg('Pilot & licences','pilot'); pg('Money','money'); pg('Hangar','hangar'); pg('Butter Cup','cup'); pg('Academy','academy'); pg('Logbook','log'); pg('Settings','hangar','Page · Hangar → Settings');
-  const r=rightNow(st); if(r) L.push({n:`${r.b.replace('▶ ','')}: ${r.t}`, k:'Right now', run:()=>clickAct(r.act, r.v, r.id)});
-  RATING_ORDER.filter(x=>!st.ratings[x] && checkrideReady(st,x).ok).forEach(x=>L.push({n:`Book checkride: ${RATINGS[x].n}`, k:'Pilot', run:()=>{ go('pilot'); setTimeout(()=>{ const b=document.querySelector(`[data-act="book-check"][data-r="${x}"]`); if(b) b.scrollIntoView({block:'center'}); },200); }}));
-  if(crime(st).dirty) L.push({n:'Launder dirty cash', k:'Money', run:()=>go('money')});
-  if(st.active) L.push({n:'Load fuel into MSFS', k:'Flight', run:()=>{ go('flight'); setTimeout(()=>clickAct('pf-load'),200); }});
-  L.push({n:'New day', k:'Action', run:()=>clickAct('rest')}, {n:'Practice landing', k:'Action', run:()=>clickAct('practice')}, {n:testSession()?'End test session':'Start test session', k:'Action', run:()=>clickAct('test-session')}, {n:'Travel as a passenger', k:'Action', run:()=>{ go('board'); setTimeout(()=>{ const d=document.querySelector('.b2-more'); if(d){ d.open=true; d.scrollIntoView({block:'center'}); } },200); }});
-  Object.keys(AP).filter(k=>!AP[k].water).forEach(k=>L.push({n:`${k} · ${AP[k].n}`, k:`Airport · ${AP[k].isl}`, run:()=>{ S.mapSel=k; go('map'); }}));
-  return L; }
 function clickAct(act, v, id){ const b=document.createElement('button'); b.dataset.act=act; if(v) b.dataset.v=v; if(id) b.dataset.id=id; b.style.display='none'; document.body.appendChild(b); b.click(); b.remove(); }
 function openCmd(){ if(document.querySelector('.cmd')) return; const el=document.createElement('div'); el.className='cmd'; el.innerHTML=`<div class="cmd-box" role="dialog" aria-label="Go to"><input type="text" placeholder="Go to a page, airport or action…" aria-label="Search"><ul></ul><p class="cmd-foot"><kbd>↑</kbd><kbd>↓</kbd> move · <kbd>Enter</kbd> open · <kbd>Esc</kbd> close</p></div>`; document.body.appendChild(el);
   const inp=el.querySelector('input'), ul=el.querySelector('ul'); const all=cmdItems(); let sel=0, list=[];
@@ -6432,7 +6356,6 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="job
 
 /* ---- 8. notifications: one stack at the bottom right, plus a history in the header ---- */
 S.notifs=S.notifs||[]; S.notifSeen=0;
-(function(){ const _t=toast; toast=function(msg){ try{ if(!S._cabMute && msg){ S.notifs.unshift({t:Date.now(), m:String(msg)}); S.notifs=S.notifs.slice(0,40); const b=document.querySelector('.bell b'); if(b){ b.textContent=S.notifs.length-S.notifSeen; b.style.display=''; } } }catch(_){} return _t.apply(this, arguments); }; })();
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="cmd"]')){ openCmd(); return; } const b=e.target.closest('[data-act="bell"]'); if(!b) { if(!e.target.closest('.notif-pane')) document.querySelectorAll('.notif-pane').forEach(p=>p.remove()); return; } const open=document.querySelector('.notif-pane'); if(open){ open.remove(); return; }
   S.notifSeen=S.notifs.length; const c=b.querySelector('b'); if(c) c.style.display='none'; const p=document.createElement('div'); p.className='notif-pane'; p.innerHTML=`<p class="label">Notifications</p>${S.notifs.length?`<ul>${S.notifs.map(n=>`<li><span>${new Date(n.t).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>${esc(n.m)}</li>`).join('')}</ul>`:'<p class="small muted">Nothing yet this session.</p>'}`; document.body.appendChild(p); });
 
@@ -6637,9 +6560,6 @@ function coldOpenShots(){ const st=S.st; if(!st || (st.flights||0)>0 || st.story
     ['The jump seat', 'castillo', `You always had calm hands. That's why I picked you.`],
     {card:true,kicker:'Two years earlier',title:'Sint Maarten',sub:'<p>A fresh licence, a cheap job, and a Cessna with a cracked seat.</p>',auto:2600}]; }
 
-/* ---- skipping cutscenes, if you'd rather just fly ---- */
-(function(){ const _pp=playPrologue; playPrologue=function(m, done){ if(uiP().skipCuts){ done(); return; } return _pp(m, done); }; })();
-(function(){ const _pa=playAftermath; playAftermath=function(){ if(uiP().skipCuts) return; return _pa(); }; })();
 
 /* ---- units: imperial or metric everywhere ---- */
 function toMetric(t){ return t.replace(/(\d[\d,]*(?:\.\d+)?)\s?lb\b/g,(m,n)=>`${Math.round(Number(n.replace(/,/g,''))*0.4536).toLocaleString()} kg`).replace(/(\d[\d,]*(?:\.\d+)?)\s?gal\b/g,(m,n)=>`${Math.round(Number(n.replace(/,/g,''))*3.785).toLocaleString()} L`); }
@@ -6699,12 +6619,6 @@ const MUSIC = { cur:null, timer:null, nodes:[], bus:null, rev:null,
 };
 /* the title screen needs a click before browsers allow sound */
 document.addEventListener('pointerdown', ()=>{ if(document.querySelector('.title-screen') && !MUSIC.cur) MUSIC.play('title'); }, true);
-/* cutscenes: the tension score replaces the old drone; act cards get a sting */
-(function(){ const _st=cutHook.start, _sh=cutHook.shot, _en=cutHook.end;
-  cutHook.start=function(el,opt){ _st.call(this,el,opt); try{ ambStop('bed'); MUSIC.play('tension'); }catch(_){} };
-  cutHook.shot=function(s,el,i,opt){ _sh.call(this,s,el,i,opt); try{ if(s && s.card && /^Act \d/.test(s.kicker||'')){ const c=MUSIC.ctx(); if(c){ MUSIC.voice(c,{f:N(33),t:c.currentTime+0.05,d:3,type:'sawtooth',g:0.09,lp:180,att:0.01,rel:2.6}); [57,60,64,69].forEach(n=>MUSIC.voice(c,{f:N(n),t:c.currentTime+0.05,d:3.2,type:'triangle',g:0.03,att:0.04,rel:2.6})); } } }catch(_){} };
-  cutHook.end=function(el,opt){ _en.call(this,el,opt); try{ MUSIC.stop(); }catch(_){} }; })();
-
 /* ---- character voices: each person keeps the same premium voice and acting direction ---- */
 const CHAR_VOICE = {
   castillo:['onyx',`Soft-spoken Latin American businessman in his fifties. Calm, unhurried, polite, quietly menacing.`],
@@ -6723,7 +6637,6 @@ pvInstr = function(text){ const k=PV._char; PV._char=null; return (k && CHAR_VOI
 (function(){ const U=window.SpeechSynthesisUtterance; if(!U) return; let pending=null; window.twSpeaker=k=>{ pending=k; setTimeout(()=>{ if(pending===k) pending=null; }, 1500); };
   const SS=window.speechSynthesis; if(!SS) return; const sp=SS.speak.bind(SS); SS.speak=function(u){ if(pending){ u.twChar=pending; pending=null; } return sp(u); }; })();
 (function(){ const _say=speakBeat; speakBeat=function(b){ try{ twSpeaker(b.who); }catch(_){} return _say(b); }; })();
-(function(){ const _sh=cutHook.shot; cutHook.shot=function(s,el,i,opt){ try{ if(Array.isArray(s) && s[1]) twSpeaker(s[1]); }catch(_){} return _sh.call(this,s,el,i,opt); }; })();
 
 /* ---- art pipeline: drop in painted portraits and scenes and they replace the drawings ---- */
 const ART = { portraits:{}, scenes:{}, bases:['https://raw.githubusercontent.com/ryanbaseball761-lab/winds/main/art/'] };
@@ -6748,8 +6661,6 @@ function carrierFor(st, job){ const c=crime(st); if(job.network) return 'Unliste
 /* 3. "Previously on" only when you've been away for a while (3+ hours) */
 (function(){ const _p=playRecapNow; playRecapNow=function(){ let last=0; try{ last=Number(localStorage.getItem('tw.lastSeen')||0); }catch(_){} if(Date.now()-last < 3*3600000) return; return _p(); }; setInterval(()=>{ try{ localStorage.setItem('tw.lastSeen', String(Date.now())); }catch(_){} }, 60000); window.addEventListener('beforeunload', ()=>{ try{ localStorage.setItem('tw.lastSeen', String(Date.now())); }catch(_){} }); })();
 
-/* 4. command bar: Settings opens the Settings tab */
-(function(){ const _ci=cmdItems; cmdItems=function(){ return _ci().map(it=>it.n==='Settings'?Object.assign({},it,{run:()=>{ S.hangarTab='settings'; go('hangar'); }}):it); }; })();
 
 /* 5 + 6. keys: number shortcuts don't fire behind the title screen or a popup; Esc closes popups and the open job */
 window.addEventListener('keydown', e=>{ if(document.querySelector('.title-screen,.cmd') && /^[1-5f/]$/i.test(e.key) && !/INPUT/.test(e.target.tagName)){ e.stopImmediatePropagation(); }
@@ -6758,9 +6669,6 @@ window.addEventListener('keydown', e=>{ if(document.querySelector('.title-screen
 
 
 
-/* 10 + 11. cutscenes: optional auto-play, and a progress line */
-window.cutAuto = ()=>!!uiP().autoCut;
-(function(){ const _sh=cutHook.shot; cutHook.shot=function(s,el,i,opt){ _sh.call(this,s,el,i,opt); try{ let p=el.querySelector('.cut-prog'); if(!p){ p=document.createElement('div'); p.className='cut-prog'; el.appendChild(p); } const n=opt.shots.length; p.innerHTML=Array.from({length:Math.min(n,24)},(_,k)=>`<i class="${k<=i?'on':''}"></i>`).join(''); }catch(_){} }; })();
 
 /* 12. title screen: "Resume flight" when you were in the middle of one */
 (function(){ const _t=titleHTML; titleHTML=function(){ const h=_t(); const a=S.st&&S.st.active; return a ? h.replace('<b>Continue</b>', a.started?'<b>Resume flight</b>':'<b>Continue to your flight</b>').replace(/(data-ts="continue" class="on"><b>[^<]*<\/b><span>)[^<]*/, `$1${esc(a.job.from)} → ${esc(a.job.local?a.job.from:a.job.to)} · ${esc(a.job.title)}`) : h; }; })();
@@ -6791,8 +6699,6 @@ try{ const g=NAV5.find(x=>x.v==='pilot'); g.tabs=[['pilot','Licences'],['profile
 
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="open-settings"]')) return; S.hangarTab='settings'; go('hangar'); });
 
-/* 4. command bar: search story chapters and achievements too */
-(function(){ const _ci=cmdItems; cmdItems=function(){ const L=_ci(); try{ const st=S.st; const MC=mainChapters(); MC.forEach((m,i)=>{ if(st.story.done[m.id]) L.push({n:`Chapter ${i+1}: ${m.title}`, k:'Story · replay the opening', run:()=>{ go('story'); setTimeout(()=>playPrologue(m,()=>{}),200); }}); }); ACH.forEach(a=>L.push({n:`${a.n}`, k:st.ach&&st.ach[a.id]?'Achievement · unlocked':'Achievement · '+a.d, run:()=>go('profile')})); }catch(_){} return L; }; })();
 
 
 
@@ -6812,9 +6718,6 @@ document.addEventListener('click', e=>{ const s=e.target.closest('.cut-skip'); i
 
 /* 15. achievements wait until a cutscene has finished before popping up */
 (function(){ const _ap=achPop; achPop=function(a){ if(document.querySelector('.cut')){ setTimeout(()=>achPop(a), 1500); return; } return _ap(a); }; })();
-
-/* 16. the same for normal pop-ups: they queue during cutscenes instead of hiding behind them */
-(function(){ const _t=toast; const Q=[]; toast=function(msg){ if(document.querySelector('.cut,.title-screen') && !S._cabMute){ Q.push(msg); return; } return _t.apply(this, arguments); }; setInterval(()=>{ if(Q.length && !document.querySelector('.cut,.title-screen')) _t(Q.shift()); }, 1200); })();
 
 /* 17. M shows or hides the menu in flight mode */
 document.addEventListener('keydown', e=>{ if(e.key.toLowerCase()!=='m' || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || e.ctrlKey||e.metaKey||e.altKey) return; if(document.body.classList.contains('flying') || S.fmMenu){ S.fmMenu=!S.fmMenu; S.keepScroll=true; render(); } });
@@ -6841,16 +6744,11 @@ function personCard(k){ const st=S.st; const c=CAST[k]; if(!c) return; const tru
   document.body.appendChild(d); d.addEventListener('click', e=>{ if(e.target===d || e.target.closest('[data-act="pc-close"]')) d.remove(); }); }
 document.addEventListener('click', e=>{ const p=e.target.closest('.sh-p, .sc-who'); if(!p || !S.st) return; const name=(p.querySelector('b')||p).textContent.trim(); const k=Object.keys(CAST).find(x=>CAST[x].n===name || ({reyes:'Reyes',castillo:'Castillo'}[x]===name) || (typeof shortName==='function' && shortName(x)===name)); if(k) personCard(k); });
 
-/* 3. cutscenes: a bigger speaker portrait, with their role */
-(function(){ const _sh=cutHook.shot; cutHook.shot=function(s,el,i,opt){ _sh.call(this,s,el,i,opt); try{ if(Array.isArray(s) && s[1] && CAST[s[1]]) setTimeout(()=>{ const w=el.querySelector('.cut-who b'); if(w && !w.dataset.r){ w.dataset.r=1; w.insertAdjacentHTML('afterend', `<small class="cut-role">${esc(CAST[s[1]].role||'')}</small>`); } }, 0); }catch(_){} }; })();
 
 /* 4. result screen: the grade letter is coloured by how you did */
 /* (CSS only, see below) */
 
 
-/* 6. command bar: what you used recently comes first */
-(function(){ const _ci=cmdItems; cmdItems=function(){ const L=_ci(); let rec=[]; try{ rec=JSON.parse(localStorage.getItem('tw.cmdRecent')||'[]'); }catch(_){}
-  L.forEach(it=>{ const run=it.run; it.run=()=>{ try{ const r=[it.n].concat(rec.filter(x=>x!==it.n)).slice(0,5); localStorage.setItem('tw.cmdRecent', JSON.stringify(r)); }catch(_){} run(); }; const k=rec.indexOf(it.n); if(k>=0){ it.k='Recent · '+it.k; it._rec=5-k; } }); return L; }; })();
 document.addEventListener('input', e=>{ if(!e.target.closest('.cmd-box input')) return; }, true);
 
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cold-again"]')) return; const st=S.st; const f=st.flights, d=st.story.done.CW1; st.flights=0; delete st.story.done.CW1; const shots=coldOpenShots(); st.flights=f; if(d) st.story.done.CW1=d; cutscene({shots, col:'#c8962a', art:SCENES.ramp(), onEnd:()=>{}}); });
@@ -6867,7 +6765,6 @@ document.addEventListener('keydown', e=>{ if(e.key!=='?' || /INPUT|TEXTAREA|SELE
   const d=document.createElement('div'); d.className='pc-wrap keys-wrap'; d.innerHTML=`<div class="pc keys"><div class="pc-in"><p class="label">Keyboard</p><h2>Shortcuts</h2><dl>${[['1 – 5','Story, Jobs, Flight, Pilot, Hangar'],['Ctrl K or /','Search anything'],['F','Your current flight'],['M','Menu in flight mode'],['Space / →','Next line in a cutscene'],['←','Previous line in a cutscene'],['Esc','Skip a cutscene, close a popup'],['?','This list']].map(([k,v])=>`<dt><kbd>${k}</kbd></dt><dd>${v}</dd>`).join('')}</dl><button class="btn sm" data-act="pc-close">Close</button></div></div>`; document.body.appendChild(d); d.addEventListener('click', ev=>{ if(ev.target===d||ev.target.closest('[data-act="pc-close"]')) d.remove(); }); });
 
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="cut-size"]'); if(!b||!S.st) return; uiP().cutSize=b.dataset.v; save(); S.keepScroll=true; render(); });
-(function(){ const _st=cutHook.start; cutHook.start=function(el,opt){ _st.call(this,el,opt); try{ el.dataset.size=uiP().cutSize||'m'; }catch(_){} }; })();
 
 /* 14. "What's new" on the title screen */
 const WHATS_NEW = [['0.42','Illustrated portraits and scenes, person cards on the Story page, flight progress in flight mode, ← to go back in cutscenes, shortcuts list (?), and more.'],['0.41','Fixed Butter Cup, Academy and Profile pages; 21 smaller fixes.'],['0.40','20 small fixes: the right airline on your ticket, dirty cash in the header, cutscene auto-play.'],['0.39','Title screen, cold open, music, character voices, volume and units settings.'],['0.38','Backups before every chapter, safehouses, the feds, New Game+.']];
@@ -6911,8 +6808,6 @@ document.addEventListener('click', e=>{ const li=e.target.closest('.sh-time li')
 /* 1 (setup pitch), 14 (quiet mode wording) and 15 (title Settings) were fixed in their own files. */
 
 
-/* 4. no more "New tab unlocked" pop-ups: everything lives in the five-item menu now */
-(function(){ const _t=toast; toast=function(msg){ if(/^New tab unlocked/i.test(String(msg))) return; return _t.apply(this, arguments); }; })();
 
 /* 5 + 6. pop-ups really sit bottom-right; achievements show one at a time */
 (function(){ const Q=[]; let busy=false; const _ap=achPop; achPop=function(a){ Q.push(a); pump(); }; function pump(){ if(busy||!Q.length) return; if(document.querySelector('.cut')){ setTimeout(pump,1500); return; } busy=true; _ap(Q.shift()); setTimeout(()=>{ busy=false; pump(); }, 4400); } })();
@@ -6938,18 +6833,12 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="own
 /* 23. Esc also closes the notifications list */
 window.addEventListener('keydown', e=>{ if(e.key==='Escape'){ document.querySelectorAll('.notif-pane').forEach(p=>p.remove()); } });
 
-/* 24. the "Click or press Space" hint fades after the first couple of lines */
-(function(){ const _sh=cutHook.shot; cutHook.shot=function(s,el,i,opt){ _sh.call(this,s,el,i,opt); try{ if(i>=2) el.classList.add('hint-off'); }catch(_){} }; })();
 
 /* 25 + 26. flight-display progress label and map "Next" label are easier to read */
 /* (CSS below) */
 
-/* 27. the Skip button says where it goes: to your next decision, or the end */
-(function(){ const _sh=cutHook.shot; cutHook.shot=function(s,el,i,opt){ _sh.call(this,s,el,i,opt); try{ const sk=el.querySelector('.cut-skip'); const L=(opt&&opt.shots)||[]; if(sk && L.length) sk.textContent = L.slice(i+1).some(x=>x&&x.choice) ? 'Skip to decision' : (s&&s.choice ? 'Skip' : 'Skip scene'); }catch(_){} }; })();
 
 
-/* 29 + 30. command bar: find people and open their card */
-(function(){ const _ci=cmdItems; cmdItems=function(){ const L=_ci(); try{ (typeof metPeople==='function'?metPeople(S.st):[]).forEach(k=>L.push({n:CAST[k].n, k:'Person · '+(CAST[k].role||''), run:()=>{ go('story'); setTimeout(()=>personCard(k),150); }})); }catch(_){} return L; }; })();
 
 /* 31. Esc closes the person card, the shortcut list and What's new */
 window.addEventListener('keydown', e=>{ if(e.key!=='Escape') return; const w=document.querySelector('.pc-wrap'); if(w){ w.remove(); e.stopImmediatePropagation(); } }, true);
@@ -6963,8 +6852,6 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="lau
 
 window.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cancel-yes"]')||!S.st||!S.st.active) return; if(S.st.active.job.kind==='story') setTimeout(()=>{ if(!S.st.active){ go('story'); } }, 50); }, true);
 
-/* 40. the result screen starts at the top after the scene */
-(function(){ const _pa=playAftermath; playAftermath=function(){ const r=_pa(); setTimeout(()=>{ try{ window.scrollTo(0,0); }catch(_){} }, 400); return r; }; })();
 
 
 /* 44. at Heat 80+ (the feds are looking) the Heat chip pulses */
@@ -6974,15 +6861,11 @@ window.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cancel-ye
 /* 46. clicking a speaker's portrait in a scene doesn't skip the line you're reading */
 document.addEventListener('click', e=>{ if(e.target.closest('.cut-who')) e.stopPropagation(); }, true);
 
-/* 47. airport search results say what you'd land on */
-(function(){ const _ci=cmdItems; cmdItems=function(){ return _ci().map(it=>{ if(/^Airport/.test(it.k)){ const code=it.n.split(' · ')[0]; const a=AP[code]; if(a) it.k=`Airport · ${a.isl} · ${longestRwy(a).toLocaleString()} ft`; } return it; }); }; })();
 
 
 /* 49. "What's new" lists this sweep */
 WHATS_NEW.unshift(['0.43','50 fixes: the new-career screen fits the story, Heat in the header, one-click "I own this aircraft", clearer checkride and job lists, phone-width fixes, and more.']);
 
-/* 50. the welcome walkthrough points at the Heat chip */
-(function(){ const _cs=cutscene; cutscene=function(opt){ try{ opt.shots=opt.shots.map(s=>s&&s.card&&s.title==='Power, Heat and dirty cash' ? Object.assign({},s,{sub:s.sub.replace('Above 60, customs starts searching.</p>','Above 60, customs starts searching. Your Heat is always shown at the top of the screen.</p>')}) : s); }catch(_){} return _cs(opt); }; })();
 
 (function(){ const s=document.createElement('style'); s.textContent=`
 .setup-wrap .hero, .setup-wrap header, .setup-wrap .setup-hero{filter:saturate(.55) brightness(.6) contrast(1.08)}
@@ -8501,6 +8384,156 @@ function storyView(){
     ${sNext?`<section class="panel sh-side"><p class="label">Side story · legit work</p><h3>Starling</h3><p class="small muted">${esc(sNext.title)}: a clean charter job flying private jets. Doesn't affect the main story.</p><div class="row" style="margin-top:8px">${chapterAction(st,sNext,availSet,true).replace(' &amp; start · $0',' &amp; start (free)')}</div></section>`:''}
   </main>`;
 }
+/* ===================== CUTSCENES =====================
+   One engine plays every scene: prologues, aftermaths, decisions, recaps and endings.
+     cutscene({shots, col, art, onEnd, rain})
+   A shot is one of:
+     [place, speaker|null, text]                          a line (speaker is a CAST key) or narration
+     {card:true, kicker, title, sub, auto}                a title card; `auto` ms moves on by itself
+     {choice:true, q, opts:[{t, why}], pick:i=>shots}     a decision; pick() returns the shots that follow
+   Keys: Space/Enter/→ next, ← back a line, Esc skip (never past a decision). */
+
+function cutAuto(){ return !!uiP().autoCut; }   // "play cutscenes automatically" in Settings
+
+/* When a scene opens: music, rain for stormy flights, text size. */
+function cutStart(el, opt){
+  try{ if(opt && opt.rain) ambStart('rain', 0.05); el.dataset.scene=''; }catch(_){}
+  try{ MUSIC.play('tension'); }catch(_){}
+  try{ el.dataset.size=uiP().cutSize||'m'; }catch(_){}
+}
+/* On every shot: the backdrop and ambience follow the place, act cards get a musical sting,
+   and the progress dots, speaker role, hint and Skip label are kept up to date. */
+function cutShot(s, el, i, opt){
+  try{ if(Array.isArray(s) && s[1]) twSpeaker(s[1]); }catch(_){}   // the voice for this speaker
+  try{ const sc=sceneFor(s, opt); const bgEl=el.querySelector('.cut-bg'); if(sc && el.dataset.scene!==sc){ el.dataset.scene=sc; bgEl.classList.add('swap'); setTimeout(()=>{ bgEl.innerHTML=SCENES[sc](); bgEl.classList.remove('swap'); }, 250); }
+    if(Array.isArray(s)){ const p=String(s[0]||''); if(/phone|text message/i.test(p)) ambRing(); const wantJet=sc==='ramp'||sc==='hangar'||sc==='cockpit'; const hasJet=AMB.nodes.some(n=>n.kind==='jet'); if(wantJet&&!hasJet) ambStart('jet',0.018); if(!wantJet&&hasJet) ambStop('jet'); } }catch(_){}
+  try{ if(s && s.card && /^Act \d/.test(s.kicker||'')){ const c=MUSIC.ctx(); if(c){ MUSIC.voice(c,{f:N(33),t:c.currentTime+0.05,d:3,type:'sawtooth',g:0.09,lp:180,att:0.01,rel:2.6}); [57,60,64,69].forEach(n=>MUSIC.voice(c,{f:N(n),t:c.currentTime+0.05,d:3.2,type:'triangle',g:0.03,att:0.04,rel:2.6})); } } }catch(_){}
+  try{ let p=el.querySelector('.cut-prog'); if(!p){ p=document.createElement('div'); p.className='cut-prog'; el.appendChild(p); } const n=opt.shots.length; p.innerHTML=Array.from({length:Math.min(n,24)},(_,k)=>`<i class="${k<=i?'on':''}"></i>`).join(''); }catch(_){}
+  try{ if(Array.isArray(s) && s[1] && CAST[s[1]]) setTimeout(()=>{ const w=el.querySelector('.cut-who b'); if(w && !w.dataset.r){ w.dataset.r=1; w.insertAdjacentHTML('afterend', `<small class="cut-role">${esc(CAST[s[1]].role||'')}</small>`); } }, 0); }catch(_){}
+  try{ if(i>=2) el.classList.add('hint-off'); }catch(_){}   // the "Click or press Space" hint fades after two lines
+  try{ const sk=el.querySelector('.cut-skip'); const L=(opt&&opt.shots)||[]; if(sk && L.length) sk.textContent = L.slice(i+1).some(x=>x&&x.choice) ? 'Skip to decision' : (s&&s.choice ? 'Skip' : 'Skip scene'); }catch(_){}
+}
+function cutEnd(el, opt){ try{ ambStop(); }catch(_){} try{ MUSIC.stop(); }catch(_){} }
+
+function cutscene(opt){
+  try{ const a=S.st&&S.st.active, L=S.st&&S.st.last; const wx=(a&&a.job.wx)||(L&&L.job&&L.job.wx)||{}; if(/wave|storm|shower|rain/i.test(String(wx.k||wx.id||wx.type||wx.name||''))) opt.rain=true; }catch(_){}   // rain behind scenes on stormy flights
+  const shots=opt.shots.slice(); const col=opt.col||'#c8962a';
+  const el=document.createElement('div'); el.className='cut'; el.style.setProperty('--arc', col);
+  el.innerHTML=`<div class="cut-bg">${opt.art||''}</div><div class="cut-shade"></div><div class="cut-bar top"></div><div class="cut-bar bot"></div>
+    <div class="cut-stage"></div><div class="cut-ctl"><span class="cut-hint">Click or press Space</span><button class="cut-skip">Skip</button></div>`;
+  document.body.appendChild(el); requestAnimationFrame(()=>el.classList.add('on')); cutStart(el, opt);
+  const stage=el.querySelector('.cut-stage'); let i=-1, typing=null, full='', txt=null, waiting=false, ended=false;
+  const stopVoice=()=>{ try{ speechSynthesis.cancel(); }catch(_){} };
+  const say=(k,t)=>{ if(!(typeof voiceOn==='function'&&voiceOn())||!window.speechSynthesis) return; const v=PRO_VOICE[k]||[false,0.95,0.9]; try{ stopVoice(); const u=new SpeechSynthesisUtterance(String(t).replace(/"/g,'')); const vv=pickVoice(v[0], k==='castillo'||k==='medina'?1:0); if(vv) u.voice=vv; u.rate=v[1]; u.pitch=v[2]; u.volume=voiceVol(); speechSynthesis.speak(u); }catch(_){} };
+  const end=()=>{ if(ended) return; ended=true; cutEnd(el, opt); clearInterval(typing); stopVoice(); document.removeEventListener('keydown', key, true); el.classList.remove('on'); setTimeout(()=>{ el.remove(); opt.onEnd&&opt.onEnd(); }, 600); };
+  const bg=()=>{ el.querySelector('.cut-bg').style.transform=`scale(${1.06+Math.max(0,i)*0.025}) translate(${(i%2?-1:1)*1.2}%, ${Math.max(0,i)*0.35}%)`; };
+  const show=()=>{ i++; waiting=false; el.classList.remove('choosing','carding'); if(i>=shots.length){ end(); return; } const s=shots[i]; bg(); cutShot(s, el, i, opt);
+    if(s.card){ el.classList.add('carding'); stage.innerHTML=`<div class="cut-title"><p>${esc(s.kicker||'')}</p><h1>${esc(s.title||'')}</h1>${s.sub?`<div class="cut-sub">${s.sub}</div>`:''}</div>`; txt=null; full=''; try{ whoosh&&whoosh(); }catch(_){} if(s.auto) setTimeout(()=>{ if(shots[i]===s) show(); }, s.auto); return; }
+    if(s.choice){ el.classList.add('choosing'); waiting=true; stage.innerHTML=`<p class="cut-place">Your call</p><p class="cut-text cut-q">${esc(s.q)}</p><div class="cut-opts">${s.opts.map((o,k)=>`<button class="cut-opt" data-k="${k}" ${o.why?'disabled':''}>${esc(o.t)}${o.why?`<small>${esc(o.why)}</small>`:''}</button>`).join('')}</div>`; txt=null; full=''; return; }
+    const [pl,k,t]=s; stage.innerHTML=`<p class="cut-place">${esc(pl||'')}</p><div class="cut-line in">${k&&CAST[k]?`<div class="cut-who">${avatar(k)}<b>${esc(CAST[k].n)}</b></div>`:''}<p class="cut-text ${k?'':'nar'}"></p></div>`;
+    txt=stage.querySelector('.cut-text'); full=k?`“${t}”`:t; let n=0; clearInterval(typing); const me=s; typing=setInterval(()=>{ n+=2; txt.textContent=full.slice(0,n); if(n>=full.length){ clearInterval(typing); if(cutAuto()){ clearTimeout(el._auto); el._auto=setTimeout(()=>{ if(shots[i]===me && !waiting) show(); }, 1800+full.length*28); } } }, 22); if(k) say(k,t); };
+  const next=()=>{ if(waiting) return; if(txt && txt.textContent.length<full.length){ clearInterval(typing); txt.textContent=full; return; } show(); };
+  const key=e=>{ if(e.key===' '||e.key==='Enter'||e.key==='ArrowRight'){ e.preventDefault(); e.stopPropagation(); next(); } else if(e.key==='ArrowLeft'){ e.preventDefault(); e.stopPropagation(); if(!waiting){ let j=i-1; while(j>=0 && shots[j].card) j--; if(j>=0 && !shots.slice(j,i+1).some(x=>x.choice)){ clearInterval(typing); i=j-1; show(); } } } else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); skip(); } };
+  /* Skip jumps to the next decision (decisions can't be skipped), or to the end */
+  const skip=()=>{ clearInterval(typing); const j=shots.findIndex((s,k)=>k>i && s.choice); if(shots[i]&&shots[i].choice) return; if(j>=0){ i=j-1; show(); } else end(); };
+  document.addEventListener('keydown', key, true);
+  el.addEventListener('click', e=>{ if(e.target.closest('.cut-skip')){ skip(); return; } const b=e.target.closest('.cut-opt'); if(b){ if(b.disabled) return; const s=shots[i]; const more=s.pick(Number(b.dataset.k))||[]; shots.splice(i+1, 0, ...more); waiting=false; show(); return; } next(); });
+  setTimeout(show, 450); return el;
+}
+
+/* The art behind a scene. */
+function sceneArt(code, dep, ac){ try{ return islandArt(code, dep, 1600, 900, ac); }catch(_){ return ''; } }
+
+/* ---------- a chapter's scenes ---------- */
+
+/* The lines of a chapter's prologue: an echo of your last mid-flight choice, the scripted prologue
+   (which can change with earlier choices), then the briefing as narration. */
+function proFor(id){
+  const scripted = (PRO_DYN[id] && PRO_DYN[id](crime(S.st).flags)) || PRO[id];
+  let lines = scripted;
+  const m=CRIME.find(x=>x.id===id);
+  if(m){ const mm=(typeof dynM==='function'&&S.st)?dynM(S.st,m):m; const here=AP[m.from]?`${AP[m.from].n}`:''; lines=(scripted||[]).concat((mm.brief||[]).map(t=>[here, null, t])); }
+  lines = lines||[];
+  const e=crime().echo; return (e && e.from!==id) ? [[`Last time`, null, e.text]].concat(lines) : lines;
+}
+
+/* Before a chapter: the act card (first chapter of an act), the prologue, then the chapter card. */
+function playPrologue(m, done){
+  if(uiP().skipCuts){ done(); return; }
+  const MC=mainChapters(); const act=CRIME_ACTS.find(a=>a.arc===m.arc)||CRIME_ACTS[0]; const ai=CRIME_ACTS.indexOf(act); const shots=[];
+  const firstOfAct = MC.filter(x=>x.arc===m.arc)[0]===m;
+  if(firstOfAct) shots.push({card:true, kicker:`Act ${ai+1} of ${CRIME_ACTS.length}`, title:act.arc, sub:`<p>${esc(act.tag)}</p><p class="cut-nerve"><span>Your nerve</span> ${esc(act.nerve)}</p>`});
+  (proFor(m.id)||[]).forEach(s=>shots.push(s));
+  shots.push({card:true, kicker:`Chapter ${MC.indexOf(m)+1} of ${MC.length}`, title:m.title, sub:`<p>${esc((CH_GOAL[m.id]||[])[0]||'')}</p>`, auto:2600});
+  cutscene({shots, col:act.col, art:sceneArt(m.from, m.dep, m.ac[0]), onEnd:done});
+}
+
+/* After a chapter: the grade, what happened, your decision if the chapter has one, and what's next. */
+function playAftermath(){
+  setTimeout(()=>{ try{ window.scrollTo(0,0); }catch(_){} }, 400);   // the result screen starts at the top afterwards
+  if(uiP().skipCuts) return;
+  const st=S.st, L=st&&st.last; if(!L||!L.job) return; const job=L.job, m=CRIME.find(x=>x.id===job.story); if(!m) return; const c=crime(st); const MC=mainChapters(); const act=CRIME_ACTS.find(a=>a.arc===m.arc)||CRIME_ACTS[0];
+  /* a failed chapter: a phone call, then try again */
+  if(L.failed){ const boss=c.on?'castillo':'dez'; cutscene({col:act.col, art:SCENES.ramp(), shots:[{card:true,kicker:m.title,title:'It went wrong',auto:1800},[`Phone call`, boss, boss==='castillo'?`I don't pay for wreckage. Get yourself together and do it again. Properly.`:`Rookie, what happened out there? Breathe. We'll try it again.`],{card:true,kicker:'Chapter failed',title:'Try again',sub:`<p>Power −5, Heat +8. Play the chapter again from the Main story page.</p>`}], onEnd:()=>render()}); return; }
+  const here=AP[job.to]?AP[job.to].n:''; const shots=[];
+  shots.push({card:true, kicker:`${m.title} · ${here}`, title:`Grade ${L.res.grade}`, sub:`<p>${esc(L.out.pay?`You earned ${money(L.out.pay)}`:'')}</p>`, auto:1800});
+  splitOut(L.out.story).forEach(t=>shots.push([here, null, t]));
+  const nextCard=()=>{ const nx=MC.find(x=>!st.story.done[x.id]); const cc=crime(st); const out=[];
+    if(cc.ending){ epilogue(st).forEach(t=>out.push(['Years later', null, t])); out.push({card:true, kicker:'The end', title:{kingpin:'Kingpin',witness:'Witness',ghost:'Ghost'}[cc.ending]||'The end', sub:`<p>Thank you for playing the main story. Side jobs and the Starling story are still out there.</p>`}); return out; }
+    out.push({card:true, kicker:'Chapter complete', title:m.title, sub:`${cc.on?`<p class="cut-meters"><span>Power ${cc.power}</span><span>Heat ${cc.heat}</span><span>${esc(crimeRank(cc))}</span></p>`:''}${nx?`<p>Next: <b>${esc(nx.title)}</b> · ${esc(nx.hook||'')}</p>`:''}`}); return out; };
+  if(m.choice && c.choice[m.id]==null && !L.res.crash){
+    const opts=m.choice.opts.map(o=>({t:o.t, why: (m.id==='CR17' && o.ending && typeof ENDING_REQ!=='undefined') ? ENDING_REQ[o.ending](c) : null}));
+    shots.push({choice:true, q:m.choice.q, opts, pick:i=>{ const btn=document.createElement('button'); btn.dataset.act='crime-choose'; btn.dataset.i=i; btn.style.display='none'; document.body.appendChild(btn); btn.click(); btn.remove();
+      const o=m.choice.opts[i]; const after=splitOut(o.out).map(t=>[here, null, t]); const fx=fxSub(o); if(fx) after.push({card:true, kicker:'Your choice', title:o.t, sub:`<p>${esc(fx)}</p>`, auto:2200}); return after.concat(nextCard()); }});
+  } else nextCard().forEach(s=>shots.push(s));
+  cutscene({shots, col:act.col, art:sceneArt(job.to, Math.min(1439,(job.dep||600)+(job.est||60)), job.ac), onEnd:()=>{ S.keepScroll=false; render(); }});
+}
+/* ===================== SMALL UI PIECES =====================
+   Pop-up messages (toast) and the search bar's list of things you can jump to (cmdItems). */
+
+/* ---------- pop-up messages ---------- */
+
+const TOAST_QUEUE = [];   // messages waiting for a cutscene or the title screen to finish
+
+/* Shows a short message bottom-right and adds it to the notifications list.
+   During a cutscene or on the title screen it waits its turn. */
+function toast(msg){
+  if(/^New tab unlocked/i.test(String(msg))) return;   // the five-item menu has everything now
+  if(document.querySelector('.cut,.title-screen') && !S._cabMute){ TOAST_QUEUE.push(msg); return; }
+  showToast(msg);
+}
+function showToast(msg){
+  try{ if(!S._cabMute && msg){ S.notifs.unshift({t:Date.now(), m:String(msg)}); S.notifs=S.notifs.slice(0,40); const b=document.querySelector('.bell b'); if(b){ b.textContent=S.notifs.length-S.notifSeen; b.style.display=''; } } }catch(_){}
+  if(S._cabMute) return;
+  const m=String(msg); const now=Date.now(); if(S._lt===m && now-(S._ltT||0)<20000) return; S._lt=m; S._ltT=now;   // the same message twice in 20 s shows once
+  S.toast=msg; let host=document.getElementById('toasts'); if(!host){ host=document.createElement('div'); host.id='toasts'; host.setAttribute('role','status'); host.setAttribute('aria-live','polite'); document.body.appendChild(host); }
+  const k=toastKind(msg); const el=document.createElement('div'); el.className='toast2 '+k; el.innerHTML=`<span class="ti">${k==='ok'?'✓':k==='warn'?'!':'✈'}</span><span class="tt"></span><i class="tbar"></i>`; el.querySelector('.tt').textContent=msg;
+  host.appendChild(el); while(host.children.length>3) host.firstElementChild.remove();
+  if(k==='warn') softTone(330,.08); else if(k==='ok') softTone(880,.05);
+  const ttl = Math.min(7000, 2800 + String(msg).length*25); el.style.setProperty('--ttl', ttl+'ms');
+  setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>{ el.remove(); if(!host.children.length) S.toast=null; }, 350); }, ttl);
+}
+setInterval(()=>{ if(TOAST_QUEUE.length && !document.querySelector('.cut,.title-screen')) showToast(TOAST_QUEUE.shift()); }, 1200);
+
+/* ---------- the search bar (Ctrl K) ---------- */
+
+/* Everything the search bar can jump to: pages, actions, checkrides, chapters, achievements, airports, people.
+   Each item is {n: name, k: kind shown on the right, run()}. Things you used recently come first. */
+function cmdItems(){ const st=S.st; const L=[]; if(!st) return L; const pg=(n,v,k,run)=>L.push({n, k:k||'Page', run:run||(()=>go(v))});
+  pg('Main story','story'); pg('Jobs','board'); pg('Map','map'); pg('Flight','flight'); pg('Pilot & licences','pilot'); pg('Money','money'); pg('Hangar','hangar'); pg('Butter Cup','cup'); pg('Academy','academy'); pg('Logbook','log'); pg('Settings','hangar','Page · Hangar → Settings', ()=>{ S.hangarTab='settings'; go('hangar'); });
+  const r=rightNow(st); if(r) L.push({n:`${r.b.replace('▶ ','')}: ${r.t}`, k:'Right now', run:()=>clickAct(r.act, r.v, r.id)});
+  RATING_ORDER.filter(x=>!st.ratings[x] && checkrideReady(st,x).ok).forEach(x=>L.push({n:`Book checkride: ${RATINGS[x].n}`, k:'Pilot', run:()=>{ go('pilot'); setTimeout(()=>{ const b=document.querySelector(`[data-act="book-check"][data-r="${x}"]`); if(b) b.scrollIntoView({block:'center'}); },200); }}));
+  if(crime(st).dirty) L.push({n:'Launder dirty cash', k:'Money', run:()=>go('money')});
+  if(st.active) L.push({n:'Load fuel into MSFS', k:'Flight', run:()=>{ go('flight'); setTimeout(()=>clickAct('pf-load'),200); }});
+  L.push({n:'New day', k:'Action', run:()=>clickAct('rest')}, {n:'Practice landing', k:'Action', run:()=>clickAct('practice')}, {n:testSession()?'End test session':'Start test session', k:'Action', run:()=>clickAct('test-session')}, {n:'Travel as a passenger', k:'Action', run:()=>{ go('board'); setTimeout(()=>{ const d=document.querySelector('.b2-more'); if(d){ d.open=true; d.scrollIntoView({block:'center'}); } },200); }});
+  Object.keys(AP).filter(k=>!AP[k].water).forEach(k=>L.push({n:`${k} · ${AP[k].n}`, k:`Airport · ${AP[k].isl}`, airport:k, run:()=>{ S.mapSel=k; go('map'); }}));
+  try{ mainChapters().forEach((m,i)=>{ if(st.story.done[m.id]) L.push({n:`Chapter ${i+1}: ${m.title}`, k:'Story · replay the opening', run:()=>{ go('story'); setTimeout(()=>playPrologue(m,()=>{}),200); }}); }); ACH.forEach(a=>L.push({n:`${a.n}`, k:st.ach&&st.ach[a.id]?'Achievement · unlocked':'Achievement · '+a.d, run:()=>go('profile')})); }catch(_){}
+  /* what you used recently is remembered (the last five) and listed first */
+  let rec=[]; try{ rec=JSON.parse(localStorage.getItem('tw.cmdRecent')||'[]'); }catch(_){}
+  L.forEach(it=>{ const run=it.run; it.run=()=>{ try{ const r=[it.n].concat(rec.filter(x=>x!==it.n)).slice(0,5); localStorage.setItem('tw.cmdRecent', JSON.stringify(r)); }catch(_){} run(); };
+    const k=rec.indexOf(it.n); if(k>=0){ it.k='Recent · '+it.k; it._rec=5-k; } else if(it.airport){ const a=AP[it.airport]; it.k=`Airport · ${a.isl} · ${longestRwy(a).toLocaleString()} ft`; } });
+  try{ metPeople(st).forEach(k=>L.push({n:CAST[k].n, k:'Person · '+(CAST[k].role||''), run:()=>{ go('story'); setTimeout(()=>personCard(k),150); }})); }catch(_){}
+  return L; }
 /* ===================== RENDER =====================
    render() redraws the whole page from S (what's on screen) and S.st (the career).
    It runs in three parts, always in this order:
@@ -8559,7 +8592,7 @@ function maybeStartWalkthrough(){ if(RENDER_ONCE.walkthrough || !S.st || S._titl
     setTimeout(()=>cutscene({col:'#c8962a', art:(typeof SCENES!=='undefined'?SCENES.ramp():''), shots:[...(typeof coldOpenShots==='function'?coldOpenShots():[]),
       {card:true,kicker:'Welcome to Trade Winds · 1 of 3',title:'The story',sub:`<p>You're a pilot in the Caribbean. One main story in five acts takes you from a Cessna to a 747, and from a clean licence to running the islands' smuggling network.</p><p>Everything starts on the <b>Story</b> page.</p>`},
       {card:true,kicker:'2 of 3',title:'How to fly a chapter',sub:`<p><b>1.</b> Press <b>Play</b>. A short cutscene sets it up.</p><p><b>2.</b> In MSFS, load the aircraft at the departure airport. The flight screen tells you where to park, how much fuel to load and which runway to use.</p><p><b>3.</b> Fly and land. The app follows you and grades the landing by itself.</p>`},
-      {card:true,kicker:'3 of 3',title:'Power, Heat and dirty cash',sub:`<p><b>Power</b> grows with every chapter and hard choice, and unlocks rewards.</p><p><b>Heat</b> is how close the law is. Network runs raise it, legit jobs cool it. Above 60, customs starts searching.</p><p><b>Dirty cash</b> from network runs has to be laundered before you can spend it.</p><p class="small">Tip: press <b>Ctrl + K</b> anywhere to jump to any page, airport or action.</p>`}], onEnd:()=>{ S._walk=false; }}), 700); } }
+      {card:true,kicker:'3 of 3',title:'Power, Heat and dirty cash',sub:`<p><b>Power</b> grows with every chapter and hard choice, and unlocks rewards.</p><p><b>Heat</b> is how close the law is. Network runs raise it, legit jobs cool it. Above 60, customs starts searching. Your Heat is always shown at the top of the screen.</p><p><b>Dirty cash</b> from network runs has to be laundered before you can spend it.</p><p class="small">Tip: press <b>Ctrl + K</b> anywhere to jump to any page, airport or action.</p>`}], onEnd:()=>{ S._walk=false; }}), 700); } }
 /* aircraft specs you measured in MSFS replace the built-in ones (once per app start) */
 function applyMeasuredAircraft(){ try{ if(!S._acReal && S.st){ S._acReal=true; for(const k in (S.st.acReal||{})) if(AC[k]) Object.assign(AC[k], S.st.acReal[k]); } }catch(_){} }
 /* an old save with no record of which tabs it has seen: mark the ones already unlocked */

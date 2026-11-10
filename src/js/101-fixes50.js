@@ -2,8 +2,6 @@
 /* 1 (setup pitch), 14 (quiet mode wording) and 15 (title Settings) were fixed in their own files. */
 
 
-/* 4. no more "New tab unlocked" pop-ups: everything lives in the five-item menu now */
-(function(){ const _t=toast; toast=function(msg){ if(/^New tab unlocked/i.test(String(msg))) return; return _t.apply(this, arguments); }; })();
 
 /* 5 + 6. pop-ups really sit bottom-right; achievements show one at a time */
 (function(){ const Q=[]; let busy=false; const _ap=achPop; achPop=function(a){ Q.push(a); pump(); }; function pump(){ if(busy||!Q.length) return; if(document.querySelector('.cut')){ setTimeout(pump,1500); return; } busy=true; _ap(Q.shift()); setTimeout(()=>{ busy=false; pump(); }, 4400); } })();
@@ -29,18 +27,12 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="own
 /* 23. Esc also closes the notifications list */
 window.addEventListener('keydown', e=>{ if(e.key==='Escape'){ document.querySelectorAll('.notif-pane').forEach(p=>p.remove()); } });
 
-/* 24. the "Click or press Space" hint fades after the first couple of lines */
-(function(){ const _sh=cutHook.shot; cutHook.shot=function(s,el,i,opt){ _sh.call(this,s,el,i,opt); try{ if(i>=2) el.classList.add('hint-off'); }catch(_){} }; })();
 
 /* 25 + 26. flight-display progress label and map "Next" label are easier to read */
 /* (CSS below) */
 
-/* 27. the Skip button says where it goes: to your next decision, or the end */
-(function(){ const _sh=cutHook.shot; cutHook.shot=function(s,el,i,opt){ _sh.call(this,s,el,i,opt); try{ const sk=el.querySelector('.cut-skip'); const L=(opt&&opt.shots)||[]; if(sk && L.length) sk.textContent = L.slice(i+1).some(x=>x&&x.choice) ? 'Skip to decision' : (s&&s.choice ? 'Skip' : 'Skip scene'); }catch(_){} }; })();
 
 
-/* 29 + 30. command bar: find people and open their card */
-(function(){ const _ci=cmdItems; cmdItems=function(){ const L=_ci(); try{ (typeof metPeople==='function'?metPeople(S.st):[]).forEach(k=>L.push({n:CAST[k].n, k:'Person · '+(CAST[k].role||''), run:()=>{ go('story'); setTimeout(()=>personCard(k),150); }})); }catch(_){} return L; }; })();
 
 /* 31. Esc closes the person card, the shortcut list and What's new */
 window.addEventListener('keydown', e=>{ if(e.key!=='Escape') return; const w=document.querySelector('.pc-wrap'); if(w){ w.remove(); e.stopImmediatePropagation(); } }, true);
@@ -54,8 +46,6 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="lau
 
 window.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cancel-yes"]')||!S.st||!S.st.active) return; if(S.st.active.job.kind==='story') setTimeout(()=>{ if(!S.st.active){ go('story'); } }, 50); }, true);
 
-/* 40. the result screen starts at the top after the scene */
-(function(){ const _pa=playAftermath; playAftermath=function(){ const r=_pa(); setTimeout(()=>{ try{ window.scrollTo(0,0); }catch(_){} }, 400); return r; }; })();
 
 
 /* 44. at Heat 80+ (the feds are looking) the Heat chip pulses */
@@ -65,15 +55,11 @@ window.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cancel-ye
 /* 46. clicking a speaker's portrait in a scene doesn't skip the line you're reading */
 document.addEventListener('click', e=>{ if(e.target.closest('.cut-who')) e.stopPropagation(); }, true);
 
-/* 47. airport search results say what you'd land on */
-(function(){ const _ci=cmdItems; cmdItems=function(){ return _ci().map(it=>{ if(/^Airport/.test(it.k)){ const code=it.n.split(' · ')[0]; const a=AP[code]; if(a) it.k=`Airport · ${a.isl} · ${longestRwy(a).toLocaleString()} ft`; } return it; }); }; })();
 
 
 /* 49. "What's new" lists this sweep */
 WHATS_NEW.unshift(['0.43','50 fixes: the new-career screen fits the story, Heat in the header, one-click "I own this aircraft", clearer checkride and job lists, phone-width fixes, and more.']);
 
-/* 50. the welcome walkthrough points at the Heat chip */
-(function(){ const _cs=cutscene; cutscene=function(opt){ try{ opt.shots=opt.shots.map(s=>s&&s.card&&s.title==='Power, Heat and dirty cash' ? Object.assign({},s,{sub:s.sub.replace('Above 60, customs starts searching.</p>','Above 60, customs starts searching. Your Heat is always shown at the top of the screen.</p>')}) : s); }catch(_){} return _cs(opt); }; })();
 
 (function(){ const s=document.createElement('style'); s.textContent=`
 .setup-wrap .hero, .setup-wrap header, .setup-wrap .setup-hero{filter:saturate(.55) brightness(.6) contrast(1.08)}

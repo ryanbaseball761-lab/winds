@@ -9,16 +9,11 @@ function personCard(k){ const st=S.st; const c=CAST[k]; if(!c) return; const tru
   document.body.appendChild(d); d.addEventListener('click', e=>{ if(e.target===d || e.target.closest('[data-act="pc-close"]')) d.remove(); }); }
 document.addEventListener('click', e=>{ const p=e.target.closest('.sh-p, .sc-who'); if(!p || !S.st) return; const name=(p.querySelector('b')||p).textContent.trim(); const k=Object.keys(CAST).find(x=>CAST[x].n===name || ({reyes:'Reyes',castillo:'Castillo'}[x]===name) || (typeof shortName==='function' && shortName(x)===name)); if(k) personCard(k); });
 
-/* 3. cutscenes: a bigger speaker portrait, with their role */
-(function(){ const _sh=cutHook.shot; cutHook.shot=function(s,el,i,opt){ _sh.call(this,s,el,i,opt); try{ if(Array.isArray(s) && s[1] && CAST[s[1]]) setTimeout(()=>{ const w=el.querySelector('.cut-who b'); if(w && !w.dataset.r){ w.dataset.r=1; w.insertAdjacentHTML('afterend', `<small class="cut-role">${esc(CAST[s[1]].role||'')}</small>`); } }, 0); }catch(_){} }; })();
 
 /* 4. result screen: the grade letter is coloured by how you did */
 /* (CSS only, see below) */
 
 
-/* 6. command bar: what you used recently comes first */
-(function(){ const _ci=cmdItems; cmdItems=function(){ const L=_ci(); let rec=[]; try{ rec=JSON.parse(localStorage.getItem('tw.cmdRecent')||'[]'); }catch(_){}
-  L.forEach(it=>{ const run=it.run; it.run=()=>{ try{ const r=[it.n].concat(rec.filter(x=>x!==it.n)).slice(0,5); localStorage.setItem('tw.cmdRecent', JSON.stringify(r)); }catch(_){} run(); }; const k=rec.indexOf(it.n); if(k>=0){ it.k='Recent · '+it.k; it._rec=5-k; } }); return L; }; })();
 document.addEventListener('input', e=>{ if(!e.target.closest('.cmd-box input')) return; }, true);
 
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cold-again"]')) return; const st=S.st; const f=st.flights, d=st.story.done.CW1; st.flights=0; delete st.story.done.CW1; const shots=coldOpenShots(); st.flights=f; if(d) st.story.done.CW1=d; cutscene({shots, col:'#c8962a', art:SCENES.ramp(), onEnd:()=>{}}); });
@@ -35,7 +30,6 @@ document.addEventListener('keydown', e=>{ if(e.key!=='?' || /INPUT|TEXTAREA|SELE
   const d=document.createElement('div'); d.className='pc-wrap keys-wrap'; d.innerHTML=`<div class="pc keys"><div class="pc-in"><p class="label">Keyboard</p><h2>Shortcuts</h2><dl>${[['1 – 5','Story, Jobs, Flight, Pilot, Hangar'],['Ctrl K or /','Search anything'],['F','Your current flight'],['M','Menu in flight mode'],['Space / →','Next line in a cutscene'],['←','Previous line in a cutscene'],['Esc','Skip a cutscene, close a popup'],['?','This list']].map(([k,v])=>`<dt><kbd>${k}</kbd></dt><dd>${v}</dd>`).join('')}</dl><button class="btn sm" data-act="pc-close">Close</button></div></div>`; document.body.appendChild(d); d.addEventListener('click', ev=>{ if(ev.target===d||ev.target.closest('[data-act="pc-close"]')) d.remove(); }); });
 
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="cut-size"]'); if(!b||!S.st) return; uiP().cutSize=b.dataset.v; save(); S.keepScroll=true; render(); });
-(function(){ const _st=cutHook.start; cutHook.start=function(el,opt){ _st.call(this,el,opt); try{ el.dataset.size=uiP().cutSize||'m'; }catch(_){} }; })();
 
 /* 14. "What's new" on the title screen */
 const WHATS_NEW = [['0.42','Illustrated portraits and scenes, person cards on the Story page, flight progress in flight mode, ← to go back in cutscenes, shortcuts list (?), and more.'],['0.41','Fixed Butter Cup, Academy and Profile pages; 21 smaller fixes.'],['0.40','20 small fixes: the right airline on your ticket, dirty cash in the header, cutscene auto-play.'],['0.39','Title screen, cold open, music, character voices, volume and units settings.'],['0.38','Backups before every chapter, safehouses, the feds, New Game+.']];

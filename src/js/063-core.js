@@ -1,7 +1,5 @@
 /* ===================== 20 MORE FIXES ===================== */
 /* 1. the same message never pops twice in a row; tab-unlock messages for tabs that live elsewhere are dropped */
-const _p20Toast = toast;
-toast = function(msg){ const m=String(msg); if(/^New tab unlocked: (Logbook|Profile|Company|Cockpit)/.test(m)) return; const now=Date.now(); if(S._lt===m && now-(S._ltT||0)<20000) return; S._lt=m; S._ltT=now; return _p20Toast(msg); };
 
 /* 2. a past departure time reads "Ready now" */
 

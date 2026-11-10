@@ -38,9 +38,6 @@ function coldOpenShots(){ const st=S.st; if(!st || (st.flights||0)>0 || st.story
     ['The jump seat', 'castillo', `You always had calm hands. That's why I picked you.`],
     {card:true,kicker:'Two years earlier',title:'Sint Maarten',sub:'<p>A fresh licence, a cheap job, and a Cessna with a cracked seat.</p>',auto:2600}]; }
 
-/* ---- skipping cutscenes, if you'd rather just fly ---- */
-(function(){ const _pp=playPrologue; playPrologue=function(m, done){ if(uiP().skipCuts){ done(); return; } return _pp(m, done); }; })();
-(function(){ const _pa=playAftermath; playAftermath=function(){ if(uiP().skipCuts) return; return _pa(); }; })();
 
 /* ---- units: imperial or metric everywhere ---- */
 function toMetric(t){ return t.replace(/(\d[\d,]*(?:\.\d+)?)\s?lb\b/g,(m,n)=>`${Math.round(Number(n.replace(/,/g,''))*0.4536).toLocaleString()} kg`).replace(/(\d[\d,]*(?:\.\d+)?)\s?gal\b/g,(m,n)=>`${Math.round(Number(n.replace(/,/g,''))*3.785).toLocaleString()} L`); }

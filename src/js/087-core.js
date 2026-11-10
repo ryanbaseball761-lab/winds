@@ -41,14 +41,6 @@ function ambStart(kind, vol){ const ctx=typeof actx==='function'?actx():null; if
   g.gain.linearRampToValueAtTime(vol, ctx.currentTime+1.5); AMB.nodes.push({kind, parts, g}); }
 function ambStop(kind){ const ctx=typeof actx==='function'?actx():null; AMB.nodes=AMB.nodes.filter(n=>{ if(kind && n.kind!==kind) return true; try{ n.g.gain.linearRampToValueAtTime(0, ctx.currentTime+0.8); setTimeout(()=>n.parts.forEach(p=>{ try{ p.stop&&p.stop(); }catch(_){} try{ p.disconnect(); }catch(_){} }), 1000); }catch(_){} return false; }); }
 function ambRing(){ const ctx=typeof actx==='function'?actx():null; if(!ctx || !sfxOn()) return; const t0=ctx.currentTime; [0,0.5].forEach(off=>{ [440,480].forEach(f=>{ const o=ctx.createOscillator(); const g=ctx.createGain(); o.frequency.value=f; g.gain.setValueAtTime(0,t0+off); g.gain.linearRampToValueAtTime(0.035,t0+off+0.02); g.gain.setValueAtTime(0.035,t0+off+0.35); g.gain.linearRampToValueAtTime(0,t0+off+0.4); o.connect(g); g.connect(ctx.destination); o.start(t0+off); o.stop(t0+off+0.45); }); }); }
-window.cutHook = {
-  start(el, opt){ ambStart('bed', 0.035); if(opt && opt.rain) ambStart('rain', 0.05); el.dataset.scene=''; },
-  shot(s, el, i, opt){ const sc=sceneFor(s, opt); const bgEl=el.querySelector('.cut-bg'); if(sc && el.dataset.scene!==sc){ el.dataset.scene=sc; bgEl.classList.add('swap'); setTimeout(()=>{ bgEl.innerHTML=SCENES[sc](); bgEl.classList.remove('swap'); }, 250); }
-    if(Array.isArray(s)){ const p=String(s[0]||''); if(/phone|text message/i.test(p)) ambRing(); const wantJet=sc==='ramp'||sc==='hangar'||sc==='cockpit'; const hasJet=AMB.nodes.some(n=>n.kind==='jet'); if(wantJet&&!hasJet) ambStart('jet',0.018); if(!wantJet&&hasJet) ambStop('jet'); } },
-  end(){ ambStop(); }
-};
-/* pass rain for stormy chapters */
-(function(){ const _cs=cutscene; cutscene=function(opt){ try{ const a=S.st&&S.st.active, L=S.st&&S.st.last; const wx=(a&&a.job.wx)||(L&&L.job&&L.job.wx)||{}; if(/wave|storm|shower|rain/i.test(String(wx.k||wx.id||wx.type||wx.name||''))) opt.rain=true; }catch(_){} return _cs(opt); }; })();
 
 
 (function(){ const s=document.createElement('style'); s.textContent=`.cut-bg{transition:transform 7s ease-out, opacity .25s}.cut-bg.swap{opacity:0}`; document.head.appendChild(s); })();

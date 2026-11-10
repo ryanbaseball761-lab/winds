@@ -51,12 +51,6 @@ function passPlane(){ const a=S.st&&S.st.active; let pct=null; try{ if(a && a.st
 
 /* 9. toasts: stacked, with an icon, slide in, and a timer bar */
 function toastKind(msg){ const m=String(msg).toLowerCase(); if(/couldn|can't|cannot|not connected|fail|error|expert mode|grounded|fine/.test(m)) return 'warn'; if(/unlocked|saved|logged|loaded|matches|repaired|moved|welcome|you're now|passed|earned/.test(m)) return 'ok'; return 'info'; }
-toast = function(msg){ S.toast=msg; let host=document.getElementById('toasts'); if(!host){ host=document.createElement('div'); host.id='toasts'; host.setAttribute('role','status'); host.setAttribute('aria-live','polite'); document.body.appendChild(host); }
-  const k=toastKind(msg); const el=document.createElement('div'); el.className='toast2 '+k; el.innerHTML=`<span class="ti">${k==='ok'?'✓':k==='warn'?'!':'✈'}</span><span class="tt"></span><i class="tbar"></i>`; el.querySelector('.tt').textContent=msg;
-  host.appendChild(el); while(host.children.length>3) host.firstElementChild.remove();
-  if(k==='warn') softTone(330,.08); else if(k==='ok') softTone(880,.05);
-  const ttl = Math.min(7000, 2800 + String(msg).length*25); el.style.setProperty('--ttl', ttl+'ms');
-  setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>{ el.remove(); if(!host.children.length) S.toast=null; }, 350); }, ttl); };
 renderToast = function(){};
 
 /* 10. UI sound: soft ticks, a whoosh on departure, a till on payday */

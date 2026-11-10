@@ -31,12 +31,6 @@ const MUSIC = { cur:null, timer:null, nodes:[], bus:null, rev:null,
 };
 /* the title screen needs a click before browsers allow sound */
 document.addEventListener('pointerdown', ()=>{ if(document.querySelector('.title-screen') && !MUSIC.cur) MUSIC.play('title'); }, true);
-/* cutscenes: the tension score replaces the old drone; act cards get a sting */
-(function(){ const _st=cutHook.start, _sh=cutHook.shot, _en=cutHook.end;
-  cutHook.start=function(el,opt){ _st.call(this,el,opt); try{ ambStop('bed'); MUSIC.play('tension'); }catch(_){} };
-  cutHook.shot=function(s,el,i,opt){ _sh.call(this,s,el,i,opt); try{ if(s && s.card && /^Act \d/.test(s.kicker||'')){ const c=MUSIC.ctx(); if(c){ MUSIC.voice(c,{f:N(33),t:c.currentTime+0.05,d:3,type:'sawtooth',g:0.09,lp:180,att:0.01,rel:2.6}); [57,60,64,69].forEach(n=>MUSIC.voice(c,{f:N(n),t:c.currentTime+0.05,d:3.2,type:'triangle',g:0.03,att:0.04,rel:2.6})); } } }catch(_){} };
-  cutHook.end=function(el,opt){ _en.call(this,el,opt); try{ MUSIC.stop(); }catch(_){} }; })();
-
 /* ---- character voices: each person keeps the same premium voice and acting direction ---- */
 const CHAR_VOICE = {
   castillo:['onyx',`Soft-spoken Latin American businessman in his fifties. Calm, unhurried, polite, quietly menacing.`],
@@ -55,7 +49,6 @@ pvInstr = function(text){ const k=PV._char; PV._char=null; return (k && CHAR_VOI
 (function(){ const U=window.SpeechSynthesisUtterance; if(!U) return; let pending=null; window.twSpeaker=k=>{ pending=k; setTimeout(()=>{ if(pending===k) pending=null; }, 1500); };
   const SS=window.speechSynthesis; if(!SS) return; const sp=SS.speak.bind(SS); SS.speak=function(u){ if(pending){ u.twChar=pending; pending=null; } return sp(u); }; })();
 (function(){ const _say=speakBeat; speakBeat=function(b){ try{ twSpeaker(b.who); }catch(_){} return _say(b); }; })();
-(function(){ const _sh=cutHook.shot; cutHook.shot=function(s,el,i,opt){ try{ if(Array.isArray(s) && s[1]) twSpeaker(s[1]); }catch(_){} return _sh.call(this,s,el,i,opt); }; })();
 
 /* ---- art pipeline: drop in painted portraits and scenes and they replace the drawings ---- */
 const ART = { portraits:{}, scenes:{}, bases:['https://raw.githubusercontent.com/ryanbaseball761-lab/winds/main/art/'] };

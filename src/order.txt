@@ -108,5 +108,7 @@ page-result.js
 page-flight.js
 page-jobs.js
 page-story.js
+cutscenes.js
+ui.js
 ui-render.js
 zz-boot.js

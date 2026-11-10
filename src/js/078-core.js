@@ -67,7 +67,6 @@ const PRO_DYN = {
   CR17:f=>(f.informant||f.ledgers)?PRO.CR17.concat([[`Text message`,'reyes',`We're in position. Whatever you're planning, don't.`]]):null
 };
 const PRO_VOICE = { dez:[false,1.05,1], mari:[true,1,1.05], castillo:[false,0.92,0.8], hartwell:[false,0.95,0.9], tico:[false,1.12,1.05], reyes:[true,1,1], medina:[false,0.95,0.85] };
-function proFor(id){ const st=S.st; const f=crime(st).flags; return (PRO_DYN[id] && PRO_DYN[id](f)) || PRO[id]; }
 
 var playPrologue; /* defined in full below (081-core.js) */
 
