@@ -23,16 +23,6 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="lau
 function achPop(a){ const d=document.createElement('div'); d.className='achpop'; d.innerHTML=`<span>Achievement</span><b>${esc(a.n)}</b><small>${esc(a.d)}</small>`; document.body.appendChild(d); try{ chimeUp&&chimeUp(); }catch(_){} setTimeout(()=>{ d.classList.add('out'); setTimeout(()=>d.remove(),500); }, 3800); }
 
 /* ---- 4 + 5. story page: trust with each person, your numbers, and replay any chapter's scenes ---- */
-const _m4Story = storyView;
-storyView = function(){ let h=_m4Story(); try{ const st=S.st, c=crime(st); const MC=mainChapters(); const done=MC.filter(m=>st.story.done[m.id]);
-  /* trust bars on people */
-  h=h.replace(/<div class="sh-p">([\s\S]*?)<b>([^<]+)<\/b>/g, (m0,pre,name)=>{ const k=Object.keys(CAST).find(x=>CAST[x].n===name.replace(/&quot;/g,'"').replace(/&amp;/g,'&')); const v=k?Math.round(st.rep[k]||0):null; return v==null?m0:`<div class="sh-p">${pre}<b>${name}</b><span class="trust" title="Trust ${v}/100"><i style="width:${Math.min(100,v)}%"></i></span>`; });
-  /* replay buttons in the timeline */
-  h=h.replace(/<li style="--c:([^"]+)"><span class="sh-n">(\d+)<\/span><div><b>([^<]+)<\/b>/g, (m0,col,n,t)=>{ const m=MC[Number(n)-1]; return m&&st.story.done[m.id]?`<li style="--c:${col}"><span class="sh-n">${n}</span><div><b>${t}</b><button class="sh-replay" data-act="replay-ch" data-id="${m.id}" title="Replay the opening scene">▶ Replay</button>`:m0; });
-  /* numbers */
-  const earned=fin(st).ledger.filter(x=>x.a>0).reduce((s,x)=>s+x.a,0); const best=(st.log||[]).filter(x=>x.fpm).reduce((b,x)=>Math.min(b,x.fpm),9999);
-  const stats=`<section class="panel sh-stats"><div><span>Chapters</span><b>${done.length}<small>/${MC.length}</small></b></div><div><span>Flights</span><b>${st.flights||0}</b></div><div><span>Hours</span><b>${Math.round((st.minutes||0)/6)/10}</b></div><div><span>Earned</span><b>${money(earned)}</b></div><div><span>Best landing</span><b>${best<9999?best+'<small> fpm</small>':'—'}</b></div><div><span>Laundered</span><b>${money(c.laundered||0)}</b></div></section>`;
-  h=h.replace('<div class="sh-grid">', stats+'<div class="sh-grid">'); }catch(_){} return h; };
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="replay-ch"]'); if(!b) return; const m=CRIME.find(x=>x.id===b.dataset.id); if(m) playPrologue(m, ()=>{}); });
 
 /* ---- 6. settings: everything in one place, in sections ---- */

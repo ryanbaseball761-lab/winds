@@ -9,22 +9,6 @@ function personStatus(st, k){ const f=flagsOf(st), c=crime(st), d=st.story.done;
     reyes: f.informant?'Your handler. You wear her wire.':d.CR9?'Watching you. Patiently.':'DEA. You haven\'t met yet.',
     medina: f.medinaBurned?'Arrested by the DEA, thanks to you.':f.medinaAlly?'Your partner, for now.':f.medinaDeal?'Thinks you work for him.':'Castillo\'s rival.' })[k]||''; }
 function metPeople(st){ const seen=new Set(); mainChapters().forEach(m=>{ if(st.story.done[m.id]) dynM(st,m).chars.forEach(k=>seen.add(k)); }); const next=mainChapters().find(m=>!st.story.done[m.id]); if(next) dynM(st,next).chars.forEach(k=>seen.add(k)); return PEOPLE.filter(k=>seen.has(k)); }
-storyView = function(){ const st=S.st; const c=crime(st); const MC=mainChapters(); const availSet=new Set(storyAvailable(st).map(m=>m.id)); const done=MC.filter(m=>st.story.done[m.id]); const next=MC.find(m=>!st.story.done[m.id]);
-  const time = done.length ? done.map(m=>{ const ch=m.choice&&c.choice[m.id]!=null?m.choice.opts[c.choice[m.id]].t:null; return `<li style="--c:${arcMeta(m.arc).col}"><span class="sh-n">${MC.indexOf(m)+1}</span><div><b>${esc(m.title)}</b><p>${esc(m.recap||'')}</p>${ch?`<p class="sh-ch">You chose: ${esc(ch)}</p>`:''}</div></li>`; }).join('') : `<li style="--c:var(--muted)"><span class="sh-n">·</span><div><b>Nothing yet</b><p>Your story starts with chapter 1 below.</p></div></li>`;
-  const people = metPeople(st).map(k=>`<div class="sh-p">${avatar(k)}<div><b>${esc(CAST[k].n)}</b><p>${esc(personStatus(st,k))}</p></div></div>`).join('');
-  const acts = CRIME_ACTS.map((a,i)=>{ const ch=MC.filter(m=>m.arc===a.arc); return `<div class="sh-act" style="--c:${a.col}"><p class="label">Act ${i+1}</p><h4>${esc(a.arc)}</h4><ol>${ch.map(m=>{ const isD=st.story.done[m.id], isN=m===next; const req=(m.req&&m.req.ratings||[]).filter(r=>!st.ratings[r]).map(r=>RATINGS[r]?RATINGS[r].n:r).join(', '); return `<li class="${isD?'d':isN?'n':''}">${isD?'✓':isN?'▶':'·'} ${esc(m.title)}${!isD&&req?` <small>${esc(req)}</small>`:''}</li>`; }).join('')}</ol></div>`; }).join('');
-  const epi = c.ending ? epilogue(st) : [];
-  const side = STORY.filter(m=>m.arc==='Starling'); const sNext=side.find(m=>!st.story.done[m.id]);
-  return `<main class="wrap story-home fade">
-    ${campaignCard(st)}
-    ${epi.length?`<section class="panel"><h3>What became of everyone</h3><ul class="tight">${epi.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`:''}
-    <div class="sh-grid">
-      <section class="panel"><h3>The story so far</h3><ol class="sh-time">${time}</ol></section>
-      <section class="panel"><h3>The people</h3><div class="sh-people">${people||'<p class="small muted">You\'ll meet them soon.</p>'}</div></section>
-    </div>
-    <section class="panel"><h3>The five acts</h3><div class="sh-acts">${acts}</div></section>
-    ${sNext?`<section class="panel sh-side"><p class="label">Side story · legit work</p><h3>Starling</h3><p class="small muted">${esc(sNext.title)}: a clean charter job flying private jets. Doesn't affect the main story.</p><div class="row" style="margin-top:8px">${chapterAction(st,sNext,availSet,true)}</div></section>`:''}
-  </main>`; };
 /* the story card uses the right cast, and the nerve line */
 
 /* nav: "Main story" first; the app opens on it */

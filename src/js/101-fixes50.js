@@ -14,8 +14,6 @@
 
 
 
-/* 11. your role reads properly everywhere ("Castillo's crew", not just "Castillo") */
-(function(){ const _sr=storyRole; storyRole=function(st){ const r=_sr(st); return r==='Castillo' ? "Castillo's crew" : r; }; })();
 
 
 /* 16. Butter Cup cards get the same noir treatment as everything else */
@@ -25,8 +23,6 @@
 /* (CSS below) */
 
 
-/* 21. story card: if a chapter needs an aircraft you own in MSFS, one click adds it */
-(function(){ const _pa=playAction; playAction=function(st,m,availSet,n){ const r=_pa(st,m,availSet,n); if(chapterStatus(st,m,availSet).k==='aircraft'){ const opts=m.ac.filter(k=>AC[k] && canFly(st,k)).slice(0,3); if(opts.length) r.btn=opts.map(k=>`<button class="btn sm" data-act="own-ac" data-v="${k}">I own the ${esc(AC[k].n)}</button>`).join('')+r.btn; } return r; }; })();
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="own-ac"]'); if(!b||!S.st) return; S.st.hangar=S.st.hangar||{}; S.st.hangar[b.dataset.v]=true; save(); toast(`Added the ${AC[b.dataset.v].n} to your hangar list.`); S.keepScroll=true; render(); });
 
 
@@ -49,15 +45,8 @@ window.addEventListener('keydown', e=>{ if(e.key==='Escape'){ document.querySele
 /* 31. Esc closes the person card, the shortcut list and What's new */
 window.addEventListener('keydown', e=>{ if(e.key!=='Escape') return; const w=document.querySelector('.pc-wrap'); if(w){ w.remove(); e.stopImmediatePropagation(); } }, true);
 
-/* 32. the five acts show how far you are in each */
-(function(){ const _sv=storyView; storyView=function(){ const h=_sv(); try{ const st=S.st; const MC=mainChapters(); return h.replace(/<p class="label">Act (\d)<\/p><h4>([^<]+)<\/h4>/g, (m,n,arc)=>{ const ch=MC.filter(x=>x.arc===arc.replace(/&amp;/g,'&')); const d=ch.filter(x=>st.story.done[x.id]).length; return `<p class="label">Act ${n} · ${d}/${ch.length}</p><h4>${arc}</h4>`; }); }catch(_){ return h; } }; })();
 
-/* 33. "The story so far" is split by act */
-(function(){ const _sv=storyView; storyView=function(){ const h=_sv(); try{ const MC=mainChapters(); let lastArc=null; return h.replace(/<li style="--c:([^"]+)"><span class="sh-n">(\d+)<\/span>/g, (m,col,n)=>{ const ch=MC[Number(n)-1]; if(!ch) return m; const head = ch.arc!==lastArc ? `<li class="sh-act-h" style="--c:${col}">Act ${CRIME_ACTS.findIndex(a=>a.arc===ch.arc)+1} · ${esc(ch.arc)}</li>` : ''; lastArc=ch.arc; return head+m; }); }catch(_){ return h; } }; })();
 
-/* 34 + 35. hiring crew and buying safehouses say how much more you need */
-(function(){ const _f=fleetCrewHTML; fleetCrewHTML=function(st){ return _f(st).replace(/<button class="btn sm" data-act="hire" data-v="([a-z]+)">Hire · (\$[\d,]+)<\/button>/g, (m,id,cost)=>{ const k=CREW.find(x=>x.id===id); return st.cash<k.cost ? `<span class="small muted">Hire · ${cost} (you need ${money(k.cost-st.cash)} more)</span>` : m; }); }; })();
-(function(){ const _o=operationHTML; operationHTML=function(st){ return _o(st).replace(/<button class="btn sm" data-act="buy-safe" data-v="([a-z]+)" disabled>Buy · (\$[\d,]+)<\/button>/g, (m,id,cost)=>{ const s=SAFEHOUSES.find(x=>x.id===id); return `<span class="small muted">${cost} · you need ${money(s.cost-st.cash)} more</span>`; }); }; })();
 
 /* 36. laundering says what it did to your Heat */
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="launder"]'); if(!b||!S.st) return; const o=launderOpts(S.st).find(x=>x.id===b.dataset.v); if(o&&o.heat) setTimeout(()=>toast(`Heat +${o.heat} from laundering.`), 700); });

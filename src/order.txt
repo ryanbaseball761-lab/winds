@@ -107,5 +107,6 @@ page-hangar.js
 page-result.js
 page-flight.js
 page-jobs.js
+page-story.js
 ui-render.js
 zz-boot.js

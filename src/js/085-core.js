@@ -1,43 +1,12 @@
 /* ===================== REWORK: a calm story card and a clean Side jobs page ===================== */
 
 /* ---- the next-chapter action, in plain words ---- */
-function playAction(st, m, availSet, n){ const s=chapterStatus(st, m, availSet);
-  if(st.active) return {btn:`<button class="btn" data-act="nav" data-v="flight">Finish your current flight first</button>`, note:''};
-  if(s.k==='ready') return {btn:`<button class="btn action big" data-act="accept-story" data-id="${m.id}">▶ Play chapter ${n}</button>`, note:''};
-  if(s.k==='travel'){ const d=deadheadCost(st,s.at); return {btn:`<button class="btn action big" data-act="story-go" data-id="${m.id}" ${st.cash<d.cost?'disabled':''}>▶ Play chapter ${n}</button>`, note: d.cost ? `Includes a ${money(d.cost)} seat to ${esc(s.at)}.` : `You'll be flown to ${esc(s.at)} for free first.`}; }
-  if(s.k==='aircraft') return {btn:`<button class="btn" data-act="nav" data-v="hangar">Open the Hangar</button>`, note:`Needs one of these in your MSFS hangar: ${m.ac.map(k=>AC[k]?AC[k].n:k).join(', ')}.`};
-  if(s.k==='locked'){ const need=((m.req||{}).ratings||[]).filter(r=>!st.ratings[r]); const btns=chapterAction(st, m, availSet, false);
-    return {btn: btns || `<button class="btn" data-act="nav" data-v="pilot">Open Pilot</button>`, note: need.length ? `Needs your ${need.map(r=>RATINGS[r].n).join(' and ')} first.` : `Finish the previous chapter first.`}; }
-  return {btn:'', note:''}; }
 
-/* ---- the main story card (Main story page) ---- */
-campaignCard = function(st){ const c=crime(st); const MC=mainChapters(); const availSet=new Set(storyAvailable(st).map(m=>m.id));
-  const next=MC.find(m=>!st.story.done[m.id]); const done=MC.filter(m=>st.story.done[m.id]); const last=done[done.length-1];
-  const act=next ? CRIME_ACTS.find(a=>a.arc===next.arc) : CRIME_ACTS[CRIME_ACTS.length-1]; const ai=CRIME_ACTS.indexOf(act);
-  const bar=MC.map(m=>{ const a=CRIME_ACTS.find(x=>x.arc===m.arc); return `<i class="${st.story.done[m.id]?'d':m===next?'n':''}" style="--c:${a.col}" title="${esc(m.title)}"></i>`; }).join('');
-  const meters = c.on ? `<div class="sc-m"><span class="sc-rank">${esc(crimeRank(c))}</span><span>Power <b>${c.power}</b></span><span>Heat <b class="${c.heat>=60?'hot':''}">${c.heat}</b></span></div>` : '';
-  let body='';
-  if(next){ const n=MC.indexOf(next)+1; const mm=dynM(st,next); const acN=storyAircraft(st,next)[0]||next.ac[0]; const pa=playAction(st,next,availSet,n);
-    const who=mm.chars.filter(k=>CAST[k]).map(k=>`<span class="sc-who"><span class="sc-avw">${avatar(k)}</span>${esc({reyes:'Reyes',castillo:'Castillo'}[k]||shortName(k))}</span>`).join('');
-    body=`<div class="sc-next">
-      <p class="sc-k">Chapter ${n} of ${MC.length}</p><h2>${esc(next.title)}</h2><p class="sc-hook">${esc(next.hook||'')}</p>
-      <div class="sc-meta"><b>${esc(next.from)} → ${esc(next.to)}</b><span>${esc(AC[acN]?AC[acN].n:acN)}</span><span>${esc({dawn:'Dawn',day:'Daytime',dusk:'Dusk',night:'Night'}[next.time]||'')}</span>${who?`<span class="sc-whos">${who}</span>`:''}</div>
-      <div class="sc-go">${pa.btn}${pa.note?`<span class="small muted">${pa.note}</span>`:''}</div></div>`; }
-  else { const end={kingpin:'Kingpin',witness:'Witness',ghost:'Ghost'}[c.ending]||'The end'; body=`<div class="sc-next"><p class="sc-k">Story complete</p><h2>Ending: ${esc(end)}</h2><p class="sc-hook">Side jobs and the Starling story are still out there.</p></div>`; }
-  return `<section class="panel campaign story-card fade" style="--arc:${act.col}">
-    <div class="sc-top"><p class="sc-act">Act ${ai+1} · ${esc(act.arc)}</p>${meters}</div>
-    <div class="sc-bar">${bar}</div>
-    ${last?`<p class="sc-prev"><span>Previously</span> ${esc(last.recap||'')}</p>`:''}
-    ${body}
-  </section>`; };
 
 /* ---- the Side jobs page ---- */
 function jobTabOf(j){ return j.network?'network':j.special||j.vip?'special':'legit'; }
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="job-tab"]'); if(!b) return; S.jobTab=b.dataset.v; S.allJobs=false; S.keepScroll=true; render(); });
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="job-sort"]'); if(!b) return; S.jobSort=b.value; S.keepScroll=true; render(); });
-const _b2Story = storyView; storyView = function(){ return _b2Story().replace(/ &amp; start · \$0/g,' &amp; start (free)').replace(/ & start · \$0/g,' & start (free)').replace(/(<li class="[^"]*">[^<]*<\/li>)/g,'$1'); };
-/* the role label in the sidebar shouldn't get cut off */
-(function(){ const _sr=storyRole; storyRole=function(st){ const r=_sr(st); return r==="Castillo's network"?'Castillo':r==='Caribe Cargo (owner)'?'Caribe Cargo':r; }; })();
 
 (function(){ const s=document.createElement('style'); s.textContent=`
 .story-card{padding:22px 24px;border-top:3px solid var(--arc)}

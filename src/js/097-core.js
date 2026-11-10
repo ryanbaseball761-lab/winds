@@ -15,8 +15,6 @@ window.addEventListener('keydown', e=>{ if(document.querySelector('.title-screen
   if(e.key==='Escape'){ const np=document.querySelector('.notif-pane'); if(np){ np.remove(); return; } if(S.openJob && !document.querySelector('.cut,.cmd')){ S.openJob=null; S.keepScroll=true; render(); } } }, true);
 
 
-/* 8. the story card shows roughly how long the flight is */
-(function(){ const _cc=campaignCard; campaignCard=function(st){ let h=_cc(st); try{ const next=mainChapters().find(m=>!st.story.done[m.id]); if(!next) return h; const ac=storyAircraft(st,next)[0]||next.ac[0]; const jj=storyJob(st,next,ac); const est=jj.est||plan(jj).est; h=h.replace(/(<div class="sc-meta"><b>[^<]*<\/b>)/, `$1<span>~${durTxt(est)}</span>`); }catch(_){} return h; }; })();
 
 
 /* 10 + 11. cutscenes: optional auto-play, and a progress line */
@@ -33,8 +31,6 @@ window.cutAuto = ()=>!!uiP().autoCut;
 /* 17. laundering: the cheapest option is highlighted */
 (function(){ const _l=launderHTML; launderHTML=function(st){ const h=_l(st); if(!h) return h; const L=launderOpts(st); const best=L.slice().sort((a,b)=>a.fee-b.fee)[0]; return best ? h.replace(`<button class="btn sm" data-act="launder" data-v="${best.id}">`, `<button class="btn sm primary" data-act="launder" data-v="${best.id}">`) : h; }; })();
 
-/* 18. fleet cards show what each jet costs per day */
-(function(){ const _f=fleetCrewHTML; fleetCrewHTML=function(st){ let h=_f(st); FLEET.forEach(f=>{ const u=UPKEEP[f[1]]; if(u) h=h.replace(`<small>${esc(f[4])}</small>`, `<small>${esc(f[4])}</small><small class="mono">${money(u)}/day</small>`); }); return h; }; })();
 
 /* 19. a backup every 30 minutes of play, too */
 setInterval(()=>{ try{ if(S.st && !(S.st.active&&S.st.active.started)) backupLabeled(S.st, `Autosave · ${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`); }catch(_){} }, 30*60000);

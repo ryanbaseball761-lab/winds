@@ -9,8 +9,6 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="open-se
 /* 4. command bar: search story chapters and achievements too */
 (function(){ const _ci=cmdItems; cmdItems=function(){ const L=_ci(); try{ const st=S.st; const MC=mainChapters(); MC.forEach((m,i)=>{ if(st.story.done[m.id]) L.push({n:`Chapter ${i+1}: ${m.title}`, k:'Story · replay the opening', run:()=>{ go('story'); setTimeout(()=>playPrologue(m,()=>{}),200); }}); }); ACH.forEach(a=>L.push({n:`${a.n}`, k:st.ach&&st.ach[a.id]?'Achievement · unlocked':'Achievement · '+a.d, run:()=>go('profile')})); }catch(_){} return L; }; })();
 
-/* 5. laundering through Dez stops if Dez is in prison; a money changer takes his place */
-(function(){ const _lo=launderOpts; launderOpts=function(st){ let L=_lo(st); const f=crime(st).flags; if(f.dezJail) L=L.map(o=>o.id==='dez'?{id:'changer',n:'A money changer in Philipsburg',fee:0.3,heat:4}:o); return L; }; })();
 
 
 
@@ -18,8 +16,6 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="open-se
 /* 9. Skip on a decision explains why it doesn't skip */
 document.addEventListener('click', e=>{ const s=e.target.closest('.cut-skip'); if(!s) return; const c=s.closest('.cut'); if(c && c.classList.contains('choosing')){ s.textContent="Decisions can't be skipped"; setTimeout(()=>{ s.textContent='Skip'; }, 1800); } }, true);
 
-/* 10. safehouses you can't buy yet say what's needed */
-(function(){ const _o=operationHTML; operationHTML=function(st){ return _o(st).replace(/<span class="small muted">(\$[\d,]+)<\/span><\/div>/g, '<span class="small muted">$1 · buy the one above first</span></div>'); }; })();
 
 
 /* 12. the sidebar says where your career is really saved */
