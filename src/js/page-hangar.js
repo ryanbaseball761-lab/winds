@@ -94,7 +94,7 @@ function hangarView(){
   const st=S.st; const cur=S.hangarTab||'fleet';
   setTimeout(prefillOwnAircraftForm, 0);
   const tabs=`<nav class="hg-tabs">${HG_TABS.map(([k,l])=>`<button class="${k===cur?'on':''}" data-act="hg-tab" data-v="${k}">${l}</button>`).join('')}</nav>`;
-  if(cur==='fleet') return `<main class="wrap stack fade">${loadedNowCard(st)}${fleetCrewHTML(st)}${tabs}
+  if(cur==='fleet') return `<main class="wrap stack fade">${tabs}${loadedNowCard(st)}${fleetCrewHTML(st)}
     ${airframeHealthSection(st)}${byoSection(st)}
     <section class="panel stack"><h2>Hangar</h2><p class="small muted">Untick any aircraft you don't have in your copy of MSFS (2020 or 2024) so the career never assigns it. Numbers are approximate planning figures; check each aircraft's own EFB for real limits.</p></section>
     ${ownedAircraftList(st)}</main>`;

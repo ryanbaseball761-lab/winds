@@ -167,7 +167,7 @@ function storyJob(st, chapter, acId){
     ac:acId, pax:m.pax, cargo:m.cargo, cargoLabel:m.cargoLabel, dep:m.dep, wx, scen:m.scen||null, paras:m.brief, teachStory:m.teach, chars:m.chars, airline:!!m.airline, client:CAST[m.chars[0]]?.n||'' };
   job.pay = payFor(st, job); job.est = plan(job).est;
   if(m.lend){ job.lend = true; job.pay = m.fee || job.pay; job.tail = acId==='CJ4'?'N52VL':STARLING_TAIL; }
-  const ch = arcChapters(m.arc); job.label = `${m.arc} · Ch ${ch.indexOf(m)+1}/${ch.length}`;
+  const ch = arcChapters(chapter.arc); job.label = `${chapter.arc} · Ch ${ch.indexOf(chapter)+1}/${ch.length}`;
   return job;
 }
 

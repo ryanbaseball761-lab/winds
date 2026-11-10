@@ -45,8 +45,6 @@ function score(job, f){
   const act=S.st&&S.st.active; if(job.scen && f.auto && act && act.scenPlan && !f.scen) g = Object.assign({}, g, {scen: scenVerdict(job, f, act.scenPlan)});
   if(diff()==='casual' && g.landing==='hard') g = Object.assign({}, g, {landing:'firm'});
   const r = scoreSheet(job, g);
-  /* Expert: skipping the checklist costs 10 points */
-  if(diff()==='expert' && S.st.active && !checklistDone(S.st.active)) { r.score=Math.max(0,r.score-10); r.grade = r.score>=90?'A':r.score>=80?'B':r.score>=70?'C':r.score>=60?'D':'F'; }
   /* a measured touchdown replaces the two estimated lines */
   const A=f&&f.tda;
   if(A && A.runway){ r.parts = r.parts.map(p=>{
@@ -57,6 +55,8 @@ function score(job, f){
     retotal(r); }
   /* with no passengers on board, the last line is about the cargo */
   if(job && !job.pax && r.parts){ r.parts=r.parts.map(p=>/^Passenger experience/.test(p[0]) ? ['Cargo care', f.landing==='hard'?6:10, 10] : p); retotal(r); }
+  /* Expert: skipping the checklist costs 10 points (applied last, so the recounts above can't undo it) */
+  if(diff()==='expert' && S.st.active && !checklistDone(S.st.active) && !r.crash){ r.parts.push(['Expert: checklist not completed', -10, 0]); retotal(r); }
   return r;
 }
 
@@ -246,10 +246,11 @@ function wearAirframe(st, job, f, res, out){
   if(t.flapOver){ dmg+=8*t.flapOver; why.push('flap overspeed'); } if(t.flapDmg){ dmg+=20; why.push('flap damage'); }
   if(t.overspeed){ dmg+=6*t.overspeed; why.push('overspeed'); } if(t.gearOver){ dmg+=8; why.push('gear overspeed'); }
   if(f.landing==='butter' && !res.crash) dmg=Math.max(0,dmg-1);
+  if(!res.crash) dmg=Math.min(dmg,12);
   A.h = Math.max(0, A.h - dmg); A.log.unshift({day:st.day, d:dmg, why:why.join(', ')||'normal wear'}); A.log=A.log.slice(0,10);
   if(dmg>=10 && !job.lend){ const cost=Math.round(dmg*18/10)*10; txn(st,-cost,'Accidents & fines',`Damage deductible: ${AC[job.ac].n}`); out.costs=(out.costs||0)+cost; out.notes.push(`Dez inspected the ${AC[job.ac].n}: ${why.join(', ')}. Your damage deductible is ${money(cost)}.`); }
   out.notes.push(`${AC[job.ac].n} airframe health: ${A.h}%${dmg>1?` (−${dmg})`:''}.`);
-  if(A.h < 40){ A.grounded = st.day + (A.h<20?3:2); out.notes.push(`It's grounded for repairs until day ${A.grounded}. Dez is not happy.`); addJournal(st, `${AC[job.ac].n} grounded`, `Dez takes one look and reaches for his toolbox. "This one sits until I say so."`, ['dez'], 'flight'); }
+  if(A.h < 25){ A.grounded = st.day + (A.h<15?3:2); out.notes.push(`It's grounded for repairs until day ${A.grounded}. Dez is not happy.`); addJournal(st, `${AC[job.ac].n} grounded`, `Dez takes one look and reaches for his toolbox. "This one sits until I say so."`, ['dez'], 'flight'); }
 }
 /* One flight never costs more than 12% health (unless you crash), and an aircraft at 25%+ can fly. */
 function capWear(st, job, res, out, before){
@@ -347,9 +348,8 @@ function rest(st){
   const net = companyTick(st);
   finDaily(st); newDayBrief(st); checkAch(st);
   st.call=null; maybeCall(st, 0.35);
-  // aircraft are repaired overnight: 12% a day, 24% while grounded; anything at 25%+ can fly
-  for(const id in (st.airframes||{})){ const A=st.airframes[id]; A.h=Math.min(100, A.h + (isGrounded(st,id)?18:6)); if(A.grounded && st.day>=A.grounded && A.h>=40) A.grounded=0; }
-  try{ for(const id in (st.airframes||{})){ const A=st.airframes[id]; A.h=Math.min(100, A.h+6); if(A.h>=25) A.grounded=0; } }catch(_){}
+  // aircraft are repaired overnight: 12% a day, 24% while grounded; anything at 25%+ can fly again
+  for(const id in (st.airframes||{})){ const A=st.airframes[id]; A.h=Math.min(100, A.h + (isGrounded(st,id)?24:12)); if(A.h>=25) A.grounded=0; }
   // Heat: Boss rank cools it; hot airports cool off after 3 days
   try{ const c=crime(st); if(c.power>=85) crBump(c,'heat',-2); for(const k in (c.hot||{})) if(st.day-c.hot[k]>3) delete c.hot[k]; }catch(_){}
   // fleet upkeep and crew wages; a safehouse cools Heat

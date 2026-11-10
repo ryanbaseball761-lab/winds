@@ -37,5 +37,23 @@ const results=[]; const ok=(n,c,info)=>{ results.push([n,!!c,info||'']); };
     return {feds,net,h,daily,ngDone:Object.keys(st.story.done).filter(k=>CRIME_IDS.has(k)).length, ng:crime(st).ng}; });
   ok('feds block at Heat 80+, no network runs then', e.feds && e.net===0, JSON.stringify(e)); ok('paying the fix cuts Heat', e.h<=55, String(e.h)); ok('new day charges fleet upkeep', e.daily>=330, String(e.daily)); ok('New Game+ restarts the story', e.ngDone===0 && e.ng===1, JSON.stringify(e));
   ok('no script errors in economy checks', p._errs.length===0, p._errs.join(' | ')); await p.close();
+  // 8. regressions from the bug hunt
+  p=await page(); const g=await p.evaluate(async()=>{ const st=S.st; const out={};
+    /* chapters changed by earlier choices still get the right "Ch n/total" label */
+    crime(st).flags.hidcase=1; const m=CRIME.find(x=>x.id==='CR9'); out.label=storyJob(st,m,'SF50').label;
+    /* Expert: skipping the checklist still costs 10 points when MSFS measured the touchdown */
+    st.ui=st.ui||{}; const d0=st.difficulty; st.difficulty='expert'; st.jobs=genJobs(st); const j=st.jobs.find(x=>!x.local)||st.jobs[0]; st.active={job:j,accepted:Date.now(),started:Date.now()};
+    const f={landing:'smooth',tdz:true,center:true,fuel:999,fuelUnit:'lb',block:j.est||30,checklist:true,radio:true,weather:true,smooth:true,tasks:[]};
+    out.expert=score(j,Object.assign({},f)).parts.some(x=>/checklist not completed/.test(x[0])); st.difficulty=d0; st.active=null;
+    /* one flight never costs more than 12% airframe health, and nothing above 25% is grounded */
+    const A=airframe(st,j.ac); A.h=60; const fo={landing:'hard',simBounces:4,simG:2.2}; const oo={notes:[],costs:0}; wearAirframe(st,j,fo,{crash:false},oo); out.wear=A.h; out.grounded=!!A.grounded;
+    /* a double click on New day only starts one day */
+    S.view='board'; render(); const day=st.day; const b=document.querySelector('[data-act="rest"]'); b.click(); b.click(); out.days=st.day-day;
+    return out; });
+  ok('chapter label survives earlier choices', /Ch [1-9]/.test(g.label), g.label);
+  ok('Expert checklist penalty is not lost', g.expert, String(g.expert));
+  ok('wear is capped at 12% per flight, no grounding above 25%', g.wear===48 && !g.grounded, JSON.stringify(g));
+  ok('double click on New day counts once', g.days===1, String(g.days));
+  ok('no script errors in regression checks', p._errs.length===0, p._errs.join(' | ')); await p.close();
   }catch(err){ ok('suite crashed', false, err.message); }
   await b.close(); let fail=0; for(const [n,good,info] of results){ console.log((good?'ok   ':'FAIL ')+n+(good?'':'  -> '+info)); if(!good) fail++; } console.log(fail?`${fail} FAILED`:'ALL PASSED'); process.exit(fail?1:0); })();

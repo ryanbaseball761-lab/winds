@@ -990,6 +990,8 @@ main.wrap{gap:22px}
 .loaded-tag{position:absolute;top:10px;left:10px;z-index:3;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:#1f9d55;color:#fff;padding:3px 8px;border-radius:999px}
 .jcard h3,.jcard .jc-title{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .set-grid .diff{display:inline-flex}
+/* the cabin panel header (title, Sounds, Voices, Live) wraps instead of pushing the page wider */
+.cabin-host .row.between{flex-wrap:wrap;gap:6px}
 </style>
 <div id="app"></div>
 <script>
@@ -7005,8 +7007,6 @@ function score(job, f){
   const act=S.st&&S.st.active; if(job.scen && f.auto && act && act.scenPlan && !f.scen) g = Object.assign({}, g, {scen: scenVerdict(job, f, act.scenPlan)});
   if(diff()==='casual' && g.landing==='hard') g = Object.assign({}, g, {landing:'firm'});
   const r = scoreSheet(job, g);
-  /* Expert: skipping the checklist costs 10 points */
-  if(diff()==='expert' && S.st.active && !checklistDone(S.st.active)) { r.score=Math.max(0,r.score-10); r.grade = r.score>=90?'A':r.score>=80?'B':r.score>=70?'C':r.score>=60?'D':'F'; }
   /* a measured touchdown replaces the two estimated lines */
   const A=f&&f.tda;
   if(A && A.runway){ r.parts = r.parts.map(p=>{
@@ -7017,6 +7017,8 @@ function score(job, f){
     retotal(r); }
   /* with no passengers on board, the last line is about the cargo */
   if(job && !job.pax && r.parts){ r.parts=r.parts.map(p=>/^Passenger experience/.test(p[0]) ? ['Cargo care', f.landing==='hard'?6:10, 10] : p); retotal(r); }
+  /* Expert: skipping the checklist costs 10 points (applied last, so the recounts above can't undo it) */
+  if(diff()==='expert' && S.st.active && !checklistDone(S.st.active) && !r.crash){ r.parts.push(['Expert: checklist not completed', -10, 0]); retotal(r); }
   return r;
 }
 
@@ -7206,10 +7208,11 @@ function wearAirframe(st, job, f, res, out){
   if(t.flapOver){ dmg+=8*t.flapOver; why.push('flap overspeed'); } if(t.flapDmg){ dmg+=20; why.push('flap damage'); }
   if(t.overspeed){ dmg+=6*t.overspeed; why.push('overspeed'); } if(t.gearOver){ dmg+=8; why.push('gear overspeed'); }
   if(f.landing==='butter' && !res.crash) dmg=Math.max(0,dmg-1);
+  if(!res.crash) dmg=Math.min(dmg,12);
   A.h = Math.max(0, A.h - dmg); A.log.unshift({day:st.day, d:dmg, why:why.join(', ')||'normal wear'}); A.log=A.log.slice(0,10);
   if(dmg>=10 && !job.lend){ const cost=Math.round(dmg*18/10)*10; txn(st,-cost,'Accidents & fines',`Damage deductible: ${AC[job.ac].n}`); out.costs=(out.costs||0)+cost; out.notes.push(`Dez inspected the ${AC[job.ac].n}: ${why.join(', ')}. Your damage deductible is ${money(cost)}.`); }
   out.notes.push(`${AC[job.ac].n} airframe health: ${A.h}%${dmg>1?` (−${dmg})`:''}.`);
-  if(A.h < 40){ A.grounded = st.day + (A.h<20?3:2); out.notes.push(`It's grounded for repairs until day ${A.grounded}. Dez is not happy.`); addJournal(st, `${AC[job.ac].n} grounded`, `Dez takes one look and reaches for his toolbox. "This one sits until I say so."`, ['dez'], 'flight'); }
+  if(A.h < 25){ A.grounded = st.day + (A.h<15?3:2); out.notes.push(`It's grounded for repairs until day ${A.grounded}. Dez is not happy.`); addJournal(st, `${AC[job.ac].n} grounded`, `Dez takes one look and reaches for his toolbox. "This one sits until I say so."`, ['dez'], 'flight'); }
 }
 /* One flight never costs more than 12% health (unless you crash), and an aircraft at 25%+ can fly. */
 function capWear(st, job, res, out, before){
@@ -7307,9 +7310,8 @@ function rest(st){
   const net = companyTick(st);
   finDaily(st); newDayBrief(st); checkAch(st);
   st.call=null; maybeCall(st, 0.35);
-  // aircraft are repaired overnight: 12% a day, 24% while grounded; anything at 25%+ can fly
-  for(const id in (st.airframes||{})){ const A=st.airframes[id]; A.h=Math.min(100, A.h + (isGrounded(st,id)?18:6)); if(A.grounded && st.day>=A.grounded && A.h>=40) A.grounded=0; }
-  try{ for(const id in (st.airframes||{})){ const A=st.airframes[id]; A.h=Math.min(100, A.h+6); if(A.h>=25) A.grounded=0; } }catch(_){}
+  // aircraft are repaired overnight: 12% a day, 24% while grounded; anything at 25%+ can fly again
+  for(const id in (st.airframes||{})){ const A=st.airframes[id]; A.h=Math.min(100, A.h + (isGrounded(st,id)?24:12)); if(A.h>=25) A.grounded=0; }
   // Heat: Boss rank cools it; hot airports cool off after 3 days
   try{ const c=crime(st); if(c.power>=85) crBump(c,'heat',-2); for(const k in (c.hot||{})) if(st.day-c.hot[k]>3) delete c.hot[k]; }catch(_){}
   // fleet upkeep and crew wages; a safehouse cools Heat
@@ -7492,7 +7494,7 @@ function storyJob(st, chapter, acId){
     ac:acId, pax:m.pax, cargo:m.cargo, cargoLabel:m.cargoLabel, dep:m.dep, wx, scen:m.scen||null, paras:m.brief, teachStory:m.teach, chars:m.chars, airline:!!m.airline, client:CAST[m.chars[0]]?.n||'' };
   job.pay = payFor(st, job); job.est = plan(job).est;
   if(m.lend){ job.lend = true; job.pay = m.fee || job.pay; job.tail = acId==='CJ4'?'N52VL':STARLING_TAIL; }
-  const ch = arcChapters(m.arc); job.label = `${m.arc} · Ch ${ch.indexOf(m)+1}/${ch.length}`;
+  const ch = arcChapters(chapter.arc); job.label = `${chapter.arc} · Ch ${ch.indexOf(chapter)+1}/${ch.length}`;
   return job;
 }
 
@@ -7849,7 +7851,7 @@ function hangarView(){
   const st=S.st; const cur=S.hangarTab||'fleet';
   setTimeout(prefillOwnAircraftForm, 0);
   const tabs=`<nav class="hg-tabs">${HG_TABS.map(([k,l])=>`<button class="${k===cur?'on':''}" data-act="hg-tab" data-v="${k}">${l}</button>`).join('')}</nav>`;
-  if(cur==='fleet') return `<main class="wrap stack fade">${loadedNowCard(st)}${fleetCrewHTML(st)}${tabs}
+  if(cur==='fleet') return `<main class="wrap stack fade">${tabs}${loadedNowCard(st)}${fleetCrewHTML(st)}
     ${airframeHealthSection(st)}${byoSection(st)}
     <section class="panel stack"><h2>Hangar</h2><p class="small muted">Untick any aircraft you don't have in your copy of MSFS (2020 or 2024) so the career never assigns it. Numbers are approximate planning figures; check each aircraft's own EFB for real limits.</p></section>
     ${ownedAircraftList(st)}</main>`;
@@ -8094,7 +8096,7 @@ function sealedOrdersSection(act){ const job=act.job; const sc = job.scen ? SCEN
   return act.scenPlan ? ordersHTML(act,false) : `<section class="opened"><p class="label">Sealed orders, opened</p><h3 style="margin:4px 0 6px">${esc(sc.n)}</h3><p>${esc(sc.text)}</p><p class="small" style="margin-top:8px"><b>In the sim:</b> ${esc(sc.sim)}</p></section>`; }
 
 /* The two-column briefing: conditions, load and fuel on the left; live sim, route, aircraft and destination on the right. */
-function briefingGrid(st, job, p, withBriefing){
+function briefingGrid(st, job, p, withBriefing, noTasks){
   const a=AC[job.ac]; const from=AP[job.from], to=AP[job.to];
   const rwDep = rwyAnalysis(job.from, job.wx, job.ac), rwArr = rwyAnalysis(job.to, job.wx, job.ac);
   const teach = [...(job.teachStory||[]), ...autoTeach(st, job, p)];
@@ -8112,7 +8114,7 @@ function briefingGrid(st, job, p, withBriefing){
   return `<div class="grid-2">
      <div class="stack">
       ${withBriefing?briefingSection(job):''}
-      ${job.kind==='check' ? `<section class="panel"><h2>Checkride tasks</h2><p class="small muted" style="margin-top:4px">Fly every task. You'll tick off the ones you completed in the debrief.</p><ul class="tight">${job.tasks.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></section>`:''}
+      ${job.kind==='check' && !noTasks ? `<section class="panel"><h2>Checkride tasks</h2><p class="small muted" style="margin-top:4px">Fly every task. You'll tick off the ones you completed in the debrief.</p><ul class="tight">${job.tasks.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></section>`:''}
       ${job.bonus?`<section class="notice"><b>Bonus objective (+${money(job.bonus.amt)}):</b> ${esc(job.bonus.text)}${job.bonus.auto==='fpm'?' <span class="muted small">(checked from your landing)</span>':job.bonus.auto==='block'?' <span class="muted small">(checked from your block time)</span>':''}</section>`:''}
       ${job.festival?`<section class="notice"><b>${esc(job.festival)}</b> is on at the destination: busy ramp, crowded frequency, and 40% extra pay.</section>`:''}
       ${job.stormName?`<section class="notice bad"><b>Hurricane ${esc(job.stormName)}</b> is affecting this route. Expect instrument conditions, strong gusts and heavy rain. Turning back is always an option.</section>`:''}
@@ -8194,8 +8196,8 @@ function flightView(){
   const tasks = isCheck ? `<section class="panel fl-tasks"><p class="label">What the examiner is grading</p><ul class="tight">${job.tasks.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>` : '';
   const setup = `<section class="panel stack preflight fsetup" id="preflight">${preflightHTML(job)}</section>`;
   const briefing = isStory ? '' : `<details class="calm-more"><summary>${job.kind==='check'?'About this checkride':'Client briefing'}</summary><div class="calm-more-in">${briefingSection(job)}</div></details>`;
-  /* a checkride shows only the ticket, the tasks and the setup */
-  const details = isCheck ? '' : `<details class="calm-more flight-more"><summary>Flight details: conditions, weights, route, aircraft and passengers</summary><div class="calm-more-in">${job.manifest?manifestHTML(job):''}${briefingGrid(st, job, p, false)}</div></details>`;
+  /* the flight details drawer (a checkride already lists its tasks above, so they are left out here) */
+  const details = `<details class="calm-more flight-more"><summary>Flight details: conditions, weights, route, aircraft and passengers</summary><div class="calm-more-in">${job.manifest?manifestHTML(job):''}${briefingGrid(st, job, p, false, isCheck)}</div></details>`;
   return `<main class="wrap stack fade">${skipBar}${hero}${pass}${how}${tasks}${setup}${briefing}${guide}${details}</main>`;
 }
 /* ===================== JOBS PAGE =====================
@@ -8559,6 +8561,19 @@ function cmdItems(){ const st=S.st; const L=[]; if(!st) return L; const pg=(n,v,
     const k=rec.indexOf(it.n); if(k>=0){ it.k='Recent · '+it.k; it._rec=5-k; } else if(it.airport){ const a=AP[it.airport]; it.k=`Airport · ${a.isl} · ${longestRwy(a).toLocaleString()} ft`; } });
   try{ metPeople(st).forEach(k=>L.push({n:CAST[k].n, k:'Person · '+(CAST[k].role||''), run:()=>{ go('story'); setTimeout(()=>personCard(k),150); }})); }catch(_){}
   return L; }
+
+/* ---------- double-click guard ---------- */
+
+/* A double click on a button that costs money or moves the career on (New day, Accept, a choice...)
+   only counts once. */
+const ONCE_ACTS = new Set(['rest','accept','accept-story','story-go','crime-choose','book-check','hire','buy-safe','launder','deadhead','cancel-yes','signoff','start','reset-yes','rush-repair','practice']);
+let LAST_ACT = {k:'', t:0};
+window.addEventListener('click', e=>{
+  const b=e.target.closest('[data-act]'); if(!b || !ONCE_ACTS.has(b.dataset.act)) return;
+  const k=b.dataset.act+'|'+(b.dataset.id||b.dataset.v||b.dataset.i||b.dataset.r||''); const now=Date.now();
+  if(LAST_ACT.k===k && now-LAST_ACT.t<800){ e.stopImmediatePropagation(); e.preventDefault(); return; }
+  LAST_ACT={k, t:now};
+}, true);
 /* ===================== RENDER =====================
    render() redraws the whole page from S (what's on screen) and S.st (the career).
    It runs in three parts, always in this order:

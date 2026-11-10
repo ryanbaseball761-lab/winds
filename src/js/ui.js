@@ -44,3 +44,16 @@ function cmdItems(){ const st=S.st; const L=[]; if(!st) return L; const pg=(n,v,
     const k=rec.indexOf(it.n); if(k>=0){ it.k='Recent · '+it.k; it._rec=5-k; } else if(it.airport){ const a=AP[it.airport]; it.k=`Airport · ${a.isl} · ${longestRwy(a).toLocaleString()} ft`; } });
   try{ metPeople(st).forEach(k=>L.push({n:CAST[k].n, k:'Person · '+(CAST[k].role||''), run:()=>{ go('story'); setTimeout(()=>personCard(k),150); }})); }catch(_){}
   return L; }
+
+/* ---------- double-click guard ---------- */
+
+/* A double click on a button that costs money or moves the career on (New day, Accept, a choice...)
+   only counts once. */
+const ONCE_ACTS = new Set(['rest','accept','accept-story','story-go','crime-choose','book-check','hire','buy-safe','launder','deadhead','cancel-yes','signoff','start','reset-yes','rush-repair','practice']);
+let LAST_ACT = {k:'', t:0};
+window.addEventListener('click', e=>{
+  const b=e.target.closest('[data-act]'); if(!b || !ONCE_ACTS.has(b.dataset.act)) return;
+  const k=b.dataset.act+'|'+(b.dataset.id||b.dataset.v||b.dataset.i||b.dataset.r||''); const now=Date.now();
+  if(LAST_ACT.k===k && now-LAST_ACT.t<800){ e.stopImmediatePropagation(); e.preventDefault(); return; }
+  LAST_ACT={k, t:now};
+}, true);

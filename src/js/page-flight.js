@@ -161,7 +161,7 @@ function sealedOrdersSection(act){ const job=act.job; const sc = job.scen ? SCEN
   return act.scenPlan ? ordersHTML(act,false) : `<section class="opened"><p class="label">Sealed orders, opened</p><h3 style="margin:4px 0 6px">${esc(sc.n)}</h3><p>${esc(sc.text)}</p><p class="small" style="margin-top:8px"><b>In the sim:</b> ${esc(sc.sim)}</p></section>`; }
 
 /* The two-column briefing: conditions, load and fuel on the left; live sim, route, aircraft and destination on the right. */
-function briefingGrid(st, job, p, withBriefing){
+function briefingGrid(st, job, p, withBriefing, noTasks){
   const a=AC[job.ac]; const from=AP[job.from], to=AP[job.to];
   const rwDep = rwyAnalysis(job.from, job.wx, job.ac), rwArr = rwyAnalysis(job.to, job.wx, job.ac);
   const teach = [...(job.teachStory||[]), ...autoTeach(st, job, p)];
@@ -179,7 +179,7 @@ function briefingGrid(st, job, p, withBriefing){
   return `<div class="grid-2">
      <div class="stack">
       ${withBriefing?briefingSection(job):''}
-      ${job.kind==='check' ? `<section class="panel"><h2>Checkride tasks</h2><p class="small muted" style="margin-top:4px">Fly every task. You'll tick off the ones you completed in the debrief.</p><ul class="tight">${job.tasks.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></section>`:''}
+      ${job.kind==='check' && !noTasks ? `<section class="panel"><h2>Checkride tasks</h2><p class="small muted" style="margin-top:4px">Fly every task. You'll tick off the ones you completed in the debrief.</p><ul class="tight">${job.tasks.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></section>`:''}
       ${job.bonus?`<section class="notice"><b>Bonus objective (+${money(job.bonus.amt)}):</b> ${esc(job.bonus.text)}${job.bonus.auto==='fpm'?' <span class="muted small">(checked from your landing)</span>':job.bonus.auto==='block'?' <span class="muted small">(checked from your block time)</span>':''}</section>`:''}
       ${job.festival?`<section class="notice"><b>${esc(job.festival)}</b> is on at the destination: busy ramp, crowded frequency, and 40% extra pay.</section>`:''}
       ${job.stormName?`<section class="notice bad"><b>Hurricane ${esc(job.stormName)}</b> is affecting this route. Expect instrument conditions, strong gusts and heavy rain. Turning back is always an option.</section>`:''}
@@ -261,7 +261,7 @@ function flightView(){
   const tasks = isCheck ? `<section class="panel fl-tasks"><p class="label">What the examiner is grading</p><ul class="tight">${job.tasks.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>` : '';
   const setup = `<section class="panel stack preflight fsetup" id="preflight">${preflightHTML(job)}</section>`;
   const briefing = isStory ? '' : `<details class="calm-more"><summary>${job.kind==='check'?'About this checkride':'Client briefing'}</summary><div class="calm-more-in">${briefingSection(job)}</div></details>`;
-  /* a checkride shows only the ticket, the tasks and the setup */
-  const details = isCheck ? '' : `<details class="calm-more flight-more"><summary>Flight details: conditions, weights, route, aircraft and passengers</summary><div class="calm-more-in">${job.manifest?manifestHTML(job):''}${briefingGrid(st, job, p, false)}</div></details>`;
+  /* the flight details drawer (a checkride already lists its tasks above, so they are left out here) */
+  const details = `<details class="calm-more flight-more"><summary>Flight details: conditions, weights, route, aircraft and passengers</summary><div class="calm-more-in">${job.manifest?manifestHTML(job):''}${briefingGrid(st, job, p, false, isCheck)}</div></details>`;
   return `<main class="wrap stack fade">${skipBar}${hero}${pass}${how}${tasks}${setup}${briefing}${guide}${details}</main>`;
 }
