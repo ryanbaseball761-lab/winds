@@ -26,7 +26,6 @@ async function connect(){
     renderSync();
   }catch(e){ S.sync='device'; renderSync(); }
 }
-function migrate(st){ st.celebs=st.celebs||{}; st.souvenirs=st.souvenirs||{}; st.gifts=st.gifts||{}; st.followups=st.followups||[]; st.ach=st.ach||{}; st.reviews=st.reviews||[]; if(!st.landedAt){ st.landedAt={}; (st.log||[]).forEach(l=>{ if(l.landing!=='crash') st.landedAt[l.to]=(st.landedAt[l.to]||0)+1; }); } if(!st.stats) st.stats={butter:0,smooth:0,firm:0,hard:0,crash:0,nm:0,diverts:0,scen:0}; if(!st.cooldown) st.cooldown={}; if(!st.visited) st.visited={}; Object.keys(AC).forEach(k=>{ if(st.hangar[k]===undefined) st.hangar[k]=true; }); Object.keys(CAST).forEach(k=>{ if(st.rep[k]===undefined) st.rep[k]=10; }); return finMigrate(st); }
 
 /* ---------- helpers ---------- */
 var toast; /* defined in full below (047-core.js) */
@@ -36,28 +35,6 @@ function syncText(){ return {account:'Saved to your account', device:'Saved in t
 function renderSync(){ const el=document.getElementById('sync'); if(el) el.textContent=syncText(); }
 
 
-function chipsFor(st, job){
-  const c=[]; const a=AC[job.ac];
-  if(job.mystery && !(st.active && st.active.job===job)){ c.push(`<span class="chip vio">Confidential</span>`); if(job.followup) c.push(`<span class="chip sea">Follow-up</span>`); if(job.request) c.push(`<span class="chip vio">Passenger request</span>`); if(!st.types[job.ac]) c.push(`<span class="chip new">New type</span>`); return c.join(''); }
-  if(job.followup) c.push(`<span class="chip sea">Follow-up</span>`);
-  if(job.request) c.push(`<span class="chip vio">Passenger request</span>`);
-  if(job.kind==='story') c.push(`<span class="chip sea">Story</span>`);
-  if(job.lend) c.push(`<span class="chip vio">Owner's jet</span>`);
-  if(job.company) c.push(`<span class="chip sky">Your company</span>`);
-  if(job.vip) c.push(`<span class="chip warn">VIP</span>`);
-  if(job.urgent) c.push(`<span class="chip bad">Urgent</span>`);
-  if(job.wx.ifr) c.push(`<span class="chip vio">IFR</span>`);
-  if(isNight(job.dep)) c.push(`<span class="chip">Night</span>`);
-  if(!st.types[job.ac]) c.push(`<span class="chip new">New type</span>`);
-  if(!job.local && !st.visited[job.to] && !AP[job.to].water) c.push(`<span class="chip new">New airport</span>`);
-  if(AP[job.to].water) c.push(`<span class="chip sky">Water landing</span>`);
-  if(!job.local && ZONE(AP[job.from].c)!==ZONE(AP[job.to].c)) c.push(`<span class="chip">Customs</span>`);
-  if(job.scen) c.push(`<span class="chip bad">Sealed orders</span>`);
-  if(job.bonus) c.push(`<span class="chip good">Bonus +${money(job.bonus.amt)}</span>`);
-  if(job.festival) c.push(`<span class="chip vio">${esc(job.festival)}</span>`);
-  if(job.stormName) c.push(`<span class="chip bad">Hurricane ${esc(job.stormName)}</span>`);
-  return c.join('');
-}
 var dutyAfter; /* defined in full below (061-core.js) */
 function avatar(k){ const c=CAST[k]; const ini=c.n.replace(/".*?"\s*/,'').split(' ').filter(w=>/^[A-Z]/.test(w)).slice(-2).map(w=>w[0]).join(''); return `<div class="avatar" style="background:${c.col}" aria-hidden="true">${esc(ini)}</div>`; }
 

@@ -1546,24 +1546,10 @@ function archOk(st, arch){
   if(arch.season){ const mo=monthOf(st.day); if(mo<7||mo>9) return false; }
   return true;
 }
-function genJobs(st){
-  const jobs=[]; const arcs = ARCH.filter(a=>archOk(st,a)).map(a=>({...a,w:archWeight(st,a)})).filter(a=>a.w>0);
-  let tries=0;
-  while(jobs.length<6 && tries<80){ tries++; const arch=wpickArr(arcs); const j=makeJob(st, arch, false); if(j && !jobs.some(x=>x.to===j.to && x.arch===j.arch)) jobs.push(j); }
-  if(st.company && fleetTypes(st).length){ let t=0, n=0; while(n<3 && t<40){ t++; const arch=wpickArr(arcs); const j=makeJob(st, arch, true); if(j){ jobs.push(j); n++; } } }
-  return decorateJobs(st, jobs).sort((x,y)=>x.dep-y.dep);
-}
-function ensureJobs(st){ const key = st.loc+'|'+st.day; if(st.jobsKey!==key){ st.jobs = genJobs(st); st.jobsKey=key; } }
 
 /* ---------- Story & checkride jobs ---------- */
 var storyAvailable; /* defined in full below (050-core.js) */
 
-function storyJob(st, m, acId){
-  const wx = genWx(st, m.to, m.wx, m.dep);
-  const job = { id:'S-'+m.id, kind:'story', story:m.id, title:m.title, label:m.arc, cat: m.cargo>m.pax*190?'cargo':'pax', from:m.from, to:m.to, local:!!m.local, tourNm:m.local?45:0,
-    ac:acId, pax:m.pax, cargo:m.cargo, cargoLabel:m.cargoLabel, dep:m.dep, wx, scen:m.scen||null, paras:m.brief, teachStory:m.teach, chars:m.chars, airline:!!m.airline, client:CAST[m.chars[0]]?.n||'' };
-  job.pay = payFor(st, job); job.est = plan(job).est; return job;
-}
 function checkrideReady(st, rid){
   const R=RATINGS[rid]; if(!R.req || st.ratings[rid]) return {ok:false, earned:!!st.ratings[rid]};
   const r=R.req, miss=[];
@@ -1583,21 +1569,6 @@ function checkrideAircraft(st, rid){
   return list;
 }
 function hasAllButTarget(st,k,rid){ return AC[k].req.every(r=>r===rid || st.ratings[r]); }
-function checkrideJob(st, rid, acId){
-  const R=RATINGS[rid]; let to = st.loc, local=true;
-  if(R.dest){ to=R.dest; local=false; }
-  if(R.water){ let best=null,bd=1e9; for(const k in AP){ if(!AP[k].water) continue; const d=distNm(AP[st.loc],AP[k]); if(d<bd){bd=d;best=k;} } if(best && bd < AC[acId].range*0.6){ to=best; local=false; } }
-  if(R.hub){ let best=null,bd=1e9; for(const k in AP){ if(k===st.loc||AP[k].water||longestRwy(AP[k])<7000) continue; const d=distNm(AP[st.loc],AP[k]); if(d>80&&d<bd){bd=d;best=k;} } if(best){ to=best; local=false; } }
-  const dep = Math.round((st.clock + 45)/5)*5;
-  const wx = genWx(st, to, R.wx || (rid==='IR'?'wave':'trades'), dep);
-  const ex = CAST[R.examiner||'wilkins'];
-  const job = { id:'C-'+rid, kind:'check', rating:rid, title:`${R.n} checkride`, label:`Checkride`, cat:'check', from:st.loc, to, local, tourNm: local?35:0, ac:acId,
-    pax:1, cargo:0, dep, wx, scen:R.scen||null, tasks:R.tasks, client:ex.n, chars:[R.examiner||'wilkins'],
-    paras:[`${ex.n} meets you at the aircraft with a clipboard. ${ex.bio}`, `"Fly it like I'm not here," she says. ${R.n} unlocks: ${R.unlocks}`] };
-  if(R.examiner==='devries') job.paras = [`Inspector Henk de Vries arrives with a thermos of tea and a clipboard. "Saba forgives nothing," he says, "so neither do I. But I am very fair."`, `He'll ride in the right seat for the whole flight. Pass, and you can land at the shortest commercial runway in the world. ${R.unlocks}`];
-  if(R.examiner==='marchetti') job.paras = [`Capitaine Hélène Marchetti flew Twin Otters into St. Barth for twenty years. She looks at your airplane, then at you, and says only, "We go."`, `Pass, and you're cleared for one of the most famous approaches anywhere. ${R.unlocks}`];
-  job.pay = 0; job.est = plan(job).est; return job;
-}
 
 /* ---------- Company ---------- */
 function fleetTypes(st){ if(!st.company) return []; return [...new Set(st.company.fleet.filter(f=>!f.hired).map(f=>f.ac))].filter(k=>canFly(st,k)); }
@@ -2210,7 +2181,6 @@ async function connect(){
     renderSync();
   }catch(e){ S.sync='device'; renderSync(); }
 }
-function migrate(st){ st.celebs=st.celebs||{}; st.souvenirs=st.souvenirs||{}; st.gifts=st.gifts||{}; st.followups=st.followups||[]; st.ach=st.ach||{}; st.reviews=st.reviews||[]; if(!st.landedAt){ st.landedAt={}; (st.log||[]).forEach(l=>{ if(l.landing!=='crash') st.landedAt[l.to]=(st.landedAt[l.to]||0)+1; }); } if(!st.stats) st.stats={butter:0,smooth:0,firm:0,hard:0,crash:0,nm:0,diverts:0,scen:0}; if(!st.cooldown) st.cooldown={}; if(!st.visited) st.visited={}; Object.keys(AC).forEach(k=>{ if(st.hangar[k]===undefined) st.hangar[k]=true; }); Object.keys(CAST).forEach(k=>{ if(st.rep[k]===undefined) st.rep[k]=10; }); return finMigrate(st); }
 
 /* ---------- helpers ---------- */
 var toast; /* defined in full below (047-core.js) */
@@ -2220,28 +2190,6 @@ function syncText(){ return {account:'Saved to your account', device:'Saved in t
 function renderSync(){ const el=document.getElementById('sync'); if(el) el.textContent=syncText(); }
 
 
-function chipsFor(st, job){
-  const c=[]; const a=AC[job.ac];
-  if(job.mystery && !(st.active && st.active.job===job)){ c.push(`<span class="chip vio">Confidential</span>`); if(job.followup) c.push(`<span class="chip sea">Follow-up</span>`); if(job.request) c.push(`<span class="chip vio">Passenger request</span>`); if(!st.types[job.ac]) c.push(`<span class="chip new">New type</span>`); return c.join(''); }
-  if(job.followup) c.push(`<span class="chip sea">Follow-up</span>`);
-  if(job.request) c.push(`<span class="chip vio">Passenger request</span>`);
-  if(job.kind==='story') c.push(`<span class="chip sea">Story</span>`);
-  if(job.lend) c.push(`<span class="chip vio">Owner's jet</span>`);
-  if(job.company) c.push(`<span class="chip sky">Your company</span>`);
-  if(job.vip) c.push(`<span class="chip warn">VIP</span>`);
-  if(job.urgent) c.push(`<span class="chip bad">Urgent</span>`);
-  if(job.wx.ifr) c.push(`<span class="chip vio">IFR</span>`);
-  if(isNight(job.dep)) c.push(`<span class="chip">Night</span>`);
-  if(!st.types[job.ac]) c.push(`<span class="chip new">New type</span>`);
-  if(!job.local && !st.visited[job.to] && !AP[job.to].water) c.push(`<span class="chip new">New airport</span>`);
-  if(AP[job.to].water) c.push(`<span class="chip sky">Water landing</span>`);
-  if(!job.local && ZONE(AP[job.from].c)!==ZONE(AP[job.to].c)) c.push(`<span class="chip">Customs</span>`);
-  if(job.scen) c.push(`<span class="chip bad">Sealed orders</span>`);
-  if(job.bonus) c.push(`<span class="chip good">Bonus +${money(job.bonus.amt)}</span>`);
-  if(job.festival) c.push(`<span class="chip vio">${esc(job.festival)}</span>`);
-  if(job.stormName) c.push(`<span class="chip bad">Hurricane ${esc(job.stormName)}</span>`);
-  return c.join('');
-}
 var dutyAfter; /* defined in full below (061-core.js) */
 function avatar(k){ const c=CAST[k]; const ini=c.n.replace(/".*?"\s*/,'').split(' ').filter(w=>/^[A-Z]/.test(w)).slice(-2).map(w=>w[0]).join(''); return `<div class="avatar" style="background:${c.col}" aria-hidden="true">${esc(ini)}</div>`; }
 
@@ -3261,14 +3209,7 @@ STORY.push(
 );
 
 /* Aircraft lent by the owner: no rating needed, but you need it in your MSFS hangar and a long-enough runway. */
-function storyAircraft(st, m){ return m.ac.filter(k=>(m.lend ? !!st.hangar[k] : canFly(st,k)) && apOk(st,m.to,k) && apOk(st,m.from,k)); }
 
-const _starlingStoryJob = storyJob;
-storyJob = function(st, m, acId){
-  const job = _starlingStoryJob(st, m, acId);
-  if(m.lend){ job.lend = true; job.pay = m.fee || job.pay; job.tail = acId==='CJ4'?'N52VL':STARLING_TAIL; }
-  return job;
-};
 
 /* Repeatable owner trips once you've met Vivienne */
 const STARLING_DEST = ['TAPA','TBPB','TVSC','TKPK','TKPN','TQPF','TFFR','TFFF','TLPL','TGPY','TIST','TISX','TUPJ','TJSJ','MDPC','MDLR','MBPV','MYNN','MYEF','MWCR','TNCA','TNCC','TNCB','KPBI','KFLL','KEYW'];
@@ -3296,12 +3237,6 @@ function starlingTrip(st){
   job.pay = Math.round((250 + p.dist*(ac==='CJ4'?1.6:1.2))/10)*10; job.est = p.est;
   return job;
 }
-const _starlingEnsure = ensureJobs;
-ensureJobs = function(st){
-  const before = st.jobsKey; _starlingEnsure(st);
-  if(st.jobsKey!==before || !st._starlingChecked){ st._starlingChecked = true;
-    if(!st.jobs.some(j=>j.arch==='starling') && Math.random()<0.8){ const j = starlingTrip(st); if(j) st.jobs.unshift(j); } }
-};
 
 /* Relationship bump for owner trips */
 /* ===================== STORY PROGRESS, NAV & STORY TAB ===================== */
@@ -3348,11 +3283,6 @@ var arcState; /* defined in full below (055-core.js) */
 var campaignCard; /* defined in full below (085-core.js) */
 
 /* Story strips say which chapter they are */
-const _progStoryJob = storyJob;
-storyJob = function(st, m, acId){
-  const j = _progStoryJob(st, m, acId); const ch = arcChapters(m.arc);
-  j.label = `${m.arc} · Ch ${ch.indexOf(m)+1}/${ch.length}`; return j;
-};
 
 /* ---------- navigation ---------- */
 const NAV_ICON = {
@@ -3655,8 +3585,6 @@ function registerCustomAc(st){
   st.customAc = st.customAc || {};
   for(const id in st.customAc){ AC[id] = Object.assign({}, st.customAc[id]); if(st.hangar && st.hangar[id]===undefined) st.hangar[id]=true; }
 }
-const _myMigrate = migrate;
-migrate = function(st){ registerCustomAc(st); return _myMigrate(st); };
 function loadedAircraft(){
   const t = S.sim && S.simState==='live' && S.sim.aircraft ? S.sim.aircraft.title : '';
   if(!t) return {title:'', id:null};
@@ -3674,16 +3602,6 @@ function makeJobFor(st, acId){
   } finally { eligibleAircraft = orig; }
   if(job) job.loaded = true; return job;
 }
-const _myEnsure = ensureJobs;
-ensureJobs = function(st){
-  _myEnsure(st);
-  const L = loadedAircraft(); if(!L.id || !canFly(st, L.id) || st.active) return;
-  const have = st.jobs.filter(j=>j.ac===L.id).length;
-  if(have < 2 && st._loadedFor !== st.jobsKey+'|'+L.id){ st._loadedFor = st.jobsKey+'|'+L.id;
-    for(let i=0;i<3-have;i++){ const j=makeJobFor(st, L.id); if(j) st.jobs.push(j); } }
-  st.jobs.forEach(j=>{ j.loaded = j.ac===L.id; });
-  st.jobs.sort((a,b)=>(b.loaded?1:0)-(a.loaded?1:0));
-};
 function loadedBanner(st){
   const L = loadedAircraft(); if(!L.title) return '';
   if(!L.id) return `<div class="notice row between" style="gap:10px"><span><b>MSFS has “${esc(L.title)}” loaded.</b> It isn't in your career yet.</span><button class="btn sm primary" data-act="nav" data-v="hangar">Add it in the Hangar</button></div>`;
@@ -3692,8 +3610,6 @@ function loadedBanner(st){
 }
 const _myBoard = boardView;
 boardView = function(){ const h=_myBoard(); return h.replace('<section><div class="section-title"><h2>Jobs at', loadedBanner(S.st)+'<section><div class="section-title"><h2>Jobs at'); };
-const _myChips = chipsFor;
-chipsFor = function(st, job){ const c=_myChips(st, job); return (job.loaded?`<span class="chip sky">✈ Loaded in MSFS</span>`:'') + c; };
 
 /* Hangar: bring your own aircraft */
 function byoSection(st){
@@ -3938,8 +3854,6 @@ document.addEventListener('click', e=>{
   document.querySelectorAll('.cabin-host').forEach(el=>{ el.innerHTML = cabinInner(); });
 });
 /* one-time cleanup: drop cabin chatter recorded before this fix (it may have come from an old flight) */
-const _vMigrate = migrate;
-migrate = function(st){ const r=_vMigrate(st); if(r && !r._cabFix){ r._cabFix=true; if(r.active && r.active.cab) delete r.active.cab; if(r.active) delete r.active.recId; } return r; };
 /* ===================== CABIN LINES THAT FIT THE FLIGHT ===================== */
 function cabinCategory(job){
   if(job.lend) return 'exec';
@@ -4093,15 +4007,6 @@ const URG_REASONS = [
   {arch:'catch', t:`Fresh catch, short shelf life`, d:`A restaurant at {to} needs the morning catch before lunch service. Double pay for a fast departure.`}
 ];
 var urgentOn; /* defined in full below (055-core.js) */
-function spawnUrgent(force){
-  const st=S.st; if(!st || st.active || st.urgent || (!force && !urgentOn())) return null;
-  const opts = URG_REASONS.filter(r=>{ const a=ARCH.find(x=>x.id===r.arch); return a && (!a.need || hasRating(st,a.need)); });
-  for(let i=0;i<10;i++){ const r=pick(opts); const arch=ARCH.find(x=>x.id===r.arch); const job=makeJob(st, arch, false); if(!job || job.local) continue;
-    const isl=AP[job.to].isl.replace(/\s*\(.*\)/,'');
-    job.pay = Math.round(job.pay*2/10)*10; job.urgent=true; job.realtime=true; job.title=r.t.replace('{to}',isl); job.label='Urgent dispatch'; job.paras=[r.d.replace(/\{to\}/g,isl), ...(job.paras||[]).slice(0,1)];
-    st.urgent = {job, expires: Date.now()+URG_ACCEPT_MIN*60000}; save(); notifyUrgent(job); render(); return job; }
-  return null;
-}
 function notifyUrgent(job){
   const body = `${job.from} → ${job.to} · ${money(job.pay)} (2× pay) · accept in ${URG_ACCEPT_MIN} min, wheels up within ${URG_TAKEOFF_MIN}`;
   toast(`URGENT: ${job.title}`);
@@ -4530,10 +4435,6 @@ function realEvents(now=new Date()){
     {n:`New Year's travel`, ap:['TNCM','TJSJ','TBPB'], from:D(1,1), to:D(1,4)}];
   const t=now.getTime(); return ev.filter(e=>t>=e.from.getTime() && t<=e.to.getTime()+864e5);
 }
-const _lvEnsure = ensureJobs;
-ensureJobs = function(st){ const before=st.jobsKey; _lvEnsure(st); if(st.jobsKey!==before || !st._rwChecked){ st._rwChecked=true; const evs=realEvents(); for(const j of st.jobs){ const e=evs.find(e=>e.ap.includes(j.to)); if(e && !j.realEvent){ j.realEvent=e.n; j.pay=Math.round(j.pay*1.2/10)*10; } } } };
-const _lvChips = chipsFor;
-chipsFor = function(st, job){ return _lvChips(st, job) + (job.realEvent?`<span class="chip warn" title="Happening around this time in the real Caribbean">🌍 ${esc(job.realEvent)} +20%</span>`:''); };
 let REAL_STORMS = [];
 async function loadRealStorms(){ if(!window.twNative || !twNative.storms) return; try{ const r=await twNative.storms(); REAL_STORMS = (r||[]).filter(s=>s.lat>8 && s.lat<30 && s.lon<-55 && s.lon>-90); if(REAL_STORMS.length && S.st) render(); }catch(_){} }
 setTimeout(loadRealStorms, 3000); setInterval(loadRealStorms, 30*60000);
@@ -4742,8 +4643,6 @@ function airframe(st, id){ st.airframes = st.airframes || {}; return st.airframe
 function isGrounded(st, id){ const a=st.airframes && st.airframes[id]; return !!(a && a.grounded && st.day < a.grounded); }
 const _wCanFly = canFly;
 canFly = function(st, id){ return _wCanFly(st, id) && !isGrounded(st, id); };
-const _wStoryAc = storyAircraft;
-storyAircraft = function(st, m){ return _wStoryAc(st, m).filter(k=>!isGrounded(st,k)); };
 /* Dez works on the fleet overnight */
 /* tired airframes sometimes misbehave */
 document.addEventListener('click', e=>{
@@ -4751,8 +4650,6 @@ document.addEventListener('click', e=>{
   setTimeout(()=>{ const st=S.st, a=st&&st.active; if(!a || a._wearChecked) return; a._wearChecked=true; const A=st.airframes&&st.airframes[a.job.ac]; if(!A || A.h>=60 || a.job.scen || a.job.kind==='check') return;
     if(Math.random() < (60-A.h)/150){ const cls=AC[a.job.ac].cls; const pickS=['rough_engine','electrical','bird_strike'].filter(k=>SCEN[k] && (SCEN[k].cls==='*' || SCEN[k].cls.includes(cls))); if(pickS.length){ a.job.scen=pick(pickS); a.job.tiredAirframe=true; save(); render(); toast(`Heads up: this ${AC[a.job.ac].n} is at ${A.h}% health. Expect sealed orders.`); } } },50);
 });
-const _wChips = chipsFor;
-chipsFor = function(st, job){ const A=st.airframes&&st.airframes[job.ac]; return _wChips(st, job) + (A && A.h<70 ? `<span class="chip ${A.h<50?'bad':'warn'}" title="Airframe health">🔧 ${A.h}%</span>` : ''); };
 function healthBar(h){ return `<div class="meter ${h<50?'bad':h<75?'warn':''}" title="Airframe health ${h}%"><i style="width:${h}%"></i></div>`; }
 const _wHangar = hangarView;
 hangarView = function(){
@@ -5304,11 +5201,6 @@ ARCH.push(
 function boardPrefs(){ try{ return JSON.parse(localStorage.getItem('tw_board')||'{}'); }catch(_){ return {}; } }
 function setBoardPrefs(p){ try{ localStorage.setItem('tw_board', JSON.stringify(p)); }catch(_){} }
 function jobPerHour(j){ const est=j.est||plan(j).est; return j.pay / Math.max(0.25, est/60); }
-function filterJobs(list){ const p=boardPrefs(); let L=list.slice();
-  if(p.kind && p.kind!=='all') L=L.filter(j=> p.kind==='vip' ? j.vip : p.kind==='urgent' ? j.urgent : p.kind==='local' ? j.local : (j.cat||'')===p.kind);
-  if(p.ac && p.ac!=='all') L=L.filter(j=>j.ac===p.ac);
-  const by=p.sort||'dep'; const key={dep:j=>j.dep, pay:j=>-j.pay, rate:j=>-jobPerHour(j), short:j=>j.local?(j.tourNm||40):distNm(AP[j.from],AP[j.to]), long:j=>-(j.local?(j.tourNm||40):distNm(AP[j.from],AP[j.to]))}[by]||(j=>j.dep);
-  return L.sort((a,b)=>key(a)-key(b)); }
 function boardTools(st){ const p=boardPrefs(); const acs=[...new Set(st.jobs.map(j=>j.ac))];
   const sel=(k,opts)=>`<select data-act="bp" data-k="${k}" aria-label="${k}">${opts.map(([v,l])=>`<option value="${v}" ${ (p[k]||opts[0][0])===v?'selected':''}>${esc(l)}</option>`).join('')}</select>`;
   return `<div class="board-tools">${sel('sort',[['dep','Soonest'],['pay','Highest pay'],['rate','Best pay per hour'],['short','Shortest'],['long','Longest']])}${sel('kind',[['all','All jobs'],['pax','Passengers'],['cargo','Cargo'],['vip','VIP'],['urgent','Urgent'],['local','Local tours']])}${acs.length>1?sel('ac',[['all','Any aircraft'],...acs.map(k=>[k,AC[k].n])]):''}</div>`; }
@@ -5324,10 +5216,6 @@ DIFF.casual.d = 'Forgiving: landings up to 450 fpm count as firm, rough rides co
 DIFF.standard.d = 'The career as designed. Checklist optional.';
 DIFF.expert.d = 'Stricter landing grades, mandatory checklist, the right fuel and aircraft loaded before you start, fines for landing below legal reserve, more in-flight surprises, and 15% extra pay.';
 
-const _gpGen = genJobs;
-genJobs = function(st){ const L=_gpGen(st); const d=diff();
-  for(const j of L){ if(d==='expert' && !j.scen && Math.random()<0.08){ const sc=scenFor(j); if(sc) j.scen=sc; } if(d==='casual' && j.scen && Math.random()<0.5) j.scen=null; }
-  return L; };
 document.addEventListener('click', e=>{ const s=e.target.closest('[data-act="start"]'); if(!s || !S.st || !S.st.active || diff()!=='expert' || S.simState!=='live') return;
   const bad=preflightChecks(S.st.active.job).filter(c=>!c.ok && ['ac','fuel','pos'].includes(c.k));
   if(bad.length){ e.stopImmediatePropagation(); e.preventDefault(); toast(`Expert mode: fix the pre-flight check first (${bad.map(c=>c.t).join('; ')}).`); const el=document.getElementById('preflight'); if(el) el.scrollIntoView({behavior:'smooth', block:'center'}); } }, true);
@@ -5376,8 +5264,6 @@ function checkUnlocks(){ const st=S.st; if(!st) return; const ui=uiPrefs(); ui.s
 /* ---- fewer interruptions ---- */
 
 
-const _dcUrg = spawnUrgent;
-spawnUrgent = function(force){ const st=S.st; if(!force && st && ((st.ui&&st.ui.quiet) || st.flights<3)) return null; return _dcUrg(force); };
 
 /* ---- accessibility: text size, motion, contrast ---- */
 function applyA11y(){ const ui = S.st ? uiPrefs() : {}; const el=document.documentElement;
@@ -5644,11 +5530,6 @@ const WEEKEND = [
   {id:'reggae', n:'Reggae Sumfest weekend', ap:'MKJS', d:'Montego Bay fills up for three nights of music. Every seat into Sangster is gold.'}
 ].filter(e=>AP[e.ap]);
 function weekendEvent(st){ const d=dateOf(st.day); const wd=d.getUTCDay(); if(wd!==5 && wd!==6 && wd!==0) return null; const sat = wd===0 ? st.day-1 : wd===5 ? st.day+1 : st.day; const wk=Math.floor(sat/7); return WEEKEND[wk % WEEKEND.length]; }
-const _weGen = genJobs;
-genJobs = function(st){ const L=_weGen(st); const ev=weekendEvent(st); if(!ev || st.loc===ev.ap) return L;
-  for(const j of L){ if(j.to===ev.ap && !j.local){ j.pay=Math.round(j.pay*1.35/10)*10; j.event=ev.n; } }
-  let tries=0; while(L.filter(j=>j.to===ev.ap).length<2 && tries<25){ tries++; const arch=pick(ARCH.filter(a=>archOk(st,a) && !a.local && !a.airline)); const j=makeJob(st, arch, false); if(j && apOk(st, ev.ap, j.ac) && distNm(AP[st.loc],AP[ev.ap]) < AC[j.ac].range*0.8){ j.to=ev.ap; const p=plan(j); if(p.over>0||!p.range) continue; j.pay=Math.round(payFor(st,j)*1.35/10)*10; j.est=p.est; j.event=ev.n; j.title=`${ev.n}: ${j.title.replace(/ to .*$/,'')} to ${AP[ev.ap].isl}`; L.push(j); } }
-  return L; };
 function weekendBanner(st){ const ev=weekendEvent(st); if(!ev) return ''; return `<section class="panel weekend"><div class="row between"><div><p class="label">This weekend · ${esc(AP[ev.ap].isl)}</p><h3>${esc(ev.n)}</h3></div><span class="chip good">+35% pay to ${esc(ev.ap)}</span></div><p class="small">${esc(ev.d)}</p></section>`; }
 const _weBoard = boardView;
 boardView = function(){ const h=_weBoard(); if(S.view!=='board' || !S.st) return h; const b=weekendBanner(S.st); return b ? h.replace(/(<section><div class="section-title"><h2>Jobs at)/, b+'$1') : h; };
@@ -5745,8 +5626,6 @@ function takeover(o){ document.querySelectorAll('.takeover').forEach(x=>x.remove
 const _tfOrders = openOrders;
 openOrders = function(a, how){ const was=a&&a.opened; const r=_tfOrders(a, how); try{ if(!was && a.opened && a.scenPlan){ const sc=SCEN[a.job.scen]||{}; const wx=/squall|shower|storm|wave|weather|rain/i.test((a.job.scen||'')+' '+(sc.n||'')+' '+a.scenPlan.title);
     takeover({kind:wx?'weather':'orders', kicker:'Sealed orders', title:a.scenPlan.title, text:a.scenPlan.text, sub:a.scenPlan.sim, ms:11000}); } }catch(_){} return r; };
-const _tfUrg = spawnUrgent;
-spawnUrgent = function(force){ const j=_tfUrg(force); try{ if(j) takeover({kind:'urgent', kicker:'Urgent flight · 2× pay', title:j.title, text:`${AP[j.from].isl} to ${AP[j.to].isl}. Accept within 5 minutes; wheels up within 15.`, btn:'Show me', ms:7000}); }catch(_){} return j; };
 
 /* ---- 4. story briefing up top, like the opening of a chapter ---- */
 function chapterHero(job){ const m=STORY.find(x=>x.id===job.story); if(!m) return ''; const meta=arcMeta(m.arc); const chs=STORY.filter(x=>x.arc===m.arc); const idx=chs.indexOf(m)+1;
@@ -5837,10 +5716,6 @@ ARCH.push({id:'mainland',label:`Mainland charter`,kind:'vip',w:0,cls:['jet','tur
   story:c=>{ const who=pick([[`${pick(NAMES.first)} ${pick(NAMES.last)}`,`a hotel developer`],[`${pick(NAMES.first)} ${pick(NAMES.last)}`,`a cardiologist heading to a conference`],[`The ${pick(NAMES.last)} family`,`going home after a month in the islands`],[`${pick(NAMES.first)} ${pick(NAMES.last)}`,`a film producer`]]);
     return { title:`Charter to ${c.to.isl}`, client:who[0], paras:[`${who[0]}, ${who[1]}, wants a private flight from ${c.from.isl} to ${c.to.n} in ${c.to.isl}. Airlines would mean two connections and a day of airports. You can do it in a few hours.`,`It's a long leg off the islands and onto the mainland, so plan fuel carefully, file the right customs paperwork, and expect busy, fast-talking airspace at the other end.`] }; }});
 const MAINLAND = ['KMIA','KFLL','KPBI','KTEB','KJFK','KATL','KORD','MMUN','MZBZ','MRLB','MPTO'].filter(k=>AP[k]);
-const _tfGen = genJobs;
-genJobs = function(st){ const L=_tfGen(st); try{ if(!hasRating(st,'JET') || MAINLAND.includes(st.loc) || AP[st.loc].water) return L; const arch=ARCH.find(a=>a.id==='mainland');
-  let n=0; for(let t=0;t<14 && n<2;t++){ const j=makeJob(st, Object.assign({}, arch, {w:1}), false); if(!j) continue; const opts=MAINLAND.filter(k=>apOk(st,k,j.ac) && distNm(AP[st.loc],AP[k]) < AC[j.ac].range*0.8 && distNm(AP[st.loc],AP[k])>300); if(!opts.length) continue;
-    j.to=pick(opts); const p=plan(j); if(p.over>0||!p.range) continue; const s=arch.story({from:AP[st.loc],to:AP[j.to],ac:AC[j.ac]}); j.title=s.title; j.client=s.client; j.paras=s.paras; j.pay=payFor(st,j); j.est=p.est; j.mainland=true; L.push(j); n++; } }catch(_){} return L; };
 /* the clock row offers to set MSFS instead of moving the flight */
 const _tfChecks = preflightChecks;
 preflightChecks = function(job){ const out=_tfChecks(job); const t=out.find(c=>c.k==='time'); if(t && !t.ok && window.twNative){ t.act='pf-settime'; t.actLabel=`Set MSFS to ${hhmm(job.dep)}`; t.d='Or set the time in the MSFS weather & time panel.'; } return out; };
@@ -5926,13 +5801,6 @@ flightView = function(){ const h=_clFlight2(); return h.replace(/<section class=
 /* 1. spread the board across your fleet: no aircraft takes more than two jobs if another one fits */
 function refitJob(st, j, acId){ const keep={ac:j.ac,cargo:j.cargo,pax:j.pax}; j.ac=acId; let p=plan(j); if(p.over>0){ j.cargo=Math.max(0,j.cargo-p.over-20); p=plan(j); }
   if(p.over>0 || !p.range || !apOk(st,j.to,acId) || !apOk(st,j.from,acId) || j.pax>AC[acId].pax){ Object.assign(j,keep); return false; } j.pay=payFor(st,j); j.est=p.est; return true; }
-const _fmGen = genJobs;
-genJobs = function(st){ const L=_fmGen(st); try{
-    const used={}; for(const j of L) used[j.ac]=(used[j.ac]||0)+1;
-    for(const j of L){ if(j.kind!=='gen' || j.company || used[j.ac]<=2) continue; const arch=ARCH.find(a=>a.id===j.arch); if(!arch) continue;
-      const cands=eligibleAircraft(st).filter(k=>k!==j.ac && arch.cls.includes(AC[k].cls) && (used[k]||0)<2).sort((a,b)=>((used[a]||0)-(used[b]||0)) || ((st.types[a]||0)-(st.types[b]||0)));
-      for(const k of cands){ const from=j.ac; if(refitJob(st,j,k)){ used[from]--; used[k]=(used[k]||0)+1; break; } } }
-  }catch(_){} return L; };
 
 /* 2. type checkouts: fly a bigger aircraft than your license allows, with Mari in the right seat */
 ARCH.push({id:'checkout', label:'Type checkout', kind:'pax', w:0, cls:['hp','bush','twin','turbo','amph','stol'], need:'PPL', pax:[1,1], cargo:[0,40], char:'mari', story:()=>({title:'',client:'',paras:[]})});
@@ -5944,16 +5812,6 @@ const CHECKOUT_TXT = {
   amph:`An amphibian lands on runways and water. Mari wants to see you check the gear position twice before every landing: wheels for runways, up for water.`,
   stol:`This one gets into strips you'd never try in a Skyhawk. Fly slow, stay ahead of it, and use every bit of the short-field technique.`
 };
-const _fmGen2 = genJobs;
-genJobs = function(st){ const L=_fmGen2(st); try{ if(st.company) return L;
-    const pool=Object.keys(AC).filter(k=>st.hangar[k] && !canFly(st,k) && CHECKOUT_TXT[AC[k].cls] && !AC[k].custom && !['jet','regional','airliner','widebody'].includes(AC[k].cls) && AC[k].req.filter(r=>!st.ratings[r]).length<=2);
-    let n=0; for(let t=0;t<10 && n<2 && pool.length;t++){ const acId=pick(pool); if(L.some(j=>j.ac===acId)) continue; const a=AC[acId];
-      const to=pickDest(st, st.loc, acId, {id:'checkout'}, Math.max(25, 40*a.cruise/60)); if(!to) continue;
-      const dep=Math.round((st.clock+ri(30,150))/5)*5; const job={ id:uid(), kind:'gen', arch:'checkout', label:'Type checkout', cat:'pax', from:st.loc, to, local:false, tourNm:0, ac:acId, pax:1, cargo:20, dep, wx:genWx(st,to,null,dep), checkout:true, company:false };
-      const p=plan(job); if(p.over>0 || !p.range) continue;
-      job.title=`Checkout: ${a.n}`; job.client=CAST.mari.n; job.paras=[`Mari wants you checked out in Coral Wing's ${a.n} before the busy season. Your license doesn't cover it on your own yet, so she'll ride in the right seat as your instructor. Fly it to ${AP[to].isl} and back to her standards, and she'll sign your logbook.`, CHECKOUT_TXT[a.cls]];
-      job.pay=Math.round(payFor(st,job)*0.45/10)*10; job.est=p.est; L.push(job); n++; pool.splice(pool.indexOf(acId),1); }
-  }catch(_){} return L; };
 /* checkout jobs show an instructor tag on the card */
 const _fmStrip = stripHTML;
 stripHTML = function(st, job, opts){ const h=_fmStrip(st, job, opts); return job.checkout ? h.replace('<article class="jcard', '<article data-checkout="1" class="jcard checkout') : h; };
@@ -6049,8 +5907,6 @@ const ASKS = [
   {k:'hold', when:j=>true, text:j=>`Traffic at the destination: you've been asked to hold. Stay airborne at least 10 minutes longer than planned.`},
   {k:'coast', when:j=>!j.local, text:j=>`A photographer on board wants one pass along the coastline below 1,500 ft, away from the airports.`}
 ];
-const _mrGen = genJobs;
-genJobs = function(st){ const L=_mrGen(st); for(const j of L){ if(j.kind==='gen' && !j.checkout && !j.scen && Math.random()<0.35){ const o=pick(ASKS.filter(x=>x.when(j))); if(o){ j.ask={k:o.k, text:o.text(j), amt:Math.max(40, Math.round(j.pay*0.25/10)*10), alt:j._askAlt}; } } } return L; };
 function askMet(job, rec){ const a=job.ask; if(!a || !rec) return null; const tr=rec.track||[]; const to=job.local?AP[job.from]:AP[job.to], fr=AP[job.from]; const p=plan(job);
   if(a.k==='climb') return (rec.maxAltFt||0) >= a.alt - 100;
   if(a.k==='hold') return (rec.airborneMinutes||0) >= Math.max(5, p.est - CLS[AC[job.ac].cls].over) + 9;
@@ -6081,8 +5937,6 @@ resultView = function(){ const h=_mrResult(); const L=S.st.last; if(!L||!L.res) 
   return t.innerHTML; };
 
 /* ---- 2. one-tap filters on the job board ---- */
-const _mrFilter = filterJobs;
-filterJobs = function(list){ let L=_mrFilter(list); const p=boardPrefs(); if(p.quick==='short') L=L.filter(j=>(j.est||plan(j).est)<=30); return L; };
 const _mrBoard = boardView;
 boardView = function(){ const h=_mrBoard(); if(S.view!=='board'||!S.st) return h; const p=boardPrefs(); const on=k=>p.quick===k||(k==='pay'&&p.sort==='pay'&&!p.quick)?'on':'';
   const bar=`<div class="quick-f"><button class="${!p.quick&&p.sort!=='pay'?'on':''}" data-act="qf" data-v="all">All</button><button class="${on('short')}" data-act="qf" data-v="short">Under 30 min</button><button class="${on('pay')}" data-act="qf" data-v="pay">Best pay</button><button data-act="nav" data-v="story">Story</button></div>`;
@@ -6153,8 +6007,6 @@ boardView = function(){ const h=_tsBoard(); if(S.view!=='board'||!S.st) return h
 const _tsSim = renderSimBits;
 renderSimBits = function(){ _tsSim(); try{ if(S.view==='board'){ const el=document.querySelector('.conn-card'); if(el){ const t=tpl(connCard(S.st)); el.replaceWith(t.content.firstElementChild); } } }catch(_){} };
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="calm-test"]'); if(!b||!S.st) return; S.st.ui=S.st.ui||{}; S.st.ui.calmTest=b.checked; if(b.checked) (S.st.jobs||[]).forEach(j=>{ j.scen=null; delete j.ask; }); save(); toast(b.checked?'Calm test mode on: plain A-to-B flights.':'Calm test mode off.'); S.keepScroll=true; render(); });
-const _tsGen = genJobs;
-genJobs = function(st){ const L=_tsGen(st); if(st.ui && st.ui.calmTest) L.forEach(j=>{ j.scen=null; delete j.ask; }); return L; };
 const _tsOrders = openOrders;
 openOrders = function(a, how){ if(testMode()) return; return _tsOrders(a, how); };
 
@@ -6283,11 +6135,6 @@ const KEEP_ARCS = new Set([...MAIN_ORDER, 'Starling']);
 const SPECIALS = STORY.filter(m=>!KEEP_ARCS.has(m.arc) && !/^CG/.test(m.id));
 for(let i=STORY.length-1;i>=0;i--) if(!KEEP_ARCS.has(STORY[i].arc)) STORY.splice(i,1);
 ARCH.push({id:'special', label:'Special charter', kind:'vip', w:0, cls:['ga','stol','hp','bush','twin','turbo','amph','jet'], need:'COMM', pax:[1,9], cargo:[0,500], story:()=>({title:'',client:'',paras:[]})});
-const _fbGen = genJobs;
-genJobs = function(st){ const L=_fbGen(st); try{ if(!hasRating(st,'COMM')) return L; st.specialDone=st.specialDone||{};
-    const opts=SPECIALS.filter(m=>m.from===st.loc && !st.specialDone[m.id] && !st.story.done[m.id] && ratingsOk(st,(m.req||{}).ratings||[]) && m.ac.some(k=>canFly(st,k) && apOk(st,m.to,k)));
-    if(opts.length && Math.random()<0.6){ const m=pick(opts); const acId=m.ac.find(k=>canFly(st,k) && apOk(st,m.to,k)); const j=storyJob(st,m,acId);
-      Object.assign(j,{kind:'gen', arch:'special', story:undefined, special:m.id, label:'Special charter', id:'X-'+m.id+'-'+st.day}); j.pay=Math.round(payFor(st,j)*1.4/10)*10; L.unshift(j); } }catch(_){} return L; };
 
 /* ---- sealed orders that don't match the sky: weather scenarios need real weather ---- */
 const WX_SCEN = new Set(['squall']);
@@ -6354,8 +6201,6 @@ preflightHTML = function(job){ let h=_frPf(job); try{ const a=S.st&&S.st.active;
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="use-loaded"]') || !S.st || !S.st.active) return; const L=loadedAircraft(); const job=S.st.active.job; if(L.id && refitJob(S.st, job, L.id)){ save(); toast(`Switched to the ${AC[L.id].n}.`); S.keepScroll=true; render(); } else toast('That aircraft can\'t do this job.'); });
 
 /* 15. sealed orders only on flights long enough to need them, and never on checkrides or first flights */
-const _frGen = genJobs;
-genJobs = function(st){ const L=_frGen(st); L.forEach(j=>{ if(j.scen && ((j.est||plan(j).est) < 20 || st.flights < 3)) j.scen=null; }); return L; };
 /* ===================== 20 MORE FIXES ===================== */
 /* 1. the same message never pops twice in a row; tab-unlock messages for tabs that live elsewhere are dropped */
 const _p20Toast = toast;
@@ -6426,16 +6271,10 @@ const _p20Board = boardView;
 boardView = function(){ const h=_p20Board(); try{ const F=fin(S.st); const H=HOUSING[F.housing]||HOUSING.bunk; return h.replace('<button class="btn" data-act="rest">New day</button>', `<button class="btn" data-act="rest">New day · rent ${money(H.rent)}</button>`); }catch(_){ return h; } };
 
 /* 15. story chapters and jobs prefer the aircraft you already have loaded in MSFS */
-const _p20SA = storyAircraft;
-storyAircraft = function(st, m){ const list=_p20SA(st, m); const L=S.simState==='live'?loadedAircraft():{}; return (L.id && list.includes(L.id)) ? [L.id, ...list.filter(x=>x!==L.id)] : list; };
-const _p20Filter = filterJobs;
-filterJobs = function(list){ const L=_p20Filter(list); const ld=S.simState==='live'?loadedAircraft():{}; if(!ld.id) return L; return L.filter(j=>j.ac===ld.id).concat(L.filter(j=>j.ac!==ld.id)); };
 const _p20Strip2 = stripHTML;
 stripHTML = function(st, job, opts){ const h=_p20Strip2(st, job, opts); const ld=S.simState==='live'?loadedAircraft():{}; return (ld.id && job.ac===ld.id) ? h.replace(/(<article[^>]*class="jcard[^"]*"[^>]*>)/, '$1<span class="loaded-tag">Loaded in MSFS</span>') : h; };
 
 /* 16. new pilots don't get sealed orders or cabin requests until they've settled in */
-const _p20Gen = genJobs;
-genJobs = function(st){ const L=_p20Gen(st); if(st.flights<3) L.forEach(j=>{ delete j.ask; j.scen=null; }); return L; };
 
 /* 17. the guide hides itself once you've done a few flights, even if it was never closed */
 const _p20Guide = guideActive;
@@ -6467,12 +6306,6 @@ AP.WSBL = {n:`Simpson Bay Lagoon (water)`, isl:`Sint Maarten`, c:'SXM', r:'LEE',
 
 /* ===================== Seaplane checkride: a short hop at St. Martin, Juliana (TNCM) to Simpson Bay Lagoon ===================== */
 RATINGS.SEA.tasks = [`Water landing in Simpson Bay Lagoon: landing attitude, a steady 100–150 fpm down, no flaring by eye`, `Taxi slowly clear of boats`];
-const _seaCk = checkrideJob;
-checkrideJob = function(st, rid, acId){ if(rid!=='SEA') return _seaCk(st, rid, acId);
-  const moved = st.loc!=='TNCM'; if(moved) st.loc='TNCM';
-  const j=_seaCk(st, rid, acId); Object.assign(j, { from:'TNCM', to:'WSBL', local:false, tourNm:0, wx:genWx(st,'WSBL','calm',j.dep) });
-  j.paras=[`${CAST[RATINGS.SEA.examiner].n} meets you at the seaplane on the ramp at Princess Juliana${moved?' (Coral Wing flew you over for free)':''}.`, `"Short and simple," she says. "Take off, swing around the lagoon, and put us down in Simpson Bay Lagoon, right over there. Gentle and steady, that's all I'm looking for." Pass, and you hold the Seaplane Rating: ${RATINGS.SEA.unlocks}`];
-  j.est=Math.max(10, plan(j).est); return j; };
 /* passing it: no crash, not a hard landing, and most of the tasks */
 /* ===================== Checkrides: an A or B (or 70+) with no crash is a pass ===================== */
 /* ===================== MAIN STORY: CONTRABAND =====================
@@ -6842,7 +6675,6 @@ try{ const r=RIVALS.find(x=>/^Ana Reyes/.test(x.n)); if(r) r.n='Ana Ruiz (Winair
 (function(){ const _ct=cabinTick; cabinTick=function(){ const a=S.st&&S.st.active; S._cabMute=true; try{ return _ct.apply(this, arguments); } finally { S._cabMute=false; if(a&&a.cab&&a.cab.log) a.cab.log=a.cab.log.filter(m=>m.kind); } }; })();
 (function(){ const _t=toast; toast=function(msg){ if(S._cabMute) return; return _t.apply(this, arguments); }; })();
 (function(){ const _sp=spokenText; spokenText=function(m){ if(!m.kind) return null; return _sp(m); }; })();
-(function(){ const _g=genJobs; genJobs=function(st){ const L=_g(st); L.forEach(j=>{ delete j.ask; }); return L; }; })();
 (function(){ const _tk=takeover; takeover=function(o){ if(o && /Request from the cabin/.test(o.kicker||'')) return; return _tk(o); }; })();
 /* no "sim rate" call on descent */
 (function(){ const _ss=safeSay; safeSay=function(key, text, every){ if(key==='rate') return; return _ss(key, text, every); }; })();
@@ -6857,7 +6689,6 @@ const DYN = {
   CR13:f=>f.dezJail?{brief:[`Mari found the cash in hangar three. All of it. With Dez in prison, she went looking for answers herself.`,`She doesn't yell. She asks if you'll take her flying, just the two of you, over to Grand Case like when you were new. She doesn't say a word until you're on final.`]}:{}
 };
 function dynM(st, m){ const d=DYN[m.id]; return d ? Object.assign({}, m, d(flagsOf(st))) : m; }
-(function(){ const _sj=storyJob; storyJob=function(st, m, acId){ return _sj(st, dynM(st, m), acId); }; })();
 
 /* endings: you only get the ones you earned */
 const ENDING_REQ = { kingpin:c=>c.power>=50 ? null : `Needs Power 50+ (you have ${c.power})`, witness:c=>(c.flags.informant||c.flags.ledgers||c.flags.medinaBurned) ? null : `You never gave Reyes anything`, ghost:()=>null };
@@ -6871,8 +6702,6 @@ function epilogue(st){ const f=flagsOf(st), L=[]; if(f.mari) L.push(`Mari runs t
 /* ================= 3. Power and Heat matter ================= */
 /* network runs: higher pay, more heat; there are more of them as your Power grows */
 const NET_TITLES = [`Unmarked crates`,`Sealed cargo`,`"Medical supplies"`,`Cash bags`,`"Spare parts"`,`Wrapped bundles`];
-(function(){ const _g=genJobs; genJobs=function(st){ const L=_g(st); try{ const c=crime(st); if(!c.on) return L; const n=1+(c.power>=45?1:0)+(c.power>=70?1:0); let k=0;
-  L.forEach(j=>{ if(k<n && j.kind==='gen' && j.cargo>0 && !j.special && !j.story){ k++; j.network=true; j.label='Network run'; j.title=`${pick(NET_TITLES)} for the network`; j.client='The network'; j.pay=Math.round(j.pay*(1.6+c.power/100)/10)*10; j.scen=null; } }); }catch(_){} return L; }; })();
 const _netStrip = stripHTML;
 stripHTML = function(st, job, opts){ const h=_netStrip(st, job, opts); return job.network ? h.replace(/(<article[^>]*class="jcard[^"]*"[^>]*>)/, '$1<span class="net-tag">Network · +Heat</span>') : h; };
 
@@ -7220,14 +7049,6 @@ flightView = function(){ const h=_flLay(); const a=S.st&&S.st.active; if(!a || a
 const ILS_FIELDS = [ // [airport, runway, ILS, RNAV]
   ['TJSJ','10','ILS RWY 10','RNAV (GPS) RWY 10'], ['TISX','10','ILS RWY 10','RNAV (GPS) RWY 10'], ['TBPB','09','ILS RWY 09','RNAV (GNSS) RWY 09'],
   ['TFFR','12','ILS RWY 12','RNAV (GNSS) RWY 12'], ['MDPC','09','ILS RWY 09','RNAV (GNSS) RWY 09'], ['TAPA','07','ILS RWY 07','RNAV (GNSS) RWY 07'] ];
-const _atpCk = checkrideJob;
-checkrideJob = function(st, rid, acId){ const j=_atpCk(st, rid, acId); if(rid!=='ATP') return j;
-  const here=AP[st.loc]; const opts=ILS_FIELDS.filter(f=>AP[f[0]] && f[0]!==st.loc).map(f=>({f, d:distNm(here,AP[f[0]])})).filter(x=>x.d>=60 && x.d<=Math.min(400,(AC[acId]?AC[acId].range:900)*0.5)).sort((a,b)=>a.d-b.d);
-  const pickF=(opts.find(x=>x.f[0]==='TJSJ')||opts[0]); if(!pickF) return j; const [code,rw,ils,rnav]=pickF.f;
-  Object.assign(j, { to:code, local:false, tourNm:0, wx:genWx(st, code, 'trades', j.dep), ilsRwy:rw });
-  j.tasks=[`Departure briefing and a clean takeoff from ${st.loc}`, `Autopilot and FMS from the climb to the approach`, `Fly the ${ils} to ${code} (the ${rnav} is your backup) and land in the touchdown zone`];
-  j.paras=[`${CAST.wilkins?CAST.wilkins.n:'The examiner'} meets you at the jet bridge with a clipboard.`, `"Today you'll take her to ${AP[code].n} and fly the ${ils}. Load the ${rnav} as the backup. Stabilized by a thousand feet, please." Pass, and you hold the Airline Transport Pilot licence.`];
-  j.est=plan(j).est; return j; };
 /* the runway card shows the ILS runway for this checkride */
 const _atpPf = preflightHTML;
 preflightHTML = function(job){ let h=_atpPf(job); if(job && job.kind==='check' && job.rating==='ATP' && job.ilsRwy){ h=h.replace(/(<small>Land<\/small><b[^>]*>)\s*[0-9]{2}[LRC]?\s*(<\/b>)/i, `$1${job.ilsRwy}$2`); h=h.replace(/(class="su-tile[^"]*"[^>]*>[\s\S]*?Runways[\s\S]*?)(<\/div>\s*<\/div>)/, `$1<p class="small" style="margin-top:6px"><b>Approach: ILS ${job.ilsRwy}</b>, RNAV ${job.ilsRwy} as backup</p>$2`); } return h; };
@@ -7370,11 +7191,6 @@ Object.keys(MID).forEach(id=>{ if(BEATS[id]) BEATS[id].push(MID[id]); else BEATS
 const DROP_STRIPS = ['TAPH','TUPA','TNCE','TRPG','TFFS','TFFM','TQPF','TNCS','MBGT','MYAN'];
 const RANK_PERKS = [[12,'Courier','Network runs unlocked'],[28,'Runner','One more network run a day, night runs pay +15%'],[45,'Lieutenant','Network runs in jets, +20% pay'],[65,'Partner','Airliner network runs, +30% pay'],[85,'Boss','Heat cools by 2 every new day']];
 function rankMul(c){ return c.power>=65?1.3:c.power>=45?1.2:1; }
-(function(){ const _g=genJobs; genJobs=function(st){ const L=_g(st); try{ const c=crime(st); if(!c.on) return L; c.hot=c.hot||{};
-  L.forEach(j=>{ if(!j.network) return; j.pay=Math.round(j.pay*rankMul(c)/10)*10;
-    if(Math.random()<0.4){ const strips=DROP_STRIPS.filter(k=>AP[k] && k!==st.loc && apOk(st,k,j.ac) && distNm(AP[st.loc],AP[k])<Math.min(400,(AC[j.ac].range||500)*0.6)); if(strips.length){ const k=pick(strips); j.to=k; j.drop=true; j.dep=Math.max(j.dep, 1260); j.title=`Night drop at ${AP[k].isl}`; j.pay=Math.round(j.pay*1.3*(c.power>=28?1.15:1)/10)*10; j.paras=[`The strip at ${AP[k].n} closes at sunset. Tonight it's open for you: two trucks, headlights on, engines running. Land, unload, leave.`]; try{ j.est=plan(j).est; }catch(_){} } }
-    if(Math.random()<0.35){ j.lowLevel=true; j.title+=' (under the radar)'; }
-    if(c.hot[j.to]){ j.hot=true; j.pay=Math.round(j.pay*1.2/10)*10; } }); }catch(_){} return L; }; })();
 const _twStrip = stripHTML;
 stripHTML = function(st, job, opts){ let h=_twStrip(st, job, opts); const tags=[]; if(job.drop) tags.push('<span class="chip warn">Night drop</span>'); if(job.lowLevel) tags.push('<span class="chip warn">Stay under 1,000 ft: +25%</span>'); if(job.hot) tags.push('<span class="chip warn">Hot airport</span>'); if(tags.length) h=h.replace('<div class="chips">', '<div class="chips">'+tags.join('')); return h; };
 
@@ -7407,7 +7223,6 @@ function fleetCrewHTML(st){ const d=st.story.done; const f=FLEET.filter(x=>d[x[0
   return `<section class="panel fleet"><p class="label">Your operation</p><h3>Fleet</h3>${f.length?`<div class="fc-grid">${f.map(x=>`<div class="fc-ac"><b class="mono">${x[3]}</b><span>${esc(x[2])}</span><small>${esc(x[4])}</small></div>`).join('')}</div>`:'<p class="small muted">Your first jet comes in Act 2.</p>'}
     ${crew?`<h3 style="margin-top:16px">Crew</h3>${crew}`:''}</section>`; }
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="hire"]'); if(!b||!S.st) return; const st=S.st, c=crime(st); const k=CREW.find(x=>x.id===b.dataset.v); if(!k) return; if(st.cash<k.cost){ toast(`You need ${money(k.cost)}.`); return; } if(k.cost) txn(st,-k.cost,'Crew',k.n); c.crew=c.crew||{}; c.crew[k.id]=1; save(); toast(`${k.n} joined your crew.`); S.keepScroll=true; render(); });
-(function(){ const _g=genJobs; genJobs=function(st){ const L=_g(st); try{ L.forEach(j=>{ if(!j.network) return; let m=1; if(crewHas(st,'tico')) m+=0.05; if(crewHas(st,'fo') && ['airliner','widebody','regional'].includes(AC[j.ac].cls)) m+=0.1; j.pay=Math.round(j.pay*m/10)*10; }); }catch(_){} return L; }; })();
 /* ===================== CUTSCENES: illustrated backdrops, ambient sound, and a "previously on" recap ===================== */
 /* ---- 2. backdrops (1600x900 SVG, noir palette) ---- */
 const SCENES = {
@@ -7767,7 +7582,6 @@ const SAFEHOUSES = [ {id:'flat',n:'Apartment in Philipsburg',cost:25000,perk:'He
   {id:'strip',n:'Private strip on a quiet cay',cost:600000,perk:'Network runs pay +20%, Heat −3 every new day'} ];
 function safeLevel(st){ const c=crime(st); return SAFEHOUSES.findIndex(s=>s.id===c.safe); }
 function dailyCosts(st){ const d=st.story.done; const L=[]; FLEET.forEach(f=>{ if(d[f[0]] && UPKEEP[f[1]]) L.push([`${f[2]} (${f[3]}) upkeep`, UPKEEP[f[1]]]); }); const c=crime(st); if(c.crew){ for(const k in WAGES) if(crewHas(st,k)) L.push([`${CREW.find(x=>x.id===k).n} wages`, WAGES[k]]); } return L; }
-(function(){ const _g=genJobs; genJobs=function(st){ const L=_g(st); try{ if(crime(st).safe==='strip') L.forEach(j=>{ if(j.network) j.pay=Math.round(j.pay*1.2/10)*10; }); }catch(_){} return L; }; })();
 const _ecLaunder = launderOpts;
 launderOpts = function(st){ const L=_ecLaunder(st); return safeLevel(st)>=1 ? L.map(o=>Object.assign({},o,{fee:Math.max(0.03,o.fee-0.05)})) : L; };
 function operationHTML(st){ const c=crime(st); if(!c.on) return ''; const L=dailyCosts(st); const tot=L.reduce((s,x)=>s+x[1],0); const lv=safeLevel(st);
@@ -7780,8 +7594,6 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="buy
 
 /* ===================== B2. HEAT WITH TEETH: the feds are watching, airport bans ===================== */
 function fedsWatching(st){ return crime(st).heat>=80; }
-/* at 80+ Heat: no network runs, no story chapters, until you lie low or pay to make it go away */
-(function(){ const _g=genJobs; genJobs=function(st){ let L=_g(st); try{ const c=crime(st); if(fedsWatching(st)) L=L.filter(j=>!j.network); const now=st.day; c.ban=c.ban||{}; L=L.filter(j=>!(c.ban[j.to] && now-c.ban[j.to]<3)); }catch(_){} return L; }; })();
 window.addEventListener('click', e=>{ const b=e.target.closest('[data-act="accept-story"],[data-act="story-go"]'); if(!b||!S.st||!CRIME_IDS.has(b.dataset.id)||!crime().on) return; if(fedsWatching(S.st)){ e.stopImmediatePropagation(); e.preventDefault(); toast('The feds are watching you. Lie low (legit jobs, new days) or pay to make it go away before the next chapter.'); go('story'); } }, true);
 function fixCost(st){ const c=crime(st); return Math.round((20000 + c.power*600)/1000)*1000; }
 function fedsHTML(st){ if(!crime(st).on || !fedsWatching(st)) return ''; const cost=fixCost(st); return `<section class="panel feds"><p class="label">Heat ${crime(st).heat} · The feds are watching</p><h3>Lie low before the next chapter</h3><p class="small">Network runs and story chapters are on hold until your Heat is under 80. Legit jobs and new days cool it faster right now, or you can pay someone to make the problem go away.</p><div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn sm" data-act="nav" data-v="board">Fly legit jobs</button><button class="btn sm" data-act="rest">New day</button><button class="btn sm action" data-act="pay-fix" ${st.cash<cost?'disabled':''}>Make it go away · ${money(cost)}</button></div></section>`; }
@@ -7800,7 +7612,6 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="ng-
   CRIME.forEach(m=>{ delete st.story.done[m.id]; }); st.crime={power:0,heat:0,con:0,on:false,flags:{},choice:{},ng,endingsSeen:seen}; st.cash=Math.round(st.cash*0.25); st.active=null; st.loc='TNCM'; save();
   cutscene({col:'#c8962a', art:SCENES.hangar(), shots:[{card:true,kicker:`New Game+ · round ${ng+1}`,title:'Back to the Cessna',sub:'<p>Same islands. Same people. Different choices.</p>'}], onEnd:()=>{ S.view='story'; render(); }}); });
 (function(){ const _sv=storyView; storyView=function(){ const h=_sv(); const n=ngHTML(S.st); return n ? h.replace(/(<main[^>]*>(?:<div class="subtabs">[\s\S]*?<\/div>)?)/, '$1'+n) : h; }; })();
-(function(){ const _g=genJobs; genJobs=function(st){ const L=_g(st); try{ if(crime(st).ng) L.forEach(j=>{ if(j.network) j.pay=Math.round(j.pay*1.5/10)*10; }); }catch(_){} return L; }; })();
 
 (function(){ const s=document.createElement('style'); s.textContent=`
 .bk-list ul{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:2px}.bk-list li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.bk-list li span{display:block;font-size:12px;color:var(--muted)}
@@ -8181,8 +7992,6 @@ document.addEventListener('click', e=>{ const li=e.target.closest('.sh-time li')
 /* 7. network runs have no airline flight number on the ticket */
 (function(){ const _fn=flightNo; flightNo=function(job){ return job && job.network ? 'Unlisted' : _fn(job); }; })();
 
-/* 8. network job titles don't repeat "(under the radar)": the tag already says it */
-(function(){ const _g=genJobs; genJobs=function(st){ const L=_g(st); L.forEach(j=>{ if(j.lowLevel && j.title) j.title=j.title.replace(/ \(under the radar\)$/,''); }); return L; }; })();
 
 /* 9. "Checkride ready" leads with the licences the story needs; the rest fold away */
 (function(){ const _b=boardView; boardView=function(){ const h=_b(); return h.replace(/<div class="b2-note"><b>Checkride ready:<\/b> ([^<]*)(<button[^>]*>Book checkride<\/button><\/div>)/, (m,list,btn)=>{ const all=list.trim().split(', '); const key=['Jet Type Rating','Airline Transport Pilot','Private Pilot']; const main=all.filter(n=>key.some(k=>n.startsWith(k))); const rest=all.filter(n=>!main.includes(n)); const shown=main.length?main:all.slice(0,1); const more=all.length-shown.length;
@@ -8705,6 +8514,222 @@ function rest(st){
   // daily costs never push cash below zero: what you can't pay costs Heat instead
   try{ if(st.cash<0 && cashBefore>=0){ const short=-st.cash; txn(st, short, 'Operation', 'Costs you couldn\'t cover (owed to Castillo\'s people)'); const c=crime(st); if(c.on) crBump(c,'heat',2); setTimeout(()=>toast(`You couldn't cover ${money(short)} of today's costs. People talk: Heat +2.`), 600); } }catch(_){}
   return net;
+}
+/* ===================== JOBS =====================
+   Building the job board, the story and checkride flights, and the small helpers around them.
+     genJobs(st)      -> a fresh list of jobs for where you are today
+     ensureJobs(st)   -> makes sure st.jobs is current (new airport or new day = new list)
+     storyJob / checkrideJob -> the flight for a story chapter or a licence test
+   genJobs is a list of named steps that run in order. Add a step; don't wrap. */
+
+/* ---------- the job board ---------- */
+
+const GEN_JOB_STEPS = [
+  /* six ordinary jobs, plus three for your own company if you have one */
+  function basicJobs(st){
+    const jobs=[]; const arcs = ARCH.filter(a=>archOk(st,a)).map(a=>({...a,w:archWeight(st,a)})).filter(a=>a.w>0);
+    let tries=0;
+    while(jobs.length<6 && tries<80){ tries++; const arch=wpickArr(arcs); const j=makeJob(st, arch, false); if(j && !jobs.some(x=>x.to===j.to && x.arch===j.arch)) jobs.push(j); }
+    if(st.company && fleetTypes(st).length){ let t=0, n=0; while(n<3 && t<40){ t++; const arch=wpickArr(arcs); const j=makeJob(st, arch, true); if(j){ jobs.push(j); n++; } } }
+    return decorateJobs(st, jobs).sort((x,y)=>x.dep-y.dep);
+  },
+  /* difficulty: Expert adds a few in-flight emergencies, Casual removes half */
+  function difficultyEmergencies(st, L){ const d=diff();
+    for(const j of L){ if(d==='expert' && !j.scen && Math.random()<0.08){ const sc=scenFor(j); if(sc) j.scen=sc; } if(d==='casual' && j.scen && Math.random()<0.5) j.scen=null; } },
+  /* a weekend event on another island: jobs going there pay more, and there are always two */
+  function weekendEventJobs(st, L){ const ev=weekendEvent(st); if(!ev || st.loc===ev.ap) return;
+    for(const j of L){ if(j.to===ev.ap && !j.local){ j.pay=Math.round(j.pay*1.35/10)*10; j.event=ev.n; } }
+    let tries=0; while(L.filter(j=>j.to===ev.ap).length<2 && tries<25){ tries++; const arch=pick(ARCH.filter(a=>archOk(st,a) && !a.local && !a.airline)); const j=makeJob(st, arch, false); if(j && apOk(st, ev.ap, j.ac) && distNm(AP[st.loc],AP[ev.ap]) < AC[j.ac].range*0.8){ j.to=ev.ap; const p=plan(j); if(p.over>0||!p.range) continue; j.pay=Math.round(payFor(st,j)*1.35/10)*10; j.est=p.est; j.event=ev.n; j.title=`${ev.n}: ${j.title.replace(/ to .*$/,'')} to ${AP[ev.ap].isl}`; L.push(j); } } },
+  /* with a jet rating: up to two long flights to the mainland */
+  function mainlandJobs(st, L){ if(!hasRating(st,'JET') || MAINLAND.includes(st.loc) || AP[st.loc].water) return; const arch=ARCH.find(a=>a.id==='mainland');
+    let n=0; for(let t=0;t<14 && n<2;t++){ const j=makeJob(st, Object.assign({}, arch, {w:1}), false); if(!j) continue; const opts=MAINLAND.filter(k=>apOk(st,k,j.ac) && distNm(AP[st.loc],AP[k]) < AC[j.ac].range*0.8 && distNm(AP[st.loc],AP[k])>300); if(!opts.length) continue;
+      j.to=pick(opts); const p=plan(j); if(p.over>0||!p.range) continue; const s=arch.story({from:AP[st.loc],to:AP[j.to],ac:AC[j.ac]}); j.title=s.title; j.client=s.client; j.paras=s.paras; j.pay=payFor(st,j); j.est=p.est; j.mainland=true; L.push(j); n++; } },
+  /* no more than two jobs for the same aircraft, where another type fits */
+  function spreadAircraft(st, L){
+    const used={}; for(const j of L) used[j.ac]=(used[j.ac]||0)+1;
+    for(const j of L){ if(j.kind!=='gen' || j.company || used[j.ac]<=2) continue; const arch=ARCH.find(a=>a.id===j.arch); if(!arch) continue;
+      const cands=eligibleAircraft(st).filter(k=>k!==j.ac && arch.cls.includes(AC[k].cls) && (used[k]||0)<2).sort((a,b)=>((used[a]||0)-(used[b]||0)) || ((st.types[a]||0)-(st.types[b]||0)));
+      for(const k of cands){ const from=j.ac; if(refitJob(st,j,k)){ used[from]--; used[k]=(used[k]||0)+1; break; } } } },
+  /* type checkouts with Mari for aircraft you own in MSFS but aren't licensed for yet */
+  function checkoutJobs(st, L){ if(st.company) return;
+    const pool=Object.keys(AC).filter(k=>st.hangar[k] && !canFly(st,k) && CHECKOUT_TXT[AC[k].cls] && !AC[k].custom && !['jet','regional','airliner','widebody'].includes(AC[k].cls) && AC[k].req.filter(r=>!st.ratings[r]).length<=2);
+    let n=0; for(let t=0;t<10 && n<2 && pool.length;t++){ const acId=pick(pool); if(L.some(j=>j.ac===acId)) continue; const a=AC[acId];
+      const to=pickDest(st, st.loc, acId, {id:'checkout'}, Math.max(25, 40*a.cruise/60)); if(!to) continue;
+      const dep=Math.round((st.clock+ri(30,150))/5)*5; const job={ id:uid(), kind:'gen', arch:'checkout', label:'Type checkout', cat:'pax', from:st.loc, to, local:false, tourNm:0, ac:acId, pax:1, cargo:20, dep, wx:genWx(st,to,null,dep), checkout:true, company:false };
+      const p=plan(job); if(p.over>0 || !p.range) continue;
+      job.title=`Checkout: ${a.n}`; job.client=CAST.mari.n; job.paras=[`Mari wants you checked out in Coral Wing's ${a.n} before the busy season. Your license doesn't cover it on your own yet, so she'll ride in the right seat as your instructor. Fly it to ${AP[to].isl} and back to her standards, and she'll sign your logbook.`, CHECKOUT_TXT[a.cls]];
+      job.pay=Math.round(payFor(st,job)*0.45/10)*10; job.est=p.est; L.push(job); n++; pool.splice(pool.indexOf(acId),1); } },
+  /* cabin requests were removed from the game. These two random draws are kept so the same save still
+     produces the same job list; remove them together with the next change to job generation. */
+  function retiredCabinRequests(st, L){ for(const j of L){ if(j.kind==='gen' && !j.checkout && !j.scen && Math.random()<0.35){ pick(ASKS.filter(x=>x.when(j))); } } },
+  /* a calm test session has no emergencies */
+  function calmTestSession(st, L){ if(st.ui && st.ui.calmTest) L.forEach(j=>{ j.scen=null; }); },
+  /* with a commercial licence: sometimes a one-off special charter from this airport */
+  function specialCharter(st, L){ if(!hasRating(st,'COMM')) return; st.specialDone=st.specialDone||{};
+    const opts=SPECIALS.filter(m=>m.from===st.loc && !st.specialDone[m.id] && !st.story.done[m.id] && ratingsOk(st,(m.req||{}).ratings||[]) && m.ac.some(k=>canFly(st,k) && apOk(st,m.to,k)));
+    if(opts.length && Math.random()<0.6){ const m=pick(opts); const acId=m.ac.find(k=>canFly(st,k) && apOk(st,m.to,k)); const j=storyJob(st,m,acId);
+      Object.assign(j,{kind:'gen', arch:'special', story:undefined, special:m.id, label:'Special charter', id:'X-'+m.id+'-'+st.day}); j.pay=Math.round(payFor(st,j)*1.4/10)*10; L.unshift(j); } },
+  /* no emergencies on very short flights or in your first three flights; no cabin requests at all */
+  function gentleStart(st, L){ L.forEach(j=>{ if(j.scen && ((j.est||plan(j).est) < 20 || st.flights < 3)) j.scen=null; }); if(st.flights<3) L.forEach(j=>{ j.scen=null; }); L.forEach(j=>{ delete j.ask; }); },
+  /* once you work for Castillo: one to three cargo jobs become network runs (more pay, more Heat) */
+  function networkRuns(st, L){ const c=crime(st); if(!c.on) return; const n=1+(c.power>=45?1:0)+(c.power>=70?1:0); let k=0;
+    L.forEach(j=>{ if(k<n && j.kind==='gen' && j.cargo>0 && !j.special && !j.story){ k++; j.network=true; j.label='Network run'; j.title=`${pick(NET_TITLES)} for the network`; j.client='The network'; j.pay=Math.round(j.pay*(1.6+c.power/100)/10)*10; j.scen=null; } }); },
+  /* network runs: rank pay, night drops at closed strips, low-level runs, hot airports */
+  function networkVariety(st, L){ const c=crime(st); if(!c.on) return; c.hot=c.hot||{};
+    L.forEach(j=>{ if(!j.network) return; j.pay=Math.round(j.pay*rankMul(c)/10)*10;
+      if(Math.random()<0.4){ const strips=DROP_STRIPS.filter(k=>AP[k] && k!==st.loc && apOk(st,k,j.ac) && distNm(AP[st.loc],AP[k])<Math.min(400,(AC[j.ac].range||500)*0.6)); if(strips.length){ const k=pick(strips); j.to=k; j.drop=true; j.dep=Math.max(j.dep, 1260); j.title=`Night drop at ${AP[k].isl}`; j.pay=Math.round(j.pay*1.3*(c.power>=28?1.15:1)/10)*10; j.paras=[`The strip at ${AP[k].n} closes at sunset. Tonight it's open for you: two trucks, headlights on, engines running. Land, unload, leave.`]; try{ j.est=plan(j).est; }catch(_){} } }
+      if(Math.random()<0.35){ j.lowLevel=true; }   // the "Low level" tag on the row says it; the title stays clean
+      if(c.hot[j.to]){ j.hot=true; j.pay=Math.round(j.pay*1.2/10)*10; } }); },
+  /* crew, the private strip and New Game+ raise network pay */
+  function networkPayPerks(st, L){
+    L.forEach(j=>{ if(!j.network) return; let m=1; if(crewHas(st,'tico')) m+=0.05; if(crewHas(st,'fo') && ['airliner','widebody','regional'].includes(AC[j.ac].cls)) m+=0.1; j.pay=Math.round(j.pay*m/10)*10; });
+  },
+  function privateStripPay(st, L){ if(crime(st).safe==='strip') L.forEach(j=>{ if(j.network) j.pay=Math.round(j.pay*1.2/10)*10; }); },
+  /* at Heat 80+ there are no network runs; airports that banned you are off the list for 3 days */
+  function fedsAndBans(st, L){ const c=crime(st); let R=L; if(fedsWatching(st)) R=R.filter(j=>!j.network); const now=st.day; c.ban=c.ban||{}; return R.filter(j=>!(c.ban[j.to] && now-c.ban[j.to]<3)); },
+  function newGamePlusPay(st, L){ if(crime(st).ng) L.forEach(j=>{ if(j.network) j.pay=Math.round(j.pay*1.5/10)*10; }); },
+];
+function genJobs(st){
+  let L=null;
+  for(const step of GEN_JOB_STEPS){ try{ const r=step(st, L); if(r) L=r; }catch(e){ if(!L) throw e; } }
+  return L;
+}
+
+function ensureJobs(st){
+  const keyBefore = st.jobsKey;
+  const key = st.loc+'|'+st.day; if(st.jobsKey!==key){ st.jobs = genJobs(st); st.jobsKey=key; }
+  const fresh = st.jobsKey!==keyBefore;
+  /* usually one Starling charter on a fresh board */
+  if(fresh || !st._starlingChecked){ st._starlingChecked = true;
+    if(!st.jobs.some(j=>j.arch==='starling') && Math.random()<0.8){ const j = starlingTrip(st); if(j) st.jobs.unshift(j); } }
+  /* the aircraft you have loaded in MSFS always has a few jobs, listed first */
+  const L = loadedAircraft();
+  if(L.id && canFly(st, L.id) && !st.active){
+    const have = st.jobs.filter(j=>j.ac===L.id).length;
+    if(have < 2 && st._loadedFor !== st.jobsKey+'|'+L.id){ st._loadedFor = st.jobsKey+'|'+L.id;
+      for(let i=0;i<3-have;i++){ const j=makeJobFor(st, L.id); if(j) st.jobs.push(j); } }
+    st.jobs.forEach(j=>{ j.loaded = j.ac===L.id; });
+    st.jobs.sort((a,b)=>(b.loaded?1:0)-(a.loaded?1:0));
+  }
+  /* real Caribbean events happening this week add 20% */
+  if(fresh || !st._rwChecked){ st._rwChecked=true; const evs=realEvents(); for(const j of st.jobs){ const e=evs.find(e=>e.ap.includes(j.to)); if(e && !j.realEvent){ j.realEvent=e.n; j.pay=Math.round(j.pay*1.2/10)*10; } } }
+}
+
+/* The job list after your filters and sort; jobs for the aircraft loaded in MSFS come first. */
+function filterJobs(list){ const p=boardPrefs(); let L=list.slice();
+  if(p.kind && p.kind!=='all') L=L.filter(j=> p.kind==='vip' ? j.vip : p.kind==='urgent' ? j.urgent : p.kind==='local' ? j.local : (j.cat||'')===p.kind);
+  if(p.ac && p.ac!=='all') L=L.filter(j=>j.ac===p.ac);
+  const by=p.sort||'dep'; const key={dep:j=>j.dep, pay:j=>-j.pay, rate:j=>-jobPerHour(j), short:j=>j.local?(j.tourNm||40):distNm(AP[j.from],AP[j.to]), long:j=>-(j.local?(j.tourNm||40):distNm(AP[j.from],AP[j.to]))}[by]||(j=>j.dep);
+  L=L.sort((a,b)=>key(a)-key(b));
+  if(p.quick==='short') L=L.filter(j=>(j.est||plan(j).est)<=30);
+  const ld=S.simState==='live'?loadedAircraft():{}; if(!ld.id) return L;
+  return L.filter(j=>j.ac===ld.id).concat(L.filter(j=>j.ac!==ld.id)); }
+
+/* The little tags on a job. */
+function chipsFor(st, job){
+  const c=[];
+  if(job.loaded) c.push(`<span class="chip sky">✈ Loaded in MSFS</span>`);
+  if(job.mystery && !(st.active && st.active.job===job)){ c.push(`<span class="chip vio">Confidential</span>`); if(job.followup) c.push(`<span class="chip sea">Follow-up</span>`); if(job.request) c.push(`<span class="chip vio">Passenger request</span>`); if(!st.types[job.ac]) c.push(`<span class="chip new">New type</span>`); }
+  else {
+    if(job.followup) c.push(`<span class="chip sea">Follow-up</span>`);
+    if(job.request) c.push(`<span class="chip vio">Passenger request</span>`);
+    if(job.kind==='story') c.push(`<span class="chip sea">Story</span>`);
+    if(job.lend) c.push(`<span class="chip vio">Owner's jet</span>`);
+    if(job.company) c.push(`<span class="chip sky">Your company</span>`);
+    if(job.vip) c.push(`<span class="chip warn">VIP</span>`);
+    if(job.urgent) c.push(`<span class="chip bad">Urgent</span>`);
+    if(job.wx.ifr) c.push(`<span class="chip vio">IFR</span>`);
+    if(isNight(job.dep)) c.push(`<span class="chip">Night</span>`);
+    if(!st.types[job.ac]) c.push(`<span class="chip new">New type</span>`);
+    if(!job.local && !st.visited[job.to] && !AP[job.to].water) c.push(`<span class="chip new">New airport</span>`);
+    if(AP[job.to].water) c.push(`<span class="chip sky">Water landing</span>`);
+    if(!job.local && ZONE(AP[job.from].c)!==ZONE(AP[job.to].c)) c.push(`<span class="chip">Customs</span>`);
+    if(job.scen) c.push(`<span class="chip bad">Sealed orders</span>`);
+    if(job.bonus) c.push(`<span class="chip good">Bonus +${money(job.bonus.amt)}</span>`);
+    if(job.festival) c.push(`<span class="chip vio">${esc(job.festival)}</span>`);
+    if(job.stormName) c.push(`<span class="chip bad">Hurricane ${esc(job.stormName)}</span>`);
+  }
+  if(job.realEvent) c.push(`<span class="chip warn" title="Happening around this time in the real Caribbean">🌍 ${esc(job.realEvent)} +20%</span>`);
+  const A=st.airframes&&st.airframes[job.ac]; if(A && A.h<70) c.push(`<span class="chip ${A.h<50?'bad':'warn'}" title="Airframe health">🔧 ${A.h}%</span>`);
+  return c.join('');
+}
+
+/* An urgent job that pops up in real time: accept within 5 minutes, wheels up within 15. */
+function spawnUrgent(force){
+  const st=S.st;
+  if(!force && st && ((st.ui&&st.ui.quiet) || st.flights<3)) return null;
+  if(!st || st.active || st.urgent || (!force && !urgentOn())) return null;
+  const opts = URG_REASONS.filter(r=>{ const a=ARCH.find(x=>x.id===r.arch); return a && (!a.need || hasRating(st,a.need)); });
+  for(let i=0;i<10;i++){ const r=pick(opts); const arch=ARCH.find(x=>x.id===r.arch); const job=makeJob(st, arch, false); if(!job || job.local) continue;
+    const isl=AP[job.to].isl.replace(/\s*\(.*\)/,'');
+    job.pay = Math.round(job.pay*2/10)*10; job.urgent=true; job.realtime=true; job.title=r.t.replace('{to}',isl); job.label='Urgent dispatch'; job.paras=[r.d.replace(/\{to\}/g,isl), ...(job.paras||[]).slice(0,1)];
+    st.urgent = {job, expires: Date.now()+URG_ACCEPT_MIN*60000}; save(); notifyUrgent(job); render();
+    try{ takeover({kind:'urgent', kicker:'Urgent flight · 2× pay', title:job.title, text:`${AP[job.from].isl} to ${AP[job.to].isl}. Accept within 5 minutes; wheels up within 15.`, btn:'Show me', ms:7000}); }catch(_){}
+    return job; }
+  return null;
+}
+
+/* ---------- story and checkride flights ---------- */
+
+/* Which of a chapter's aircraft you can fly it in right now (the one loaded in MSFS first). */
+function storyAircraft(st, m){
+  const list = m.ac.filter(k=>(m.lend ? !!st.hangar[k] : canFly(st,k)) && apOk(st,m.to,k) && apOk(st,m.from,k)).filter(k=>!isGrounded(st,k));
+  const L=S.simState==='live'?loadedAircraft():{}; return (L.id && list.includes(L.id)) ? [L.id, ...list.filter(x=>x!==L.id)] : list; }
+
+/* The flight for a story chapter. Earlier choices can change the chapter (dynM). */
+function storyJob(st, chapter, acId){
+  const m = dynM(st, chapter);
+  const wx = genWx(st, m.to, m.wx, m.dep);
+  const job = { id:'S-'+m.id, kind:'story', story:m.id, title:m.title, label:m.arc, cat: m.cargo>m.pax*190?'cargo':'pax', from:m.from, to:m.to, local:!!m.local, tourNm:m.local?45:0,
+    ac:acId, pax:m.pax, cargo:m.cargo, cargoLabel:m.cargoLabel, dep:m.dep, wx, scen:m.scen||null, paras:m.brief, teachStory:m.teach, chars:m.chars, airline:!!m.airline, client:CAST[m.chars[0]]?.n||'' };
+  job.pay = payFor(st, job); job.est = plan(job).est;
+  if(m.lend){ job.lend = true; job.pay = m.fee || job.pay; job.tail = acId==='CJ4'?'N52VL':STARLING_TAIL; }
+  const ch = arcChapters(m.arc); job.label = `${m.arc} · Ch ${ch.indexOf(m)+1}/${ch.length}`;
+  return job;
+}
+
+function basicCheckride(st, rid, acId){
+  const R=RATINGS[rid]; let to = st.loc, local=true;
+  if(R.dest){ to=R.dest; local=false; }
+  if(R.water){ let best=null,bd=1e9; for(const k in AP){ if(!AP[k].water) continue; const d=distNm(AP[st.loc],AP[k]); if(d<bd){bd=d;best=k;} } if(best && bd < AC[acId].range*0.6){ to=best; local=false; } }
+  if(R.hub){ let best=null,bd=1e9; for(const k in AP){ if(k===st.loc||AP[k].water||longestRwy(AP[k])<7000) continue; const d=distNm(AP[st.loc],AP[k]); if(d>80&&d<bd){bd=d;best=k;} } if(best){ to=best; local=false; } }
+  const dep = Math.round((st.clock + 45)/5)*5;
+  const wx = genWx(st, to, R.wx || (rid==='IR'?'wave':'trades'), dep);
+  const ex = CAST[R.examiner||'wilkins'];
+  const job = { id:'C-'+rid, kind:'check', rating:rid, title:`${R.n} checkride`, label:`Checkride`, cat:'check', from:st.loc, to, local, tourNm: local?35:0, ac:acId,
+    pax:1, cargo:0, dep, wx, scen:R.scen||null, tasks:R.tasks, client:ex.n, chars:[R.examiner||'wilkins'],
+    paras:[`${ex.n} meets you at the aircraft with a clipboard. ${ex.bio}`, `"Fly it like I'm not here," she says. ${R.n} unlocks: ${R.unlocks}`] };
+  if(R.examiner==='devries') job.paras = [`Inspector Henk de Vries arrives with a thermos of tea and a clipboard. "Saba forgives nothing," he says, "so neither do I. But I am very fair."`, `He'll ride in the right seat for the whole flight. Pass, and you can land at the shortest commercial runway in the world. ${R.unlocks}`];
+  if(R.examiner==='marchetti') job.paras = [`Capitaine Hélène Marchetti flew Twin Otters into St. Barth for twenty years. She looks at your airplane, then at you, and says only, "We go."`, `Pass, and you're cleared for one of the most famous approaches anywhere. ${R.unlocks}`];
+  job.pay = 0; job.est = plan(job).est; return job;
+}
+/* The flight for a licence test. */
+function checkrideJob(st, rid, acId){
+  /* Seaplane: a short hop from Juliana to Simpson Bay Lagoon (you're flown to Juliana for free) */
+  if(rid==='SEA'){
+    const moved = st.loc!=='TNCM'; if(moved) st.loc='TNCM';
+    const j=basicCheckride(st, rid, acId); Object.assign(j, { from:'TNCM', to:'WSBL', local:false, tourNm:0, wx:genWx(st,'WSBL','calm',j.dep) });
+    j.paras=[`${CAST[RATINGS.SEA.examiner].n} meets you at the seaplane on the ramp at Princess Juliana${moved?' (Coral Wing flew you over for free)':''}.`, `"Short and simple," she says. "Take off, swing around the lagoon, and put us down in Simpson Bay Lagoon, right over there. Gentle and steady, that's all I'm looking for." Pass, and you hold the Seaplane Rating: ${RATINGS.SEA.unlocks}`];
+    j.est=Math.max(10, plan(j).est); return j; }
+  const j=basicCheckride(st, rid, acId); if(rid!=='ATP') return j;
+  /* Airline Transport Pilot: fly to a nearby airport with an ILS (San Juan if it's in range) */
+  const here=AP[st.loc]; const opts=ILS_FIELDS.filter(f=>AP[f[0]] && f[0]!==st.loc).map(f=>({f, d:distNm(here,AP[f[0]])})).filter(x=>x.d>=60 && x.d<=Math.min(400,(AC[acId]?AC[acId].range:900)*0.5)).sort((a,b)=>a.d-b.d);
+  const pickF=(opts.find(x=>x.f[0]==='TJSJ')||opts[0]); if(!pickF) return j; const [code,rw,ils,rnav]=pickF.f;
+  Object.assign(j, { to:code, local:false, tourNm:0, wx:genWx(st, code, 'trades', j.dep), ilsRwy:rw });
+  j.tasks=[`Departure briefing and a clean takeoff from ${st.loc}`, `Autopilot and FMS from the climb to the approach`, `Fly the ${ils} to ${code} (the ${rnav} is your backup) and land in the touchdown zone`];
+  j.paras=[`${CAST.wilkins?CAST.wilkins.n:'The examiner'} meets you at the jet bridge with a clipboard.`, `"Today you'll take her to ${AP[code].n} and fly the ${ils}. Load the ${rnav} as the backup. Stabilized by a thousand feet, please." Pass, and you hold the Airline Transport Pilot licence.`];
+  j.est=plan(j).est; return j;
+}
+
+/* ---------- loading a save ---------- */
+
+/* Brings an older save up to date. Runs every time a save is loaded. */
+function migrate(st){
+  registerCustomAc(st);
+  st.celebs=st.celebs||{}; st.souvenirs=st.souvenirs||{}; st.gifts=st.gifts||{}; st.followups=st.followups||[]; st.ach=st.ach||{}; st.reviews=st.reviews||[]; if(!st.landedAt){ st.landedAt={}; (st.log||[]).forEach(l=>{ if(l.landing!=='crash') st.landedAt[l.to]=(st.landedAt[l.to]||0)+1; }); } if(!st.stats) st.stats={butter:0,smooth:0,firm:0,hard:0,crash:0,nm:0,diverts:0,scen:0}; if(!st.cooldown) st.cooldown={}; if(!st.visited) st.visited={}; Object.keys(AC).forEach(k=>{ if(st.hangar[k]===undefined) st.hangar[k]=true; }); Object.keys(CAST).forEach(k=>{ if(st.rep[k]===undefined) st.rep[k]=10; });
+  const r=finMigrate(st);
+  if(r && !r._cabFix){ r._cabFix=true; if(r.active && r.active.cab) delete r.active.cab; if(r.active) delete r.active.recId; }
+  return r;
 }
 /* ===================== RENDER =====================
    render() redraws the whole page from S (what's on screen) and S.st (the career).

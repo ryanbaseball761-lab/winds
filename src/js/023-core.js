@@ -9,15 +9,6 @@ const URG_REASONS = [
   {arch:'catch', t:`Fresh catch, short shelf life`, d:`A restaurant at {to} needs the morning catch before lunch service. Double pay for a fast departure.`}
 ];
 var urgentOn; /* defined in full below (055-core.js) */
-function spawnUrgent(force){
-  const st=S.st; if(!st || st.active || st.urgent || (!force && !urgentOn())) return null;
-  const opts = URG_REASONS.filter(r=>{ const a=ARCH.find(x=>x.id===r.arch); return a && (!a.need || hasRating(st,a.need)); });
-  for(let i=0;i<10;i++){ const r=pick(opts); const arch=ARCH.find(x=>x.id===r.arch); const job=makeJob(st, arch, false); if(!job || job.local) continue;
-    const isl=AP[job.to].isl.replace(/\s*\(.*\)/,'');
-    job.pay = Math.round(job.pay*2/10)*10; job.urgent=true; job.realtime=true; job.title=r.t.replace('{to}',isl); job.label='Urgent dispatch'; job.paras=[r.d.replace(/\{to\}/g,isl), ...(job.paras||[]).slice(0,1)];
-    st.urgent = {job, expires: Date.now()+URG_ACCEPT_MIN*60000}; save(); notifyUrgent(job); render(); return job; }
-  return null;
-}
 function notifyUrgent(job){
   const body = `${job.from} → ${job.to} · ${money(job.pay)} (2× pay) · accept in ${URG_ACCEPT_MIN} min, wheels up within ${URG_TAKEOFF_MIN}`;
   toast(`URGENT: ${job.title}`);

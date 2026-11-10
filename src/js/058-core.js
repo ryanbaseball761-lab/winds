@@ -17,8 +17,6 @@ boardView = function(){ const h=_tsBoard(); if(S.view!=='board'||!S.st) return h
 const _tsSim = renderSimBits;
 renderSimBits = function(){ _tsSim(); try{ if(S.view==='board'){ const el=document.querySelector('.conn-card'); if(el){ const t=tpl(connCard(S.st)); el.replaceWith(t.content.firstElementChild); } } }catch(_){} };
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="calm-test"]'); if(!b||!S.st) return; S.st.ui=S.st.ui||{}; S.st.ui.calmTest=b.checked; if(b.checked) (S.st.jobs||[]).forEach(j=>{ j.scen=null; delete j.ask; }); save(); toast(b.checked?'Calm test mode on: plain A-to-B flights.':'Calm test mode off.'); S.keepScroll=true; render(); });
-const _tsGen = genJobs;
-genJobs = function(st){ const L=_tsGen(st); if(st.ui && st.ui.calmTest) L.forEach(j=>{ j.scen=null; delete j.ask; }); return L; };
 const _tsOrders = openOrders;
 openOrders = function(a, how){ if(testMode()) return; return _tsOrders(a, how); };
 

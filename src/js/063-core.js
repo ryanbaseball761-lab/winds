@@ -68,16 +68,10 @@ const _p20Board = boardView;
 boardView = function(){ const h=_p20Board(); try{ const F=fin(S.st); const H=HOUSING[F.housing]||HOUSING.bunk; return h.replace('<button class="btn" data-act="rest">New day</button>', `<button class="btn" data-act="rest">New day · rent ${money(H.rent)}</button>`); }catch(_){ return h; } };
 
 /* 15. story chapters and jobs prefer the aircraft you already have loaded in MSFS */
-const _p20SA = storyAircraft;
-storyAircraft = function(st, m){ const list=_p20SA(st, m); const L=S.simState==='live'?loadedAircraft():{}; return (L.id && list.includes(L.id)) ? [L.id, ...list.filter(x=>x!==L.id)] : list; };
-const _p20Filter = filterJobs;
-filterJobs = function(list){ const L=_p20Filter(list); const ld=S.simState==='live'?loadedAircraft():{}; if(!ld.id) return L; return L.filter(j=>j.ac===ld.id).concat(L.filter(j=>j.ac!==ld.id)); };
 const _p20Strip2 = stripHTML;
 stripHTML = function(st, job, opts){ const h=_p20Strip2(st, job, opts); const ld=S.simState==='live'?loadedAircraft():{}; return (ld.id && job.ac===ld.id) ? h.replace(/(<article[^>]*class="jcard[^"]*"[^>]*>)/, '$1<span class="loaded-tag">Loaded in MSFS</span>') : h; };
 
 /* 16. new pilots don't get sealed orders or cabin requests until they've settled in */
-const _p20Gen = genJobs;
-genJobs = function(st){ const L=_p20Gen(st); if(st.flights<3) L.forEach(j=>{ delete j.ask; j.scen=null; }); return L; };
 
 /* 17. the guide hides itself once you've done a few flights, even if it was never closed */
 const _p20Guide = guideActive;

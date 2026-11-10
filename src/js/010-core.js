@@ -40,14 +40,7 @@ STORY.push(
 );
 
 /* Aircraft lent by the owner: no rating needed, but you need it in your MSFS hangar and a long-enough runway. */
-function storyAircraft(st, m){ return m.ac.filter(k=>(m.lend ? !!st.hangar[k] : canFly(st,k)) && apOk(st,m.to,k) && apOk(st,m.from,k)); }
 
-const _starlingStoryJob = storyJob;
-storyJob = function(st, m, acId){
-  const job = _starlingStoryJob(st, m, acId);
-  if(m.lend){ job.lend = true; job.pay = m.fee || job.pay; job.tail = acId==='CJ4'?'N52VL':STARLING_TAIL; }
-  return job;
-};
 
 /* Repeatable owner trips once you've met Vivienne */
 const STARLING_DEST = ['TAPA','TBPB','TVSC','TKPK','TKPN','TQPF','TFFR','TFFF','TLPL','TGPY','TIST','TISX','TUPJ','TJSJ','MDPC','MDLR','MBPV','MYNN','MYEF','MWCR','TNCA','TNCC','TNCB','KPBI','KFLL','KEYW'];
@@ -75,11 +68,5 @@ function starlingTrip(st){
   job.pay = Math.round((250 + p.dist*(ac==='CJ4'?1.6:1.2))/10)*10; job.est = p.est;
   return job;
 }
-const _starlingEnsure = ensureJobs;
-ensureJobs = function(st){
-  const before = st.jobsKey; _starlingEnsure(st);
-  if(st.jobsKey!==before || !st._starlingChecked){ st._starlingChecked = true;
-    if(!st.jobs.some(j=>j.arch==='starling') && Math.random()<0.8){ const j = starlingTrip(st); if(j) st.jobs.unshift(j); } }
-};
 
 /* Relationship bump for owner trips */

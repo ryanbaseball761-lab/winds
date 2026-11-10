@@ -15,8 +15,6 @@ function registerCustomAc(st){
   st.customAc = st.customAc || {};
   for(const id in st.customAc){ AC[id] = Object.assign({}, st.customAc[id]); if(st.hangar && st.hangar[id]===undefined) st.hangar[id]=true; }
 }
-const _myMigrate = migrate;
-migrate = function(st){ registerCustomAc(st); return _myMigrate(st); };
 function loadedAircraft(){
   const t = S.sim && S.simState==='live' && S.sim.aircraft ? S.sim.aircraft.title : '';
   if(!t) return {title:'', id:null};
@@ -34,16 +32,6 @@ function makeJobFor(st, acId){
   } finally { eligibleAircraft = orig; }
   if(job) job.loaded = true; return job;
 }
-const _myEnsure = ensureJobs;
-ensureJobs = function(st){
-  _myEnsure(st);
-  const L = loadedAircraft(); if(!L.id || !canFly(st, L.id) || st.active) return;
-  const have = st.jobs.filter(j=>j.ac===L.id).length;
-  if(have < 2 && st._loadedFor !== st.jobsKey+'|'+L.id){ st._loadedFor = st.jobsKey+'|'+L.id;
-    for(let i=0;i<3-have;i++){ const j=makeJobFor(st, L.id); if(j) st.jobs.push(j); } }
-  st.jobs.forEach(j=>{ j.loaded = j.ac===L.id; });
-  st.jobs.sort((a,b)=>(b.loaded?1:0)-(a.loaded?1:0));
-};
 function loadedBanner(st){
   const L = loadedAircraft(); if(!L.title) return '';
   if(!L.id) return `<div class="notice row between" style="gap:10px"><span><b>MSFS has “${esc(L.title)}” loaded.</b> It isn't in your career yet.</span><button class="btn sm primary" data-act="nav" data-v="hangar">Add it in the Hangar</button></div>`;
@@ -52,8 +40,6 @@ function loadedBanner(st){
 }
 const _myBoard = boardView;
 boardView = function(){ const h=_myBoard(); return h.replace('<section><div class="section-title"><h2>Jobs at', loadedBanner(S.st)+'<section><div class="section-title"><h2>Jobs at'); };
-const _myChips = chipsFor;
-chipsFor = function(st, job){ const c=_myChips(st, job); return (job.loaded?`<span class="chip sky">✈ Loaded in MSFS</span>`:'') + c; };
 
 /* Hangar: bring your own aircraft */
 function byoSection(st){

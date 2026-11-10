@@ -101,5 +101,6 @@
 101-fixes50.js
 chrome.js
 game-flow.js
+jobs.js
 ui-render.js
 zz-boot.js

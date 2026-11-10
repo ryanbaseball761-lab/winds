@@ -3,8 +3,6 @@ function airframe(st, id){ st.airframes = st.airframes || {}; return st.airframe
 function isGrounded(st, id){ const a=st.airframes && st.airframes[id]; return !!(a && a.grounded && st.day < a.grounded); }
 const _wCanFly = canFly;
 canFly = function(st, id){ return _wCanFly(st, id) && !isGrounded(st, id); };
-const _wStoryAc = storyAircraft;
-storyAircraft = function(st, m){ return _wStoryAc(st, m).filter(k=>!isGrounded(st,k)); };
 /* Dez works on the fleet overnight */
 /* tired airframes sometimes misbehave */
 document.addEventListener('click', e=>{
@@ -12,8 +10,6 @@ document.addEventListener('click', e=>{
   setTimeout(()=>{ const st=S.st, a=st&&st.active; if(!a || a._wearChecked) return; a._wearChecked=true; const A=st.airframes&&st.airframes[a.job.ac]; if(!A || A.h>=60 || a.job.scen || a.job.kind==='check') return;
     if(Math.random() < (60-A.h)/150){ const cls=AC[a.job.ac].cls; const pickS=['rough_engine','electrical','bird_strike'].filter(k=>SCEN[k] && (SCEN[k].cls==='*' || SCEN[k].cls.includes(cls))); if(pickS.length){ a.job.scen=pick(pickS); a.job.tiredAirframe=true; save(); render(); toast(`Heads up: this ${AC[a.job.ac].n} is at ${A.h}% health. Expect sealed orders.`); } } },50);
 });
-const _wChips = chipsFor;
-chipsFor = function(st, job){ const A=st.airframes&&st.airframes[job.ac]; return _wChips(st, job) + (A && A.h<70 ? `<span class="chip ${A.h<50?'bad':'warn'}" title="Airframe health">🔧 ${A.h}%</span>` : ''); };
 function healthBar(h){ return `<div class="meter ${h<50?'bad':h<75?'warn':''}" title="Airframe health ${h}%"><i style="width:${h}%"></i></div>`; }
 const _wHangar = hangarView;
 hangarView = function(){

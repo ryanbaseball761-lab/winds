@@ -8,7 +8,6 @@ const DYN = {
   CR13:f=>f.dezJail?{brief:[`Mari found the cash in hangar three. All of it. With Dez in prison, she went looking for answers herself.`,`She doesn't yell. She asks if you'll take her flying, just the two of you, over to Grand Case like when you were new. She doesn't say a word until you're on final.`]}:{}
 };
 function dynM(st, m){ const d=DYN[m.id]; return d ? Object.assign({}, m, d(flagsOf(st))) : m; }
-(function(){ const _sj=storyJob; storyJob=function(st, m, acId){ return _sj(st, dynM(st, m), acId); }; })();
 
 /* endings: you only get the ones you earned */
 const ENDING_REQ = { kingpin:c=>c.power>=50 ? null : `Needs Power 50+ (you have ${c.power})`, witness:c=>(c.flags.informant||c.flags.ledgers||c.flags.medinaBurned) ? null : `You never gave Reyes anything`, ghost:()=>null };

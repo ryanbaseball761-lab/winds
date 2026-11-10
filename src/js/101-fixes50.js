@@ -11,8 +11,6 @@
 /* 7. network runs have no airline flight number on the ticket */
 (function(){ const _fn=flightNo; flightNo=function(job){ return job && job.network ? 'Unlisted' : _fn(job); }; })();
 
-/* 8. network job titles don't repeat "(under the radar)": the tag already says it */
-(function(){ const _g=genJobs; genJobs=function(st){ const L=_g(st); L.forEach(j=>{ if(j.lowLevel && j.title) j.title=j.title.replace(/ \(under the radar\)$/,''); }); return L; }; })();
 
 /* 9. "Checkride ready" leads with the licences the story needs; the rest fold away */
 (function(){ const _b=boardView; boardView=function(){ const h=_b(); return h.replace(/<div class="b2-note"><b>Checkride ready:<\/b> ([^<]*)(<button[^>]*>Book checkride<\/button><\/div>)/, (m,list,btn)=>{ const all=list.trim().split(', '); const key=['Jet Type Rating','Airline Transport Pilot','Private Pilot']; const main=all.filter(n=>key.some(k=>n.startsWith(k))); const rest=all.filter(n=>!main.includes(n)); const shown=main.length?main:all.slice(0,1); const more=all.length-shown.length;

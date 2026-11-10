@@ -182,24 +182,10 @@ function archOk(st, arch){
   if(arch.season){ const mo=monthOf(st.day); if(mo<7||mo>9) return false; }
   return true;
 }
-function genJobs(st){
-  const jobs=[]; const arcs = ARCH.filter(a=>archOk(st,a)).map(a=>({...a,w:archWeight(st,a)})).filter(a=>a.w>0);
-  let tries=0;
-  while(jobs.length<6 && tries<80){ tries++; const arch=wpickArr(arcs); const j=makeJob(st, arch, false); if(j && !jobs.some(x=>x.to===j.to && x.arch===j.arch)) jobs.push(j); }
-  if(st.company && fleetTypes(st).length){ let t=0, n=0; while(n<3 && t<40){ t++; const arch=wpickArr(arcs); const j=makeJob(st, arch, true); if(j){ jobs.push(j); n++; } } }
-  return decorateJobs(st, jobs).sort((x,y)=>x.dep-y.dep);
-}
-function ensureJobs(st){ const key = st.loc+'|'+st.day; if(st.jobsKey!==key){ st.jobs = genJobs(st); st.jobsKey=key; } }
 
 /* ---------- Story & checkride jobs ---------- */
 var storyAvailable; /* defined in full below (050-core.js) */
 
-function storyJob(st, m, acId){
-  const wx = genWx(st, m.to, m.wx, m.dep);
-  const job = { id:'S-'+m.id, kind:'story', story:m.id, title:m.title, label:m.arc, cat: m.cargo>m.pax*190?'cargo':'pax', from:m.from, to:m.to, local:!!m.local, tourNm:m.local?45:0,
-    ac:acId, pax:m.pax, cargo:m.cargo, cargoLabel:m.cargoLabel, dep:m.dep, wx, scen:m.scen||null, paras:m.brief, teachStory:m.teach, chars:m.chars, airline:!!m.airline, client:CAST[m.chars[0]]?.n||'' };
-  job.pay = payFor(st, job); job.est = plan(job).est; return job;
-}
 function checkrideReady(st, rid){
   const R=RATINGS[rid]; if(!R.req || st.ratings[rid]) return {ok:false, earned:!!st.ratings[rid]};
   const r=R.req, miss=[];
@@ -219,21 +205,6 @@ function checkrideAircraft(st, rid){
   return list;
 }
 function hasAllButTarget(st,k,rid){ return AC[k].req.every(r=>r===rid || st.ratings[r]); }
-function checkrideJob(st, rid, acId){
-  const R=RATINGS[rid]; let to = st.loc, local=true;
-  if(R.dest){ to=R.dest; local=false; }
-  if(R.water){ let best=null,bd=1e9; for(const k in AP){ if(!AP[k].water) continue; const d=distNm(AP[st.loc],AP[k]); if(d<bd){bd=d;best=k;} } if(best && bd < AC[acId].range*0.6){ to=best; local=false; } }
-  if(R.hub){ let best=null,bd=1e9; for(const k in AP){ if(k===st.loc||AP[k].water||longestRwy(AP[k])<7000) continue; const d=distNm(AP[st.loc],AP[k]); if(d>80&&d<bd){bd=d;best=k;} } if(best){ to=best; local=false; } }
-  const dep = Math.round((st.clock + 45)/5)*5;
-  const wx = genWx(st, to, R.wx || (rid==='IR'?'wave':'trades'), dep);
-  const ex = CAST[R.examiner||'wilkins'];
-  const job = { id:'C-'+rid, kind:'check', rating:rid, title:`${R.n} checkride`, label:`Checkride`, cat:'check', from:st.loc, to, local, tourNm: local?35:0, ac:acId,
-    pax:1, cargo:0, dep, wx, scen:R.scen||null, tasks:R.tasks, client:ex.n, chars:[R.examiner||'wilkins'],
-    paras:[`${ex.n} meets you at the aircraft with a clipboard. ${ex.bio}`, `"Fly it like I'm not here," she says. ${R.n} unlocks: ${R.unlocks}`] };
-  if(R.examiner==='devries') job.paras = [`Inspector Henk de Vries arrives with a thermos of tea and a clipboard. "Saba forgives nothing," he says, "so neither do I. But I am very fair."`, `He'll ride in the right seat for the whole flight. Pass, and you can land at the shortest commercial runway in the world. ${R.unlocks}`];
-  if(R.examiner==='marchetti') job.paras = [`Capitaine Hélène Marchetti flew Twin Otters into St. Barth for twenty years. She looks at your airplane, then at you, and says only, "We go."`, `Pass, and you're cleared for one of the most famous approaches anywhere. ${R.unlocks}`];
-  job.pay = 0; job.est = plan(job).est; return job;
-}
 
 /* ---------- Company ---------- */
 function fleetTypes(st){ if(!st.company) return []; return [...new Set(st.company.fleet.filter(f=>!f.hired).map(f=>f.ac))].filter(k=>canFly(st,k)); }

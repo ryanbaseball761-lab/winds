@@ -42,11 +42,6 @@ var arcState; /* defined in full below (055-core.js) */
 var campaignCard; /* defined in full below (085-core.js) */
 
 /* Story strips say which chapter they are */
-const _progStoryJob = storyJob;
-storyJob = function(st, m, acId){
-  const j = _progStoryJob(st, m, acId); const ch = arcChapters(m.arc);
-  j.label = `${m.arc} · Ch ${ch.indexOf(m)+1}/${ch.length}`; return j;
-};
 
 /* ---------- navigation ---------- */
 const NAV_ICON = {

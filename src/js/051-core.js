@@ -32,8 +32,6 @@ function takeover(o){ document.querySelectorAll('.takeover').forEach(x=>x.remove
 const _tfOrders = openOrders;
 openOrders = function(a, how){ const was=a&&a.opened; const r=_tfOrders(a, how); try{ if(!was && a.opened && a.scenPlan){ const sc=SCEN[a.job.scen]||{}; const wx=/squall|shower|storm|wave|weather|rain/i.test((a.job.scen||'')+' '+(sc.n||'')+' '+a.scenPlan.title);
     takeover({kind:wx?'weather':'orders', kicker:'Sealed orders', title:a.scenPlan.title, text:a.scenPlan.text, sub:a.scenPlan.sim, ms:11000}); } }catch(_){} return r; };
-const _tfUrg = spawnUrgent;
-spawnUrgent = function(force){ const j=_tfUrg(force); try{ if(j) takeover({kind:'urgent', kicker:'Urgent flight · 2× pay', title:j.title, text:`${AP[j.from].isl} to ${AP[j.to].isl}. Accept within 5 minutes; wheels up within 15.`, btn:'Show me', ms:7000}); }catch(_){} return j; };
 
 /* ---- 4. story briefing up top, like the opening of a chapter ---- */
 function chapterHero(job){ const m=STORY.find(x=>x.id===job.story); if(!m) return ''; const meta=arcMeta(m.arc); const chs=STORY.filter(x=>x.arc===m.arc); const idx=chs.indexOf(m)+1;
@@ -124,10 +122,6 @@ ARCH.push({id:'mainland',label:`Mainland charter`,kind:'vip',w:0,cls:['jet','tur
   story:c=>{ const who=pick([[`${pick(NAMES.first)} ${pick(NAMES.last)}`,`a hotel developer`],[`${pick(NAMES.first)} ${pick(NAMES.last)}`,`a cardiologist heading to a conference`],[`The ${pick(NAMES.last)} family`,`going home after a month in the islands`],[`${pick(NAMES.first)} ${pick(NAMES.last)}`,`a film producer`]]);
     return { title:`Charter to ${c.to.isl}`, client:who[0], paras:[`${who[0]}, ${who[1]}, wants a private flight from ${c.from.isl} to ${c.to.n} in ${c.to.isl}. Airlines would mean two connections and a day of airports. You can do it in a few hours.`,`It's a long leg off the islands and onto the mainland, so plan fuel carefully, file the right customs paperwork, and expect busy, fast-talking airspace at the other end.`] }; }});
 const MAINLAND = ['KMIA','KFLL','KPBI','KTEB','KJFK','KATL','KORD','MMUN','MZBZ','MRLB','MPTO'].filter(k=>AP[k]);
-const _tfGen = genJobs;
-genJobs = function(st){ const L=_tfGen(st); try{ if(!hasRating(st,'JET') || MAINLAND.includes(st.loc) || AP[st.loc].water) return L; const arch=ARCH.find(a=>a.id==='mainland');
-  let n=0; for(let t=0;t<14 && n<2;t++){ const j=makeJob(st, Object.assign({}, arch, {w:1}), false); if(!j) continue; const opts=MAINLAND.filter(k=>apOk(st,k,j.ac) && distNm(AP[st.loc],AP[k]) < AC[j.ac].range*0.8 && distNm(AP[st.loc],AP[k])>300); if(!opts.length) continue;
-    j.to=pick(opts); const p=plan(j); if(p.over>0||!p.range) continue; const s=arch.story({from:AP[st.loc],to:AP[j.to],ac:AC[j.ac]}); j.title=s.title; j.client=s.client; j.paras=s.paras; j.pay=payFor(st,j); j.est=p.est; j.mainland=true; L.push(j); n++; } }catch(_){} return L; };
 /* the clock row offers to set MSFS instead of moving the flight */
 const _tfChecks = preflightChecks;
 preflightChecks = function(job){ const out=_tfChecks(job); const t=out.find(c=>c.k==='time'); if(t && !t.ok && window.twNative){ t.act='pf-settime'; t.actLabel=`Set MSFS to ${hhmm(job.dep)}`; t.d='Or set the time in the MSFS weather & time panel.'; } return out; };

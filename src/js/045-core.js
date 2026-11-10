@@ -45,11 +45,6 @@ ARCH.push(
 function boardPrefs(){ try{ return JSON.parse(localStorage.getItem('tw_board')||'{}'); }catch(_){ return {}; } }
 function setBoardPrefs(p){ try{ localStorage.setItem('tw_board', JSON.stringify(p)); }catch(_){} }
 function jobPerHour(j){ const est=j.est||plan(j).est; return j.pay / Math.max(0.25, est/60); }
-function filterJobs(list){ const p=boardPrefs(); let L=list.slice();
-  if(p.kind && p.kind!=='all') L=L.filter(j=> p.kind==='vip' ? j.vip : p.kind==='urgent' ? j.urgent : p.kind==='local' ? j.local : (j.cat||'')===p.kind);
-  if(p.ac && p.ac!=='all') L=L.filter(j=>j.ac===p.ac);
-  const by=p.sort||'dep'; const key={dep:j=>j.dep, pay:j=>-j.pay, rate:j=>-jobPerHour(j), short:j=>j.local?(j.tourNm||40):distNm(AP[j.from],AP[j.to]), long:j=>-(j.local?(j.tourNm||40):distNm(AP[j.from],AP[j.to]))}[by]||(j=>j.dep);
-  return L.sort((a,b)=>key(a)-key(b)); }
 function boardTools(st){ const p=boardPrefs(); const acs=[...new Set(st.jobs.map(j=>j.ac))];
   const sel=(k,opts)=>`<select data-act="bp" data-k="${k}" aria-label="${k}">${opts.map(([v,l])=>`<option value="${v}" ${ (p[k]||opts[0][0])===v?'selected':''}>${esc(l)}</option>`).join('')}</select>`;
   return `<div class="board-tools">${sel('sort',[['dep','Soonest'],['pay','Highest pay'],['rate','Best pay per hour'],['short','Shortest'],['long','Longest']])}${sel('kind',[['all','All jobs'],['pax','Passengers'],['cargo','Cargo'],['vip','VIP'],['urgent','Urgent'],['local','Local tours']])}${acs.length>1?sel('ac',[['all','Any aircraft'],...acs.map(k=>[k,AC[k].n])]):''}</div>`; }
@@ -65,10 +60,6 @@ DIFF.casual.d = 'Forgiving: landings up to 450 fpm count as firm, rough rides co
 DIFF.standard.d = 'The career as designed. Checklist optional.';
 DIFF.expert.d = 'Stricter landing grades, mandatory checklist, the right fuel and aircraft loaded before you start, fines for landing below legal reserve, more in-flight surprises, and 15% extra pay.';
 
-const _gpGen = genJobs;
-genJobs = function(st){ const L=_gpGen(st); const d=diff();
-  for(const j of L){ if(d==='expert' && !j.scen && Math.random()<0.08){ const sc=scenFor(j); if(sc) j.scen=sc; } if(d==='casual' && j.scen && Math.random()<0.5) j.scen=null; }
-  return L; };
 document.addEventListener('click', e=>{ const s=e.target.closest('[data-act="start"]'); if(!s || !S.st || !S.st.active || diff()!=='expert' || S.simState!=='live') return;
   const bad=preflightChecks(S.st.active.job).filter(c=>!c.ok && ['ac','fuel','pos'].includes(c.k));
   if(bad.length){ e.stopImmediatePropagation(); e.preventDefault(); toast(`Expert mode: fix the pre-flight check first (${bad.map(c=>c.t).join('; ')}).`); const el=document.getElementById('preflight'); if(el) el.scrollIntoView({behavior:'smooth', block:'center'}); } }, true);

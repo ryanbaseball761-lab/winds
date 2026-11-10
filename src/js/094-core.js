@@ -6,7 +6,6 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="ng-
   CRIME.forEach(m=>{ delete st.story.done[m.id]; }); st.crime={power:0,heat:0,con:0,on:false,flags:{},choice:{},ng,endingsSeen:seen}; st.cash=Math.round(st.cash*0.25); st.active=null; st.loc='TNCM'; save();
   cutscene({col:'#c8962a', art:SCENES.hangar(), shots:[{card:true,kicker:`New Game+ · round ${ng+1}`,title:'Back to the Cessna',sub:'<p>Same islands. Same people. Different choices.</p>'}], onEnd:()=>{ S.view='story'; render(); }}); });
 (function(){ const _sv=storyView; storyView=function(){ const h=_sv(); const n=ngHTML(S.st); return n ? h.replace(/(<main[^>]*>(?:<div class="subtabs">[\s\S]*?<\/div>)?)/, '$1'+n) : h; }; })();
-(function(){ const _g=genJobs; genJobs=function(st){ const L=_g(st); try{ if(crime(st).ng) L.forEach(j=>{ if(j.network) j.pay=Math.round(j.pay*1.5/10)*10; }); }catch(_){} return L; }; })();
 
 (function(){ const s=document.createElement('style'); s.textContent=`
 .bk-list ul{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:2px}.bk-list li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.bk-list li span{display:block;font-size:12px;color:var(--muted)}

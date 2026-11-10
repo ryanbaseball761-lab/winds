@@ -15,8 +15,6 @@ function checkUnlocks(){ const st=S.st; if(!st) return; const ui=uiPrefs(); ui.s
 /* ---- fewer interruptions ---- */
 
 
-const _dcUrg = spawnUrgent;
-spawnUrgent = function(force){ const st=S.st; if(!force && st && ((st.ui&&st.ui.quiet) || st.flights<3)) return null; return _dcUrg(force); };
 
 /* ---- accessibility: text size, motion, contrast ---- */
 function applyA11y(){ const ui = S.st ? uiPrefs() : {}; const el=document.documentElement;

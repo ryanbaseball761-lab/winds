@@ -49,11 +49,6 @@ const KEEP_ARCS = new Set([...MAIN_ORDER, 'Starling']);
 const SPECIALS = STORY.filter(m=>!KEEP_ARCS.has(m.arc) && !/^CG/.test(m.id));
 for(let i=STORY.length-1;i>=0;i--) if(!KEEP_ARCS.has(STORY[i].arc)) STORY.splice(i,1);
 ARCH.push({id:'special', label:'Special charter', kind:'vip', w:0, cls:['ga','stol','hp','bush','twin','turbo','amph','jet'], need:'COMM', pax:[1,9], cargo:[0,500], story:()=>({title:'',client:'',paras:[]})});
-const _fbGen = genJobs;
-genJobs = function(st){ const L=_fbGen(st); try{ if(!hasRating(st,'COMM')) return L; st.specialDone=st.specialDone||{};
-    const opts=SPECIALS.filter(m=>m.from===st.loc && !st.specialDone[m.id] && !st.story.done[m.id] && ratingsOk(st,(m.req||{}).ratings||[]) && m.ac.some(k=>canFly(st,k) && apOk(st,m.to,k)));
-    if(opts.length && Math.random()<0.6){ const m=pick(opts); const acId=m.ac.find(k=>canFly(st,k) && apOk(st,m.to,k)); const j=storyJob(st,m,acId);
-      Object.assign(j,{kind:'gen', arch:'special', story:undefined, special:m.id, label:'Special charter', id:'X-'+m.id+'-'+st.day}); j.pay=Math.round(payFor(st,j)*1.4/10)*10; L.unshift(j); } }catch(_){} return L; };
 
 /* ---- sealed orders that don't match the sky: weather scenarios need real weather ---- */
 const WX_SCEN = new Set(['squall']);

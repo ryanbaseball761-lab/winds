@@ -119,10 +119,6 @@ function realEvents(now=new Date()){
     {n:`New Year's travel`, ap:['TNCM','TJSJ','TBPB'], from:D(1,1), to:D(1,4)}];
   const t=now.getTime(); return ev.filter(e=>t>=e.from.getTime() && t<=e.to.getTime()+864e5);
 }
-const _lvEnsure = ensureJobs;
-ensureJobs = function(st){ const before=st.jobsKey; _lvEnsure(st); if(st.jobsKey!==before || !st._rwChecked){ st._rwChecked=true; const evs=realEvents(); for(const j of st.jobs){ const e=evs.find(e=>e.ap.includes(j.to)); if(e && !j.realEvent){ j.realEvent=e.n; j.pay=Math.round(j.pay*1.2/10)*10; } } } };
-const _lvChips = chipsFor;
-chipsFor = function(st, job){ return _lvChips(st, job) + (job.realEvent?`<span class="chip warn" title="Happening around this time in the real Caribbean">🌍 ${esc(job.realEvent)} +20%</span>`:''); };
 let REAL_STORMS = [];
 async function loadRealStorms(){ if(!window.twNative || !twNative.storms) return; try{ const r=await twNative.storms(); REAL_STORMS = (r||[]).filter(s=>s.lat>8 && s.lat<30 && s.lon<-55 && s.lon>-90); if(REAL_STORMS.length && S.st) render(); }catch(_){} }
 setTimeout(loadRealStorms, 3000); setInterval(loadRealStorms, 30*60000);

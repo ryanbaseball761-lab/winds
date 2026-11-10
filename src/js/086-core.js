@@ -27,11 +27,6 @@ Object.keys(MID).forEach(id=>{ if(BEATS[id]) BEATS[id].push(MID[id]); else BEATS
 const DROP_STRIPS = ['TAPH','TUPA','TNCE','TRPG','TFFS','TFFM','TQPF','TNCS','MBGT','MYAN'];
 const RANK_PERKS = [[12,'Courier','Network runs unlocked'],[28,'Runner','One more network run a day, night runs pay +15%'],[45,'Lieutenant','Network runs in jets, +20% pay'],[65,'Partner','Airliner network runs, +30% pay'],[85,'Boss','Heat cools by 2 every new day']];
 function rankMul(c){ return c.power>=65?1.3:c.power>=45?1.2:1; }
-(function(){ const _g=genJobs; genJobs=function(st){ const L=_g(st); try{ const c=crime(st); if(!c.on) return L; c.hot=c.hot||{};
-  L.forEach(j=>{ if(!j.network) return; j.pay=Math.round(j.pay*rankMul(c)/10)*10;
-    if(Math.random()<0.4){ const strips=DROP_STRIPS.filter(k=>AP[k] && k!==st.loc && apOk(st,k,j.ac) && distNm(AP[st.loc],AP[k])<Math.min(400,(AC[j.ac].range||500)*0.6)); if(strips.length){ const k=pick(strips); j.to=k; j.drop=true; j.dep=Math.max(j.dep, 1260); j.title=`Night drop at ${AP[k].isl}`; j.pay=Math.round(j.pay*1.3*(c.power>=28?1.15:1)/10)*10; j.paras=[`The strip at ${AP[k].n} closes at sunset. Tonight it's open for you: two trucks, headlights on, engines running. Land, unload, leave.`]; try{ j.est=plan(j).est; }catch(_){} } }
-    if(Math.random()<0.35){ j.lowLevel=true; j.title+=' (under the radar)'; }
-    if(c.hot[j.to]){ j.hot=true; j.pay=Math.round(j.pay*1.2/10)*10; } }); }catch(_){} return L; }; })();
 const _twStrip = stripHTML;
 stripHTML = function(st, job, opts){ let h=_twStrip(st, job, opts); const tags=[]; if(job.drop) tags.push('<span class="chip warn">Night drop</span>'); if(job.lowLevel) tags.push('<span class="chip warn">Stay under 1,000 ft: +25%</span>'); if(job.hot) tags.push('<span class="chip warn">Hot airport</span>'); if(tags.length) h=h.replace('<div class="chips">', '<div class="chips">'+tags.join('')); return h; };
 
@@ -64,4 +59,3 @@ function fleetCrewHTML(st){ const d=st.story.done; const f=FLEET.filter(x=>d[x[0
   return `<section class="panel fleet"><p class="label">Your operation</p><h3>Fleet</h3>${f.length?`<div class="fc-grid">${f.map(x=>`<div class="fc-ac"><b class="mono">${x[3]}</b><span>${esc(x[2])}</span><small>${esc(x[4])}</small></div>`).join('')}</div>`:'<p class="small muted">Your first jet comes in Act 2.</p>'}
     ${crew?`<h3 style="margin-top:16px">Crew</h3>${crew}`:''}</section>`; }
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="hire"]'); if(!b||!S.st) return; const st=S.st, c=crime(st); const k=CREW.find(x=>x.id===b.dataset.v); if(!k) return; if(st.cash<k.cost){ toast(`You need ${money(k.cost)}.`); return; } if(k.cost) txn(st,-k.cost,'Crew',k.n); c.crew=c.crew||{}; c.crew[k.id]=1; save(); toast(`${k.n} joined your crew.`); S.keepScroll=true; render(); });
-(function(){ const _g=genJobs; genJobs=function(st){ const L=_g(st); try{ L.forEach(j=>{ if(!j.network) return; let m=1; if(crewHas(st,'tico')) m+=0.05; if(crewHas(st,'fo') && ['airliner','widebody','regional'].includes(AC[j.ac].cls)) m+=0.1; j.pay=Math.round(j.pay*m/10)*10; }); }catch(_){} return L; }; })();

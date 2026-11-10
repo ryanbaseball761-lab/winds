@@ -50,5 +50,3 @@ preflightHTML = function(job){ let h=_frPf(job); try{ const a=S.st&&S.st.active;
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="use-loaded"]') || !S.st || !S.st.active) return; const L=loadedAircraft(); const job=S.st.active.job; if(L.id && refitJob(S.st, job, L.id)){ save(); toast(`Switched to the ${AC[L.id].n}.`); S.keepScroll=true; render(); } else toast('That aircraft can\'t do this job.'); });
 
 /* 15. sealed orders only on flights long enough to need them, and never on checkrides or first flights */
-const _frGen = genJobs;
-genJobs = function(st){ const L=_frGen(st); L.forEach(j=>{ if(j.scen && ((j.est||plan(j).est) < 20 || st.flights < 3)) j.scen=null; }); return L; };

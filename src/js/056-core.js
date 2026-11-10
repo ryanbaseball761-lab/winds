@@ -7,8 +7,6 @@ const ASKS = [
   {k:'hold', when:j=>true, text:j=>`Traffic at the destination: you've been asked to hold. Stay airborne at least 10 minutes longer than planned.`},
   {k:'coast', when:j=>!j.local, text:j=>`A photographer on board wants one pass along the coastline below 1,500 ft, away from the airports.`}
 ];
-const _mrGen = genJobs;
-genJobs = function(st){ const L=_mrGen(st); for(const j of L){ if(j.kind==='gen' && !j.checkout && !j.scen && Math.random()<0.35){ const o=pick(ASKS.filter(x=>x.when(j))); if(o){ j.ask={k:o.k, text:o.text(j), amt:Math.max(40, Math.round(j.pay*0.25/10)*10), alt:j._askAlt}; } } } return L; };
 function askMet(job, rec){ const a=job.ask; if(!a || !rec) return null; const tr=rec.track||[]; const to=job.local?AP[job.from]:AP[job.to], fr=AP[job.from]; const p=plan(job);
   if(a.k==='climb') return (rec.maxAltFt||0) >= a.alt - 100;
   if(a.k==='hold') return (rec.airborneMinutes||0) >= Math.max(5, p.est - CLS[AC[job.ac].cls].over) + 9;
@@ -39,8 +37,6 @@ resultView = function(){ const h=_mrResult(); const L=S.st.last; if(!L||!L.res) 
   return t.innerHTML; };
 
 /* ---- 2. one-tap filters on the job board ---- */
-const _mrFilter = filterJobs;
-filterJobs = function(list){ let L=_mrFilter(list); const p=boardPrefs(); if(p.quick==='short') L=L.filter(j=>(j.est||plan(j).est)<=30); return L; };
 const _mrBoard = boardView;
 boardView = function(){ const h=_mrBoard(); if(S.view!=='board'||!S.st) return h; const p=boardPrefs(); const on=k=>p.quick===k||(k==='pay'&&p.sort==='pay'&&!p.quick)?'on':'';
   const bar=`<div class="quick-f"><button class="${!p.quick&&p.sort!=='pay'?'on':''}" data-act="qf" data-v="all">All</button><button class="${on('short')}" data-act="qf" data-v="short">Under 30 min</button><button class="${on('pay')}" data-act="qf" data-v="pay">Best pay</button><button data-act="nav" data-v="story">Story</button></div>`;

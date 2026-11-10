@@ -61,5 +61,3 @@ document.addEventListener('click', e=>{
   document.querySelectorAll('.cabin-host').forEach(el=>{ el.innerHTML = cabinInner(); });
 });
 /* one-time cleanup: drop cabin chatter recorded before this fix (it may have come from an old flight) */
-const _vMigrate = migrate;
-migrate = function(st){ const r=_vMigrate(st); if(r && !r._cabFix){ r._cabFix=true; if(r.active && r.active.cab) delete r.active.cab; if(r.active) delete r.active.recId; } return r; };

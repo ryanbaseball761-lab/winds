@@ -87,11 +87,6 @@ const WEEKEND = [
   {id:'reggae', n:'Reggae Sumfest weekend', ap:'MKJS', d:'Montego Bay fills up for three nights of music. Every seat into Sangster is gold.'}
 ].filter(e=>AP[e.ap]);
 function weekendEvent(st){ const d=dateOf(st.day); const wd=d.getUTCDay(); if(wd!==5 && wd!==6 && wd!==0) return null; const sat = wd===0 ? st.day-1 : wd===5 ? st.day+1 : st.day; const wk=Math.floor(sat/7); return WEEKEND[wk % WEEKEND.length]; }
-const _weGen = genJobs;
-genJobs = function(st){ const L=_weGen(st); const ev=weekendEvent(st); if(!ev || st.loc===ev.ap) return L;
-  for(const j of L){ if(j.to===ev.ap && !j.local){ j.pay=Math.round(j.pay*1.35/10)*10; j.event=ev.n; } }
-  let tries=0; while(L.filter(j=>j.to===ev.ap).length<2 && tries<25){ tries++; const arch=pick(ARCH.filter(a=>archOk(st,a) && !a.local && !a.airline)); const j=makeJob(st, arch, false); if(j && apOk(st, ev.ap, j.ac) && distNm(AP[st.loc],AP[ev.ap]) < AC[j.ac].range*0.8){ j.to=ev.ap; const p=plan(j); if(p.over>0||!p.range) continue; j.pay=Math.round(payFor(st,j)*1.35/10)*10; j.est=p.est; j.event=ev.n; j.title=`${ev.n}: ${j.title.replace(/ to .*$/,'')} to ${AP[ev.ap].isl}`; L.push(j); } }
-  return L; };
 function weekendBanner(st){ const ev=weekendEvent(st); if(!ev) return ''; return `<section class="panel weekend"><div class="row between"><div><p class="label">This weekend · ${esc(AP[ev.ap].isl)}</p><h3>${esc(ev.n)}</h3></div><span class="chip good">+35% pay to ${esc(ev.ap)}</span></div><p class="small">${esc(ev.d)}</p></section>`; }
 const _weBoard = boardView;
 boardView = function(){ const h=_weBoard(); if(S.view!=='board' || !S.st) return h; const b=weekendBanner(S.st); return b ? h.replace(/(<section><div class="section-title"><h2>Jobs at)/, b+'$1') : h; };
