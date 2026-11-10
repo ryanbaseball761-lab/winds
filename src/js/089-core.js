@@ -5,9 +5,9 @@ const NAV5 = [
   {v:'story', n:'Story', ico:'<path d="M4 5h7a3 3 0 0 1 3 3v11a2 2 0 0 0-2-2H4zM20 5h-6a3 3 0 0 0-3 3"/>'},
   {v:'board', n:'Jobs', ico:'<rect x="4" y="6" width="16" height="13" rx="2"/><path d="M9 6V4h6v2M4 11h16"/>', tabs:[['board','Jobs'],['map','Map']]},
   {v:'flight', n:'Flight', ico:'<path d="M3 13l18-7-7 18-2-8z"/>'},
-  {v:'pilot', n:'Pilot', ico:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>', tabs:[['pilot','Licences'],['money','Money'],['cup','Butter Cup'],['academy','Academy']]},
+  {v:'pilot', n:'Pilot', ico:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>', tabs:[['pilot','Licences'],['profile','Profile'],['log','Logbook'],['money','Money'],['company','Airline'],['cup','Butter Cup'],['academy','Academy']]},
   {v:'hangar', n:'Hangar', ico:'<path d="M3 20V9l9-5 9 5v11M7 20v-6h10v6"/>'} ];
-function navGroup(v){ return NAV5.find(g=>g.v===v || (g.tabs||[]).some(t=>t[0]===v)) || NAV5.find(g=>g.v==='pilot' && ['profile','log','company','cockpit'].includes(v)) || null; }
+function navGroup(v){ return NAV5.find(g=>g.v===v || (g.tabs||[]).some(t=>t[0]===v)) || NAV5.find(g=>g.v==='pilot' && ['profile','log','cockpit'].includes(v)) || null; }
 
 /* ---- 3. flight mode: once you're flying, the flight takes over the screen ---- */
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="fm-menu"]')) return; S.fmMenu=!S.fmMenu; S.keepScroll=true; render(); });

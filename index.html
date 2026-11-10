@@ -3077,7 +3077,7 @@ const VIEW_META = {
   story:['Story','Your storylines, chapter by chapter'],
   log:['Logbook','Every flight you\'ve flown'],
   money:['Money','Cash, credit and the ledger'],
-  company:['Company','Your own airline'],
+  company:['Airline','Your own airline: aircraft, crews and routes'],
   hangar:['Hangar','Aircraft you own in MSFS and the sim connection']
 };
 const NAV_GROUP_NAMES = ['Fly','Career','Business'];
@@ -6351,9 +6351,9 @@ const NAV5 = [
   {v:'story', n:'Story', ico:'<path d="M4 5h7a3 3 0 0 1 3 3v11a2 2 0 0 0-2-2H4zM20 5h-6a3 3 0 0 0-3 3"/>'},
   {v:'board', n:'Jobs', ico:'<rect x="4" y="6" width="16" height="13" rx="2"/><path d="M9 6V4h6v2M4 11h16"/>', tabs:[['board','Jobs'],['map','Map']]},
   {v:'flight', n:'Flight', ico:'<path d="M3 13l18-7-7 18-2-8z"/>'},
-  {v:'pilot', n:'Pilot', ico:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>', tabs:[['pilot','Licences'],['money','Money'],['cup','Butter Cup'],['academy','Academy']]},
+  {v:'pilot', n:'Pilot', ico:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>', tabs:[['pilot','Licences'],['profile','Profile'],['log','Logbook'],['money','Money'],['company','Airline'],['cup','Butter Cup'],['academy','Academy']]},
   {v:'hangar', n:'Hangar', ico:'<path d="M3 20V9l9-5 9 5v11M7 20v-6h10v6"/>'} ];
-function navGroup(v){ return NAV5.find(g=>g.v===v || (g.tabs||[]).some(t=>t[0]===v)) || NAV5.find(g=>g.v==='pilot' && ['profile','log','company','cockpit'].includes(v)) || null; }
+function navGroup(v){ return NAV5.find(g=>g.v===v || (g.tabs||[]).some(t=>t[0]===v)) || NAV5.find(g=>g.v==='pilot' && ['profile','log','cockpit'].includes(v)) || null; }
 
 /* ---- 3. flight mode: once you're flying, the flight takes over the screen ---- */
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="fm-menu"]')) return; S.fmMenu=!S.fmMenu; S.keepScroll=true; render(); });
@@ -6718,7 +6718,6 @@ setInterval(()=>{ try{ if(S.st && !(S.st.active&&S.st.active.started)) backupLab
 
 
 /* 2. Pilot tabs include Profile and Logbook, so they're easy to find */
-try{ const g=NAV5.find(x=>x.v==='pilot'); g.tabs=[['pilot','Licences'],['profile','Profile'],['log','Logbook'],['money','Money'],['cup','Butter Cup'],['academy','Academy']]; }catch(_){}
 
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="open-settings"]')) return; S.hangarTab='settings'; go('hangar'); });
 
@@ -7138,9 +7137,13 @@ const AFTER_RESULT = [
       else if(c.on){ crBump(c,'power',2); crBump(c,'heat',4); }
       if(o){ const m=CRIME.find(x=>x.id===job.story); if(m && m.choice) o.notes=o.notes.filter(n=>!/^Choices stick/.test(n)); } }
     else if(c.on && !res.crash && job.kind==='gen'){ crBump(c,'heat',-2); } },
+  /* Caribe Cargo (chapter 16) becomes your own company: buy aircraft, hire crews and run routes from the Airline page */
+  function caribeCargoCompany(st, job, f, res){ if(job.story!=='CR15' || res.crash) return; const o=st.last&&st.last.out;
+    if(!st.company){ st.company={name:'Caribe Cargo', base:job.to, fleet:[], ledger:[], founded:st.day, story:true}; st.ratings.CO=true; if(o) o.notes.unshift('Caribe Cargo is your company now. Spend your money on aircraft, crews and routes on the Pilot → Airline page.'); }
+    else if(o) o.notes.unshift(`Caribe Cargo flies under ${st.company.name}'s certificate. Buy aircraft and set up routes on the Pilot → Airline page.`); },
   /* network runs add Heat; at Heat 60+ customs may search you, at 90+ you're busted */
   function customs(st, job, f, res){ const c=crime(st); const o=st.last&&st.last.out; if(!c.on || res.crash) return;
-    if(job.network){ crBump(c,'heat',7); crBump(c,'power',1); }   // (a network run is also a 'gen' job, so the −2 above already ran: net +5)
+    if(job.network){ crBump(c,'heat',12); crBump(c,'power',1); }   // (a network run is also a 'gen' job, so the −2 above already ran: net +5)
     if((job.network || job.kind==='story') && o){
       if(c.heat>=90){ txn(st,-50000,'Payoffs',`Lawyers, ${job.to}`); crBump(c,'power',-10); c.heat=50; o.notes.push(`BUSTED at ${job.to}. Customs found the hidden compartment. The network's lawyers got you out for $50,000. Power −10, Heat down to 50.`); try{ setTimeout(()=>takeover({kind:'orders',kicker:'Busted',title:`Customs at ${job.to}`,text:`They found the hidden compartment. The network's lawyers got you out, for $50,000.`,ms:9000}),600); }catch(_){} }
       else if(c.heat>=60){ if(res.grade==='A'||res.grade==='B'){ o.notes.push(`Customs came out to the plane, but a clean landing and calm answers got you waved through. Heat −5.`); crBump(c,'heat',-5); }
@@ -7383,7 +7386,7 @@ const GEN_JOB_STEPS = [
   function gentleStart(st, L){ L.forEach(j=>{ if(j.scen && ((j.est||plan(j).est) < 20 || st.flights < 3)) j.scen=null; }); if(st.flights<3) L.forEach(j=>{ j.scen=null; }); L.forEach(j=>{ delete j.ask; }); },
   /* once you work for Castillo: one to three cargo jobs become network runs (more pay, more Heat) */
   function networkRuns(st, L){ const c=crime(st); if(!c.on) return; const n=1+(c.power>=45?1:0)+(c.power>=70?1:0); let k=0;
-    L.forEach(j=>{ if(k<n && j.kind==='gen' && j.cargo>0 && !j.special && !j.story){ k++; j.network=true; j.label='Network run'; j.title=`${pick(NET_TITLES)} for the network`; j.client='The network'; j.pay=Math.round(j.pay*(1.6+c.power/100)/10)*10; j.scen=null; } }); },
+    L.forEach(j=>{ if(k<n && j.kind==='gen' && j.cargo>0 && !j.special && !j.story){ k++; j.network=true; j.label='Network run'; j.title=`${pick(NET_TITLES)} for the network`; j.client='The network'; j.pay=Math.round(j.pay*(2.4+c.power/100)/10)*10; j.scen=null; } }); },
   /* network runs: rank pay, night drops at closed strips, low-level runs, hot airports */
   function networkVariety(st, L){ const c=crime(st); if(!c.on) return; c.hot=c.hot||{};
     L.forEach(j=>{ if(!j.network) return; j.pay=Math.round(j.pay*rankMul(c)/10)*10;
@@ -8377,7 +8380,7 @@ function operationHTML(st){ const c=crime(st); if(!c.on) return ''; const L=dail
     : `<button class="btn sm" data-act="buy-safe" data-v="${s.id}" >Buy · ${money(s.cost)}</button>`;
   return `<section class="panel op-panel"><p class="label">Your operation</p><div class="op-grid">
     <div><h3>Daily costs <span class="mono">${money(tot)}</span></h3>${L.length?`<ul class="tight small">${L.map(x=>`<li>${esc(x[0])}: ${money(x[1])}</li>`).join('')}</ul>`:'<p class="small muted">Nothing yet. Jets and crew cost money every day.</p>'}</div>
-    <div><h3>Safehouse</h3>${SAFEHOUSES.map((s,i)=>`<div class="fc-row"><div><b>${esc(s.n)}</b><p class="small muted">${esc(s.perk)}</p></div>${buy(s,i)}</div>`).join('')}</div></div></section>`; }
+    <div><h3>Safehouse</h3>${SAFEHOUSES.map((s,i)=>`<div class="fc-row"><div><b>${esc(s.n)}</b><p class="small muted">${esc(s.perk)}</p></div>${buy(s,i)}</div>`).join('')}</div></div>${st.company?`<div class="fc-row" style="margin-top:12px"><div><b>${esc(st.company.name)}</b><p class="small muted">${st.company.fleet.length} aircraft of your own. Buy more, hire crews and put them on routes that earn while you rest.</p></div><button class="btn sm" data-act="nav" data-v="company">Open the airline</button></div>`:''}</section>`; }
 
 function storyView(){
   const st=S.st; const c=crime(st); const MC=mainChapters(); const availSet=new Set(storyAvailable(st).map(m=>m.id)); const done=MC.filter(m=>st.story.done[m.id]); const next=MC.find(m=>!st.story.done[m.id]);
@@ -8547,7 +8550,7 @@ setInterval(()=>{ if(TOAST_QUEUE.length && !document.querySelector('.cut,.title-
 /* Everything the search bar can jump to: pages, actions, checkrides, chapters, achievements, airports, people.
    Each item is {n: name, k: kind shown on the right, run()}. Things you used recently come first. */
 function cmdItems(){ const st=S.st; const L=[]; if(!st) return L; const pg=(n,v,k,run)=>L.push({n, k:k||'Page', run:run||(()=>go(v))});
-  pg('Main story','story'); pg('Jobs','board'); pg('Map','map'); pg('Flight','flight'); pg('Pilot & licences','pilot'); pg('Money','money'); pg('Hangar','hangar'); pg('Butter Cup','cup'); pg('Academy','academy'); pg('Logbook','log'); pg('Settings','hangar','Page · Hangar → Settings', ()=>{ S.hangarTab='settings'; go('hangar'); });
+  pg('Main story','story'); pg('Jobs','board'); pg('Map','map'); pg('Flight','flight'); pg('Pilot & licences','pilot'); pg('Money','money'); pg('Airline (buy aircraft)','company'); pg('Hangar','hangar'); pg('Butter Cup','cup'); pg('Academy','academy'); pg('Logbook','log'); pg('Settings','hangar','Page · Hangar → Settings', ()=>{ S.hangarTab='settings'; go('hangar'); });
   const r=rightNow(st); if(r) L.push({n:`${r.b.replace('▶ ','')}: ${r.t}`, k:'Right now', run:()=>clickAct(r.act, r.v, r.id)});
   RATING_ORDER.filter(x=>!st.ratings[x] && checkrideReady(st,x).ok).forEach(x=>L.push({n:`Book checkride: ${RATINGS[x].n}`, k:'Pilot', run:()=>{ go('pilot'); setTimeout(()=>{ const b=document.querySelector(`[data-act="book-check"][data-r="${x}"]`); if(b) b.scrollIntoView({block:'center'}); },200); }}));
   if(crime(st).dirty) L.push({n:'Launder dirty cash', k:'Money', run:()=>go('money')});
@@ -8566,7 +8569,7 @@ function cmdItems(){ const st=S.st; const L=[]; if(!st) return L; const pg=(n,v,
 
 /* A double click on a button that costs money or moves the career on (New day, Accept, a choice...)
    only counts once. */
-const ONCE_ACTS = new Set(['rest','accept','accept-story','story-go','crime-choose','book-check','hire','buy-safe','launder','deadhead','cancel-yes','signoff','start','reset-yes','rush-repair','practice']);
+const ONCE_ACTS = new Set(['rest','accept','accept-story','story-go','book-check','hire','buy-safe','launder','deadhead','cancel-yes','signoff','start','reset-yes','rush-repair','practice']);
 let LAST_ACT = {k:'', t:0};
 window.addEventListener('click', e=>{
   const b=e.target.closest('[data-act]'); if(!b || !ONCE_ACTS.has(b.dataset.act)) return;

@@ -8,7 +8,7 @@ const VIEW_META = {
   story:['Story','Your storylines, chapter by chapter'],
   log:['Logbook','Every flight you\'ve flown'],
   money:['Money','Cash, credit and the ledger'],
-  company:['Company','Your own airline'],
+  company:['Airline','Your own airline: aircraft, crews and routes'],
   hangar:['Hangar','Aircraft you own in MSFS and the sim connection']
 };
 const NAV_GROUP_NAMES = ['Fly','Career','Business'];

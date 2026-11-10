@@ -30,7 +30,7 @@ setInterval(()=>{ if(TOAST_QUEUE.length && !document.querySelector('.cut,.title-
 /* Everything the search bar can jump to: pages, actions, checkrides, chapters, achievements, airports, people.
    Each item is {n: name, k: kind shown on the right, run()}. Things you used recently come first. */
 function cmdItems(){ const st=S.st; const L=[]; if(!st) return L; const pg=(n,v,k,run)=>L.push({n, k:k||'Page', run:run||(()=>go(v))});
-  pg('Main story','story'); pg('Jobs','board'); pg('Map','map'); pg('Flight','flight'); pg('Pilot & licences','pilot'); pg('Money','money'); pg('Hangar','hangar'); pg('Butter Cup','cup'); pg('Academy','academy'); pg('Logbook','log'); pg('Settings','hangar','Page · Hangar → Settings', ()=>{ S.hangarTab='settings'; go('hangar'); });
+  pg('Main story','story'); pg('Jobs','board'); pg('Map','map'); pg('Flight','flight'); pg('Pilot & licences','pilot'); pg('Money','money'); pg('Airline (buy aircraft)','company'); pg('Hangar','hangar'); pg('Butter Cup','cup'); pg('Academy','academy'); pg('Logbook','log'); pg('Settings','hangar','Page · Hangar → Settings', ()=>{ S.hangarTab='settings'; go('hangar'); });
   const r=rightNow(st); if(r) L.push({n:`${r.b.replace('▶ ','')}: ${r.t}`, k:'Right now', run:()=>clickAct(r.act, r.v, r.id)});
   RATING_ORDER.filter(x=>!st.ratings[x] && checkrideReady(st,x).ok).forEach(x=>L.push({n:`Book checkride: ${RATINGS[x].n}`, k:'Pilot', run:()=>{ go('pilot'); setTimeout(()=>{ const b=document.querySelector(`[data-act="book-check"][data-r="${x}"]`); if(b) b.scrollIntoView({block:'center'}); },200); }}));
   if(crime(st).dirty) L.push({n:'Launder dirty cash', k:'Money', run:()=>go('money')});
@@ -49,7 +49,7 @@ function cmdItems(){ const st=S.st; const L=[]; if(!st) return L; const pg=(n,v,
 
 /* A double click on a button that costs money or moves the career on (New day, Accept, a choice...)
    only counts once. */
-const ONCE_ACTS = new Set(['rest','accept','accept-story','story-go','crime-choose','book-check','hire','buy-safe','launder','deadhead','cancel-yes','signoff','start','reset-yes','rush-repair','practice']);
+const ONCE_ACTS = new Set(['rest','accept','accept-story','story-go','book-check','hire','buy-safe','launder','deadhead','cancel-yes','signoff','start','reset-yes','rush-repair','practice']);
 let LAST_ACT = {k:'', t:0};
 window.addEventListener('click', e=>{
   const b=e.target.closest('[data-act]'); if(!b || !ONCE_ACTS.has(b.dataset.act)) return;

@@ -176,9 +176,13 @@ const AFTER_RESULT = [
       else if(c.on){ crBump(c,'power',2); crBump(c,'heat',4); }
       if(o){ const m=CRIME.find(x=>x.id===job.story); if(m && m.choice) o.notes=o.notes.filter(n=>!/^Choices stick/.test(n)); } }
     else if(c.on && !res.crash && job.kind==='gen'){ crBump(c,'heat',-2); } },
+  /* Caribe Cargo (chapter 16) becomes your own company: buy aircraft, hire crews and run routes from the Airline page */
+  function caribeCargoCompany(st, job, f, res){ if(job.story!=='CR15' || res.crash) return; const o=st.last&&st.last.out;
+    if(!st.company){ st.company={name:'Caribe Cargo', base:job.to, fleet:[], ledger:[], founded:st.day, story:true}; st.ratings.CO=true; if(o) o.notes.unshift('Caribe Cargo is your company now. Spend your money on aircraft, crews and routes on the Pilot → Airline page.'); }
+    else if(o) o.notes.unshift(`Caribe Cargo flies under ${st.company.name}'s certificate. Buy aircraft and set up routes on the Pilot → Airline page.`); },
   /* network runs add Heat; at Heat 60+ customs may search you, at 90+ you're busted */
   function customs(st, job, f, res){ const c=crime(st); const o=st.last&&st.last.out; if(!c.on || res.crash) return;
-    if(job.network){ crBump(c,'heat',7); crBump(c,'power',1); }   // (a network run is also a 'gen' job, so the −2 above already ran: net +5)
+    if(job.network){ crBump(c,'heat',12); crBump(c,'power',1); }   // (a network run is also a 'gen' job, so the −2 above already ran: net +5)
     if((job.network || job.kind==='story') && o){
       if(c.heat>=90){ txn(st,-50000,'Payoffs',`Lawyers, ${job.to}`); crBump(c,'power',-10); c.heat=50; o.notes.push(`BUSTED at ${job.to}. Customs found the hidden compartment. The network's lawyers got you out for $50,000. Power −10, Heat down to 50.`); try{ setTimeout(()=>takeover({kind:'orders',kicker:'Busted',title:`Customs at ${job.to}`,text:`They found the hidden compartment. The network's lawyers got you out, for $50,000.`,ms:9000}),600); }catch(_){} }
       else if(c.heat>=60){ if(res.grade==='A'||res.grade==='B'){ o.notes.push(`Customs came out to the plane, but a clean landing and calm answers got you waved through. Heat −5.`); crBump(c,'heat',-5); }

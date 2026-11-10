@@ -2,7 +2,6 @@
 
 
 /* 2. Pilot tabs include Profile and Logbook, so they're easy to find */
-try{ const g=NAV5.find(x=>x.v==='pilot'); g.tabs=[['pilot','Licences'],['profile','Profile'],['log','Logbook'],['money','Money'],['cup','Butter Cup'],['academy','Academy']]; }catch(_){}
 
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="open-settings"]')) return; S.hangarTab='settings'; go('hangar'); });
 

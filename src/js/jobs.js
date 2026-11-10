@@ -56,7 +56,7 @@ const GEN_JOB_STEPS = [
   function gentleStart(st, L){ L.forEach(j=>{ if(j.scen && ((j.est||plan(j).est) < 20 || st.flights < 3)) j.scen=null; }); if(st.flights<3) L.forEach(j=>{ j.scen=null; }); L.forEach(j=>{ delete j.ask; }); },
   /* once you work for Castillo: one to three cargo jobs become network runs (more pay, more Heat) */
   function networkRuns(st, L){ const c=crime(st); if(!c.on) return; const n=1+(c.power>=45?1:0)+(c.power>=70?1:0); let k=0;
-    L.forEach(j=>{ if(k<n && j.kind==='gen' && j.cargo>0 && !j.special && !j.story){ k++; j.network=true; j.label='Network run'; j.title=`${pick(NET_TITLES)} for the network`; j.client='The network'; j.pay=Math.round(j.pay*(1.6+c.power/100)/10)*10; j.scen=null; } }); },
+    L.forEach(j=>{ if(k<n && j.kind==='gen' && j.cargo>0 && !j.special && !j.story){ k++; j.network=true; j.label='Network run'; j.title=`${pick(NET_TITLES)} for the network`; j.client='The network'; j.pay=Math.round(j.pay*(2.4+c.power/100)/10)*10; j.scen=null; } }); },
   /* network runs: rank pay, night drops at closed strips, low-level runs, hot airports */
   function networkVariety(st, L){ const c=crime(st); if(!c.on) return; c.hot=c.hot||{};
     L.forEach(j=>{ if(!j.network) return; j.pay=Math.round(j.pay*rankMul(c)/10)*10;

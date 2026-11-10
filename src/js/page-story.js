@@ -70,7 +70,7 @@ function operationHTML(st){ const c=crime(st); if(!c.on) return ''; const L=dail
     : `<button class="btn sm" data-act="buy-safe" data-v="${s.id}" >Buy · ${money(s.cost)}</button>`;
   return `<section class="panel op-panel"><p class="label">Your operation</p><div class="op-grid">
     <div><h3>Daily costs <span class="mono">${money(tot)}</span></h3>${L.length?`<ul class="tight small">${L.map(x=>`<li>${esc(x[0])}: ${money(x[1])}</li>`).join('')}</ul>`:'<p class="small muted">Nothing yet. Jets and crew cost money every day.</p>'}</div>
-    <div><h3>Safehouse</h3>${SAFEHOUSES.map((s,i)=>`<div class="fc-row"><div><b>${esc(s.n)}</b><p class="small muted">${esc(s.perk)}</p></div>${buy(s,i)}</div>`).join('')}</div></div></section>`; }
+    <div><h3>Safehouse</h3>${SAFEHOUSES.map((s,i)=>`<div class="fc-row"><div><b>${esc(s.n)}</b><p class="small muted">${esc(s.perk)}</p></div>${buy(s,i)}</div>`).join('')}</div></div>${st.company?`<div class="fc-row" style="margin-top:12px"><div><b>${esc(st.company.name)}</b><p class="small muted">${st.company.fleet.length} aircraft of your own. Buy more, hire crews and put them on routes that earn while you rest.</p></div><button class="btn sm" data-act="nav" data-v="company">Open the airline</button></div>`:''}</section>`; }
 
 function storyView(){
   const st=S.st; const c=crime(st); const MC=mainChapters(); const availSet=new Set(storyAvailable(st).map(m=>m.id)); const done=MC.filter(m=>st.story.done[m.id]); const next=MC.find(m=>!st.story.done[m.id]);
