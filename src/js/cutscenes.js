@@ -60,13 +60,17 @@ function sceneArt(code, dep, ac){ try{ return islandArt(code, dep, 1600, 900, ac
 
 /* ---------- a chapter's scenes ---------- */
 
+/* Which briefing paragraphs are read out after each prologue (by index). The rest repeat what the
+   scene already showed, or would give away something that happens in flight. Chapters not listed read all. */
+const PRO_BRIEF = { CW1:[1], CR2:[1], CR3:[], CR4:[0,1], CR5:[0,1], CR6:[], CR7:[], CR8:[0,1], CR9:[], CR10:[0], CRM:[0], CR11:[], CR12:[0,1], CR13:[1], CR14:[0,1], CR15:[0], CRB:[], CR16:[], CRT:[0], CR17:[1] };
+
 /* The lines of a chapter's prologue: an echo of your last mid-flight choice, the scripted prologue
    (which can change with earlier choices), then the briefing as narration. */
 function proFor(id){
   const scripted = (PRO_DYN[id] && PRO_DYN[id](crime(S.st).flags)) || PRO[id];
   let lines = scripted;
   const m=CRIME.find(x=>x.id===id);
-  if(m){ const mm=(typeof dynM==='function'&&S.st)?dynM(S.st,m):m; const here=AP[m.from]?`${AP[m.from].n}`:''; lines=(scripted||[]).concat((mm.brief||[]).map(t=>[here, null, t])); }
+  if(m){ const mm=(typeof dynM==='function'&&S.st)?dynM(S.st,m):m; const here=AP[m.from]?`${AP[m.from].n}`:''; const keep=PRO_BRIEF[id]; const brief=(mm.brief||[]).filter((t,i)=>!keep || keep.includes(i)); lines=(scripted||[]).concat(brief.map(t=>[here, null, t])); }
   lines = lines||[];
   const e=crime().echo; return (e && e.from!==id) ? [[`Last time`, null, e.text]].concat(lines) : lines;
 }

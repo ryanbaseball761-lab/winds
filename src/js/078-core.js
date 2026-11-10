@@ -62,9 +62,19 @@ const PRO = {
 };
 /* continuity variants */
 const PRO_DYN = {
+  /* The Rat: if you took Reyes's deal, you know who the real rat is; Tico remembers the right seat */
+  CR11:f=>{ const L=PRO.CR11.slice(0,2); if(f.informant) L.push([`The villa`,null,`You know exactly who's been talking to the DEA. It isn't Tico. Your burner phone feels very heavy in your pocket.`]); L.push(PRO.CR11[2]); if(f.ticoSeat) L.push([`The ramp`,'tico',`Boss. You let me sit up front once, remember? Best ten minutes of my life.`]); return L; },
   CR13:f=>f.dezJail?[[`Coral Wing hangar · 5:10 PM`,null,`With Dez gone, the hangar is quiet. Mari has been going through his toolboxes.`],[`Hangar three`,null,`Under the trays, the money. All of it.`],[`The hangar`,'mari',`Don't. Don't explain. Just take me flying. Like when you were new.`]]:null,
-  CR16:f=>f.mari?[[`Tocumen cargo ramp · 9:30 PM`,null,`The 747-8 freighter is the biggest thing on the airfield. Eighty tons are going in through the nose.`],[`The ramp`,'mari',`Eighty tons, and I tracked every pallet. Bring her home, partner.`],[`The ramp`,null,`Two years ago you were scared of a taped box in a Cessna. You stand under the wing and laugh out loud.`]]:null,
-  CR17:f=>(f.informant||f.ledgers)?PRO.CR17.concat([[`Text message`,'reyes',`We're in position. Whatever you're planning, don't.`]]):null
+  /* The Setup: Castillo heard what you told his lawyer */
+  CRB:f=>f.toldLawyer?[PRO.CRB[0],[`The ramp`,'castillo',`My lawyer tells me you had a lot to say about Dez. Never mind. We're friends.`]].concat(PRO.CRB.slice(1)):null,
+  /* Heavy: who's with you on the ramp, and what you've been doing since Cancún */
+  CR16:f=>{ const L=f.mari?[[`Tocumen cargo ramp · 9:30 PM`,null,`The 747-8 freighter is the biggest thing on the airfield. Eighty tons are going in through the nose.`],[`The ramp`,'mari',`Eighty tons, and I tracked every pallet. Bring her home, partner.`]]:[PRO.CR16[0]];
+    if(f.war) L.push([`The ramp`,null,`Half of Castillo's pilots fly for you now. Tonight one of them is walking around your 747 with a flashlight, checking the tires for you.`]);
+    if(f.patient) L.push([`The cockpit`,null,`Your notebook is forty pages long now. Dates, tail numbers, amounts. Castillo still thinks you're grateful.`]);
+    L.push(f.mari?[`The ramp`,null,`Two years ago you were scared of a taped box in a Cessna. You stand under the wing and laugh out loud.`]:PRO.CR16[PRO.CR16.length-1]); return L; },
+  /* The Last Run: everything you hold over Castillo, and Reyes if she's in it */
+  CR17:f=>{ const L=PRO.CR17.slice(); if(f.war) L.push([`The radio`,null,`Two of Castillo's own pilots are flying a few miles behind you tonight. They work for you now.`]); if(f.patient) L.push([`Your flight bag`,null,`The notebook. Everything Castillo has done since Cancún, in your handwriting.`]); if(f.drivecopy) L.push([`Your phone`,null,`Arnaud's drive is still on it. Every account, every name.`]);
+    if(f.informant||f.ledgers) L.push([`Text message`,'reyes',`We're in position. Whatever you're planning, don't.`]); return L.length===PRO.CR17.length?null:L; }
 };
 const PRO_VOICE = { dez:[false,1.05,1], mari:[true,1,1.05], castillo:[false,0.92,0.8], hartwell:[false,0.95,0.9], tico:[false,1.12,1.05], reyes:[true,1,1], medina:[false,0.95,0.85] };
 

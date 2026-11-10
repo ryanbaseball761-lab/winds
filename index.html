@@ -5562,7 +5562,7 @@ const CRIME = [
     {t:`Keep one bundle for yourself`,out:`$10,000 rides home in your flight bag. The broker pauses at the count, looks at you for a long second, then lets it go.`,cash:10000,heat:6,power:2}]}},
  {id:'CR3',arc:'Clean Hands',title:`The Ramp Check`,chars:['dez','mari'],req:{after:'CR2'},from:'TKPN',to:'TNCM',ac:['C172','DA40','C152','G36'],pax:0,cargo:60,cargoLabel:`two coolers "of fish"`,time:'day',dep:840,wx:'trades',
   hook:`Two coolers home to Juliana, and customs is waiting on the ramp.`,
-  recap:`Customs met you at Juliana. Dez swapped the coolers before they reached the plane. Now you owe him.`,
+  recap:`Customs met you at Juliana. Dez swapped the coolers before they reached the plane. Now you and Dez are in this together.`,
   brief:[`Two coolers for the trip home. "Fish," says the man who loads them. They don't smell like fish.`,`On the radio, tower asks you to park at the main apron for a customs inspection. Your phone lights up: Dez. "Taxi to the Coral Wing hangar first. Two minutes. Trust me." You're sure everyone on the frequency can hear your heart.`],
   teach:[`Juliana is busy. Hold short for the jets, then taxi to the general aviation ramp on the north side.`],
   out:{good:`By the time customs reaches the plane, the coolers really are full of fish. Dez winks at you over the officer's shoulder. Up in her office, Mari watches through the blinds.`,ok:`Customs takes twenty minutes and finds nothing but fish. Dez lets out a long breath. Mari watches from her office window.`,bad:`Customs takes an hour. They find nothing, but they write down your name. Mari asks what's going on, and you lie to her for the first time.`},rep:{dez:6,mari:-2}},
@@ -5611,7 +5611,7 @@ const CRIME = [
   recap:`DEA Agent Elena Reyes was waiting at St. Croix with photos of you and the jet.`,
   brief:[`A sealed case for a contact on St. Croix. Routine now.`,`But St. Croix is United States territory, and when you shut down on the ramp, two dark SUVs pull up beside the jet. A tired-looking woman shows you a badge. "Agent Elena Reyes, DEA. Nice airplane. Whose is it?" She has photos of you in San Juan, loading bags.`],
   teach:[`St. Croix is a long, wide runway. An easy landing for a very hard day.`],
-  out:{good:`A clean landing, for all the good it does you. They search the jet and take you to a small room with no windows.`,ok:`They search the jet and take you to a small room with no windows.`,bad:`They search the jet and take you to a small room with no windows.`},rep:{reyes:5},
+  out:{good:`A clean landing, for all the good it does you. Two dark SUVs pull up beside the jet before the engines have spooled down. A tired-looking woman holds up a badge. "Agent Elena Reyes, DEA. Nice airplane. Whose is it?" She has photos of you in San Juan, loading bags. They search the jet and take you to a small room with no windows.`,ok:`Two dark SUVs pull up beside the jet before the engines have spooled down. A tired-looking woman holds up a badge. "Agent Elena Reyes, DEA. Nice airplane. Whose is it?" She has photos of you in San Juan, loading bags. They search the jet and take you to a small room with no windows.`,bad:`A rough landing, and an audience. Two dark SUVs pull up beside the jet before the engines have spooled down. A tired-looking woman holds up a badge. "Agent Elena Reyes, DEA. Nice airplane. Whose is it?" She has photos of you in San Juan, loading bags. They search the jet and take you to a small room with no windows.`},rep:{reyes:5},
   choice:{q:`Reyes slides a phone across the table. "Keep flying for Castillo. Tell me what you see. Do that, and you walk. Or I make one call and you do twenty years."`,opts:[
     {t:`Take her deal`,out:`"Smart," she says. "Keep this phone charged. Don't call me. I'll call you." You fly home playing both sides, and part of you likes it.`,heat:-25,flag:'informant'},
     {t:`Say nothing and ask for a lawyer`,out:`Twelve hours later, Castillo's lawyers have you out on a technicality. Castillo is impressed. "You kept your mouth shut. People will hear about that." Reyes isn't finished with you.`,heat:10,power:8}]}},
@@ -5874,6 +5874,7 @@ try{ const r=RIVALS.find(x=>/^Ana Reyes/.test(x.n)); if(r) r.n='Ana Ruiz (Winair
 /* ================= 2. choices carry forward ================= */
 const flagsOf = st => crime(st).flags;
 const DYN = {
+  CR9:f=>f.hidcase?{out:{good:`A clean landing. Two dark SUVs pull up beside the jet before the engines have spooled down. A tired-looking woman holds up a badge. "Agent Elena Reyes, DEA. Nice airplane. Whose is it?" She has photos of you in San Juan, loading bags. They take the jet apart for two hours and never find the avionics panel. Reyes doesn't need the case. She has the photos. They take you to a small room with no windows.`,ok:`Two dark SUVs pull up beside the jet before the engines have spooled down. A tired-looking woman holds up a badge. "Agent Elena Reyes, DEA. Nice airplane. Whose is it?" She has photos of you in San Juan, loading bags. They search the jet for two hours and never find the avionics panel. It doesn't matter. They take you to a small room with no windows.`,bad:`Two dark SUVs pull up beside the jet before the engines have spooled down. A tired-looking woman holds up a badge. "Agent Elena Reyes, DEA. Nice airplane. Whose is it?" She has photos of you in San Juan, loading bags. They search for two hours. The case stays hidden behind the panel, but they take you to a small room with no windows anyway.`}}:{},
   CR15:f=>({chars:['castillo'].concat(f.mari?['mari']:[])}),
   CR16:f=>f.mari?{chars:['mari']}:{chars:[], out:{good:`The 747 kisses the runway at Montego Bay. Your first officer, a kid from Kingston, just shakes his head and laughs.`,ok:`Eighty tons on the ground at Montego Bay. The trucks are already lining up.`,bad:`A heavy, heavy landing, but eighty tons are on the ground at Montego Bay.`}},
   CRT:f=>({chars:['medina'].concat(f.mari?['mari']:[])}),
@@ -5883,13 +5884,23 @@ const DYN = {
 function dynM(st, m){ const d=DYN[m.id]; return d ? Object.assign({}, m, d(flagsOf(st))) : m; }
 
 /* endings: you only get the ones you earned */
-const ENDING_REQ = { kingpin:c=>c.power>=50 ? null : `Needs Power 50+ (you have ${c.power})`, witness:c=>(c.flags.informant||c.flags.ledgers||c.flags.medinaBurned) ? null : `You never gave Reyes anything`, ghost:()=>null };
+const ENDING_REQ = { kingpin:c=>c.power>=50 ? null : `Needs Power 50+ (you have ${c.power})`, witness:c=>(c.flags.informant||c.flags.ledgers||c.flags.medinaBurned||c.flags.drivecopy||c.flags.patient) ? null : `You have nothing to give Reyes`, ghost:()=>null };
 (function(){ const _ch=crimeChoiceHTML; crimeChoiceHTML=function(st){ const h=_ch(st); if(!h || !st.last || st.last.job.story!=='CR17' || crime(st).choice.CR17!=null) return h; const c=crime(st); const m=CRIME.find(x=>x.id==='CR17'); const t=tpl(h);
   t.content.querySelectorAll('[data-act="crime-choose"]').forEach(b=>{ const o=m.choice.opts[Number(b.dataset.i)]; const why=o.ending && ENDING_REQ[o.ending](c); if(why){ b.disabled=true; b.title=why; b.insertAdjacentHTML('beforeend', ` <small>(${esc(why)})</small>`); } }); return t.innerHTML; }; })();
 window.addEventListener('click', e=>{ const b=e.target.closest('[data-act="crime-choose"]'); if(b && b.disabled){ e.stopImmediatePropagation(); e.preventDefault(); } }, true);
-function epilogue(st){ const f=flagsOf(st), L=[]; if(f.mari) L.push(`Mari runs the logistics, and she never lets anyone put a kid in the back again.`); else if(st.story.done.CR13) L.push(`Mari sends a postcard once a year from somewhere cold. It never has a return address.`);
+function epilogue(st){ const f=flagsOf(st), L=[]; const end=crime(st).ending;
+  if(f.mari) L.push(`Mari runs the logistics, and she never lets anyone put a kid in the back again.`); else if(st.story.done.CR13) L.push(`Mari sends a postcard once a year from somewhere cold. It never has a return address.`);
   if(f.dezFree) L.push(`Dez runs your hangar and still calls you "rookie".`); if(f.dezJail) L.push(`Dez is still in prison. He has never said your name.`);
-  if(f.ticoRan) L.push(`Tico flies crop dusters in Belize now. He wrote once, to say thank you.`); if(f.boy) L.push(`Somewhere in Tortola, a boy who once couldn't breathe is learning to swim.`); return L; }
+  if(f.ticoRan) L.push(`Tico flies crop dusters in Belize now. He wrote once, to say thank you.`); else if(st.story.done.CR11) L.push(f.ticoSeat?`Sometimes you still see Tico in the right seat, grinning at the sky. Then you remember the car at Grand Cayman.`:`Nobody ever found out what happened to Tico. You stopped asking.`);
+  if(f.boy) L.push(`Somewhere in Tortola, a boy who once couldn't breathe is learning to swim.`); else if(f.oxygen) L.push(`You never found out what happened to the boy from Tortola. You gave him oxygen. You tell yourself that counts.`);
+  if(f.hartwellSafe) L.push(`Lionel Hartwell dives the reefs off Mustique again. He keeps a seat on every one of your planes, just in case.`); else if(st.story.done.CR14) L.push(`Hartwell's foundation closed the next year. Nobody has seen him on Mustique since.`);
+  if(f.medinaBurned) L.push(`Rafael Medina is in a Florida prison. He tells anyone who'll listen that it was you.`); else if(f.medinaAlly) L.push(`Medina kept his half of the Caribbean for exactly one year. Then he wanted yours.`); else if(f.medinaDeal) L.push(`Medina never asked for his fifty thousand back. He's patient like that.`);
+  if(end==='kingpin') L.push(`Castillo lives in a small house in Panama now. Every Christmas he sends you a bottle of rum. You have it tested.`);
+  if(end==='witness') L.push(`Castillo got thirty years. He has never sent you a single word. That worries you more than threats would.`);
+  if(end==='ghost') L.push(`Castillo spent two years looking for you. Then he stopped. You're not sure which is worse.`);
+  if(end==='witness') L.push(`Reyes got her promotion. She calls on your birthday, from a different number every year.`); else if(end==='kingpin' && (f.informant||f.ledgers)) L.push(`Reyes never forgave you. Her last text was one word: "Liar."`); else if(end==='kingpin') L.push(`Reyes is still out there, chasing planes. Now they're yours.`);
+  if(end==='ghost' && f.drivecopy) L.push(`Arnaud's drive sits on an old phone, in a safe, in a country with no extradition treaty. Insurance.`);
+  return L; }
 
 /* ================= 3. Power and Heat matter ================= */
 /* network runs: higher pay, more heat; there are more of them as your Power grows */
@@ -5910,18 +5921,18 @@ const BEATS = {
   CR10:[['cruise','self',`Fourteen hundred pounds. A 737 freighter carries forty thousand. You do the math again.`],['descent',f=>f.informant?'reyes':'self',f=>f.informant?`Nice jet. Where's it going? Text me the tail number of every plane you see on that ramp.`:`A text from an unknown number: "We know who you are." You delete it, and then you check your mirrors all the way down.`]],
   CRM:[{at:'cruise',who:'radio',text:`Traffic, two o'clock, same altitude, no transponder.|A dark jet is sliding in next to your wing.`,opts:[{t:'Climb and outrun them',reply:`You push the power up and climb. The other jet stays with you for a minute, then peels off toward the coast.`,power:2},{t:'Call Castillo',reply:`"Medinas," Castillo says. "Ignore them. Land and do your job."`}]}],
   CR11:[['cruise','self',`Tico won't look at you. He rode with you through the storm. He wanted to be a pilot.`]],
-  CR12:[['cruise','castillo',`Dez knew the risks. Don't get sentimental. It's bad for business.`]],
+  CR12:[f=>f.informant?{at:'climb',who:'reyes',text:`Dez won't talk to us. He's protecting someone. If it's you, now would be a good time to tell me.`}:null, ['cruise','castillo',`Dez knew the risks. Don't get sentimental. It's bad for business.`]],
   CR13:[['climb','self',`Mari hasn't said a word since takeoff.`]],
   CR14:[['climb','self',`Your first airliner. A hundred and fifty thousand pounds, and every one of them feels like yours.`],['cruise','hartwell',`I built that foundation to save a reef. Then Castillo found it. Now I can't remember the last time I went diving.`]],
-  CR15:[['cruise','self',`Eighteen tons a night. Your airline. You can't stop smiling.`],['descent','castillo',`Half, my friend. We'll talk when you land.`]],
+  CR15:[f=>f.informant?{at:'climb',who:'reyes',text:`An airline. That's ambitious. Every invoice, every tail number. Send it all to me.`}:null, ['cruise','self',`Eighteen tons a night. Your airline. You can't stop smiling.`],['descent','castillo',`Half, my friend. We'll talk when you land.`]],
   CRB:[['cruise','self',`Castillo hasn't been this friendly in months.`], f=>{ const who=f.dezFree?'dez':f.mari?'mari':f.ticoRan?'tico':f.informant?'reyes':null; if(!who) return {at:'descent',who:'self',text:`Something feels wrong about this one. You can't say what.`};
       const line={dez:`Rookie, listen. Castillo sold you to the Medinas. They're waiting on the cargo ramp. Park at the passenger terminal and walk out with the tourists.`,mari:`Don't park on the cargo ramp. Castillo sold you to the Medinas. Passenger terminal, now.`,tico:`It's Tico. You let me run, so I owe you one. Castillo sold you to the Medinas. They're on the cargo ramp.`,reyes:`Our wiretap just lit up. Castillo sold you to the Medinas. Stay off the cargo ramp.`}[who];
       return {at:'descent',who,text:line,opts:[{t:'Park at the passenger terminal',reply:`You ask ground for a stand at the passenger terminal. Your hands are steady. They shouldn't be.`,flag:'warned'},{t:'Ignore it',reply:`You land where Castillo told you to.`}]}; }],
   CR16:[['climb','self',`Four engines. Eighty tons. Two years ago you were scared of a box in a Cessna.`],['descent',f=>f.mari?'mari':'castillo',f=>f.mari?`The trucks are in place. Bring her home, partner.`:`I hear you're flying a 747 now. Don't forget who taught you.`]],
-  CRT:[['descent','self',`Everyone at that table is looking at the sky right now.`]],
+  CRT:[f=>f.informant?{at:'cruise',who:'reyes',text:`A table full of suppliers in Cancún. Tell me you're remembering every face.`}:null, ['descent','self',`Everyone at that table is looking at the sky right now.`]],
   CR17:[['cruise',f=>f.informant||f.ledgers?'reyes':'self',f=>f.informant||f.ledgers?`We're in position at Miami. Whatever you're planning, don't.`:`Castillo is pretending to sleep in the jump seat. One hour to Miami. One hour to decide.`]]
 };
-function beatsFor(a){ const f=flagsOf(S.st); return (BEATS[a.job.story]||[]).map(b=>{ if(typeof b==='function') b=b(f); if(Array.isArray(b)) b={at:b[0],who:typeof b[1]==='function'?b[1](f):b[1],text:typeof b[2]==='function'?b[2](f):b[2]}; return b; }); }
+function beatsFor(a){ const f=flagsOf(S.st); return (BEATS[a.job.story]||[]).map(b=>{ if(typeof b==='function') b=b(f); if(Array.isArray(b)) b={at:b[0],who:typeof b[1]==='function'?b[1](f):b[1],text:typeof b[2]==='function'?b[2](f):b[2]}; return b; }).filter(Boolean); }
 function beatPhase(a){ const s=S.sim; if(!s||!s.motion||!s.position||s.motion.onGround) return null; const rec=s.recorder; if(!rec||!rec.takeoff) return null;
   const from=AP[a.job.from], to=AP[a.job.local?a.job.from:a.job.to]; const here={lat:s.position.lat,lon:s.position.lon}; const total=Math.max(1,distNm(from,to)); const togo=distNm(here,to); const frac=1-togo/total; const since=(Date.now()-rec.takeoff.t)/60000; const agl=s.position.aglFt||0;
   return { climb: agl>800 && since>0.8, cruise: frac>=0.3 || (total<25 && since>3), descent: (frac>=0.5 || since>6) && togo<Math.max(8,Math.min(40,total*0.35)), final: togo<4 && agl<1500 }; }
@@ -6046,9 +6057,19 @@ const PRO = {
 };
 /* continuity variants */
 const PRO_DYN = {
+  /* The Rat: if you took Reyes's deal, you know who the real rat is; Tico remembers the right seat */
+  CR11:f=>{ const L=PRO.CR11.slice(0,2); if(f.informant) L.push([`The villa`,null,`You know exactly who's been talking to the DEA. It isn't Tico. Your burner phone feels very heavy in your pocket.`]); L.push(PRO.CR11[2]); if(f.ticoSeat) L.push([`The ramp`,'tico',`Boss. You let me sit up front once, remember? Best ten minutes of my life.`]); return L; },
   CR13:f=>f.dezJail?[[`Coral Wing hangar · 5:10 PM`,null,`With Dez gone, the hangar is quiet. Mari has been going through his toolboxes.`],[`Hangar three`,null,`Under the trays, the money. All of it.`],[`The hangar`,'mari',`Don't. Don't explain. Just take me flying. Like when you were new.`]]:null,
-  CR16:f=>f.mari?[[`Tocumen cargo ramp · 9:30 PM`,null,`The 747-8 freighter is the biggest thing on the airfield. Eighty tons are going in through the nose.`],[`The ramp`,'mari',`Eighty tons, and I tracked every pallet. Bring her home, partner.`],[`The ramp`,null,`Two years ago you were scared of a taped box in a Cessna. You stand under the wing and laugh out loud.`]]:null,
-  CR17:f=>(f.informant||f.ledgers)?PRO.CR17.concat([[`Text message`,'reyes',`We're in position. Whatever you're planning, don't.`]]):null
+  /* The Setup: Castillo heard what you told his lawyer */
+  CRB:f=>f.toldLawyer?[PRO.CRB[0],[`The ramp`,'castillo',`My lawyer tells me you had a lot to say about Dez. Never mind. We're friends.`]].concat(PRO.CRB.slice(1)):null,
+  /* Heavy: who's with you on the ramp, and what you've been doing since Cancún */
+  CR16:f=>{ const L=f.mari?[[`Tocumen cargo ramp · 9:30 PM`,null,`The 747-8 freighter is the biggest thing on the airfield. Eighty tons are going in through the nose.`],[`The ramp`,'mari',`Eighty tons, and I tracked every pallet. Bring her home, partner.`]]:[PRO.CR16[0]];
+    if(f.war) L.push([`The ramp`,null,`Half of Castillo's pilots fly for you now. Tonight one of them is walking around your 747 with a flashlight, checking the tires for you.`]);
+    if(f.patient) L.push([`The cockpit`,null,`Your notebook is forty pages long now. Dates, tail numbers, amounts. Castillo still thinks you're grateful.`]);
+    L.push(f.mari?[`The ramp`,null,`Two years ago you were scared of a taped box in a Cessna. You stand under the wing and laugh out loud.`]:PRO.CR16[PRO.CR16.length-1]); return L; },
+  /* The Last Run: everything you hold over Castillo, and Reyes if she's in it */
+  CR17:f=>{ const L=PRO.CR17.slice(); if(f.war) L.push([`The radio`,null,`Two of Castillo's own pilots are flying a few miles behind you tonight. They work for you now.`]); if(f.patient) L.push([`Your flight bag`,null,`The notebook. Everything Castillo has done since Cancún, in your handwriting.`]); if(f.drivecopy) L.push([`Your phone`,null,`Arnaud's drive is still on it. Every account, every name.`]);
+    if(f.informant||f.ledgers) L.push([`Text message`,'reyes',`We're in position. Whatever you're planning, don't.`]); return L.length===PRO.CR17.length?null:L; }
 };
 const PRO_VOICE = { dez:[false,1.05,1], mari:[true,1,1.05], castillo:[false,0.92,0.8], hartwell:[false,0.95,0.9], tico:[false,1.12,1.05], reyes:[true,1,1], medina:[false,0.95,0.85] };
 
@@ -8446,13 +8467,17 @@ function sceneArt(code, dep, ac){ try{ return islandArt(code, dep, 1600, 900, ac
 
 /* ---------- a chapter's scenes ---------- */
 
+/* Which briefing paragraphs are read out after each prologue (by index). The rest repeat what the
+   scene already showed, or would give away something that happens in flight. Chapters not listed read all. */
+const PRO_BRIEF = { CW1:[1], CR2:[1], CR3:[], CR4:[0,1], CR5:[0,1], CR6:[], CR7:[], CR8:[0,1], CR9:[], CR10:[0], CRM:[0], CR11:[], CR12:[0,1], CR13:[1], CR14:[0,1], CR15:[0], CRB:[], CR16:[], CRT:[0], CR17:[1] };
+
 /* The lines of a chapter's prologue: an echo of your last mid-flight choice, the scripted prologue
    (which can change with earlier choices), then the briefing as narration. */
 function proFor(id){
   const scripted = (PRO_DYN[id] && PRO_DYN[id](crime(S.st).flags)) || PRO[id];
   let lines = scripted;
   const m=CRIME.find(x=>x.id===id);
-  if(m){ const mm=(typeof dynM==='function'&&S.st)?dynM(S.st,m):m; const here=AP[m.from]?`${AP[m.from].n}`:''; lines=(scripted||[]).concat((mm.brief||[]).map(t=>[here, null, t])); }
+  if(m){ const mm=(typeof dynM==='function'&&S.st)?dynM(S.st,m):m; const here=AP[m.from]?`${AP[m.from].n}`:''; const keep=PRO_BRIEF[id]; const brief=(mm.brief||[]).filter((t,i)=>!keep || keep.includes(i)); lines=(scripted||[]).concat(brief.map(t=>[here, null, t])); }
   lines = lines||[];
   const e=crime().echo; return (e && e.from!==id) ? [[`Last time`, null, e.text]].concat(lines) : lines;
 }
