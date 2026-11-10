@@ -21,19 +21,6 @@ function touchdownAnalysis(code, td){
   const center = Math.abs(xt) <= Math.max(8, e.w*0.12) ? 'on' : Math.abs(xt) <= half*0.55 ? 'near' : Math.abs(xt) <= half ? 'wide' : 'off';
   return { runway:e.id, len:e.len, w:e.w, avail:e.len-e.disp, fromThr, zoneEnd, zone, xt, center, approx:!!e.approx, remaining: Math.round(e.len - best.along), surf:e.surf };
 }
-const _wScore = score;
-score = function(job, f){
-  if(f && f.td && f.td.lat!=null && f.landing!=='crash'){ const code = f.landedAt || (job.local?job.from:job.to); const A = touchdownAnalysis(code, f.td); f.tda = A;
-    if(A && A.runway){ f.tdz = A.zone==='aim' || A.zone==='zone'; f.center = !A.approx ? (A.center==='on' || A.center==='near') : f.center; } }
-  const r = _wScore(job, f); const A=f&&f.tda;
-  if(A && A.runway){ r.parts = r.parts.map(p=>{
-      if(/^Touchdown zone/.test(p[0])){ const pts = A.zone==='aim'?10 : A.zone==='zone'?8 : A.zone==='long'? (A.fromThr < A.zoneEnd+1000?4:1) : 0;
-        return [`Touchdown point: ${A.zone==='short'?`${Math.abs(A.fromThr)} ft SHORT of the threshold`:`${A.fromThr.toLocaleString()} ft past the threshold of ${A.runway}`}${A.zone==='long'?' (floated long)':A.zone==='aim'?' (on the aiming point)':''}`, pts, 10]; }
-      if(/^Centerline/.test(p[0]) && !A.approx){ const pts = A.center==='on'?5:A.center==='near'?4:A.center==='wide'?2:0; return [`Centerline: ${Math.abs(A.xt)} ft ${A.xt>0?'right':A.xt<0?'left':''} of center`, pts, 5]; }
-      return p; });
-    const tot = clamp(Math.round(r.parts.reduce((s,p)=>s+p[1],0)),0,100); r.score=tot; r.grade=gradeOf(tot); }
-  return r;
-};
 function runwaySVG(A){
   if(!A || !A.runway) return ''; const W=560, H=90, pad=24, L=A.len; const sx = x => pad + (x/L)*(W-2*pad); const half=26;
   const yOf = xt => H/2 + Math.max(-half-8, Math.min(half+8, xt/(A.w/2)*half));

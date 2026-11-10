@@ -173,35 +173,6 @@ function checkAch(st){
 }
 
 /* ---------- after each flight ---------- */
-function afterFlight(st, job, f, res, out){
-  const s=st.stats; const landedAt = f.landedAt || job.to;
-  st.landedAt = st.landedAt || {}; if(!res.crash){ st.landedAt[landedAt] = (st.landedAt[landedAt]||0)+1; }
-  if(isNight(job.dep)) s.night=(s.night||0)+1;
-  if(job.wx.ifr) s.ifr=(s.ifr||0)+1;
-  if(!job.local && ZONE(AP[job.from].c)!==ZONE(AP[landedAt].c)) s.intl=(s.intl||0)+1;
-  if(AP[landedAt].water && !res.crash) s.water=(s.water||0)+1;
-  if(job.arch==='relief' || job.story==='HR1' || job.story==='HR2') s.relief=(s.relief||0)+1;
-  if(job.festival) s.festival=(s.festival||0)+1;
-  s.aStreak = res.grade==='A' ? (s.aStreak||0)+1 : 0;
-  // bonus objective
-  if(job.bonus && !res.crash){
-    let met = !!f.bonus;
-    if(job.bonus.auto==='fpm' && f.verified) met = f.simFpm < 150;
-    if(job.bonus.auto==='fpm' && !f.verified) met = f.landing==='butter' || (f.landing==='smooth' && !!f.bonus);
-    if(job.bonus.auto==='block') met = f.block <= plan(job).est*1.1 + 2;
-    out.bonusMet = met;
-    if(met){ const amt = job.company ? Math.round(job.bonus.amt*2.6) : job.bonus.amt; txn(st, amt, 'Tips & bonuses', 'Bonus objective'); out.pay += amt; s.bonus=(s.bonus||0)+1; out.notes.push(`Bonus objective met: ${job.bonus.text.replace(/\.$/,'')}. +${money(amt)}.`); }
-    else out.notes.push(`Bonus objective missed: ${job.bonus.text.replace(/\.$/,'')}.`);
-  }
-  // review
-  const rv = makeReview(st, job, f, res);
-  if(rv){ st.reviews = st.reviews || []; st.reviews.unshift(rv); st.reviews = st.reviews.slice(0,60); out.review = rv; }
-  if(job.mystery) s.mystery=(s.mystery||0)+1;
-  surpriseAfter(st, job, f, res, out);
-  finAfterFlight(st, job, f, res, out);
-  out.ach = checkAch(st);
-  out.rank = rankOf(st).name;
-}
 
 /* ---------- extra story chapters ---------- */
 STORY.push(

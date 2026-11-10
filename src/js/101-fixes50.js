@@ -38,8 +38,6 @@
 (function(){ const _pa=playAction; playAction=function(st,m,availSet,n){ const r=_pa(st,m,availSet,n); if(chapterStatus(st,m,availSet).k==='aircraft'){ const opts=m.ac.filter(k=>AC[k] && canFly(st,k)).slice(0,3); if(opts.length) r.btn=opts.map(k=>`<button class="btn sm" data-act="own-ac" data-v="${k}">I own the ${esc(AC[k].n)}</button>`).join('')+r.btn; } return r; }; })();
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="own-ac"]'); if(!b||!S.st) return; S.st.hangar=S.st.hangar||{}; S.st.hangar[b.dataset.v]=true; save(); toast(`Added the ${AC[b.dataset.v].n} to your hangar list.`); S.keepScroll=true; render(); });
 
-/* 22. daily costs never push your cash below zero: what you can't pay costs Heat instead */
-(function(){ const _rs=rest; rest=function(st){ const c0=st.cash; const r=_rs(st); try{ if(st.cash<0 && c0>=0){ const short=-st.cash; txn(st, short, 'Operation', 'Costs you couldn\'t cover (owed to Castillo\'s people)'); const c=crime(st); if(c.on) crBump(c,'heat',2); setTimeout(()=>toast(`You couldn't cover ${money(short)} of today's costs. People talk: Heat +2.`), 600); } }catch(_){} return r; }; })();
 
 /* 23. Esc also closes the notifications list */
 window.addEventListener('keydown', e=>{ if(e.key==='Escape'){ document.querySelectorAll('.notif-pane').forEach(p=>p.remove()); } });

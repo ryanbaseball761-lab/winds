@@ -83,11 +83,6 @@ function cabinInner(){
 }
 const _coachCockpit = cockpitView;
 cockpitView = function(){ const h=_coachCockpit(); return h.replace('<main class="wrap stack fade cockpit">', '<main class="wrap stack fade cockpit"><div class="callout-host" aria-live="assertive">'+calloutHTML()+'</div>'); };
-const _coachAfter = afterFlight;
-afterFlight = function(st, job, f, res, out){
-  const C = job._cab; const r=_coachAfter(st, job, f, res, out);
-  const line = coachSummary(job, C); if(line) out.notes.push(line); return r;
-};
 /* keep a reference to the cabin on the job so the debrief can read it after the flight closes */
 const _coachTick2 = coachTick;
 coachTick = function(){ _coachTick2(); const a=S.st&&S.st.active; if(a && a.cab) a.job._cab = {tally:a.cab.tally}; };

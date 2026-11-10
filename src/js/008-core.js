@@ -142,12 +142,6 @@ function finDaily(st){
   ensureMarket(st);
   F.history.push({ d:st.day, cash:Math.round(st.cash), net:Math.round(netWorth(st)) }); if(F.history.length>400) F.history.shift();
 }
-function rest(st){
-  st.day += 1; st.clock = 420; st.duty = 0; st.jobsKey = '';
-  const net = companyTick(st);
-  finDaily(st); newDayBrief(st); checkAch(st);
-  return net;
-}
 function finAfterFlight(st, job, f, res, out){
   const F=fin(st);
   if(F.bond>0 && out.pay>0 && !job.company){ const cut=Math.min(F.bond, Math.round(out.pay*0.2)); F.bond-=cut; txn(st,-cut,'Training bond','20% of flight pay'); out.notes.push(`Training bond repayment: ${money(cut)} (${money(F.bond)} left).`); if(F.bond<=0){ out.notes.push(`Training bond paid off.`); scoreDelta(st, 15); } }

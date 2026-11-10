@@ -21,20 +21,6 @@ document.addEventListener('click', e=>{
   const s=e.target.closest('[data-act="start"]'); if(s && S.st && S.st.active && diff()==='expert' && !checklistDone(S.st.active)){ e.stopImmediatePropagation(); e.preventDefault(); toast('Expert mode: finish the checklist first.'); go('cockpit'); }
 }, true);
 /* Expert: the block timer can't start from the checklist until earlier phases are ticked */
-const _dfScore = score;
-score = function(job, f){
-  if(diff()==='casual' && f.landing==='hard') f = Object.assign({}, f, {landing:'firm'});
-  const r=_dfScore(job, f);
-  if(diff()==='expert' && S.st.active && !checklistDone(S.st.active)) { r.score=Math.max(0,r.score-10); r.grade = r.score>=90?'A':r.score>=80?'B':r.score>=70?'C':r.score>=60?'D':'F'; }
-  return r;
-};
-const _dfAfter = afterFlight;
-afterFlight = function(st, job, f, res, out){
-  const r=_dfAfter(st, job, f, res, out);
-  if(diff()==='expert' && !res.crash && job.kind!=='check' && !job.company){ const b=Math.round(out.pay*0.15/10)*10; if(b>0){ txn(st,b,'Tips & bonuses','Expert pay'); out.pay+=b; out.notes.push(`Expert difficulty: +${money(b)} (15%).`); } }
-  if(diff()==='casual' && job.comfort!=null && job.comfort<50) st.reputation=clamp(st.reputation+2,0,100); // undo the rough-ride penalty
-  return r;
-};
 
 /* ---- automatic debrief from the MSFS recorder ---- */
 

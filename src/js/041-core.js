@@ -75,15 +75,7 @@ inflightView = function(){ const a=S.st.active; let h=_orInflight(); if(a.job.sc
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="orders-ok"]')){ S.ordersPop=false; S.keepScroll=true; render(); } });
 /* flights with sealed orders log themselves too, graded on what you actually did */
 var autoReady; /* defined in full below (060-core.js) */
-const _orApply = applyResult;
-applyResult = function(st, job, f, res){
-  const a=st.active; if(job.scen && f.auto && !f.scen && a && a.scenPlan){ const P=a.scenPlan; const landed=f.landedAt;
-    f.scen = P.divert ? (landed===P.target ? 'book' : landed===job.to ? 'ignored' : 'messy') : (landed===P.target || landed===P.alt ? 'book' : 'messy'); }
-  return _orApply(st, job, f, res);
-};
 /* applyResult's own divert check should accept the planned diversion */
-const _orScore = score;
-score = function(job, f){ const a=S.st&&S.st.active; if(job.scen && f.auto && a && a.scenPlan && !f.scen){ const P=a.scenPlan; f = Object.assign({}, f, {scen: P.divert ? (f.landedAt===P.target?'book':f.landedAt===job.to?'ignored':'messy') : (f.landedAt===P.target||f.landedAt===P.alt?'book':'messy')}); } return _orScore(job, f); };
 
 /* ---- sim rate ---- */
 function simRateNow(){ const x=S.sim&&S.sim.ext; return x && x.simRate ? x.simRate : 1; }

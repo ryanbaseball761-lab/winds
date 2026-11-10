@@ -83,9 +83,3 @@ ensureJobs = function(st){
 };
 
 /* Relationship bump for owner trips */
-const _starlingAfter = afterFlight;
-afterFlight = function(st, job, f, res, out){
-  const r = _starlingAfter(st, job, f, res, out);
-  if(job.arch==='starling' && !res.crash){ st.rep.vivienne = clamp((st.rep.vivienne||10) + ({A:3,B:2,C:1,D:0,F:-2}[res.grade]||0), 0, 100); if(res.grade==='A' || res.grade==='B') st.rep.abe = clamp((st.rep.abe||10)+1,0,100); }
-  return r;
-};

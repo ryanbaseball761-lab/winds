@@ -24,13 +24,6 @@ const _lvRender = renderSimBits;
 renderSimBits = function(){ _lvRender(); if(S.view==='map' && S.st && S.st.active && S.simState==='live'){ S.keepScroll=true; render(); } };
 
 /* ---------- replay: keep the path and approach with the result ---------- */
-const _lvApply = applyResult;
-applyResult = function(st, job, f, res){
-  const rec = st.active ? simRecFor(st.active) : null;
-  const r = _lvApply(st, job, f, res);
-  if(rec && st.last){ st.last.replay = { track:(rec.track||[]).slice(-300), approach: rec.approach||null, td: rec.touchdown||null }; }
-  return r;
-};
 function replaySvgPath(track, w, h){
   const lats=track.map(p=>p[0]), lons=track.map(p=>p[1]); let a0=Math.min(...lats), a1=Math.max(...lats), o0=Math.min(...lons), o1=Math.max(...lons);
   const pad=0.02; a0-=pad; a1+=pad; o0-=pad; o1+=pad; const k=Math.cos((a0+a1)/2*Math.PI/180);

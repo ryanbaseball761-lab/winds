@@ -44,14 +44,6 @@ document.addEventListener('click', e=>{
 /* record when the wheels actually left the ground */
 const _urRender = renderSimBits;
 renderSimBits = function(){ _urRender(); const a=S.st&&S.st.active; if(a && a.job.realtime && !a.job._toAt){ const rec=simRecFor(a); if(rec && rec.takeoff) { a.job._toAt=rec.takeoff.t; save(); } } };
-const _urAfter = afterFlight;
-afterFlight = function(st, job, f, res, out){
-  const r=_urAfter(st, job, f, res, out);
-  if(job.realtime && job.wheelsUpBy && !res.crash){ const t = job._toAt || null;
-    if(!t || t > job.wheelsUpBy){ const cut=Math.round(out.pay/2/10)*10; txn(st,-cut,'Flight pay','Missed urgent window'); out.pay-=cut; out.notes.push(t?`Wheels up ${Math.round((t-job.wheelsUpBy)/60000)} min late: the 2× urgent rate became standard pay.`:`MSFS didn't record a takeoff, so the urgent 2× rate couldn't be confirmed. Paid at the standard rate.`); }
-    else out.notes.push(`Wheels up with ${Math.round((job.wheelsUpBy-t)/60000)} min to spare. Full 2× urgent pay.`); }
-  return r;
-};
 /* live countdowns + random dispatch calls while you're idle */
 setInterval(()=>{
   document.querySelectorAll('.urg-count').forEach(el=>{ el.textContent = mmss(Number(el.dataset.until)-Date.now()); });

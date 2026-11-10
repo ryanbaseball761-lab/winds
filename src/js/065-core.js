@@ -7,5 +7,3 @@ checkrideJob = function(st, rid, acId){ if(rid!=='SEA') return _seaCk(st, rid, a
   j.paras=[`${CAST[RATINGS.SEA.examiner].n} meets you at the seaplane on the ramp at Princess Juliana${moved?' (Coral Wing flew you over for free)':''}.`, `"Short and simple," she says. "Take off, swing around the lagoon, and put us down in Simpson Bay Lagoon, right over there. Gentle and steady, that's all I'm looking for." Pass, and you hold the Seaplane Rating: ${RATINGS.SEA.unlocks}`];
   j.est=Math.max(10, plan(j).est); return j; };
 /* passing it: no crash, not a hard landing, and most of the tasks */
-const _seaApply = applyResult;
-applyResult = function(st, job, f, res){ if(job.kind==='check' && job.rating==='SEA' && !res.crash && f && f.landing!=='hard') res.score=Math.max(70, res.score); return _seaApply(st, job, f, res); };

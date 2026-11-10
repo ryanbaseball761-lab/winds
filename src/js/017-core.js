@@ -28,15 +28,6 @@ function callHTML(st){
     <div class="row" style="justify-content:center"><button class="btn action" data-act="call-yes">Take the job</button><button class="btn" data-act="call-no">Not today</button></div>
   </div></div>`;
 }
-const _evAfterCall = afterFlight;
-afterFlight = function(st, job, f, res, out){ const r=_evAfterCall(st, job, f, res, out);
-  // live weather bonus
-  const W=job._wx; if(W && !res.crash && !job.company){ const rough = W.maxWind>=25 || W.minVis<3 || W.cloud;
-    if(rough){ const b=Math.max(25, Math.round(job.pay*0.15/10)*10); txn(st, b, 'Tips & bonuses', 'Weather bonus'); out.pay += b; out.notes.push(`You flew real MSFS weather (${W.maxWind} kt max wind${W.minVis<3?`, ${W.minVis} sm visibility`:''}${W.cloud?', in cloud':''}): ${money(b)} weather bonus.`); } }
-  setTimeout(()=>{ maybeCall(st, 0.22); },0);
-  return r; };
-const _evRest = rest;
-rest = function(st){ const r=_evRest(st); st.call=null; maybeCall(st, 0.35); return r; };
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="call-yes"],[data-act="call-no"]'); if(!b || !S.st || !S.st.call) return; const st=S.st; const c=st.call;
   if(b.dataset.act==='call-yes'){ if(st.active){ toast('Finish your current flight first.'); return; } st.active={job:c.job, accepted:Date.now()}; st.call=null; st.rep[c.who]=clamp((st.rep[c.who]||10)+2,0,100); save(); S.debrief=false; S.showResult=false; go('flight'); }
@@ -61,12 +52,6 @@ const CHOICES = {
 const ALT_OUT = {
   VJ8: st => st.story.flags.VJ7==='b' ? {good:`Starling II lands beautifully. On the ramp, Vivienne hands you a folder: the broker's emails, including the one about your fee. "I'd have paid you that myself if you'd asked," she says, and walks away. Abe shakes his head slowly.`, ok:`Starling II comes home in one piece. Vivienne is polite, nothing more. Somebody told her about the broker.`, bad:`A rough arrival, and a rougher conversation afterwards. Vivienne knows about the fee.`}
     : st.story.flags.VJ7==='a' && st.story.flags.VJ3==='a' ? {good:`The whole Coral Wing ramp turns out to watch Starling II taxi in. Vivienne hands you a second set of keys. "Chief pilot of Saltwater Air. Don't argue." Abe hands you the finished crossword with "PILOT" written across the margin.`, ok:`A long flight, flown honestly and well. Vivienne offers you a permanent seat on every Starling trip, at double the rate.`, bad:`It wasn't pretty, but Vivienne doesn't care. "You're the one I trust," she says. "The landing we can fix."`} : null,
-};
-const _evApply = applyResult;
-applyResult = function(st, job, f, res){
-  const m = job.kind==='story' ? STORY.find(x=>x.id===job.story) : null; const alt = m && ALT_OUT[m.id] ? ALT_OUT[m.id](st) : null;
-  if(alt){ const o=m.out; m.out=alt; try{ return _evApply(st, job, f, res); } finally { m.out=o; } }
-  return _evApply(st, job, f, res);
 };
 function choiceHTML(st){
   const j=st.last && st.last.job; if(!j || j.kind!=='story' || !CHOICES[j.story] || st.story.flags[j.story] || st.last.res.crash) return '';

@@ -7,8 +7,6 @@ document.addEventListener('click', e=>{
 /* a rolling backup each in-game day (3 kept) */
 function latestBackup(){ try{ const a=JSON.parse(localStorage.getItem('tw.backups')||'[]'); return a.length?a[a.length-1].st:null; }catch(e){ return null; } }
 function backupNow(st){ try{ const a=JSON.parse(localStorage.getItem('tw.backups')||'[]'); a.push({at:Date.now(), day:st.day, st:JSON.parse(JSON.stringify(st))}); while(a.length>7) a.shift(); localStorage.setItem('tw.backups', JSON.stringify(a)); }catch(e){ /* storage full: skip */ } }
-const _stRest = rest;
-rest = function(st){ backupNow(st); return _stRest(st); };
 const _stHangar = hangarView;
 hangarView = function(){ let backs=[]; try{ backs=JSON.parse(localStorage.getItem('tw.backups')||'[]'); }catch(_){}
   return _stHangar().replace(/<\/main>\s*$/, `<section class="panel stack" style="max-width:760px"><h3>Backups</h3><p class="small muted">Trade Winds keeps your last ${backs.length||3} days automatically${window.TW_STANDALONE?', plus a career file in Documents\\Trade Winds':''}.</p>${backs.length?`<div class="row">${backs.map((b,i)=>`<button class="btn sm" data-act="st-restore-i" data-i="${i}">Day ${b.day} · ${new Date(b.at).toLocaleString()}</button>`).join('')}</div>`:'<p class="small">The first backup is made when you rest.</p>'}</section></main>`); };

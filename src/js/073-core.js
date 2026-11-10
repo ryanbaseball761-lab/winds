@@ -9,8 +9,6 @@ const DYN = {
 };
 function dynM(st, m){ const d=DYN[m.id]; return d ? Object.assign({}, m, d(flagsOf(st))) : m; }
 (function(){ const _sj=storyJob; storyJob=function(st, m, acId){ return _sj(st, dynM(st, m), acId); }; })();
-/* The Setup: if someone warned you mid-flight, you walk away with the load */
-(function(){ const _ap=applyResult; applyResult=function(st, job, f, res){ if(job.story==='CRB' && flagsOf(st).warned){ job.out={good:`You park at the passenger terminal instead of the cargo ramp and walk out with a crowd of tourists. From the taxi you watch three trucks full of Medina's men circle an empty cargo ramp. Castillo sold you to them, and it didn't work.`,ok:`You park at the passenger terminal and walk out with the tourists. Three trucks of Medina's men wait on an empty cargo ramp. Castillo sold you out, and it didn't work.`,bad:`A rough landing, but you park at the passenger terminal and slip out with the tourists. Medina's men wait on an empty cargo ramp. Castillo sold you out.`}; } return _ap(st, job, f, res); }; })();
 
 /* endings: you only get the ones you earned */
 const ENDING_REQ = { kingpin:c=>c.power>=50 ? null : `Needs Power 50+ (you have ${c.power})`, witness:c=>(c.flags.informant||c.flags.ledgers||c.flags.medinaBurned) ? null : `You never gave Reyes anything`, ghost:()=>null };

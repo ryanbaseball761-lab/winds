@@ -72,10 +72,6 @@ genJobs = function(st){ const L=_gpGen(st); const d=diff();
 document.addEventListener('click', e=>{ const s=e.target.closest('[data-act="start"]'); if(!s || !S.st || !S.st.active || diff()!=='expert' || S.simState!=='live') return;
   const bad=preflightChecks(S.st.active.job).filter(c=>!c.ok && ['ac','fuel','pos'].includes(c.k));
   if(bad.length){ e.stopImmediatePropagation(); e.preventDefault(); toast(`Expert mode: fix the pre-flight check first (${bad.map(c=>c.t).join('; ')}).`); const el=document.getElementById('preflight'); if(el) el.scrollIntoView({behavior:'smooth', block:'center'}); } }, true);
-const _gpApply = applyResult;
-applyResult = function(st, job, f, res){ const r=_gpApply(st, job, f, res);
-  if(diff()==='expert' && !res.crash && job.kind!=='check' && res.fuelMin!=null && res.fuelMin < plan(job).reserveMin*0.75 && AC[job.ac].fuel!=='elec'){ const fine=Math.max(250, Math.round(job.pay*0.2/10)*10); txn(st,-fine,'Accidents & fines','Landed below reserve fuel'); const o=st.last&&st.last.out; if(o){ o.costs=(o.costs||0)+fine; o.notes.push(`Expert: you landed with ${res.fuelMin} min of fuel, below the legal reserve. The authority fines you ${money(fine)}.`); } st.reputation=clamp(st.reputation-2,0,100); }
-  return r; };
 
 /* ---- mid-game story: The Logbook ---- */
 CAST.lucille = {n:`Lucille Bain`, col:'#7a5c99', role:`Retired schoolteacher, Antigua`, bio:`Eddie Bain's daughter. Seventy-one, sharp as a tack, and still angry at her father for disappearing in 1981.`};
@@ -104,7 +100,3 @@ STORY.push(
 );
 
 /* ---- economy: reputation is harder to max out (it was hitting 100 by flight 25) ---- */
-const _ecApply = applyResult;
-applyResult = function(st, job, f, res){ const before=st.reputation; const r=_ecApply(st, job, f, res); const d=st.reputation-before;
-  if(d>0){ const scaled = d * Math.max(0.15, 1 - before/110); st._repFrac = (st._repFrac||0) + scaled; const whole=Math.floor(st._repFrac); st._repFrac -= whole; st.reputation = clamp(before + whole, 0, 100); }
-  return r; };

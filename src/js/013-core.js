@@ -68,13 +68,3 @@ cockpitView = function(){ const h=_shellCockpit(); return h.replace(/<\/main>\s*
 const _shellFlight = flightView;
 flightView = function(){ const h=_shellFlight(); if(!S.st.active || S.debrief) return h; return h.replace('<section class="panel stack" id="simpanel">', cabinBlock()+'<section class="panel stack" id="simpanel">'); };
 /* comfort pays */
-const _shellAfter = afterFlight;
-afterFlight = function(st, job, f, res, out){
-  const r = _shellAfter(st, job, f, res, out);
-  if(job.pax && typeof job.comfort==='number' && !res.crash){
-    out.notes.push(`Passenger comfort: ${job.comfort}/100.`);
-    if(job.comfort>=90 && !job.company){ const tip=Math.max(20, Math.round(job.pay*0.08/10)*10); txn(st, tip, 'Tips & bonuses', 'Comfort bonus'); out.pay += tip; out.notes.push(`The passengers loved the ride: ${money(tip)} comfort bonus.`); }
-    else if(job.comfort<50){ st.reputation = clamp(st.reputation-2,0,100); out.notes.push(`A rough ride. Word gets around: reputation −2.`); }
-  }
-  return r;
-};

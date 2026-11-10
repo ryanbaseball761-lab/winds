@@ -1610,84 +1610,6 @@ function regFor(st){ const c=st.company; const pre = {SXM:'PJ-',MAF:'F-O',BLM:'F
 /* ---------- Debrief & scoring ---------- */
 const LANDING = { butter:{n:`Butter (under 100 fpm)`,pts:30}, smooth:{n:`Smooth (100–200 fpm)`,pts:26}, firm:{n:`Firm (200–350 fpm)`,pts:18}, hard:{n:`Hard (350–600 fpm)`,pts:6}, crash:{n:`Damage or crash`,pts:-40} };
 function gradeOf(score){ return score>=90?'A':score>=78?'B':score>=62?'C':score>=45?'D':'F'; }
-function score(job, f){
-  const a=AC[job.ac], p=plan(job); const parts=[];
-  const L = LANDING[f.landing]||LANDING.firm; parts.push([`Landing`, L.pts, 30]);
-  if(f.landing==='crash'){ return { score:0, grade:'F', parts:[[`Landing`,-40,30]], crash:true, fuelMin:0, block:f.block }; }
-  parts.push([`Touchdown zone`, f.tdz?10:3, 10]);
-  parts.push([`Centerline / alignment`, f.center?5:2, 5]);
-  let fuelMin;
-  if(a.fuel==='elec'){ fuelMin = (f.fuel/100)*90; parts.push([`Battery reserve`, f.fuel>=20?15:f.fuel>=10?6:-10, 15]); }
-  else { const lb = f.fuelUnit==='gal' ? f.fuel*p.density : f.fuelUnit==='kg' ? f.fuel*2.2046 : f.fuel; fuelMin = a.burn ? lb/a.burn*60 : 999; const r=p.reserveMin; parts.push([`Fuel reserve (${Math.round(fuelMin)} min left, ${r} required)`, fuelMin>=r?15:fuelMin>=r*0.5?6:-10, 15]); }
-  const slow = f.block > p.est*1.3 + 8; parts.push([`Block time vs plan (${durTxt(f.block)} vs ${durTxt(p.est)})`, f.diverted ? 8 : slow?4:10, 10]);
-  const pr = ['checklist','radio','weather','smooth'].filter(k=>f[k]).length*5; parts.push([`Airmanship`, pr, 20]);
-  if(job.kind==='check'){ const n=job.tasks.length, done=(f.tasks||[]).length; parts.push([`Checkride tasks (${done}/${n})`, Math.round(10*done/n), 10]); }
-  else if(job.scen){ const s=SCEN[job.scen]; let how=f.scen||'book'; const landed=f.landedAt||job.to; let label=s.n;
-    if(s.divert && how==='book' && !job.local && (s.returnHome ? landed!==job.from : landed===job.to)){ how='messy'; label=`${s.n} (by the book meant ${s.returnHome?'returning to '+job.from:'diverting'})`; }
-    const m={book:10, messy:5, ignored:-10}[how]; parts.push([label, m, 10]); }
-  else parts.push([`Passenger experience`, f.landing==='hard'?3:10, 10]);
-  let total = parts.reduce((s,p)=>s+p[1],0); total = clamp(Math.round(total),0,100);
-  return { score:total, grade:gradeOf(total), parts, fuelMin:Math.round(fuelMin), block:f.block };
-}
-function applyResult(st, job, f, res){
-  const a=AC[job.ac]; const p=plan(job); const sc = job.scen?SCEN[job.scen]:null;
-  const out = { id:job.id, title:job.title, grade:res.grade, score:res.score, parts:res.parts, pay:0, costs:0, notes:[], ok:true, story:'', jobKind:job.kind };
-  const landedAt = f.landedAt || job.to;
-  const expectedDivert = sc && sc.divert;
-  const divertedOk = landedAt!==job.to && (expectedDivert || f.scen==='book');
-  // pay
-  let factor = 0.6 + res.score/100*0.6;
-  if(res.crash){ factor=0; out.ok=false; }
-  else if(landedAt!==job.to && !job.local && !divertedOk){ factor*=0.4; out.notes.push(`You landed at ${landedAt} instead of ${job.to}, so the client pays only part of the fare.`); }
-  else if(landedAt!==job.to && !job.local){ out.notes.push(`Diverting was the right call. The client pays in full, and Coral Wing arranges onward transport.`); st.stats.diverts++; }
-  if(job.kind==='check'){
-    const n=job.tasks.length, done=(f.tasks||[]).length;
-    const pass = !res.crash && res.score>=70 && done/n>=0.8 && f.landing!=='hard';
-    out.pass = pass;
-    if(pass){ st.ratings[job.rating]=true; out.notes.push(`Passed. You now hold the ${RATINGS[job.rating].n}.`); addJournal(st,`Earned: ${RATINGS[job.rating].n}`, `${CAST[job.chars[0]].n} signs the logbook. ${RATINGS[job.rating].unlocks}`, job.chars, 'milestone'); st.rep[job.chars[0]] = clamp(st.rep[job.chars[0]]+5,0,100); }
-    else { st.cooldown[job.rating] = st.day+1; out.notes.push(`Not this time. You need a score of 70 or more, at least 80% of the tasks done, and no hard landing. You can retest after a day's rest.`); }
-  } else {
-    let gross = Math.round(job.pay*factor);
-    if(job.company){ const rev = Math.round(gross*2.6); const cb = companyFlightCost(st, job, res.block); const cost = cb.total; out.pay = rev; out.costs = cost; out.costBreak = cb; txn(st, rev, 'Company revenue', job.title); txn(st, -cb.fuel, 'Fuel', job.title); txn(st, -cb.maint, 'Maintenance', job.title); txn(st, -cb.fees, 'Landing & handling fees', job.title); const f2 = st.company.fleet.find(x=>x.ac===job.ac && !x.hired); if(f2){ f2.cond = Math.max(30, f2.cond - (f.landing==='hard'?6:f.landing==='firm'?1.2:0.6)); f2.flights=(f2.flights||0)+1; } }
-    else { out.pay = gross; txn(st, gross, 'Flight pay', job.title); }
-    if(res.grade==='A' && !res.crash){ const bonus = Math.round(job.pay*0.1/10)*10; if(!job.company && bonus>0){ txn(st, bonus, 'Tips & bonuses', 'Client tip'); out.notes.push(`Client tip for an excellent flight: ${money(bonus)}.`); out.pay += bonus; } }
-  }
-  if(res.crash){ const fine = Math.round(Math.max(2000, (a.price||5e6)*0.002)); txn(st, -fine, 'Accidents & fines', job.title); out.costs += fine; out.notes.push(`Accident investigation, insurance excess and repairs: ${money(fine)}.`); st.stats.crash++; }
-  // reputation
-  const repDelta = res.crash?-12 : {A:3,B:2,C:0,D:-2,F:-4}[res.grade];
-  st.reputation = clamp(st.reputation + repDelta, 0, 100);
-  // story
-  if(job.kind==='story'){
-    const m = STORY.find(x=>x.id===job.story);
-    if(!res.crash){ st.story.done[m.id]=true; }
-    const tone = res.crash ? 'bad' : (res.grade==='A'||res.grade==='B') ? 'good' : res.grade==='C' ? 'ok' : 'bad';
-    out.story = res.crash ? `The mission ends with an accident report instead of a happy client. You can try this chapter again.` : m.out[tone];
-    if(!res.crash){ for(const k in (m.rep||{})){ st.rep[k] = clamp((st.rep[k]||10) + (tone==='bad'? Math.round(m.rep[k]/3) : m.rep[k]), 0, 100); } }
-    if(!res.crash && m.reward){ if(m.reward.voucher){ st.voucher = m.reward.voucher; } if(m.reward.bonus){ txn(st, m.reward.bonus, 'Gifts & windfalls', m.title); out.pay += m.reward.bonus; } if(m.reward.note) out.notes.push(m.reward.note); }
-    addJournal(st, `${m.title}`, out.story, m.chars, 'story', res.grade);
-  } else if(job.kind==='gen'){
-    const line = res.crash ? `The ${job.label.toLowerCase()} ended badly at ${landedAt}.` : `${job.client}: ${job.label.toLowerCase()} from ${AP[job.from].isl} to ${AP[landedAt].isl}, grade ${res.grade}.`;
-    const ar = ARCH.find(x=>x.id===job.arch); if(ar && ar.char && !res.crash){ st.rep[ar.char] = clamp((st.rep[ar.char]||10) + ({A:4,B:3,C:1,D:0,F:-2}[res.grade]), 0, 100); }
-    addJournal(st, job.title, line, ar&&ar.char?[ar.char]:[], 'flight', res.grade);
-  }
-  // logbook & stats
-  if(f.verified){ out.notes.push(`Recorded by MSFS: touchdown at ${f.simFpm} fpm${f.simBounces?`, with ${f.simBounces} bounce${f.simBounces>1?'s':''}`:''}.`); }
-  st.minutes += res.block; st.flights += 1; st.stats[f.landing] = (st.stats[f.landing]||0)+1; st.stats.nm += p.dist; if(job.scen && f.scen==='book') st.stats.scen++;
-  const firstType = !st.types[job.ac]; st.types[job.ac] = (st.types[job.ac]||0) + 1; if(firstType && !res.crash) out.notes.push(`New type in your logbook: ${a.n}.`);
-  const firstAp = !st.visited[landedAt]; st.visited[landedAt]=true; if(firstAp && !AP[landedAt].water) out.notes.push(`First landing at ${AP[landedAt].n}, ${AP[landedAt].isl}.`);
-  st.log.unshift({ id:uid(), day:st.day, dep:job.dep, from:job.from, to:landedAt, ac:job.ac, min:res.block, grade:res.grade, score:res.score, pay:out.pay-out.costs, title:job.title, kind:job.kind, landing:f.landing, verified:!!f.verified, fpm:f.verified?f.simFpm:null });
-  st.log = st.log.slice(0,300);
-  // clock
-  const start = Math.max(st.clock, job.dep);
-  st.duty += Math.min(60, start - st.clock) + res.block + 30; st.clock = start + res.block + 30;
-  st.loc = AP[landedAt].water ? job.from : landedAt; // after a water landing you return to base
-  if(AP[landedAt].water) out.notes.push(`After the water landing you fly back to ${job.from} (not logged separately).`);
-  st.active = null; st.last = { job, res, out, f };
-  if(st.clock >= 1440){ out.notes.push(`It's past midnight. Time to rest.`); }
-  afterFlight(st, job, f, res, out);
-  st.jobsKey = '';
-  return out;
-}
 function addJournal(st, title, text, chars, kind, grade){ st.journal.unshift({id:uid(), day:st.day, clock:st.clock, title, text, chars:chars||[], kind:kind||'flight', grade}); st.journal = st.journal.slice(0,200); }
 
 function deadheadCost(st, to){ const d = distNm(AP[st.loc], AP[to]); return { cost: Math.round(60 + d*0.55), min: Math.round(d/380*60 + 75), d:Math.round(d) }; }
@@ -1973,35 +1895,6 @@ function checkAch(st){
 }
 
 /* ---------- after each flight ---------- */
-function afterFlight(st, job, f, res, out){
-  const s=st.stats; const landedAt = f.landedAt || job.to;
-  st.landedAt = st.landedAt || {}; if(!res.crash){ st.landedAt[landedAt] = (st.landedAt[landedAt]||0)+1; }
-  if(isNight(job.dep)) s.night=(s.night||0)+1;
-  if(job.wx.ifr) s.ifr=(s.ifr||0)+1;
-  if(!job.local && ZONE(AP[job.from].c)!==ZONE(AP[landedAt].c)) s.intl=(s.intl||0)+1;
-  if(AP[landedAt].water && !res.crash) s.water=(s.water||0)+1;
-  if(job.arch==='relief' || job.story==='HR1' || job.story==='HR2') s.relief=(s.relief||0)+1;
-  if(job.festival) s.festival=(s.festival||0)+1;
-  s.aStreak = res.grade==='A' ? (s.aStreak||0)+1 : 0;
-  // bonus objective
-  if(job.bonus && !res.crash){
-    let met = !!f.bonus;
-    if(job.bonus.auto==='fpm' && f.verified) met = f.simFpm < 150;
-    if(job.bonus.auto==='fpm' && !f.verified) met = f.landing==='butter' || (f.landing==='smooth' && !!f.bonus);
-    if(job.bonus.auto==='block') met = f.block <= plan(job).est*1.1 + 2;
-    out.bonusMet = met;
-    if(met){ const amt = job.company ? Math.round(job.bonus.amt*2.6) : job.bonus.amt; txn(st, amt, 'Tips & bonuses', 'Bonus objective'); out.pay += amt; s.bonus=(s.bonus||0)+1; out.notes.push(`Bonus objective met: ${job.bonus.text.replace(/\.$/,'')}. +${money(amt)}.`); }
-    else out.notes.push(`Bonus objective missed: ${job.bonus.text.replace(/\.$/,'')}.`);
-  }
-  // review
-  const rv = makeReview(st, job, f, res);
-  if(rv){ st.reviews = st.reviews || []; st.reviews.unshift(rv); st.reviews = st.reviews.slice(0,60); out.review = rv; }
-  if(job.mystery) s.mystery=(s.mystery||0)+1;
-  surpriseAfter(st, job, f, res, out);
-  finAfterFlight(st, job, f, res, out);
-  out.ach = checkAch(st);
-  out.rank = rankOf(st).name;
-}
 
 /* ---------- extra story chapters ---------- */
 STORY.push(
@@ -2974,12 +2867,6 @@ function finDaily(st){
   ensureMarket(st);
   F.history.push({ d:st.day, cash:Math.round(st.cash), net:Math.round(netWorth(st)) }); if(F.history.length>400) F.history.shift();
 }
-function rest(st){
-  st.day += 1; st.clock = 420; st.duty = 0; st.jobsKey = '';
-  const net = companyTick(st);
-  finDaily(st); newDayBrief(st); checkAch(st);
-  return net;
-}
 function finAfterFlight(st, job, f, res, out){
   const F=fin(st);
   if(F.bond>0 && out.pay>0 && !job.company){ const cut=Math.min(F.bond, Math.round(out.pay*0.2)); F.bond-=cut; txn(st,-cut,'Training bond','20% of flight pay'); out.notes.push(`Training bond repayment: ${money(cut)} (${money(F.bond)} left).`); if(F.bond<=0){ out.notes.push(`Training bond paid off.`); scoreDelta(st, 15); } }
@@ -3417,12 +3304,6 @@ ensureJobs = function(st){
 };
 
 /* Relationship bump for owner trips */
-const _starlingAfter = afterFlight;
-afterFlight = function(st, job, f, res, out){
-  const r = _starlingAfter(st, job, f, res, out);
-  if(job.arch==='starling' && !res.crash){ st.rep.vivienne = clamp((st.rep.vivienne||10) + ({A:3,B:2,C:1,D:0,F:-2}[res.grade]||0), 0, 100); if(res.grade==='A' || res.grade==='B') st.rep.abe = clamp((st.rep.abe||10)+1,0,100); }
-  return r;
-};
 /* ===================== STORY PROGRESS, NAV & STORY TAB ===================== */
 const ARC_META = {
   'Coral Wing':      {main:true, n:1, tag:`Your first weeks flying for Mari at Coral Wing Air.`, col:'#0b746f'},
@@ -3609,16 +3490,6 @@ cockpitView = function(){ const h=_shellCockpit(); return h.replace(/<\/main>\s*
 const _shellFlight = flightView;
 flightView = function(){ const h=_shellFlight(); if(!S.st.active || S.debrief) return h; return h.replace('<section class="panel stack" id="simpanel">', cabinBlock()+'<section class="panel stack" id="simpanel">'); };
 /* comfort pays */
-const _shellAfter = afterFlight;
-afterFlight = function(st, job, f, res, out){
-  const r = _shellAfter(st, job, f, res, out);
-  if(job.pax && typeof job.comfort==='number' && !res.crash){
-    out.notes.push(`Passenger comfort: ${job.comfort}/100.`);
-    if(job.comfort>=90 && !job.company){ const tip=Math.max(20, Math.round(job.pay*0.08/10)*10); txn(st, tip, 'Tips & bonuses', 'Comfort bonus'); out.pay += tip; out.notes.push(`The passengers loved the ride: ${money(tip)} comfort bonus.`); }
-    else if(job.comfort<50){ st.reputation = clamp(st.reputation-2,0,100); out.notes.push(`A rough ride. Word gets around: reputation −2.`); }
-  }
-  return r;
-};
 /* ===================== 1. A CHARACTER IN YOUR EAR: live coaching from real sim data ===================== */
 const COACH_PILOTS = ['mari','abe','wilkins','dez','devries','marchetti','calloway','celeste'];
 function shortName(k){ const n=CAST[k].n; const nick=n.match(/"([^"]+)"/); if(nick) return nick[1]; return n.replace(/^(Captain|Capitaine|Inspector|Examiner|Dr\.)\s+/,'').split(' ')[0]; }
@@ -3704,11 +3575,6 @@ function cabinInner(){
 }
 const _coachCockpit = cockpitView;
 cockpitView = function(){ const h=_coachCockpit(); return h.replace('<main class="wrap stack fade cockpit">', '<main class="wrap stack fade cockpit"><div class="callout-host" aria-live="assertive">'+calloutHTML()+'</div>'); };
-const _coachAfter = afterFlight;
-afterFlight = function(st, job, f, res, out){
-  const C = job._cab; const r=_coachAfter(st, job, f, res, out);
-  const line = coachSummary(job, C); if(line) out.notes.push(line); return r;
-};
 /* keep a reference to the cabin on the job so the debrief can read it after the flight closes */
 const _coachTick2 = coachTick;
 coachTick = function(){ _coachTick2(); const a=S.st&&S.st.active; if(a && a.cab) a.job._cab = {tally:a.cab.tally}; };
@@ -3899,15 +3765,6 @@ function callHTML(st){
     <div class="row" style="justify-content:center"><button class="btn action" data-act="call-yes">Take the job</button><button class="btn" data-act="call-no">Not today</button></div>
   </div></div>`;
 }
-const _evAfterCall = afterFlight;
-afterFlight = function(st, job, f, res, out){ const r=_evAfterCall(st, job, f, res, out);
-  // live weather bonus
-  const W=job._wx; if(W && !res.crash && !job.company){ const rough = W.maxWind>=25 || W.minVis<3 || W.cloud;
-    if(rough){ const b=Math.max(25, Math.round(job.pay*0.15/10)*10); txn(st, b, 'Tips & bonuses', 'Weather bonus'); out.pay += b; out.notes.push(`You flew real MSFS weather (${W.maxWind} kt max wind${W.minVis<3?`, ${W.minVis} sm visibility`:''}${W.cloud?', in cloud':''}): ${money(b)} weather bonus.`); } }
-  setTimeout(()=>{ maybeCall(st, 0.22); },0);
-  return r; };
-const _evRest = rest;
-rest = function(st){ const r=_evRest(st); st.call=null; maybeCall(st, 0.35); return r; };
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="call-yes"],[data-act="call-no"]'); if(!b || !S.st || !S.st.call) return; const st=S.st; const c=st.call;
   if(b.dataset.act==='call-yes'){ if(st.active){ toast('Finish your current flight first.'); return; } st.active={job:c.job, accepted:Date.now()}; st.call=null; st.rep[c.who]=clamp((st.rep[c.who]||10)+2,0,100); save(); S.debrief=false; S.showResult=false; go('flight'); }
@@ -3932,12 +3789,6 @@ const CHOICES = {
 const ALT_OUT = {
   VJ8: st => st.story.flags.VJ7==='b' ? {good:`Starling II lands beautifully. On the ramp, Vivienne hands you a folder: the broker's emails, including the one about your fee. "I'd have paid you that myself if you'd asked," she says, and walks away. Abe shakes his head slowly.`, ok:`Starling II comes home in one piece. Vivienne is polite, nothing more. Somebody told her about the broker.`, bad:`A rough arrival, and a rougher conversation afterwards. Vivienne knows about the fee.`}
     : st.story.flags.VJ7==='a' && st.story.flags.VJ3==='a' ? {good:`The whole Coral Wing ramp turns out to watch Starling II taxi in. Vivienne hands you a second set of keys. "Chief pilot of Saltwater Air. Don't argue." Abe hands you the finished crossword with "PILOT" written across the margin.`, ok:`A long flight, flown honestly and well. Vivienne offers you a permanent seat on every Starling trip, at double the rate.`, bad:`It wasn't pretty, but Vivienne doesn't care. "You're the one I trust," she says. "The landing we can fix."`} : null,
-};
-const _evApply = applyResult;
-applyResult = function(st, job, f, res){
-  const m = job.kind==='story' ? STORY.find(x=>x.id===job.story) : null; const alt = m && ALT_OUT[m.id] ? ALT_OUT[m.id](st) : null;
-  if(alt){ const o=m.out; m.out=alt; try{ return _evApply(st, job, f, res); } finally { m.out=o; } }
-  return _evApply(st, job, f, res);
 };
 function choiceHTML(st){
   const j=st.last && st.last.job; if(!j || j.kind!=='story' || !CHOICES[j.story] || st.story.flags[j.story] || st.last.res.crash) return '';
@@ -3976,26 +3827,6 @@ function seasonOf(st){ const d=new Date(Date.UTC(2026,5,1)+ (st.day-1)*864e5); c
   return m>=5 && m<=10 ? {n:`Hurricane season`, d:`June to November. Tropical waves and storms roll through. Relief flights pay well; watch the forecasts.`, c:'#3d5a80'}
     : m===11 || m<=3 ? {n:`High season`, d:`Winter tourists flood the islands. More VIP and charter work, busier airports.`, c:'#d9532f'}
     : {n:`Shoulder season`, d:`Quieter skies between the winter rush and the storms.`, c:'#0b746f'}; }
-const _wkAfter = afterFlight;
-afterFlight = function(st, job, f, res, out){
-  const r=_wkAfter(st, job, f, res, out); if(res.crash) return r;
-  const W=weeklyState(st); const to=st.log[0]?st.log[0].to:job.to; const c={st,job,f,res,out,to,fpm:f.verified?f.simFpm:null};
-  for(const ch of weekPicks(W.key)){ if(W.done[ch.id]) continue;
-    if(ch.set){ W.sets[ch.id]=W.sets[ch.id]||[]; const k=ch.key(c); if(k && !W.sets[ch.id].includes(k)) W.sets[ch.id].push(k); W.prog[ch.id]=W.sets[ch.id].length; }
-    else if(ch.test(c)) W.prog[ch.id]=(W.prog[ch.id]||0)+1;
-    if((W.prog[ch.id]||0)>=ch.goal){ W.done[ch.id]=true; txn(st, ch.cash, 'Gifts & windfalls', `Weekly challenge: ${ch.n}`); st.reputation=clamp(st.reputation+2,0,100); out.pay+=ch.cash; out.notes.push(`Weekly challenge complete: ${ch.n}! +${money(ch.cash)}, reputation +2.`); }
-  }
-  if(!W.champ && weekPicks(W.key).every(ch=>W.done[ch.id])){ W.champ=true; txn(st, 1000, 'Gifts & windfalls', 'Weekly champion'); out.pay+=1000; out.notes.push(`All three weekly challenges done. Weekly champion bonus: ${money(1000)}.`); st.weeksWon=(st.weeksWon||0)+1; }
-  // personal records
-  const R = st.records = st.records || {};
-  const nm = plan(job).dist;
-  if(f.verified && (R.fpm==null || f.simFpm < R.fpm.v)) { R.fpm={v:f.simFpm, at:`${job.from}→${to}`, day:st.day}; out.notes.push(`New personal record: softest landing, ${f.simFpm} fpm.`); }
-  if(!job.local && (R.long==null || nm > R.long.v)) R.long={v:nm, at:`${job.from}→${to}`, day:st.day};
-  if(R.score==null || res.score > R.score.v) R.score={v:res.score, at:`${job.from}→${to}`, day:st.day};
-  if(job.pax && typeof job.comfort==='number' && (R.comfort==null || job.comfort > R.comfort.v)) R.comfort={v:job.comfort, at:`${job.from}→${to}`, day:st.day};
-  R.streak = res.grade==='A' ? (R.streak||0)+1 : 0; if(!R.bestStreak || R.streak > R.bestStreak) R.bestStreak = R.streak;
-  return r;
-};
 function weeklyPanel(st){
   const W=weeklyState(st); const picks=weekPicks(W.key); const s=seasonOf(st);
   return `<section class="panel stack weekly"><div class="row between"><div><p class="label">This week · ${esc(W.key)}</p><h3>Weekly challenges</h3></div><span class="chip">${weekEnds()}</span></div>
@@ -4219,20 +4050,6 @@ document.addEventListener('click', e=>{
   const s=e.target.closest('[data-act="start"]'); if(s && S.st && S.st.active && diff()==='expert' && !checklistDone(S.st.active)){ e.stopImmediatePropagation(); e.preventDefault(); toast('Expert mode: finish the checklist first.'); go('cockpit'); }
 }, true);
 /* Expert: the block timer can't start from the checklist until earlier phases are ticked */
-const _dfScore = score;
-score = function(job, f){
-  if(diff()==='casual' && f.landing==='hard') f = Object.assign({}, f, {landing:'firm'});
-  const r=_dfScore(job, f);
-  if(diff()==='expert' && S.st.active && !checklistDone(S.st.active)) { r.score=Math.max(0,r.score-10); r.grade = r.score>=90?'A':r.score>=80?'B':r.score>=70?'C':r.score>=60?'D':'F'; }
-  return r;
-};
-const _dfAfter = afterFlight;
-afterFlight = function(st, job, f, res, out){
-  const r=_dfAfter(st, job, f, res, out);
-  if(diff()==='expert' && !res.crash && job.kind!=='check' && !job.company){ const b=Math.round(out.pay*0.15/10)*10; if(b>0){ txn(st,b,'Tips & bonuses','Expert pay'); out.pay+=b; out.notes.push(`Expert difficulty: +${money(b)} (15%).`); } }
-  if(diff()==='casual' && job.comfort!=null && job.comfort<50) st.reputation=clamp(st.reputation+2,0,100); // undo the rough-ride penalty
-  return r;
-};
 
 /* ---- automatic debrief from the MSFS recorder ---- */
 
@@ -4311,14 +4128,6 @@ document.addEventListener('click', e=>{
 /* record when the wheels actually left the ground */
 const _urRender = renderSimBits;
 renderSimBits = function(){ _urRender(); const a=S.st&&S.st.active; if(a && a.job.realtime && !a.job._toAt){ const rec=simRecFor(a); if(rec && rec.takeoff) { a.job._toAt=rec.takeoff.t; save(); } } };
-const _urAfter = afterFlight;
-afterFlight = function(st, job, f, res, out){
-  const r=_urAfter(st, job, f, res, out);
-  if(job.realtime && job.wheelsUpBy && !res.crash){ const t = job._toAt || null;
-    if(!t || t > job.wheelsUpBy){ const cut=Math.round(out.pay/2/10)*10; txn(st,-cut,'Flight pay','Missed urgent window'); out.pay-=cut; out.notes.push(t?`Wheels up ${Math.round((t-job.wheelsUpBy)/60000)} min late: the 2× urgent rate became standard pay.`:`MSFS didn't record a takeoff, so the urgent 2× rate couldn't be confirmed. Paid at the standard rate.`); }
-    else out.notes.push(`Wheels up with ${Math.round((job.wheelsUpBy-t)/60000)} min to spare. Full 2× urgent pay.`); }
-  return r;
-};
 /* live countdowns + random dispatch calls while you're idle */
 setInterval(()=>{
   document.querySelectorAll('.urg-count').forEach(el=>{ el.textContent = mmss(Number(el.dataset.until)-Date.now()); });
@@ -4626,13 +4435,6 @@ const _lvRender = renderSimBits;
 renderSimBits = function(){ _lvRender(); if(S.view==='map' && S.st && S.st.active && S.simState==='live'){ S.keepScroll=true; render(); } };
 
 /* ---------- replay: keep the path and approach with the result ---------- */
-const _lvApply = applyResult;
-applyResult = function(st, job, f, res){
-  const rec = st.active ? simRecFor(st.active) : null;
-  const r = _lvApply(st, job, f, res);
-  if(rec && st.last){ st.last.replay = { track:(rec.track||[]).slice(-300), approach: rec.approach||null, td: rec.touchdown||null }; }
-  return r;
-};
 function replaySvgPath(track, w, h){
   const lats=track.map(p=>p[0]), lons=track.map(p=>p[1]); let a0=Math.min(...lats), a1=Math.max(...lats), o0=Math.min(...lons), o1=Math.max(...lons);
   const pad=0.02; a0-=pad; a1+=pad; o0-=pad; o1+=pad; const k=Math.cos((a0+a1)/2*Math.PI/180);
@@ -4942,27 +4744,7 @@ const _wCanFly = canFly;
 canFly = function(st, id){ return _wCanFly(st, id) && !isGrounded(st, id); };
 const _wStoryAc = storyAircraft;
 storyAircraft = function(st, m){ return _wStoryAc(st, m).filter(k=>!isGrounded(st,k)); };
-const _wAfter = afterFlight;
-afterFlight = function(st, job, f, res, out){
-  const r=_wAfter(st, job, f, res, out); if(job.company) return r;
-  const A=airframe(st, job.ac); const t=(job._cab&&job._cab.tally)||{}; const why=[];
-  let dmg = 1;
-  if(res.crash){ dmg+=60; why.push('accident'); }
-  else if(f.landing==='hard'){ dmg+=12; why.push('hard landing'); } else if(f.landing==='firm'){ dmg+=3; }
-  if(f.simBounces>1){ dmg+=3*(f.simBounces-1); why.push('bounced landing'); }
-  if(f.simG && f.simG>1.8){ dmg+=8; why.push(`${f.simG} G touchdown`); }
-  if(t.flapOver){ dmg+=8*t.flapOver; why.push('flap overspeed'); } if(t.flapDmg){ dmg+=20; why.push('flap damage'); }
-  if(t.overspeed){ dmg+=6*t.overspeed; why.push('overspeed'); } if(t.gearOver){ dmg+=8; why.push('gear overspeed'); }
-  if(f.landing==='butter' && !res.crash) dmg=Math.max(0,dmg-1);
-  A.h = Math.max(0, A.h - dmg); A.log.unshift({day:st.day, d:dmg, why:why.join(', ')||'normal wear'}); A.log=A.log.slice(0,10);
-  if(dmg>=10 && !job.lend){ const cost=Math.round(dmg*18/10)*10; txn(st,-cost,'Accidents & fines',`Damage deductible: ${AC[job.ac].n}`); out.costs=(out.costs||0)+cost; out.notes.push(`Dez inspected the ${AC[job.ac].n}: ${why.join(', ')}. Your damage deductible is ${money(cost)}.`); }
-  out.notes.push(`${AC[job.ac].n} airframe health: ${A.h}%${dmg>1?` (−${dmg})`:''}.`);
-  if(A.h < 40){ A.grounded = st.day + (A.h<20?3:2); out.notes.push(`It's grounded for repairs until day ${A.grounded}. Dez is not happy.`); addJournal(st, `${AC[job.ac].n} grounded`, `Dez takes one look and reaches for his toolbox. "This one sits until I say so."`, ['dez'], 'flight'); }
-  return r;
-};
 /* Dez works on the fleet overnight */
-const _wRest = rest;
-rest = function(st){ const r=_wRest(st); for(const id in (st.airframes||{})){ const A=st.airframes[id]; A.h=Math.min(100, A.h + (isGrounded(st,id)?18:6)); if(A.grounded && st.day>=A.grounded && A.h>=40) A.grounded=0; } return r; };
 /* tired airframes sometimes misbehave */
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="accept"],[data-act="accept-story"],[data-act="call-yes"],[data-act="urg-yes"]'); if(!b) return;
@@ -5141,8 +4923,6 @@ document.addEventListener('click', e=>{
 /* a rolling backup each in-game day (3 kept) */
 function latestBackup(){ try{ const a=JSON.parse(localStorage.getItem('tw.backups')||'[]'); return a.length?a[a.length-1].st:null; }catch(e){ return null; } }
 function backupNow(st){ try{ const a=JSON.parse(localStorage.getItem('tw.backups')||'[]'); a.push({at:Date.now(), day:st.day, st:JSON.parse(JSON.stringify(st))}); while(a.length>7) a.shift(); localStorage.setItem('tw.backups', JSON.stringify(a)); }catch(e){ /* storage full: skip */ } }
-const _stRest = rest;
-rest = function(st){ backupNow(st); return _stRest(st); };
 const _stHangar = hangarView;
 hangarView = function(){ let backs=[]; try{ backs=JSON.parse(localStorage.getItem('tw.backups')||'[]'); }catch(_){}
   return _stHangar().replace(/<\/main>\s*$/, `<section class="panel stack" style="max-width:760px"><h3>Backups</h3><p class="small muted">Trade Winds keeps your last ${backs.length||3} days automatically${window.TW_STANDALONE?', plus a career file in Documents\\Trade Winds':''}.</p>${backs.length?`<div class="row">${backs.map((b,i)=>`<button class="btn sm" data-act="st-restore-i" data-i="${i}">Day ${b.day} · ${new Date(b.at).toLocaleString()}</button>`).join('')}</div>`:'<p class="small">The first backup is made when you rest.</p>'}</section></main>`); };
@@ -5254,14 +5034,6 @@ function paxVerdict(p, job, f, res, t){
   if(p.trait==='vip'){ s = res.grade==='A' && comfort>=90 ? 5 : res.grade<='B' ? 4 : 2; line = s===5?`"Flawless. I'll ask for you next time."`:s===4?`"Acceptable."`:`"My assistant will be in touch."`; }
   return {s, line};
 }
-const _mfAfter = afterFlight;
-afterFlight = function(st, job, f, res, out){
-  const r=_mfAfter(st, job, f, res, out); const M=job.manifest; if(!M || res.crash) return r;
-  const t=(job._cab&&job._cab.tally)||{}; const v=M.map(p=>Object.assign({p}, paxVerdict(p,job,f,res,t))); out.manifest=v;
-  const tips = v.reduce((sum,x)=>sum + (x.s===5 ? (x.p.trait==='vip'?60:20) : 0), 0);
-  if(tips>0 && !job.company){ txn(st,tips,'Tips & bonuses','Passenger tips'); out.pay+=tips; out.notes.push(`Passenger tips: ${money(tips)}.`); }
-  return r;
-};
 const _mfResult = resultView;
 resultView = function(){ const h=_mfResult(); const v=S.st.last&&S.st.last.out&&S.st.last.out.manifest; if(!v) return h;
   const sec=`<section class="panel stack"><p class="label">Your passengers</p><div class="mf-list">${v.map(x=>`<div class="mf"><span class="mf-ic">${TRAITS[x.p.trait].i}</span><div><b>${esc(x.p.name)}</b> <span class="stars small">${'★'.repeat(x.s)}${'☆'.repeat(5-x.s)}</span><span class="small">${esc(x.line)}</span></div></div>`).join('')}</div></section>`;
@@ -5289,9 +5061,6 @@ function leagueRows(st){
 }
 function weekOfDay(l){ return l.at ? isoWeek(new Date(l.at)) : isoWeek(); }
 /* stamp real time on new log entries so weeks line up */
-const _rvAfter = afterFlight;
-afterFlight = function(st, job, f, res, out){ const r=_rvAfter(st, job, f, res, out); if(st.log[0] && !st.log[0].at) st.log[0].at=Date.now();
-  const rows=leagueRows(st); const i=rows.findIndex(x=>x.me); if(i===0 && f.verified && rows.length>1) out.notes.push(`You're top of this week's landing league, ahead of ${rows[1].n}.`); else if(i>0 && f.verified) out.notes.push(`Landing league: you're #${i+1} this week. ${rows[0].n} leads with ${rows[0].fpm} fpm.`); return r; };
 const _rvWeekly = weeklyPanel;
 weeklyPanel = function(st){ const rows=leagueRows(st);
   const t=`<div class="league"><p class="label">Landing league · this week</p><ol>${rows.slice(0,6).map((r,i)=>`<li class="${r.me?'me':''}"><span>${i+1}</span><b>${esc(r.n)}</b><span class="mono">${r.fpm} fpm</span></li>`).join('')}</ol>${rows.some(r=>r.me)?'':'<p class="tiny muted">Land with MSFS connected to join the league.</p>'}</div>`;
@@ -5384,15 +5153,7 @@ inflightView = function(){ const a=S.st.active; let h=_orInflight(); if(a.job.sc
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="orders-ok"]')){ S.ordersPop=false; S.keepScroll=true; render(); } });
 /* flights with sealed orders log themselves too, graded on what you actually did */
 var autoReady; /* defined in full below (060-core.js) */
-const _orApply = applyResult;
-applyResult = function(st, job, f, res){
-  const a=st.active; if(job.scen && f.auto && !f.scen && a && a.scenPlan){ const P=a.scenPlan; const landed=f.landedAt;
-    f.scen = P.divert ? (landed===P.target ? 'book' : landed===job.to ? 'ignored' : 'messy') : (landed===P.target || landed===P.alt ? 'book' : 'messy'); }
-  return _orApply(st, job, f, res);
-};
 /* applyResult's own divert check should accept the planned diversion */
-const _orScore = score;
-score = function(job, f){ const a=S.st&&S.st.active; if(job.scen && f.auto && a && a.scenPlan && !f.scen){ const P=a.scenPlan; f = Object.assign({}, f, {scen: P.divert ? (f.landedAt===P.target?'book':f.landedAt===job.to?'ignored':'messy') : (f.landedAt===P.target||f.landedAt===P.alt?'book':'messy')}); } return _orScore(job, f); };
 
 /* ---- sim rate ---- */
 function simRateNow(){ const x=S.sim&&S.sim.ext; return x && x.simRate ? x.simRate : 1; }
@@ -5426,19 +5187,6 @@ function touchdownAnalysis(code, td){
   const center = Math.abs(xt) <= Math.max(8, e.w*0.12) ? 'on' : Math.abs(xt) <= half*0.55 ? 'near' : Math.abs(xt) <= half ? 'wide' : 'off';
   return { runway:e.id, len:e.len, w:e.w, avail:e.len-e.disp, fromThr, zoneEnd, zone, xt, center, approx:!!e.approx, remaining: Math.round(e.len - best.along), surf:e.surf };
 }
-const _wScore = score;
-score = function(job, f){
-  if(f && f.td && f.td.lat!=null && f.landing!=='crash'){ const code = f.landedAt || (job.local?job.from:job.to); const A = touchdownAnalysis(code, f.td); f.tda = A;
-    if(A && A.runway){ f.tdz = A.zone==='aim' || A.zone==='zone'; f.center = !A.approx ? (A.center==='on' || A.center==='near') : f.center; } }
-  const r = _wScore(job, f); const A=f&&f.tda;
-  if(A && A.runway){ r.parts = r.parts.map(p=>{
-      if(/^Touchdown zone/.test(p[0])){ const pts = A.zone==='aim'?10 : A.zone==='zone'?8 : A.zone==='long'? (A.fromThr < A.zoneEnd+1000?4:1) : 0;
-        return [`Touchdown point: ${A.zone==='short'?`${Math.abs(A.fromThr)} ft SHORT of the threshold`:`${A.fromThr.toLocaleString()} ft past the threshold of ${A.runway}`}${A.zone==='long'?' (floated long)':A.zone==='aim'?' (on the aiming point)':''}`, pts, 10]; }
-      if(/^Centerline/.test(p[0]) && !A.approx){ const pts = A.center==='on'?5:A.center==='near'?4:A.center==='wide'?2:0; return [`Centerline: ${Math.abs(A.xt)} ft ${A.xt>0?'right':A.xt<0?'left':''} of center`, pts, 5]; }
-      return p; });
-    const tot = clamp(Math.round(r.parts.reduce((s,p)=>s+p[1],0)),0,100); r.score=tot; r.grade=gradeOf(tot); }
-  return r;
-};
 function runwaySVG(A){
   if(!A || !A.runway) return ''; const W=560, H=90, pad=24, L=A.len; const sx = x => pad + (x/L)*(W-2*pad); const half=26;
   const yOf = xt => H/2 + Math.max(-half-8, Math.min(half+8, xt/(A.w/2)*half));
@@ -5583,10 +5331,6 @@ genJobs = function(st){ const L=_gpGen(st); const d=diff();
 document.addEventListener('click', e=>{ const s=e.target.closest('[data-act="start"]'); if(!s || !S.st || !S.st.active || diff()!=='expert' || S.simState!=='live') return;
   const bad=preflightChecks(S.st.active.job).filter(c=>!c.ok && ['ac','fuel','pos'].includes(c.k));
   if(bad.length){ e.stopImmediatePropagation(); e.preventDefault(); toast(`Expert mode: fix the pre-flight check first (${bad.map(c=>c.t).join('; ')}).`); const el=document.getElementById('preflight'); if(el) el.scrollIntoView({behavior:'smooth', block:'center'}); } }, true);
-const _gpApply = applyResult;
-applyResult = function(st, job, f, res){ const r=_gpApply(st, job, f, res);
-  if(diff()==='expert' && !res.crash && job.kind!=='check' && res.fuelMin!=null && res.fuelMin < plan(job).reserveMin*0.75 && AC[job.ac].fuel!=='elec'){ const fine=Math.max(250, Math.round(job.pay*0.2/10)*10); txn(st,-fine,'Accidents & fines','Landed below reserve fuel'); const o=st.last&&st.last.out; if(o){ o.costs=(o.costs||0)+fine; o.notes.push(`Expert: you landed with ${res.fuelMin} min of fuel, below the legal reserve. The authority fines you ${money(fine)}.`); } st.reputation=clamp(st.reputation-2,0,100); }
-  return r; };
 
 /* ---- mid-game story: The Logbook ---- */
 CAST.lucille = {n:`Lucille Bain`, col:'#7a5c99', role:`Retired schoolteacher, Antigua`, bio:`Eddie Bain's daughter. Seventy-one, sharp as a tack, and still angry at her father for disappearing in 1981.`};
@@ -5615,10 +5359,6 @@ STORY.push(
 );
 
 /* ---- economy: reputation is harder to max out (it was hitting 100 by flight 25) ---- */
-const _ecApply = applyResult;
-applyResult = function(st, job, f, res){ const before=st.reputation; const r=_ecApply(st, job, f, res); const d=st.reputation-before;
-  if(d>0){ const scaled = d * Math.max(0.15, 1 - before/110); st._repFrac = (st._repFrac||0) + scaled; const whole=Math.floor(st._repFrac); st._repFrac -= whole; st.reputation = clamp(before + whole, 0, 100); }
-  return r; };
 /* ===================== DECLUTTER, ACCESSIBILITY, FLIGHT LOGS ===================== */
 /* ---- tabs unlock as you need them ---- */
 const TAB_UNLOCK = {
@@ -5632,8 +5372,6 @@ function uiPrefs(){ const st=S.st; st.ui = st.ui || {}; return st.ui; }
 
 function checkUnlocks(){ const st=S.st; if(!st) return; const ui=uiPrefs(); ui.seen = ui.seen || {}; const label=Object.fromEntries(VIEWS);
   for(const k in TAB_UNLOCK){ if(ui.seen[k]) continue; if(TAB_UNLOCK[k].t(st)){ ui.seen[k]=1; if(st.flights>0) setTimeout(()=>toast(`New tab unlocked: ${label[k]||k}`), 1200); } } }
-const _dcApply = applyResult;
-applyResult = function(st, job, f, res){ const r=_dcApply(st, job, f, res); try{ checkUnlocks(); }catch(_){} return r; };
 
 /* ---- fewer interruptions ---- */
 
@@ -5675,8 +5413,6 @@ async function writeFlightLog(job, f, res){ const T=S.trace; if(!window.twNative
   const d=new Date(); const name=`${d.toISOString().slice(0,16).replace(/[:T]/g,'-')}_${job.from}_${job.local?job.from:job.to}.json`;
   const rec = S.sim && S.sim.recorder; const body={ app: (typeof TW_VERSION!=='undefined'?TW_VERSION:''), difficulty:diff(), job:{id:job.id,title:job.title,from:job.from,to:job.to,ac:job.ac,kind:job.kind,scen:job.scen||null,dep:job.dep,est:job.est}, result:{score:res.score, grade:res.grade, parts:res.parts}, input:Object.assign({}, f, {td:f.td||null}), recorder:rec||null, samples:(T&&T.id===job.id)?T.samples:[], aircraftTitle:S.sim&&S.sim.aircraft&&S.sim.aircraft.title, errors:errLog().slice(-10) };
   try{ await twNative.flightLog(name, JSON.stringify(body)); }catch(_){} S.trace=null; }
-const _dcApply2 = applyResult;
-applyResult = function(st, job, f, res){ const r=_dcApply2(st, job, f, res); try{ if(f && f.verified) writeFlightLog(job, f, res); }catch(_){} return r; };
 /* ---- a calmer job board ---- */
 const _dcDispatch = dispatchCard;
 dispatchCard = function(st){ let h=_dcDispatch(st); const n=(st.brief&&st.brief.msgs||[]).length;
@@ -6281,10 +6017,6 @@ makeBonus = function(job){ const amt=Math.max(30, Math.round(job.pay*0.2/10)*10)
   return ({ butter:{k, amt, text:`Grease it: touch down under 150 fpm`, auto:'fpm'}, ontime:{k, amt, text:`Arrive on time: block time within 10% of the plan`, auto:'block'},
     zone:{k, amt, text:`Put it on the aiming point: touch down 400–1,800 ft past the threshold`, auto:'zone'}, center:{k, amt, text:`Land on the centerline: within 10 ft`, auto:'center'},
     comfort:{k, amt, text:`Keep the cabin happy: comfort 90 or better at the end`, auto:'comfort'} })[k]; };
-const _smApply = applyResult;
-applyResult = function(st, job, f, res){ try{ const b=job.bonus; if(b && f){ const A=f.tda;
-    if(b.auto==='zone') f.bonus = !!(A && A.zone==='aim'); else if(b.auto==='center') f.bonus = !!(A && !A.approx && Math.abs(A.xt)<=10); else if(b.auto==='comfort') f.bonus = f.comfort!=null && f.comfort>=90; else if(!b.auto) f.bonus = false; } }catch(_){}
-  return _smApply(st, job, f, res); };
 
 /* ---- the flight starts itself when MSFS shows you've started the engine at the departure airport ---- */
 const _smSim = renderSimBits;
@@ -6333,13 +6065,6 @@ const _mrIf = inflightView;
 inflightView = function(){ const h=_mrIf(); const a=S.st&&S.st.active; if(!a || !a.job.ask || !a.askShown) return h; return h.replace(/(<section class="if-head">[\s\S]*?<\/section>)/, m=>m+`<section class="notice ask-note"><b>Cabin request (+${money(a.job.ask.amt)}):</b> ${esc(a.job.ask.text)}</section>`); };
 
 /* ---- 5. diversions for a good reason are paid fairly ---- */
-const _mrApply = applyResult;
-applyResult = function(st, job, f, res){ const r=_mrApply(st, job, f, res); try{ const o=st.last&&st.last.out; if(!o) return r; const rec=S.sim&&S.sim.recorder;
-    // cabin request
-    if(job.ask && !res.crash){ const met=askMet(job, rec); if(met===true){ txn(st, job.ask.amt, 'Tips & bonuses', 'Cabin request'); o.pay+=job.ask.amt; o.notes.push(`Cabin request done: +${money(job.ask.amt)}. The passengers noticed.`); } else if(met===false) o.notes.push(`Cabin request not done this time. No harm done.`); }
-    // fair diversion
-    const landed=f.landedAt||job.to; if(!res.crash && !job.local && !job.scen && landed!==job.to && AP[landed]){ const w=(S.sim&&S.sim.ext&&S.sim.ext.weather)||null; const lowFuel = res.fuelMin!=null && res.fuelMin < plan(job).reserveMin*1.2; const badWx = w && (w.visSm<3 || w.windKt>AC[job.ac].xw+5 || w.inCloud) || job.wx.ifr;
-      if(lowFuel || badWx){ const extra=Math.round(job.pay*0.35/10)*10; txn(st, extra, 'Flight pay', 'Diversion allowance'); o.pay+=extra; o.notes.push(`Good call diverting to ${landed} (${lowFuel?'fuel':'weather'}). The client pays three quarters of the fare.`); st.reputation=clamp(st.reputation+1,0,100); } } }catch(_){} return r; };
 
 /* ---- 6. a clear "how you did" at the top of the result ---- */
 function debriefSummary(L){ const {res,f,out,job}=L; const parts=(res.parts||[]).map(p=>({n:p[0], pts:p[1], max:p[2], r:p[2]?p[1]/p[2]:1}));
@@ -6439,11 +6164,6 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="practic
   const L=loadedAircraft(); const acId=(L.id && AC[L.id]) ? L.id : (eligibleAircraft(st).find(k=>apOk(st,code,k)) || 'C172');
   const dep=Math.round(st.clock/5)*5; const job={ id:'P-'+uid(), kind:'practice', practice:true, label:'Practice', cat:'pax', from:code, to:code, local:true, tourNm:15, ac:acId, pax:0, cargo:0, dep, wx:genWx(st,code,null,dep), title:`Practice landing at ${AP[code].isl}`, client:'', paras:[`Take off, fly a circuit, and land. No pay and nothing goes in your logbook: just your landing grade, the runway diagram and the copilot calls.`] };
   job.pay=0; job.est=plan(job).est; st.active={job, accepted:Date.now()}; save(); S.showResult=false; go('flight'); toast('Practice: start the engine in MSFS and fly a circuit.'); });
-const _tsApply = applyResult;
-applyResult = function(st, job, f, res){ if(!job.practice) return _tsApply(st, job, f, res);
-  const out={ id:job.id, title:job.title, grade:res.grade, score:res.score, parts:res.parts, pay:0, costs:0, notes:['Practice flight: no pay, and nothing was added to your logbook or career.'], ok:true, story:'', jobKind:'practice' };
-  if(f.verified) out.notes.push(`Recorded by MSFS: touchdown at ${f.simFpm} fpm${f.simBounces?`, ${f.simBounces} bounce${f.simBounces>1?'s':''}`:''}.`);
-  st.active=null; st.last={job, res, out, f}; save(); return out; };
 
 /* ---- "something's off": a note saved into the flight's log ---- */
 function noteBox(){ return `<div class="note-box" role="dialog" aria-label="Report something"><p class="label">Something's off?</p><textarea id="tw-note" rows="3" placeholder="What happened? e.g. callout came late, wrong runway, plane rolled on descent"></textarea><div class="row"><button class="btn sm primary" data-act="note-save">Save note</button><button class="btn sm ghost" data-act="note-cancel">Cancel</button></div></div>`; }
@@ -6548,8 +6268,6 @@ safeSay = function(key, text, every){ if(key==='fuel'){ const a=S.st&&S.st.activ
 
 /* ---- 5 + 6. no duty day, no "past midnight": the day rolls over by itself ---- */
 dutyAfter = function(){ return 0; };
-const _fbApply = applyResult;
-applyResult = function(st, job, f, res){ const r=_fbApply(st, job, f, res); try{ st.duty=0; const o=st.last&&st.last.out; if(o) o.notes=o.notes.filter(n=>!/past midnight/i.test(n)); if(st.clock>=1440){ rest(st); if(o) o.notes.push('A new day starts with fresh jobs on the board.'); } }catch(_){} return r; };
 const _fbBoard = boardView;
 boardView = function(){ const h=_fbBoard(); if(S.view!=='board'||!S.st) return h; const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h;
   main.querySelectorAll('section, .notice, aside > *').forEach(s=>{ if(!s.parentNode) return; const ht=headText(s); if((/Duty day/.test(ht) || /out of duty time/i.test(s.textContent)) && !/Travel as a passenger/.test(s.textContent)) s.remove(); });
@@ -6570,8 +6288,6 @@ genJobs = function(st){ const L=_fbGen(st); try{ if(!hasRating(st,'COMM')) retur
     const opts=SPECIALS.filter(m=>m.from===st.loc && !st.specialDone[m.id] && !st.story.done[m.id] && ratingsOk(st,(m.req||{}).ratings||[]) && m.ac.some(k=>canFly(st,k) && apOk(st,m.to,k)));
     if(opts.length && Math.random()<0.6){ const m=pick(opts); const acId=m.ac.find(k=>canFly(st,k) && apOk(st,m.to,k)); const j=storyJob(st,m,acId);
       Object.assign(j,{kind:'gen', arch:'special', story:undefined, special:m.id, label:'Special charter', id:'X-'+m.id+'-'+st.day}); j.pay=Math.round(payFor(st,j)*1.4/10)*10; L.unshift(j); } }catch(_){} return L; };
-const _fbApply2 = applyResult;
-applyResult = function(st, job, f, res){ const r=_fbApply2(st, job, f, res); try{ if(job.special && !res.crash){ st.specialDone=st.specialDone||{}; st.specialDone[job.special]=1; const m=SPECIALS.find(x=>x.id===job.special); const o=st.last&&st.last.out; if(m && o){ const tone=(res.grade==='A'||res.grade==='B')?'good':res.grade==='C'?'ok':'bad'; o.story=m.out[tone]; } } }catch(_){} return r; };
 
 /* ---- sealed orders that don't match the sky: weather scenarios need real weather ---- */
 const WX_SCEN = new Set(['squall']);
@@ -6602,23 +6318,14 @@ touchdownAnalysis = function(code, td){ const A=_frTda(code, td); if(A && A.runw
 /* 4 + 5. fairer landing grades, and a checkride isn't failed for a firm 373 fpm landing */
 landingClass = function(fpm){ const d=diff(); const T = d==='expert' ? [80,170,320] : d==='casual' ? [130,260,600] : [110,220,450]; return fpm<T[0]?'butter':fpm<T[1]?'smooth':fpm<T[2]?'firm':'hard'; };
 LANDING.hard.pts = 10; LANDING.firm.pts = 20;
-const _frApplyCk = applyResult;
-applyResult = function(st, job, f, res){ if(job.kind==='check' && f && f.landing==='hard' && (f.simFpm||0) < 550 && !res.crash){ f.landing='firm'; } return _frApplyCk(st, job, f, res); };
 
 /* 6. local flights (tours, circuits, searches) were planned twice as long as they really take */
 const _frPlan = plan;
 plan = function(job){ const p=_frPlan(job); if(job && job.local){ p.est = Math.max(10, Math.round(p.est*0.6)); } return p; };
 
 /* 7. one rough landing shouldn't ground a plane: damage per flight is capped and Dez repairs more overnight */
-const _frAfter = afterFlight;
-afterFlight = function(st, job, f, res, out){ const before = st.airframes && st.airframes[job.ac] ? st.airframes[job.ac].h : 100; const r=_frAfter(st, job, f, res, out);
-  try{ const A=st.airframes&&st.airframes[job.ac]; if(A && !res.crash){ const lost=before-A.h; if(lost>12){ A.h=before-12; if(A.log[0]) A.log[0].d=12; } if(A.h>=25) A.grounded=0; out.notes=out.notes.map(n=>/airframe health:/.test(n)?n.replace(/\d+%( \(−\d+\))?/, `${A.h}%${before-A.h>1?` (−${before-A.h})`:''}`):n); } }catch(_){} return r; };
-const _frRest = rest;
-rest = function(st){ const r=_frRest(st); try{ for(const id in (st.airframes||{})){ const A=st.airframes[id]; A.h=Math.min(100, A.h+6); if(A.h>=25) A.grounded=0; } }catch(_){} return r; };
 
 /* 8. cargo flights are graded on the cargo, not on passengers who aren't there */
-const _frScore = score;
-score = function(job, f){ const r=_frScore(job, f); if(job && !job.pax && r.parts){ r.parts=r.parts.map(p=>/^Passenger experience/.test(p[0]) ? ['Cargo care', f.landing==='hard'?6:10, 10] : p); const tot=clamp(Math.round(r.parts.reduce((s,p)=>s+p[1],0)),0,100); r.score=tot; r.grade=gradeOf(tot); } return r; };
 
 /* 9. no "Finish flight" button before the flight has started (too easy to press by mistake) */
 const _frPass = boardingPass;
@@ -6767,11 +6474,7 @@ checkrideJob = function(st, rid, acId){ if(rid!=='SEA') return _seaCk(st, rid, a
   j.paras=[`${CAST[RATINGS.SEA.examiner].n} meets you at the seaplane on the ramp at Princess Juliana${moved?' (Coral Wing flew you over for free)':''}.`, `"Short and simple," she says. "Take off, swing around the lagoon, and put us down in Simpson Bay Lagoon, right over there. Gentle and steady, that's all I'm looking for." Pass, and you hold the Seaplane Rating: ${RATINGS.SEA.unlocks}`];
   j.est=Math.max(10, plan(j).est); return j; };
 /* passing it: no crash, not a hard landing, and most of the tasks */
-const _seaApply = applyResult;
-applyResult = function(st, job, f, res){ if(job.kind==='check' && job.rating==='SEA' && !res.crash && f && f.landing!=='hard') res.score=Math.max(70, res.score); return _seaApply(st, job, f, res); };
 /* ===================== Checkrides: an A or B (or 70+) with no crash is a pass ===================== */
-const _ckEasy = applyResult;
-applyResult = function(st, job, f, res){ if(job.kind==='check' && f && !res.crash && (res.score>=70 || res.grade==='A' || res.grade==='B')){ f.tasks=(job.tasks||[]).slice(); if(f.landing==='hard') f.landing='firm'; res.score=Math.max(70, res.score); } return _ckEasy(st, job, f, res); };
 /* ===================== MAIN STORY: CONTRABAND =====================
    A clean pilot gets pulled into the islands' smuggling network and rises to run it.
    4 acts, 15 chapters. Power (how much of the network answers to you) and Heat (how close the law is). */
@@ -6988,15 +6691,6 @@ function crBump(c, k, v){ c[k]=clamp(Math.round((c[k]||0)+v), k==='con'?-10:0, k
 
 
 /* ---- after a chapter: power, heat, customs searches; side jobs are legit cover that cools the heat ---- */
-const _crApply = applyResult;
-applyResult = function(st, job, f, res){ const r=_crApply(st, job, f, res); try{ const c=crime(st); const o=st.last&&st.last.out;
-  if(job.kind==='story' && CRIME_IDS.has(job.story) && !res.crash){
-    if(job.story==='CR4') c.on=true;
-    else if(c.on){ crBump(c,'power',2); crBump(c,'heat',4);
-      }
-    if(o){ const m=CRIME.find(x=>x.id===job.story); if(m && m.choice) o.notes=o.notes.filter(n=>!/^Choices stick/.test(n)); } }
-  else if(c.on && !res.crash && job.kind==='gen'){ crBump(c,'heat',-2); }
-  }catch(_){} return r; };
 
 /* ---- choices: two or three options, each changes Power / Heat / cash / people ---- */
 function crimeChoiceHTML(st){ const L=st.last; const j=L&&L.job; if(!j || j.kind!=='story' || !CRIME_IDS.has(j.story) || (L.res&&L.res.crash)) return null;
@@ -7164,8 +6858,6 @@ const DYN = {
 };
 function dynM(st, m){ const d=DYN[m.id]; return d ? Object.assign({}, m, d(flagsOf(st))) : m; }
 (function(){ const _sj=storyJob; storyJob=function(st, m, acId){ return _sj(st, dynM(st, m), acId); }; })();
-/* The Setup: if someone warned you mid-flight, you walk away with the load */
-(function(){ const _ap=applyResult; applyResult=function(st, job, f, res){ if(job.story==='CRB' && flagsOf(st).warned){ job.out={good:`You park at the passenger terminal instead of the cargo ramp and walk out with a crowd of tourists. From the taxi you watch three trucks full of Medina's men circle an empty cargo ramp. Castillo sold you to them, and it didn't work.`,ok:`You park at the passenger terminal and walk out with the tourists. Three trucks of Medina's men wait on an empty cargo ramp. Castillo sold you out, and it didn't work.`,bad:`A rough landing, but you park at the passenger terminal and slip out with the tourists. Medina's men wait on an empty cargo ramp. Castillo sold you out.`}; } return _ap(st, job, f, res); }; })();
 
 /* endings: you only get the ones you earned */
 const ENDING_REQ = { kingpin:c=>c.power>=50 ? null : `Needs Power 50+ (you have ${c.power})`, witness:c=>(c.flags.informant||c.flags.ledgers||c.flags.medinaBurned) ? null : `You never gave Reyes anything`, ghost:()=>null };
@@ -7181,12 +6873,6 @@ function epilogue(st){ const f=flagsOf(st), L=[]; if(f.mari) L.push(`Mari runs t
 const NET_TITLES = [`Unmarked crates`,`Sealed cargo`,`"Medical supplies"`,`Cash bags`,`"Spare parts"`,`Wrapped bundles`];
 (function(){ const _g=genJobs; genJobs=function(st){ const L=_g(st); try{ const c=crime(st); if(!c.on) return L; const n=1+(c.power>=45?1:0)+(c.power>=70?1:0); let k=0;
   L.forEach(j=>{ if(k<n && j.kind==='gen' && j.cargo>0 && !j.special && !j.story){ k++; j.network=true; j.label='Network run'; j.title=`${pick(NET_TITLES)} for the network`; j.client='The network'; j.pay=Math.round(j.pay*(1.6+c.power/100)/10)*10; j.scen=null; } }); }catch(_){} return L; }; })();
-(function(){ const _ap=applyResult; applyResult=function(st, job, f, res){ const r=_ap(st, job, f, res); try{ const c=crime(st); const o=st.last&&st.last.out; if(!c.on || res.crash) return r;
-  if(job.network){ crBump(c,'heat',7); crBump(c,'power',1); }   // (the legit -2 in 67 already ran; net +5)
-  if((job.network || job.kind==='story') && o){
-    if(c.heat>=90){ txn(st,-50000,'Payoffs',`Lawyers, ${job.to}`); crBump(c,'power',-10); c.heat=50; o.notes.push(`BUSTED at ${job.to}. Customs found the hidden compartment. The network's lawyers got you out for $50,000. Power −10, Heat down to 50.`); try{ setTimeout(()=>takeover({kind:'orders',kicker:'Busted',title:`Customs at ${job.to}`,text:`They found the hidden compartment. The network's lawyers got you out, for $50,000.`,ms:9000}),600); }catch(_){} }
-    else if(c.heat>=60){ if(res.grade==='A'||res.grade==='B'){ o.notes.push(`Customs came out to the plane, but a clean landing and calm answers got you waved through. Heat −5.`); crBump(c,'heat',-5); }
-      else { const cost=Math.round(c.heat*60/10)*10; txn(st,-cost,'Payoffs',`Customs at ${job.to}`); crBump(c,'heat',-15); o.notes.push(`Customs searched the plane at ${job.to}. Your people made it go away for ${money(cost)}. Heat −15. (A cleaner landing gets you waved through.)`); } } } }catch(_){} return r; }; })();
 const _netStrip = stripHTML;
 stripHTML = function(st, job, opts){ const h=_netStrip(st, job, opts); return job.network ? h.replace(/(<article[^>]*class="jcard[^"]*"[^>]*>)/, '$1<span class="net-tag">Network · +Heat</span>') : h; };
 
@@ -7459,9 +7145,6 @@ playPrologue = function(m, done){ const st=S.st; const MC=mainChapters(); const 
   shots.push({card:true, kicker:`Chapter ${MC.indexOf(m)+1} of ${MC.length}`, title:m.title, sub:`<p>${esc((CH_GOAL[m.id]||[])[0]||'')}</p>`, auto:2600});
   cutscene({shots, col:act.col, art:sceneArt(m.from, m.dep, m.ac[0]), onEnd:done}); };
 
-/* ---- the right outcome text when choices changed the chapter ---- */
-(function(){ const _ap=applyResult; applyResult=function(st, job, f, res){ const r=_ap(st, job, f, res); try{ if(job.kind==='story' && CRIME_IDS.has(job.story) && !res.crash){ const o=st.last&&st.last.out; const m=CRIME.find(x=>x.id===job.story); const mm=dynM(st,m); const outs=job.out||mm.out;
-    const tone=(res.grade==='A'||res.grade==='B')?'good':res.grade==='C'?'ok':'bad'; if(o && outs && outs[tone]) o.story=outs[tone]; } }catch(_){} return r; }; })();
 
 /* ---- after a chapter: what happened, your decision, and what it led to, all as one scene ---- */
 function fxSub(o){ const b=[]; if(o.power) b.push(`Power ${o.power>0?'+':''}${o.power>=100?'max':o.power}`); if(o.heat) b.push(`Heat ${o.heat>0?'+':''}${o.heat<=-100?'cleared':o.heat}`); if(o.cash) b.push(`${o.cash>0?'+':'−'}${money(Math.abs(o.cash))}`); return b.join(' · '); }
@@ -7678,12 +7361,7 @@ Object.keys(MID).forEach(id=>{ if(BEATS[id]) BEATS[id].push(MID[id]); else BEATS
 /* echoes: the next prologue opens with what you did last time */
 (function(){ const _sb=showBeat; showBeat=function(a,b,idx){ const r=_sb(a,b,idx); try{ const d=document.querySelector('.beat'); if(d && b.opts) d.addEventListener('click', e=>{ const btn=e.target.closest('[data-act="beat-opt"]'); if(!btn) return; const o=b.opts[Number(btn.dataset.i)]; const c=crime(); if(o.cash) txn(S.st,o.cash,'Story',a.job.title); if(o.echo){ c.echo={text:o.echo, from:a.job.story}; save(); } }); }catch(_){} return r; }; })();
 (function(){ const _pf=proFor; proFor=function(id){ const base=_pf(id)||[]; const e=crime().echo; return (e && e.from!==id) ? [[`Last time`, null, e.text]].concat(base) : base; }; })();
-(function(){ const _ap=applyResult; applyResult=function(st,job,f,res){ const r=_ap(st,job,f,res); try{ const c=crime(st); if(job.kind==='story' && CRIME_IDS.has(job.story) && !res.crash && c.echo && c.echo.from!==job.story) c.echo=null; }catch(_){} return r; }; })();
 
-/* ---- 5. failing a chapter has consequences, and you try again ---- */
-(function(){ const _ap=applyResult; applyResult=function(st,job,f,res){ const r=_ap(st,job,f,res); try{ if(job.kind==='story' && CRIME_IDS.has(job.story)){ const c=crime(st); const o=st.last&&st.last.out;
-  if(res.crash){ delete st.story.done[job.story]; if(c.on){ crBump(c,'heat',8); crBump(c,'power',-5); } if(o) o.notes.unshift('The chapter failed. You can fly it again from the Main story page.'); st.last.failed=true; }
-  else if(res.grade==='D'||res.grade==='F'){ if(c.on){ crBump(c,'heat',4); } st.last.sloppy=true; } save(); } }catch(_){} return r; }; })();
 (function(){ const _pa=playAftermath; playAftermath=function(){ const st=S.st, L=st&&st.last; if(!L||!L.job) return _pa(); const m=CRIME.find(x=>x.id===L.job.story); if(!m) return _pa(); const act=CRIME_ACTS.find(a=>a.arc===m.arc)||CRIME_ACTS[0];
   if(L.failed){ const boss=crime(st).on?'castillo':'dez'; cutscene({col:act.col, art:SCENES.ramp(), shots:[{card:true,kicker:m.title,title:'It went wrong',auto:1800},[`Phone call`, boss, boss==='castillo'?`I don't pay for wreckage. Get yourself together and do it again. Properly.`:`Rookie, what happened out there? Breathe. We'll try it again.`],{card:true,kicker:'Chapter failed',title:'Try again',sub:`<p>Power −5, Heat +8. Play the chapter again from the Main story page.</p>`}], onEnd:()=>render()}); return; }
   return _pa(); }; })();
@@ -7699,8 +7377,6 @@ function rankMul(c){ return c.power>=65?1.3:c.power>=45?1.2:1; }
     if(c.hot[j.to]){ j.hot=true; j.pay=Math.round(j.pay*1.2/10)*10; } }); }catch(_){} return L; }; })();
 const _twStrip = stripHTML;
 stripHTML = function(st, job, opts){ let h=_twStrip(st, job, opts); const tags=[]; if(job.drop) tags.push('<span class="chip warn">Night drop</span>'); if(job.lowLevel) tags.push('<span class="chip warn">Stay under 1,000 ft: +25%</span>'); if(job.hot) tags.push('<span class="chip warn">Hot airport</span>'); if(tags.length) h=h.replace('<div class="chips">', '<div class="chips">'+tags.join('')); return h; };
-/* rest: Boss rank cools heat; hot airports cool off after 3 days */
-(function(){ const _rs=rest; rest=function(st){ const r=_rs(st); try{ const c=crime(st); if(c.power>=85) crBump(c,'heat',-2); for(const k in (c.hot||{})) if(st.day-c.hot[k]>3) delete c.hot[k]; }catch(_){} return r; }; })();
 
 /* ---- 7 + 8 + 18. what the sim tells us during the flight: low level, transponder, real fuel burn ---- */
 (function(){ const _rs=renderSimBits; renderSimBits=function(){ _rs(); try{ const a=S.st&&S.st.active, s=S.sim; if(!a||!a.started||!s||S.simState!=='live'||!s.motion||!s.position) return; const now=Date.now(); const T=a.track=a.track||{air:0,low:0,last:now,fuel:[]}; const dt=Math.min(20,(now-T.last)/1000); T.last=now;
@@ -7714,16 +7390,7 @@ stripHTML = function(st, job, opts){ let h=_twStrip(st, job, opts); const tags=[
   const [t0,f0]=T.fuel[0], [t1,f1]=T.fuel[T.fuel.length-1]; const mins=(t1-t0)/60000; if(mins<6) return; const burn=(f0-f1)/mins; if(!(burn>0)) return;
   const dest=a.job.local?AP[a.job.from]:AP[a.job.to]; const togo=a.job.local?0:distNm({lat:s.position.lat,lon:s.position.lon},dest); const gs=Math.max(60,s.motion.gs||AC[a.job.ac].cruise);
   const need=burn*(togo/gs*60 + 30); if(f1 < need) return _ss(key, `Fuel check. At this burn rate we'll land with less than thirty minutes left. Consider the nearest airport.`, every); }; })();
-/* payouts for low-level and dark runs */
-(function(){ const _ap=applyResult; applyResult=function(st,job,f,res){ const a=st.active; const T=a&&a.track; const r=_ap(st,job,f,res); try{ const o=st.last&&st.last.out; if(!o||res.crash||!job.network) return r;
-  if(job.lowLevel && T && T.air>120){ const frac=T.low/T.air; if(frac>=0.6){ const b=Math.round(job.pay*0.25/10)*10; txn(st,b,'Network','Under the radar bonus'); o.notes.push(`Under the radar: ${Math.round(frac*100)}% of the flight below 1,000 ft. Bonus ${money(b)}.`); } else o.notes.push(`Only ${Math.round(frac*100)}% of the flight was below 1,000 ft. No radar bonus.`); }
-  if(T && T.xpdrSeen && T.dark>T.air*0.5){ crBump(crime(st),'heat',-3); o.notes.push('You flew most of it with the transponder in standby. Heat −3.'); }
-  if(job.hot){ crBump(crime(st),'heat',3); } }catch(_){} return r; }; })();
-/* searches and busts mark the airport as hot for a few days */
-(function(){ const _ap=applyResult; applyResult=function(st,job,f,res){ const r=_ap(st,job,f,res); try{ const o=st.last&&st.last.out; if(o && o.notes.some(n=>/^Customs searched|^BUSTED/.test(n))){ const c=crime(st); c.hot=c.hot||{}; c.hot[job.to]=st.day; o.notes.push(`${job.to} is a hot airport for the next few days: more pay, more Heat.`); } }catch(_){} return r; }; })();
 
-/* ---- 10. dirty cash: network money has to be laundered before you can spend it ---- */
-(function(){ const _ap=applyResult; applyResult=function(st,job,f,res){ const before=st.cash; const r=_ap(st,job,f,res); try{ if(job.network && !res.crash){ const gained=st.cash-before; if(gained>0){ const c=crime(st); c.dirty=(c.dirty||0)+gained; st.cash-=gained; const o=st.last&&st.last.out; if(o) o.notes.unshift(`${money(gained)} is dirty cash. Launder it before you can spend it.`); save(); } } }catch(_){} return r; }; })();
 function launderOpts(st){ const d=st.story.done; const L=[]; L.push({id:'dez',n:'Dez, cash under the counter',fee:0.25,heat:3}); if(d.CR5) L.push({id:'trust',n:'The Hartwell Reef Trust',fee:0.15,heat:1}); if(d.CR15) L.push({id:'caribe',n:'Caribe Cargo invoices',fee:0.08,heat:0}); return L; }
 function launderHTML(st){ const c=crime(st); if(!c.dirty) return ''; const L=launderOpts(st); return `<section class="panel launder"><div class="row between"><div><p class="label">Dirty cash</p><h3>${money(c.dirty)}</h3></div><p class="small muted" style="max-width:420px">Money from network runs. Launder it to move it into your cash. Better options unlock as the story goes on.</p></div><div class="row" style="flex-wrap:wrap;gap:8px;margin-top:10px">${L.map(o=>`<button class="btn sm" data-act="launder" data-v="${o.id}">${esc(o.n)} · ${Math.round(o.fee*100)}% fee${o.heat?` · Heat +${o.heat}`:''}</button>`).join('')}</div></section>`; }
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="launder"]'); if(!b||!S.st) return; const st=S.st, c=crime(st); const o=launderOpts(st).find(x=>x.id===b.dataset.v); if(!o||!c.dirty) return; const amt=c.dirty, net=Math.round(amt*(1-o.fee)); c.dirty=0; txn(st,net,'Laundered',o.n); if(o.heat) crBump(c,'heat',o.heat); save(); toast(`Laundered ${money(amt)} through ${o.n}: ${money(net)} clean.`); S.keepScroll=true; render(); });
@@ -7741,8 +7408,6 @@ function fleetCrewHTML(st){ const d=st.story.done; const f=FLEET.filter(x=>d[x[0
     ${crew?`<h3 style="margin-top:16px">Crew</h3>${crew}`:''}</section>`; }
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="hire"]'); if(!b||!S.st) return; const st=S.st, c=crime(st); const k=CREW.find(x=>x.id===b.dataset.v); if(!k) return; if(st.cash<k.cost){ toast(`You need ${money(k.cost)}.`); return; } if(k.cost) txn(st,-k.cost,'Crew',k.n); c.crew=c.crew||{}; c.crew[k.id]=1; save(); toast(`${k.n} joined your crew.`); S.keepScroll=true; render(); });
 (function(){ const _g=genJobs; genJobs=function(st){ const L=_g(st); try{ L.forEach(j=>{ if(!j.network) return; let m=1; if(crewHas(st,'tico')) m+=0.05; if(crewHas(st,'fo') && ['airliner','widebody','regional'].includes(AC[j.ac].cls)) m+=0.1; j.pay=Math.round(j.pay*m/10)*10; }); }catch(_){} return L; }; })();
-(function(){ const _ap=applyResult; applyResult=function(st,job,f,res){ const c=crime(st); const h0=c.heat, cash0=st.cash; const r=_ap(st,job,f,res); try{ if(job.network && crewHas(st,'loaders') && c.heat>h0) crBump(c,'heat',-2);
-  const o=st.last&&st.last.out; if(crewHas(st,'dez') && o){ const p=fin(st).ledger.slice(0,6).find(x=>x.c==='Payoffs' && x.a<0); if(p && !p.halved){ p.halved=1; txn(st,Math.round(-p.a/2),'Payoffs','Dez knew a guy (half back)'); o.notes.push('Dez knew a guy: half the payoff came back.'); } } }catch(_){} return r; }; })();
 /* ===================== CUTSCENES: illustrated backdrops, ambient sound, and a "previously on" recap ===================== */
 /* ---- 2. backdrops (1600x900 SVG, noir palette) ---- */
 const SCENES = {
@@ -8002,8 +7667,6 @@ hudHTML = function(a){ let h=_m1Hud(a); try{ const s=S.sim||{}; const job=a.job;
   if(extra.length) h=h.replace('<div class="fhud-cells">','<div class="fhud-cells">'+extra.join(''));
   if(goal) h=h.replace('</section>', goal+'</section>'); }catch(_){} return h; };
 
-/* ---- 2. result screen: pay counts up, Power and Heat show what changed ---- */
-(function(){ const _ap=applyResult; applyResult=function(st,job,f,res){ const c=crime(st); const p0=c.power, h0=c.heat; const r=_ap(st,job,f,res); try{ st.last.delta={power:c.power-p0, heat:c.heat-h0}; }catch(_){} return r; }; })();
 const _m2Res = resultView;
 resultView = function(){ const h=_m2Res(); const L=S.st&&S.st.last; if(!L||!L.delta||!crime().on) return h; const d=L.delta, c=crime(); if(!d.power && !d.heat) return h;
   const bar=(n,v,dv,col)=>`<div class="dbar"><span>${n}</span><div class="db-t"><i style="width:${Math.max(0,v-Math.max(0,dv))}%;background:${col}"></i><i class="db-new" style="width:${Math.abs(dv)}%;background:${dv>=0?col:'transparent'};${dv<0?`outline:1px dashed ${col}`:''}"></i></div><b>${v} <small class="${dv>0?'up':dv<0?'down':''}">${dv>0?'+':''}${dv||''}</small></b></div>`;
@@ -8025,7 +7688,6 @@ ACH.push(
   {id:'cx_radar',n:`Under the Radar`,d:`Earn a low-level bonus on a network run.`,t:s=>!!(s.crime&&s.crime.radar)}
 );
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="launder"]'); if(!b||!S.st) return; const c=crime(); c.laundered=(c.laundered||0)+(c.dirty||0); }, true);
-(function(){ const _ap=applyResult; applyResult=function(st,job,f,res){ const before=new Set(Object.keys(st.ach||{})); const r=_ap(st,job,f,res); try{ const o=st.last&&st.last.out; if(o && o.notes.some(n=>/^Under the radar:/.test(n))) crime(st).radar=1; checkAch(st); const fresh=ACH.filter(a=>st.ach&&st.ach[a.id]&&!before.has(a.id)); fresh.forEach((a,i)=>setTimeout(()=>achPop(a), 1200+i*2600)); }catch(_){} return r; }; })();
 function achPop(a){ const d=document.createElement('div'); d.className='achpop'; d.innerHTML=`<span>Achievement</span><b>${esc(a.n)}</b><small>${esc(a.d)}</small>`; document.body.appendChild(d); try{ chimeUp&&chimeUp(); }catch(_){} setTimeout(()=>{ d.classList.add('out'); setTimeout(()=>d.remove(),500); }, 3800); }
 
 /* ---- 4 + 5. story page: trust with each person, your numbers, and replay any chapter's scenes ---- */
@@ -8105,8 +7767,6 @@ const SAFEHOUSES = [ {id:'flat',n:'Apartment in Philipsburg',cost:25000,perk:'He
   {id:'strip',n:'Private strip on a quiet cay',cost:600000,perk:'Network runs pay +20%, Heat −3 every new day'} ];
 function safeLevel(st){ const c=crime(st); return SAFEHOUSES.findIndex(s=>s.id===c.safe); }
 function dailyCosts(st){ const d=st.story.done; const L=[]; FLEET.forEach(f=>{ if(d[f[0]] && UPKEEP[f[1]]) L.push([`${f[2]} (${f[3]}) upkeep`, UPKEEP[f[1]]]); }); const c=crime(st); if(c.crew){ for(const k in WAGES) if(crewHas(st,k)) L.push([`${CREW.find(x=>x.id===k).n} wages`, WAGES[k]]); } return L; }
-(function(){ const _rs=rest; rest=function(st){ const r=_rs(st); try{ const c=crime(st); const L=dailyCosts(st); const tot=L.reduce((s,x)=>s+x[1],0); if(tot){ txn(st,-tot,'Operation','Fleet upkeep and crew wages'); setTimeout(()=>toast(`Daily costs: ${money(tot)} for your fleet and crew.`),400); }
-  const lv=safeLevel(st); if(lv>=0) crBump(c,'heat',-(lv+1)); }catch(_){} return r; }; })();
 (function(){ const _g=genJobs; genJobs=function(st){ const L=_g(st); try{ if(crime(st).safe==='strip') L.forEach(j=>{ if(j.network) j.pay=Math.round(j.pay*1.2/10)*10; }); }catch(_){} return L; }; })();
 const _ecLaunder = launderOpts;
 launderOpts = function(st){ const L=_ecLaunder(st); return safeLevel(st)>=1 ? L.map(o=>Object.assign({},o,{fee:Math.max(0.03,o.fee-0.05)})) : L; };
@@ -8123,8 +7783,6 @@ function fedsWatching(st){ return crime(st).heat>=80; }
 /* at 80+ Heat: no network runs, no story chapters, until you lie low or pay to make it go away */
 (function(){ const _g=genJobs; genJobs=function(st){ let L=_g(st); try{ const c=crime(st); if(fedsWatching(st)) L=L.filter(j=>!j.network); const now=st.day; c.ban=c.ban||{}; L=L.filter(j=>!(c.ban[j.to] && now-c.ban[j.to]<3)); }catch(_){} return L; }; })();
 window.addEventListener('click', e=>{ const b=e.target.closest('[data-act="accept-story"],[data-act="story-go"]'); if(!b||!S.st||!CRIME_IDS.has(b.dataset.id)||!crime().on) return; if(fedsWatching(S.st)){ e.stopImmediatePropagation(); e.preventDefault(); toast('The feds are watching you. Lie low (legit jobs, new days) or pay to make it go away before the next chapter.'); go('story'); } }, true);
-(function(){ const _ap=applyResult; applyResult=function(st,job,f,res){ const r=_ap(st,job,f,res); try{ const c=crime(st); if(!c.on||res.crash) return r; if(!job.network && job.kind==='gen' && fedsWatching(st)) crBump(c,'heat',-2); const o=st.last&&st.last.out; if(o && o.notes.some(n=>/^BUSTED/.test(n))){ c.ban=c.ban||{}; c.ban[job.to]=st.day; o.notes.push(`${job.to} is closed to you for 3 days.`); } }catch(_){} return r; }; })();
-(function(){ const _rs=rest; rest=function(st){ const r=_rs(st); try{ if(fedsWatching(st)) crBump(crime(st),'heat',-4); }catch(_){} return r; }; })();
 function fixCost(st){ const c=crime(st); return Math.round((20000 + c.power*600)/1000)*1000; }
 function fedsHTML(st){ if(!crime(st).on || !fedsWatching(st)) return ''; const cost=fixCost(st); return `<section class="panel feds"><p class="label">Heat ${crime(st).heat} · The feds are watching</p><h3>Lie low before the next chapter</h3><p class="small">Network runs and story chapters are on hold until your Heat is under 80. Legit jobs and new days cool it faster right now, or you can pay someone to make the problem go away.</p><div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn sm" data-act="nav" data-v="board">Fly legit jobs</button><button class="btn sm" data-act="rest">New day</button><button class="btn sm action" data-act="pay-fix" ${st.cash<cost?'disabled':''}>Make it go away · ${money(cost)}</button></div></section>`; }
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="pay-fix"]')||!S.st) return; const st=S.st, cost=fixCost(st); if(st.cash<cost) return; txn(st,-cost,'Payoffs','A favor from a judge'); crBump(crime(st),'heat',-30); save(); toast('A judge owes Castillo a favor. Heat −30.'); S.keepScroll=true; render(); });
@@ -8143,7 +7801,6 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="ng-
   cutscene({col:'#c8962a', art:SCENES.hangar(), shots:[{card:true,kicker:`New Game+ · round ${ng+1}`,title:'Back to the Cessna',sub:'<p>Same islands. Same people. Different choices.</p>'}], onEnd:()=>{ S.view='story'; render(); }}); });
 (function(){ const _sv=storyView; storyView=function(){ const h=_sv(); const n=ngHTML(S.st); return n ? h.replace(/(<main[^>]*>(?:<div class="subtabs">[\s\S]*?<\/div>)?)/, '$1'+n) : h; }; })();
 (function(){ const _g=genJobs; genJobs=function(st){ const L=_g(st); try{ if(crime(st).ng) L.forEach(j=>{ if(j.network) j.pay=Math.round(j.pay*1.5/10)*10; }); }catch(_){} return L; }; })();
-(function(){ const _ap=applyResult; applyResult=function(st,job,f,res){ const c=crime(st); const h0=c.heat; const r=_ap(st,job,f,res); try{ if(c.ng && c.heat>h0) crBump(c,'heat',Math.round((c.heat-h0)*0.5)); }catch(_){} return r; }; })();
 
 (function(){ const s=document.createElement('style'); s.textContent=`
 .bk-list ul{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:2px}.bk-list li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.bk-list li span{display:block;font-size:12px;color:var(--muted)}
@@ -8379,8 +8036,6 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="open-se
 /* 5. laundering through Dez stops if Dez is in prison; a money changer takes his place */
 (function(){ const _lo=launderOpts; launderOpts=function(st){ let L=_lo(st); const f=crime(st).flags; if(f.dezJail) L=L.map(o=>o.id==='dez'?{id:'changer',n:'A money changer in Philipsburg',fee:0.3,heat:4}:o); return L; }; })();
 
-/* 6. Heat cools by 1 every new day on its own */
-(function(){ const _rs=rest; rest=function(st){ const r=_rs(st); try{ const c=crime(st); if(c.on) crBump(c,'heat',-1); }catch(_){} return r; }; })();
 
 
 
@@ -8411,8 +8066,6 @@ document.addEventListener('click', e=>{ const s=e.target.closest('.cut-skip'); i
 /* 17. M shows or hides the menu in flight mode */
 document.addEventListener('keydown', e=>{ if(e.key.toLowerCase()!=='m' || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || e.ctrlKey||e.metaKey||e.altKey) return; if(document.body.classList.contains('flying') || S.fmMenu){ S.fmMenu=!S.fmMenu; S.keepScroll=true; render(); } });
 
-/* 18. flight mode resets after you land, so the next flight starts clean */
-(function(){ const _ap=applyResult; applyResult=function(){ S.fmMenu=false; S.openJob=null; return _ap.apply(this, arguments); }; })();
 
 /* 19. the result screen's Next button for a story chapter says which chapter */
 (function(){ const _r=resultView; resultView=function(){ const h=_r(); try{ const MC=mainChapters(); const nx=MC.find(m=>!S.st.story.done[m.id]); if(!nx) return h; const n=MC.indexOf(nx)+1; return h.replace(/(<div class="row next-bar">[\s\S]*?)Next: ([^<(]+)/, `$1Chapter ${n}: $2`); }catch(_){ return h; } }; })();
@@ -8555,8 +8208,6 @@ document.addEventListener('click', e=>{ const li=e.target.closest('.sh-time li')
 (function(){ const _pa=playAction; playAction=function(st,m,availSet,n){ const r=_pa(st,m,availSet,n); if(chapterStatus(st,m,availSet).k==='aircraft'){ const opts=m.ac.filter(k=>AC[k] && canFly(st,k)).slice(0,3); if(opts.length) r.btn=opts.map(k=>`<button class="btn sm" data-act="own-ac" data-v="${k}">I own the ${esc(AC[k].n)}</button>`).join('')+r.btn; } return r; }; })();
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="own-ac"]'); if(!b||!S.st) return; S.st.hangar=S.st.hangar||{}; S.st.hangar[b.dataset.v]=true; save(); toast(`Added the ${AC[b.dataset.v].n} to your hangar list.`); S.keepScroll=true; render(); });
 
-/* 22. daily costs never push your cash below zero: what you can't pay costs Heat instead */
-(function(){ const _rs=rest; rest=function(st){ const c0=st.cash; const r=_rs(st); try{ if(st.cash<0 && c0>=0){ const short=-st.cash; txn(st, short, 'Operation', 'Costs you couldn\'t cover (owed to Castillo\'s people)'); const c=crime(st); if(c.on) crBump(c,'heat',2); setTimeout(()=>toast(`You couldn't cover ${money(short)} of today's costs. People talk: Heat +2.`), 600); } }catch(_){} return r; }; })();
 
 /* 23. Esc also closes the notifications list */
 window.addEventListener('keydown', e=>{ if(e.key==='Escape'){ document.querySelectorAll('.notif-pane').forEach(p=>p.remove()); } });
@@ -8689,6 +8340,371 @@ function band(){
     </div>
     <nav class="mrail" aria-label="Sections">${NAV5.map(railItem).join('')}</nav>
   ${urgent?`<div class="urgent-host">${urgent}</div>`:''}</header>${S.view==='board' && !S.showResult ? callHTML(st) : ''}`;
+}
+/* ===================== GAME FLOW =====================
+   What happens to the career when a flight is scored and finished, and when a new day starts.
+     score(job, f)                 -> the grade for a flight
+     applyResult(st, job, f, res)  -> pays, logs and moves the story on; returns the result sheet ("out")
+     afterFlight(...)              -> the extras on top of the basic result (bonuses, wear, records)
+     rest(st)                      -> starts a new day
+   Each is one function made of named steps that run in a fixed order. Add a step; don't wrap. */
+
+/* ---------- scoring ---------- */
+
+/* When MSFS tells us where the wheels touched, work out the runway, the distance past the threshold and the centerline offset. */
+function scoreTouchdownPoint(job, f){
+  if(f && f.td && f.td.lat!=null && f.landing!=='crash'){ const code = f.landedAt || (job.local?job.from:job.to); const A = touchdownAnalysis(code, f.td); f.tda = A;
+    if(A && A.runway){ f.tdz = A.zone==='aim' || A.zone==='zone'; f.center = !A.approx ? (A.center==='on' || A.center==='near') : f.center; } }
+}
+/* An in-flight emergency flown automatically is judged by where you landed. */
+function scenVerdict(job, f, P){ const landed=f.landedAt;
+  return P.divert ? (landed===P.target ? 'book' : landed===job.to ? 'ignored' : 'messy') : (landed===P.target || landed===P.alt ? 'book' : 'messy'); }
+
+/* The score sheet: every line is [label, points, out of]. */
+function scoreSheet(job, f){
+  const a=AC[job.ac], p=plan(job); const parts=[];
+  const L = LANDING[f.landing]||LANDING.firm; parts.push([`Landing`, L.pts, 30]);
+  if(f.landing==='crash'){ return { score:0, grade:'F', parts:[[`Landing`,-40,30]], crash:true, fuelMin:0, block:f.block }; }
+  parts.push([`Touchdown zone`, f.tdz?10:3, 10]);
+  parts.push([`Centerline / alignment`, f.center?5:2, 5]);
+  let fuelMin;
+  if(a.fuel==='elec'){ fuelMin = (f.fuel/100)*90; parts.push([`Battery reserve`, f.fuel>=20?15:f.fuel>=10?6:-10, 15]); }
+  else { const lb = f.fuelUnit==='gal' ? f.fuel*p.density : f.fuelUnit==='kg' ? f.fuel*2.2046 : f.fuel; fuelMin = a.burn ? lb/a.burn*60 : 999; const r=p.reserveMin; parts.push([`Fuel reserve (${Math.round(fuelMin)} min left, ${r} required)`, fuelMin>=r?15:fuelMin>=r*0.5?6:-10, 15]); }
+  const slow = f.block > p.est*1.3 + 8; parts.push([`Block time vs plan (${durTxt(f.block)} vs ${durTxt(p.est)})`, f.diverted ? 8 : slow?4:10, 10]);
+  const pr = ['checklist','radio','weather','smooth'].filter(k=>f[k]).length*5; parts.push([`Airmanship`, pr, 20]);
+  if(job.kind==='check'){ const n=job.tasks.length, done=(f.tasks||[]).length; parts.push([`Checkride tasks (${done}/${n})`, Math.round(10*done/n), 10]); }
+  else if(job.scen){ const s=SCEN[job.scen]; let how=f.scen||'book'; const landed=f.landedAt||job.to; let label=s.n;
+    if(s.divert && how==='book' && !job.local && (s.returnHome ? landed!==job.from : landed===job.to)){ how='messy'; label=`${s.n} (by the book meant ${s.returnHome?'returning to '+job.from:'diverting'})`; }
+    const m={book:10, messy:5, ignored:-10}[how]; parts.push([label, m, 10]); }
+  else parts.push([`Passenger experience`, f.landing==='hard'?3:10, 10]);
+  let total = parts.reduce((s,p)=>s+p[1],0); total = clamp(Math.round(total),0,100);
+  return { score:total, grade:gradeOf(total), parts, fuelMin:Math.round(fuelMin), block:f.block };
+}
+function retotal(r){ const tot=clamp(Math.round(r.parts.reduce((s,p)=>s+p[1],0)),0,100); r.score=tot; r.grade=gradeOf(tot); }
+
+function score(job, f){
+  scoreTouchdownPoint(job, f);
+  let g = f;   // the flight as it is judged (difficulty and emergencies can adjust a copy)
+  const act=S.st&&S.st.active; if(job.scen && f.auto && act && act.scenPlan && !f.scen) g = Object.assign({}, g, {scen: scenVerdict(job, f, act.scenPlan)});
+  if(diff()==='casual' && g.landing==='hard') g = Object.assign({}, g, {landing:'firm'});
+  const r = scoreSheet(job, g);
+  /* Expert: skipping the checklist costs 10 points */
+  if(diff()==='expert' && S.st.active && !checklistDone(S.st.active)) { r.score=Math.max(0,r.score-10); r.grade = r.score>=90?'A':r.score>=80?'B':r.score>=70?'C':r.score>=60?'D':'F'; }
+  /* a measured touchdown replaces the two estimated lines */
+  const A=f&&f.tda;
+  if(A && A.runway){ r.parts = r.parts.map(p=>{
+      if(/^Touchdown zone/.test(p[0])){ const pts = A.zone==='aim'?10 : A.zone==='zone'?8 : A.zone==='long'? (A.fromThr < A.zoneEnd+1000?4:1) : 0;
+        return [`Touchdown point: ${A.zone==='short'?`${Math.abs(A.fromThr)} ft SHORT of the threshold`:`${A.fromThr.toLocaleString()} ft past the threshold of ${A.runway}`}${A.zone==='long'?' (floated long)':A.zone==='aim'?' (on the aiming point)':''}`, pts, 10]; }
+      if(/^Centerline/.test(p[0]) && !A.approx){ const pts = A.center==='on'?5:A.center==='near'?4:A.center==='wide'?2:0; return [`Centerline: ${Math.abs(A.xt)} ft ${A.xt>0?'right':A.xt<0?'left':''} of center`, pts, 5]; }
+      return p; });
+    retotal(r); }
+  /* with no passengers on board, the last line is about the cargo */
+  if(job && !job.pax && r.parts){ r.parts=r.parts.map(p=>/^Passenger experience/.test(p[0]) ? ['Cargo care', f.landing==='hard'?6:10, 10] : p); retotal(r); }
+  return r;
+}
+
+/* ---------- finishing a flight ---------- */
+
+const toneOf = res => (res.grade==='A'||res.grade==='B') ? 'good' : res.grade==='C' ? 'ok' : 'bad';
+
+/* Checkrides are forgiving: a decent score passes, and a firm-ish "hard" landing isn't held against you. */
+function easeCheckride(job, f, res){
+  if(job.kind==='check' && f && !res.crash && (res.score>=70 || res.grade==='A' || res.grade==='B')){ f.tasks=(job.tasks||[]).slice(); if(f.landing==='hard') f.landing='firm'; res.score=Math.max(70, res.score); }
+  if(job.kind==='check' && job.rating==='SEA' && !res.crash && f && f.landing!=='hard') res.score=Math.max(70, res.score);
+  if(job.kind==='check' && f && f.landing==='hard' && (f.simFpm||0) < 550 && !res.crash){ f.landing='firm'; }
+}
+/* The Setup (CRB): if someone warned you mid-flight, you walk away with the load. */
+function setupWarnedOutcome(st, job){
+  if(job.story==='CRB' && flagsOf(st).warned){ job.out={good:`You park at the passenger terminal instead of the cargo ramp and walk out with a crowd of tourists. From the taxi you watch three trucks full of Medina's men circle an empty cargo ramp. Castillo sold you to them, and it didn't work.`,ok:`You park at the passenger terminal and walk out with the tourists. Three trucks of Medina's men wait on an empty cargo ramp. Castillo sold you out, and it didn't work.`,bad:`A rough landing, but you park at the passenger terminal and slip out with the tourists. Medina's men wait on an empty cargo ramp. Castillo sold you out.`}; }
+}
+/* A practice flight changes nothing in the career. */
+function practiceResult(st, job, f, res){
+  const out={ id:job.id, title:job.title, grade:res.grade, score:res.score, parts:res.parts, pay:0, costs:0, notes:['Practice flight: no pay, and nothing was added to your logbook or career.'], ok:true, story:'', jobKind:'practice' };
+  if(f.verified) out.notes.push(`Recorded by MSFS: touchdown at ${f.simFpm} fpm${f.simBounces?`, ${f.simBounces} bounce${f.simBounces>1?'s':''}`:''}.`);
+  st.active=null; st.last={job, res, out, f}; save(); return out;
+}
+/* Bonus objectives that MSFS can judge by itself. */
+function judgeBonusObjective(job, f){
+  try{ const b=job.bonus; if(b && f){ const A=f.tda;
+    if(b.auto==='zone') f.bonus = !!(A && A.zone==='aim'); else if(b.auto==='center') f.bonus = !!(A && !A.approx && Math.abs(A.xt)<=10); else if(b.auto==='comfort') f.bonus = f.comfort!=null && f.comfort>=90; else if(!b.auto) f.bonus = false; } }catch(_){}
+}
+
+/* The basic result: pay, checkride pass/fail, reputation, the story chapter, the logbook and the clock. */
+function settleFlight(st, job, f, res){
+  const a=AC[job.ac]; const p=plan(job); const sc = job.scen?SCEN[job.scen]:null;
+  const chapter = job.kind==='story' ? STORY.find(x=>x.id===job.story) : null;
+  const altOut = chapter && ALT_OUT[chapter.id] ? ALT_OUT[chapter.id](st) : null;   // outcome text that depends on earlier choices
+  const out = { id:job.id, title:job.title, grade:res.grade, score:res.score, parts:res.parts, pay:0, costs:0, notes:[], ok:true, story:'', jobKind:job.kind };
+  const landedAt = f.landedAt || job.to;
+  const expectedDivert = sc && sc.divert;
+  const divertedOk = landedAt!==job.to && (expectedDivert || f.scen==='book');
+  // pay
+  let factor = 0.6 + res.score/100*0.6;
+  if(res.crash){ factor=0; out.ok=false; }
+  else if(landedAt!==job.to && !job.local && !divertedOk){ factor*=0.4; out.notes.push(`You landed at ${landedAt} instead of ${job.to}, so the client pays only part of the fare.`); }
+  else if(landedAt!==job.to && !job.local){ out.notes.push(`Diverting was the right call. The client pays in full, and Coral Wing arranges onward transport.`); st.stats.diverts++; }
+  if(job.kind==='check'){
+    const n=job.tasks.length, done=(f.tasks||[]).length;
+    const pass = !res.crash && res.score>=70 && done/n>=0.8 && f.landing!=='hard';
+    out.pass = pass;
+    if(pass){ st.ratings[job.rating]=true; out.notes.push(`Passed. You now hold the ${RATINGS[job.rating].n}.`); addJournal(st,`Earned: ${RATINGS[job.rating].n}`, `${CAST[job.chars[0]].n} signs the logbook. ${RATINGS[job.rating].unlocks}`, job.chars, 'milestone'); st.rep[job.chars[0]] = clamp(st.rep[job.chars[0]]+5,0,100); }
+    else { st.cooldown[job.rating] = st.day+1; out.notes.push(`Not this time. You need a score of 70 or more, at least 80% of the tasks done, and no hard landing. You can retest after a day's rest.`); }
+  } else {
+    let gross = Math.round(job.pay*factor);
+    if(job.company){ const rev = Math.round(gross*2.6); const cb = companyFlightCost(st, job, res.block); const cost = cb.total; out.pay = rev; out.costs = cost; out.costBreak = cb; txn(st, rev, 'Company revenue', job.title); txn(st, -cb.fuel, 'Fuel', job.title); txn(st, -cb.maint, 'Maintenance', job.title); txn(st, -cb.fees, 'Landing & handling fees', job.title); const f2 = st.company.fleet.find(x=>x.ac===job.ac && !x.hired); if(f2){ f2.cond = Math.max(30, f2.cond - (f.landing==='hard'?6:f.landing==='firm'?1.2:0.6)); f2.flights=(f2.flights||0)+1; } }
+    else { out.pay = gross; txn(st, gross, 'Flight pay', job.title); }
+    if(res.grade==='A' && !res.crash){ const bonus = Math.round(job.pay*0.1/10)*10; if(!job.company && bonus>0){ txn(st, bonus, 'Tips & bonuses', 'Client tip'); out.notes.push(`Client tip for an excellent flight: ${money(bonus)}.`); out.pay += bonus; } }
+  }
+  if(res.crash){ const fine = Math.round(Math.max(2000, (a.price||5e6)*0.002)); txn(st, -fine, 'Accidents & fines', job.title); out.costs += fine; out.notes.push(`Accident investigation, insurance excess and repairs: ${money(fine)}.`); st.stats.crash++; }
+  // reputation
+  const repDelta = res.crash?-12 : {A:3,B:2,C:0,D:-2,F:-4}[res.grade];
+  st.reputation = clamp(st.reputation + repDelta, 0, 100);
+  // story
+  if(job.kind==='story'){
+    const m = chapter;
+    if(!res.crash){ st.story.done[m.id]=true; }
+    const tone = res.crash ? 'bad' : toneOf(res);
+    out.story = res.crash ? `The mission ends with an accident report instead of a happy client. You can try this chapter again.` : (altOut||m.out)[tone];
+    if(!res.crash){ for(const k in (m.rep||{})){ st.rep[k] = clamp((st.rep[k]||10) + (tone==='bad'? Math.round(m.rep[k]/3) : m.rep[k]), 0, 100); } }
+    if(!res.crash && m.reward){ if(m.reward.voucher){ st.voucher = m.reward.voucher; } if(m.reward.bonus){ txn(st, m.reward.bonus, 'Gifts & windfalls', m.title); out.pay += m.reward.bonus; } if(m.reward.note) out.notes.push(m.reward.note); }
+    addJournal(st, `${m.title}`, out.story, m.chars, 'story', res.grade);
+  } else if(job.kind==='gen'){
+    const line = res.crash ? `The ${job.label.toLowerCase()} ended badly at ${landedAt}.` : `${job.client}: ${job.label.toLowerCase()} from ${AP[job.from].isl} to ${AP[landedAt].isl}, grade ${res.grade}.`;
+    const ar = ARCH.find(x=>x.id===job.arch); if(ar && ar.char && !res.crash){ st.rep[ar.char] = clamp((st.rep[ar.char]||10) + ({A:4,B:3,C:1,D:0,F:-2}[res.grade]), 0, 100); }
+    addJournal(st, job.title, line, ar&&ar.char?[ar.char]:[], 'flight', res.grade);
+  }
+  // logbook & stats
+  if(f.verified){ out.notes.push(`Recorded by MSFS: touchdown at ${f.simFpm} fpm${f.simBounces?`, with ${f.simBounces} bounce${f.simBounces>1?'s':''}`:''}.`); }
+  st.minutes += res.block; st.flights += 1; st.stats[f.landing] = (st.stats[f.landing]||0)+1; st.stats.nm += p.dist; if(job.scen && f.scen==='book') st.stats.scen++;
+  const firstType = !st.types[job.ac]; st.types[job.ac] = (st.types[job.ac]||0) + 1; if(firstType && !res.crash) out.notes.push(`New type in your logbook: ${a.n}.`);
+  const firstAp = !st.visited[landedAt]; st.visited[landedAt]=true; if(firstAp && !AP[landedAt].water) out.notes.push(`First landing at ${AP[landedAt].n}, ${AP[landedAt].isl}.`);
+  st.log.unshift({ id:uid(), day:st.day, dep:job.dep, from:job.from, to:landedAt, ac:job.ac, min:res.block, grade:res.grade, score:res.score, pay:out.pay-out.costs, title:job.title, kind:job.kind, landing:f.landing, verified:!!f.verified, fpm:f.verified?f.simFpm:null });
+  st.log = st.log.slice(0,300);
+  // clock
+  const start = Math.max(st.clock, job.dep);
+  st.duty += Math.min(60, start - st.clock) + res.block + 30; st.clock = start + res.block + 30;
+  st.loc = AP[landedAt].water ? job.from : landedAt; // after a water landing you return to base
+  if(AP[landedAt].water) out.notes.push(`After the water landing you fly back to ${job.from} (not logged separately).`);
+  st.active = null; st.last = { job, res, out, f };
+  if(st.clock >= 1440){ out.notes.push(`It's past midnight. Time to rest.`); }
+  afterFlight(st, job, f, res, out);
+  st.jobsKey = '';
+  return out;
+}
+
+/* The steps that run after the basic result, in order. Each gets (st, job, f, res, was) where "was" holds
+   values from before the flight was settled; st.last.out is the result sheet. A step that fails is skipped. */
+const AFTER_RESULT = [
+  /* Expert: landing below the legal fuel reserve is fined */
+  function expertFuelFine(st, job, f, res){ if(job.practice) return;
+    if(diff()==='expert' && !res.crash && job.kind!=='check' && res.fuelMin!=null && res.fuelMin < plan(job).reserveMin*0.75 && AC[job.ac].fuel!=='elec'){ const fine=Math.max(250, Math.round(job.pay*0.2/10)*10); txn(st,-fine,'Accidents & fines','Landed below reserve fuel'); const o=st.last&&st.last.out; if(o){ o.costs=(o.costs||0)+fine; o.notes.push(`Expert: you landed with ${res.fuelMin} min of fuel, below the legal reserve. The authority fines you ${money(fine)}.`); } st.reputation=clamp(st.reputation-2,0,100); } },
+  /* reputation is harder to gain the more you have */
+  function slowReputation(st, job, f, res, was){ if(job.practice) return; const before=was.reputation; const d=st.reputation-before;
+    if(d>0){ const scaled = d * Math.max(0.15, 1 - before/110); st._repFrac = (st._repFrac||0) + scaled; const whole=Math.floor(st._repFrac); st._repFrac -= whole; st.reputation = clamp(before + whole, 0, 100); } },
+  function unlocks(st, job){ if(job.practice) return; checkUnlocks(); },
+  function flightLogFile(st, job, f, res){ if(job.practice) return; if(f && f.verified) writeFlightLog(job, f, res); },
+  /* cabin requests, and a fair deal when you divert for fuel or weather */
+  function cabinAndDiversion(st, job, f, res){ if(job.practice) return; const o=st.last&&st.last.out; if(!o) return; const rec=S.sim&&S.sim.recorder;
+    if(job.ask && !res.crash){ const met=askMet(job, rec); if(met===true){ txn(st, job.ask.amt, 'Tips & bonuses', 'Cabin request'); o.pay+=job.ask.amt; o.notes.push(`Cabin request done: +${money(job.ask.amt)}. The passengers noticed.`); } else if(met===false) o.notes.push(`Cabin request not done this time. No harm done.`); }
+    const landed=f.landedAt||job.to; if(!res.crash && !job.local && !job.scen && landed!==job.to && AP[landed]){ const w=(S.sim&&S.sim.ext&&S.sim.ext.weather)||null; const lowFuel = res.fuelMin!=null && res.fuelMin < plan(job).reserveMin*1.2; const badWx = w && (w.visSm<3 || w.windKt>AC[job.ac].xw+5 || w.inCloud) || job.wx.ifr;
+      if(lowFuel || badWx){ const extra=Math.round(job.pay*0.35/10)*10; txn(st, extra, 'Flight pay', 'Diversion allowance'); o.pay+=extra; o.notes.push(`Good call diverting to ${landed} (${lowFuel?'fuel':'weather'}). The client pays three quarters of the fare.`); st.reputation=clamp(st.reputation+1,0,100); } } },
+  /* there are no duty hours: landing after midnight simply starts the next day */
+  function rollDay(st){ st.duty=0; const o=st.last&&st.last.out; if(o) o.notes=o.notes.filter(n=>!/past midnight/i.test(n)); if(st.clock>=1440){ rest(st); if(o) o.notes.push('A new day starts with fresh jobs on the board.'); } },
+  /* one-off special flights are marked done and get their own outcome text */
+  function specialFlight(st, job, f, res){ if(job.special && !res.crash){ st.specialDone=st.specialDone||{}; st.specialDone[job.special]=1; const m=SPECIALS.find(x=>x.id===job.special); const o=st.last&&st.last.out; if(m && o){ o.story=m.out[toneOf(res)]; } } },
+  /* the main story: Castillo's work starts with chapter CR4; each chapter adds Power and Heat; legit jobs cool Heat */
+  function storyPowerHeat(st, job, f, res){ const c=crime(st); const o=st.last&&st.last.out;
+    if(job.kind==='story' && CRIME_IDS.has(job.story) && !res.crash){
+      if(job.story==='CR4') c.on=true;
+      else if(c.on){ crBump(c,'power',2); crBump(c,'heat',4); }
+      if(o){ const m=CRIME.find(x=>x.id===job.story); if(m && m.choice) o.notes=o.notes.filter(n=>!/^Choices stick/.test(n)); } }
+    else if(c.on && !res.crash && job.kind==='gen'){ crBump(c,'heat',-2); } },
+  /* network runs add Heat; at Heat 60+ customs may search you, at 90+ you're busted */
+  function customs(st, job, f, res){ const c=crime(st); const o=st.last&&st.last.out; if(!c.on || res.crash) return;
+    if(job.network){ crBump(c,'heat',7); crBump(c,'power',1); }   // (a network run is also a 'gen' job, so the −2 above already ran: net +5)
+    if((job.network || job.kind==='story') && o){
+      if(c.heat>=90){ txn(st,-50000,'Payoffs',`Lawyers, ${job.to}`); crBump(c,'power',-10); c.heat=50; o.notes.push(`BUSTED at ${job.to}. Customs found the hidden compartment. The network's lawyers got you out for $50,000. Power −10, Heat down to 50.`); try{ setTimeout(()=>takeover({kind:'orders',kicker:'Busted',title:`Customs at ${job.to}`,text:`They found the hidden compartment. The network's lawyers got you out, for $50,000.`,ms:9000}),600); }catch(_){} }
+      else if(c.heat>=60){ if(res.grade==='A'||res.grade==='B'){ o.notes.push(`Customs came out to the plane, but a clean landing and calm answers got you waved through. Heat −5.`); crBump(c,'heat',-5); }
+        else { const cost=Math.round(c.heat*60/10)*10; txn(st,-cost,'Payoffs',`Customs at ${job.to}`); crBump(c,'heat',-15); o.notes.push(`Customs searched the plane at ${job.to}. Your people made it go away for ${money(cost)}. Heat −15. (A cleaner landing gets you waved through.)`); } } } },
+  /* the outcome text follows the choices you made earlier */
+  function storyOutcomeText(st, job, f, res){ if(job.kind==='story' && CRIME_IDS.has(job.story) && !res.crash){ const o=st.last&&st.last.out; const m=CRIME.find(x=>x.id===job.story); const mm=dynM(st,m); const outs=job.out||mm.out;
+    const tone=toneOf(res); if(o && outs && outs[tone]) o.story=outs[tone]; } },
+  /* a mid-flight choice is echoed in the next chapter only */
+  function clearEcho(st, job, f, res){ const c=crime(st); if(job.kind==='story' && CRIME_IDS.has(job.story) && !res.crash && c.echo && c.echo.from!==job.story) c.echo=null; },
+  /* failing a chapter has consequences, and you fly it again */
+  function failedChapter(st, job, f, res){ if(job.kind==='story' && CRIME_IDS.has(job.story)){ const c=crime(st); const o=st.last&&st.last.out;
+    if(res.crash){ delete st.story.done[job.story]; if(c.on){ crBump(c,'heat',8); crBump(c,'power',-5); } if(o) o.notes.unshift('The chapter failed. You can fly it again from the Main story page.'); st.last.failed=true; }
+    else if(res.grade==='D'||res.grade==='F'){ if(c.on){ crBump(c,'heat',4); } st.last.sloppy=true; } save(); } },
+  /* network runs flown low or with the transponder off */
+  function lowAndDark(st, job, f, res, was){ const T=was.track; const o=st.last&&st.last.out; if(!o||res.crash||!job.network) return;
+    if(job.lowLevel && T && T.air>120){ const frac=T.low/T.air; if(frac>=0.6){ const b=Math.round(job.pay*0.25/10)*10; txn(st,b,'Network','Under the radar bonus'); o.notes.push(`Under the radar: ${Math.round(frac*100)}% of the flight below 1,000 ft. Bonus ${money(b)}.`); } else o.notes.push(`Only ${Math.round(frac*100)}% of the flight was below 1,000 ft. No radar bonus.`); }
+    if(T && T.xpdrSeen && T.dark>T.air*0.5){ crBump(crime(st),'heat',-3); o.notes.push('You flew most of it with the transponder in standby. Heat −3.'); }
+    if(job.hot){ crBump(crime(st),'heat',3); } },
+  /* a search or a bust makes the airport hot for a few days */
+  function hotAirport(st, job){ const o=st.last&&st.last.out; if(o && o.notes.some(n=>/^Customs searched|^BUSTED/.test(n))){ const c=crime(st); c.hot=c.hot||{}; c.hot[job.to]=st.day; o.notes.push(`${job.to} is a hot airport for the next few days: more pay, more Heat.`); } },
+  /* network money is dirty: it has to be laundered before you can spend it */
+  function dirtyCash(st, job, f, res, was){ if(job.network && !res.crash){ const gained=st.cash-was.cash; if(gained>0){ const c=crime(st); c.dirty=(c.dirty||0)+gained; st.cash-=gained; const o=st.last&&st.last.out; if(o) o.notes.unshift(`${money(gained)} is dirty cash. Launder it before you can spend it.`); save(); } } },
+  /* crew perks: the loaders take 2 Heat off a network run; Dez halves a payoff */
+  function crewPerks(st, job, f, res, was){ const c=crime(st); if(job.network && crewHas(st,'loaders') && c.heat>was.heat) crBump(c,'heat',-2);
+    const o=st.last&&st.last.out; if(crewHas(st,'dez') && o){ const p=fin(st).ledger.slice(0,6).find(x=>x.c==='Payoffs' && x.a<0); if(p && !p.halved){ p.halved=1; txn(st,Math.round(-p.a/2),'Payoffs','Dez knew a guy (half back)'); o.notes.push('Dez knew a guy: half the payoff came back.'); } } },
+  /* the result screen shows what changed */
+  function powerHeatDelta(st, job, f, res, was){ const c=crime(st); st.last.delta={power:c.power-was.power, heat:c.heat-was.heat}; },
+  function achievements(st, job, f, res, was){ const o=st.last&&st.last.out; if(o && o.notes.some(n=>/^Under the radar:/.test(n))) crime(st).radar=1; checkAch(st); const fresh=ACH.filter(a=>st.ach&&st.ach[a.id]&&!was.ach.has(a.id)); fresh.forEach((a,i)=>setTimeout(()=>achPop(a), 1200+i*2600)); },
+  /* while the feds are watching, legit work cools Heat faster; a bust closes the airport to you */
+  function fedsAndBans(st, job, f, res){ const c=crime(st); if(!c.on||res.crash) return; if(!job.network && job.kind==='gen' && fedsWatching(st)) crBump(c,'heat',-2); const o=st.last&&st.last.out; if(o && o.notes.some(n=>/^BUSTED/.test(n))){ c.ban=c.ban||{}; c.ban[job.to]=st.day; o.notes.push(`${job.to} is closed to you for 3 days.`); } },
+  /* New Game+: Heat rises half again as fast */
+  function newGamePlusHeat(st, job, f, res, was){ const c=crime(st); if(c.ng && c.heat>was.heat) crBump(c,'heat',Math.round((c.heat-was.heat)*0.5)); },
+];
+
+function applyResult(st, job, f, res){
+  S.fmMenu=false; S.openJob=null;   // flight mode resets, so the next flight starts clean
+  const c=crime(st);
+  const was = { power:c.power, heat:c.heat, cash:st.cash, ach:new Set(Object.keys(st.ach||{})), track:st.active&&st.active.track, reputation:null };
+  setupWarnedOutcome(st, job);
+  easeCheckride(job, f, res);
+  let out;
+  if(job.practice) out = practiceResult(st, job, f, res);
+  else {
+    judgeBonusObjective(job, f);
+    was.reputation = st.reputation;
+    const act=st.active; if(job.scen && f.auto && !f.scen && act && act.scenPlan) f.scen = scenVerdict(job, f, act.scenPlan);
+    const rec = st.active ? simRecFor(st.active) : null;
+    out = settleFlight(st, job, f, res);
+    if(rec && st.last){ st.last.replay = { track:(rec.track||[]).slice(-300), approach: rec.approach||null, td: rec.touchdown||null }; }
+  }
+  for(const step of AFTER_RESULT){ try{ step(st, job, f, res, was); }catch(_){} }
+  return out;
+}
+
+/* ---------- extras after a flight ---------- */
+
+/* Wear on the aircraft you flew (not company aircraft). */
+function wearAirframe(st, job, f, res, out){
+  const A=airframe(st, job.ac); const t=(job._cab&&job._cab.tally)||{}; const why=[];
+  let dmg = 1;
+  if(res.crash){ dmg+=60; why.push('accident'); }
+  else if(f.landing==='hard'){ dmg+=12; why.push('hard landing'); } else if(f.landing==='firm'){ dmg+=3; }
+  if(f.simBounces>1){ dmg+=3*(f.simBounces-1); why.push('bounced landing'); }
+  if(f.simG && f.simG>1.8){ dmg+=8; why.push(`${f.simG} G touchdown`); }
+  if(t.flapOver){ dmg+=8*t.flapOver; why.push('flap overspeed'); } if(t.flapDmg){ dmg+=20; why.push('flap damage'); }
+  if(t.overspeed){ dmg+=6*t.overspeed; why.push('overspeed'); } if(t.gearOver){ dmg+=8; why.push('gear overspeed'); }
+  if(f.landing==='butter' && !res.crash) dmg=Math.max(0,dmg-1);
+  A.h = Math.max(0, A.h - dmg); A.log.unshift({day:st.day, d:dmg, why:why.join(', ')||'normal wear'}); A.log=A.log.slice(0,10);
+  if(dmg>=10 && !job.lend){ const cost=Math.round(dmg*18/10)*10; txn(st,-cost,'Accidents & fines',`Damage deductible: ${AC[job.ac].n}`); out.costs=(out.costs||0)+cost; out.notes.push(`Dez inspected the ${AC[job.ac].n}: ${why.join(', ')}. Your damage deductible is ${money(cost)}.`); }
+  out.notes.push(`${AC[job.ac].n} airframe health: ${A.h}%${dmg>1?` (−${dmg})`:''}.`);
+  if(A.h < 40){ A.grounded = st.day + (A.h<20?3:2); out.notes.push(`It's grounded for repairs until day ${A.grounded}. Dez is not happy.`); addJournal(st, `${AC[job.ac].n} grounded`, `Dez takes one look and reaches for his toolbox. "This one sits until I say so."`, ['dez'], 'flight'); }
+}
+/* One flight never costs more than 12% health (unless you crash), and an aircraft at 25%+ can fly. */
+function capWear(st, job, res, out, before){
+  try{ const A=st.airframes&&st.airframes[job.ac]; if(A && !res.crash){ const lost=before-A.h; if(lost>12){ A.h=before-12; if(A.log[0]) A.log[0].d=12; } if(A.h>=25) A.grounded=0; out.notes=out.notes.map(n=>/airframe health:/.test(n)?n.replace(/\d+%( \(−\d+\))?/, `${A.h}%${before-A.h>1?` (−${before-A.h})`:''}`):n); } }catch(_){}
+}
+/* Weekly challenges and personal records (not after a crash). */
+function weeklyAndRecords(st, job, f, res, out){
+  const W=weeklyState(st); const to=st.log[0]?st.log[0].to:job.to; const c={st,job,f,res,out,to,fpm:f.verified?f.simFpm:null};
+  for(const ch of weekPicks(W.key)){ if(W.done[ch.id]) continue;
+    if(ch.set){ W.sets[ch.id]=W.sets[ch.id]||[]; const k=ch.key(c); if(k && !W.sets[ch.id].includes(k)) W.sets[ch.id].push(k); W.prog[ch.id]=W.sets[ch.id].length; }
+    else if(ch.test(c)) W.prog[ch.id]=(W.prog[ch.id]||0)+1;
+    if((W.prog[ch.id]||0)>=ch.goal){ W.done[ch.id]=true; txn(st, ch.cash, 'Gifts & windfalls', `Weekly challenge: ${ch.n}`); st.reputation=clamp(st.reputation+2,0,100); out.pay+=ch.cash; out.notes.push(`Weekly challenge complete: ${ch.n}! +${money(ch.cash)}, reputation +2.`); }
+  }
+  if(!W.champ && weekPicks(W.key).every(ch=>W.done[ch.id])){ W.champ=true; txn(st, 1000, 'Gifts & windfalls', 'Weekly champion'); out.pay+=1000; out.notes.push(`All three weekly challenges done. Weekly champion bonus: ${money(1000)}.`); st.weeksWon=(st.weeksWon||0)+1; }
+  const R = st.records = st.records || {};
+  const nm = plan(job).dist;
+  if(f.verified && (R.fpm==null || f.simFpm < R.fpm.v)) { R.fpm={v:f.simFpm, at:`${job.from}→${to}`, day:st.day}; out.notes.push(`New personal record: softest landing, ${f.simFpm} fpm.`); }
+  if(!job.local && (R.long==null || nm > R.long.v)) R.long={v:nm, at:`${job.from}→${to}`, day:st.day};
+  if(R.score==null || res.score > R.score.v) R.score={v:res.score, at:`${job.from}→${to}`, day:st.day};
+  if(job.pax && typeof job.comfort==='number' && (R.comfort==null || job.comfort > R.comfort.v)) R.comfort={v:job.comfort, at:`${job.from}→${to}`, day:st.day};
+  R.streak = res.grade==='A' ? (R.streak||0)+1 : 0; if(!R.bestStreak || R.streak > R.bestStreak) R.bestStreak = R.streak;
+}
+
+function afterFlight(st, job, f, res, out){
+  const s=st.stats; const landedAt = f.landedAt || job.to;
+  const cabin = job._cab;
+  const healthBefore = st.airframes && st.airframes[job.ac] ? st.airframes[job.ac].h : 100;
+  // counters
+  st.landedAt = st.landedAt || {}; if(!res.crash){ st.landedAt[landedAt] = (st.landedAt[landedAt]||0)+1; }
+  if(isNight(job.dep)) s.night=(s.night||0)+1;
+  if(job.wx.ifr) s.ifr=(s.ifr||0)+1;
+  if(!job.local && ZONE(AP[job.from].c)!==ZONE(AP[landedAt].c)) s.intl=(s.intl||0)+1;
+  if(AP[landedAt].water && !res.crash) s.water=(s.water||0)+1;
+  if(job.arch==='relief' || job.story==='HR1' || job.story==='HR2') s.relief=(s.relief||0)+1;
+  if(job.festival) s.festival=(s.festival||0)+1;
+  s.aStreak = res.grade==='A' ? (s.aStreak||0)+1 : 0;
+  // bonus objective
+  if(job.bonus && !res.crash){
+    let met = !!f.bonus;
+    if(job.bonus.auto==='fpm' && f.verified) met = f.simFpm < 150;
+    if(job.bonus.auto==='fpm' && !f.verified) met = f.landing==='butter' || (f.landing==='smooth' && !!f.bonus);
+    if(job.bonus.auto==='block') met = f.block <= plan(job).est*1.1 + 2;
+    out.bonusMet = met;
+    if(met){ const amt = job.company ? Math.round(job.bonus.amt*2.6) : job.bonus.amt; txn(st, amt, 'Tips & bonuses', 'Bonus objective'); out.pay += amt; s.bonus=(s.bonus||0)+1; out.notes.push(`Bonus objective met: ${job.bonus.text.replace(/\.$/,'')}. +${money(amt)}.`); }
+    else out.notes.push(`Bonus objective missed: ${job.bonus.text.replace(/\.$/,'')}.`);
+  }
+  // review
+  const rv = makeReview(st, job, f, res);
+  if(rv){ st.reviews = st.reviews || []; st.reviews.unshift(rv); st.reviews = st.reviews.slice(0,60); out.review = rv; }
+  if(job.mystery) s.mystery=(s.mystery||0)+1;
+  surpriseAfter(st, job, f, res, out);
+  finAfterFlight(st, job, f, res, out);
+  out.ach = checkAch(st);
+  out.rank = rankOf(st).name;
+  // Starling charter clients remember good flights
+  if(job.arch==='starling' && !res.crash){ st.rep.vivienne = clamp((st.rep.vivienne||10) + ({A:3,B:2,C:1,D:0,F:-2}[res.grade]||0), 0, 100); if(res.grade==='A' || res.grade==='B') st.rep.abe = clamp((st.rep.abe||10)+1,0,100); }
+  // passenger comfort
+  if(job.pax && typeof job.comfort==='number' && !res.crash){
+    out.notes.push(`Passenger comfort: ${job.comfort}/100.`);
+    if(job.comfort>=90 && !job.company){ const tip=Math.max(20, Math.round(job.pay*0.08/10)*10); txn(st, tip, 'Tips & bonuses', 'Comfort bonus'); out.pay += tip; out.notes.push(`The passengers loved the ride: ${money(tip)} comfort bonus.`); }
+    else if(job.comfort<50){ st.reputation = clamp(st.reputation-2,0,100); out.notes.push(`A rough ride. Word gets around: reputation −2.`); }
+  }
+  // the instructor's summary
+  { const line = coachSummary(job, cabin); if(line) out.notes.push(line); }
+  // flying in real MSFS weather pays a bonus
+  { const W=job._wx; if(W && !res.crash && !job.company){ const rough = W.maxWind>=25 || W.minVis<3 || W.cloud;
+      if(rough){ const b=Math.max(25, Math.round(job.pay*0.15/10)*10); txn(st, b, 'Tips & bonuses', 'Weather bonus'); out.pay += b; out.notes.push(`You flew real MSFS weather (${W.maxWind} kt max wind${W.minVis<3?`, ${W.minVis} sm visibility`:''}${W.cloud?', in cloud':''}): ${money(b)} weather bonus.`); } }
+    setTimeout(()=>{ maybeCall(st, 0.22); },0); }
+  if(!res.crash) weeklyAndRecords(st, job, f, res, out);
+  // difficulty
+  if(diff()==='expert' && !res.crash && job.kind!=='check' && !job.company){ const b=Math.round(out.pay*0.15/10)*10; if(b>0){ txn(st,b,'Tips & bonuses','Expert pay'); out.pay+=b; out.notes.push(`Expert difficulty: +${money(b)} (15%).`); } }
+  if(diff()==='casual' && job.comfort!=null && job.comfort<50) st.reputation=clamp(st.reputation+2,0,100); // undo the rough-ride penalty
+  // urgent jobs: the 2× rate needs wheels up inside the window
+  if(job.realtime && job.wheelsUpBy && !res.crash){ const t = job._toAt || null;
+    if(!t || t > job.wheelsUpBy){ const cut=Math.round(out.pay/2/10)*10; txn(st,-cut,'Flight pay','Missed urgent window'); out.pay-=cut; out.notes.push(t?`Wheels up ${Math.round((t-job.wheelsUpBy)/60000)} min late: the 2× urgent rate became standard pay.`:`MSFS didn't record a takeoff, so the urgent 2× rate couldn't be confirmed. Paid at the standard rate.`); }
+    else out.notes.push(`Wheels up with ${Math.round((job.wheelsUpBy-t)/60000)} min to spare. Full 2× urgent pay.`); }
+  if(!job.company) wearAirframe(st, job, f, res, out);
+  // each passenger's verdict, and their tips
+  { const M=job.manifest; if(M && !res.crash){
+      const t=(job._cab&&job._cab.tally)||{}; const v=M.map(p=>Object.assign({p}, paxVerdict(p,job,f,res,t))); out.manifest=v;
+      const tips = v.reduce((sum,x)=>sum + (x.s===5 ? (x.p.trait==='vip'?60:20) : 0), 0);
+      if(tips>0 && !job.company){ txn(st,tips,'Tips & bonuses','Passenger tips'); out.pay+=tips; out.notes.push(`Passenger tips: ${money(tips)}.`); } } }
+  // the weekly landing league
+  if(st.log[0] && !st.log[0].at) st.log[0].at=Date.now();
+  { const rows=leagueRows(st); const i=rows.findIndex(x=>x.me); if(i===0 && f.verified && rows.length>1) out.notes.push(`You're top of this week's landing league, ahead of ${rows[1].n}.`); else if(i>0 && f.verified) out.notes.push(`Landing league: you're #${i+1} this week. ${rows[0].n} leads with ${rows[0].fpm} fpm.`); }
+  capWear(st, job, res, out, healthBefore);
+}
+
+/* ---------- a new day ---------- */
+
+function rest(st){
+  const cashBefore = st.cash;
+  backupNow(st);
+  st.day += 1; st.clock = 420; st.duty = 0; st.jobsKey = '';
+  const net = companyTick(st);
+  finDaily(st); newDayBrief(st); checkAch(st);
+  st.call=null; maybeCall(st, 0.35);
+  // aircraft are repaired overnight: 12% a day, 24% while grounded; anything at 25%+ can fly
+  for(const id in (st.airframes||{})){ const A=st.airframes[id]; A.h=Math.min(100, A.h + (isGrounded(st,id)?18:6)); if(A.grounded && st.day>=A.grounded && A.h>=40) A.grounded=0; }
+  try{ for(const id in (st.airframes||{})){ const A=st.airframes[id]; A.h=Math.min(100, A.h+6); if(A.h>=25) A.grounded=0; } }catch(_){}
+  // Heat: Boss rank cools it; hot airports cool off after 3 days
+  try{ const c=crime(st); if(c.power>=85) crBump(c,'heat',-2); for(const k in (c.hot||{})) if(st.day-c.hot[k]>3) delete c.hot[k]; }catch(_){}
+  // fleet upkeep and crew wages; a safehouse cools Heat
+  try{ const c=crime(st); const L=dailyCosts(st); const tot=L.reduce((s,x)=>s+x[1],0); if(tot){ txn(st,-tot,'Operation','Fleet upkeep and crew wages'); setTimeout(()=>toast(`Daily costs: ${money(tot)} for your fleet and crew.`),400); }
+    const lv=safeLevel(st); if(lv>=0) crBump(c,'heat',-(lv+1)); }catch(_){}
+  // lying low while the feds watch cools Heat faster
+  try{ if(fedsWatching(st)) crBump(crime(st),'heat',-4); }catch(_){}
+  // Heat cools by 1 every day on its own
+  try{ const c=crime(st); if(c.on) crBump(c,'heat',-1); }catch(_){}
+  // daily costs never push cash below zero: what you can't pay costs Heat instead
+  try{ if(st.cash<0 && cashBefore>=0){ const short=-st.cash; txn(st, short, 'Operation', 'Costs you couldn\'t cover (owed to Castillo\'s people)'); const c=crime(st); if(c.on) crBump(c,'heat',2); setTimeout(()=>toast(`You couldn't cover ${money(short)} of today's costs. People talk: Heat +2.`), 600); } }catch(_){}
+  return net;
 }
 /* ===================== RENDER =====================
    render() redraws the whole page from S (what's on screen) and S.st (the career).

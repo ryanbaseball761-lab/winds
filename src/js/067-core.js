@@ -214,15 +214,6 @@ function crBump(c, k, v){ c[k]=clamp(Math.round((c[k]||0)+v), k==='con'?-10:0, k
 
 
 /* ---- after a chapter: power, heat, customs searches; side jobs are legit cover that cools the heat ---- */
-const _crApply = applyResult;
-applyResult = function(st, job, f, res){ const r=_crApply(st, job, f, res); try{ const c=crime(st); const o=st.last&&st.last.out;
-  if(job.kind==='story' && CRIME_IDS.has(job.story) && !res.crash){
-    if(job.story==='CR4') c.on=true;
-    else if(c.on){ crBump(c,'power',2); crBump(c,'heat',4);
-      }
-    if(o){ const m=CRIME.find(x=>x.id===job.story); if(m && m.choice) o.notes=o.notes.filter(n=>!/^Choices stick/.test(n)); } }
-  else if(c.on && !res.crash && job.kind==='gen'){ crBump(c,'heat',-2); }
-  }catch(_){} return r; };
 
 /* ---- choices: two or three options, each changes Power / Heat / cash / people ---- */
 function crimeChoiceHTML(st){ const L=st.last; const j=L&&L.job; if(!j || j.kind!=='story' || !CRIME_IDS.has(j.story) || (L.res&&L.res.crash)) return null;

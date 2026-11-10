@@ -14,8 +14,6 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="open-se
 /* 5. laundering through Dez stops if Dez is in prison; a money changer takes his place */
 (function(){ const _lo=launderOpts; launderOpts=function(st){ let L=_lo(st); const f=crime(st).flags; if(f.dezJail) L=L.map(o=>o.id==='dez'?{id:'changer',n:'A money changer in Philipsburg',fee:0.3,heat:4}:o); return L; }; })();
 
-/* 6. Heat cools by 1 every new day on its own */
-(function(){ const _rs=rest; rest=function(st){ const r=_rs(st); try{ const c=crime(st); if(c.on) crBump(c,'heat',-1); }catch(_){} return r; }; })();
 
 
 
@@ -46,8 +44,6 @@ document.addEventListener('click', e=>{ const s=e.target.closest('.cut-skip'); i
 /* 17. M shows or hides the menu in flight mode */
 document.addEventListener('keydown', e=>{ if(e.key.toLowerCase()!=='m' || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || e.ctrlKey||e.metaKey||e.altKey) return; if(document.body.classList.contains('flying') || S.fmMenu){ S.fmMenu=!S.fmMenu; S.keepScroll=true; render(); } });
 
-/* 18. flight mode resets after you land, so the next flight starts clean */
-(function(){ const _ap=applyResult; applyResult=function(){ S.fmMenu=false; S.openJob=null; return _ap.apply(this, arguments); }; })();
 
 /* 19. the result screen's Next button for a story chapter says which chapter */
 (function(){ const _r=resultView; resultView=function(){ const h=_r(); try{ const MC=mainChapters(); const nx=MC.find(m=>!S.st.story.done[m.id]); if(!nx) return h; const n=MC.indexOf(nx)+1; return h.replace(/(<div class="row next-bar">[\s\S]*?)Next: ([^<(]+)/, `$1Chapter ${n}: $2`); }catch(_){ return h; } }; })();

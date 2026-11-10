@@ -8,9 +8,6 @@ function leagueRows(st){
 }
 function weekOfDay(l){ return l.at ? isoWeek(new Date(l.at)) : isoWeek(); }
 /* stamp real time on new log entries so weeks line up */
-const _rvAfter = afterFlight;
-afterFlight = function(st, job, f, res, out){ const r=_rvAfter(st, job, f, res, out); if(st.log[0] && !st.log[0].at) st.log[0].at=Date.now();
-  const rows=leagueRows(st); const i=rows.findIndex(x=>x.me); if(i===0 && f.verified && rows.length>1) out.notes.push(`You're top of this week's landing league, ahead of ${rows[1].n}.`); else if(i>0 && f.verified) out.notes.push(`Landing league: you're #${i+1} this week. ${rows[0].n} leads with ${rows[0].fpm} fpm.`); return r; };
 const _rvWeekly = weeklyPanel;
 weeklyPanel = function(st){ const rows=leagueRows(st);
   const t=`<div class="league"><p class="label">Landing league · this week</p><ol>${rows.slice(0,6).map((r,i)=>`<li class="${r.me?'me':''}"><span>${i+1}</span><b>${esc(r.n)}</b><span class="mono">${r.fpm} fpm</span></li>`).join('')}</ol>${rows.some(r=>r.me)?'':'<p class="tiny muted">Land with MSFS connected to join the league.</p>'}</div>`;

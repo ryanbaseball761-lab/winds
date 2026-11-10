@@ -34,8 +34,6 @@ safeSay = function(key, text, every){ if(key==='fuel'){ const a=S.st&&S.st.activ
 
 /* ---- 5 + 6. no duty day, no "past midnight": the day rolls over by itself ---- */
 dutyAfter = function(){ return 0; };
-const _fbApply = applyResult;
-applyResult = function(st, job, f, res){ const r=_fbApply(st, job, f, res); try{ st.duty=0; const o=st.last&&st.last.out; if(o) o.notes=o.notes.filter(n=>!/past midnight/i.test(n)); if(st.clock>=1440){ rest(st); if(o) o.notes.push('A new day starts with fresh jobs on the board.'); } }catch(_){} return r; };
 const _fbBoard = boardView;
 boardView = function(){ const h=_fbBoard(); if(S.view!=='board'||!S.st) return h; const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h;
   main.querySelectorAll('section, .notice, aside > *').forEach(s=>{ if(!s.parentNode) return; const ht=headText(s); if((/Duty day/.test(ht) || /out of duty time/i.test(s.textContent)) && !/Travel as a passenger/.test(s.textContent)) s.remove(); });
@@ -56,8 +54,6 @@ genJobs = function(st){ const L=_fbGen(st); try{ if(!hasRating(st,'COMM')) retur
     const opts=SPECIALS.filter(m=>m.from===st.loc && !st.specialDone[m.id] && !st.story.done[m.id] && ratingsOk(st,(m.req||{}).ratings||[]) && m.ac.some(k=>canFly(st,k) && apOk(st,m.to,k)));
     if(opts.length && Math.random()<0.6){ const m=pick(opts); const acId=m.ac.find(k=>canFly(st,k) && apOk(st,m.to,k)); const j=storyJob(st,m,acId);
       Object.assign(j,{kind:'gen', arch:'special', story:undefined, special:m.id, label:'Special charter', id:'X-'+m.id+'-'+st.day}); j.pay=Math.round(payFor(st,j)*1.4/10)*10; L.unshift(j); } }catch(_){} return L; };
-const _fbApply2 = applyResult;
-applyResult = function(st, job, f, res){ const r=_fbApply2(st, job, f, res); try{ if(job.special && !res.crash){ st.specialDone=st.specialDone||{}; st.specialDone[job.special]=1; const m=SPECIALS.find(x=>x.id===job.special); const o=st.last&&st.last.out; if(m && o){ const tone=(res.grade==='A'||res.grade==='B')?'good':res.grade==='C'?'ok':'bad'; o.story=m.out[tone]; } } }catch(_){} return r; };
 
 /* ---- sealed orders that don't match the sky: weather scenarios need real weather ---- */
 const WX_SCEN = new Set(['squall']);

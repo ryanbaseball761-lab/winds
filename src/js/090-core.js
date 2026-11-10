@@ -11,8 +11,6 @@ hudHTML = function(a){ let h=_m1Hud(a); try{ const s=S.sim||{}; const job=a.job;
   if(extra.length) h=h.replace('<div class="fhud-cells">','<div class="fhud-cells">'+extra.join(''));
   if(goal) h=h.replace('</section>', goal+'</section>'); }catch(_){} return h; };
 
-/* ---- 2. result screen: pay counts up, Power and Heat show what changed ---- */
-(function(){ const _ap=applyResult; applyResult=function(st,job,f,res){ const c=crime(st); const p0=c.power, h0=c.heat; const r=_ap(st,job,f,res); try{ st.last.delta={power:c.power-p0, heat:c.heat-h0}; }catch(_){} return r; }; })();
 const _m2Res = resultView;
 resultView = function(){ const h=_m2Res(); const L=S.st&&S.st.last; if(!L||!L.delta||!crime().on) return h; const d=L.delta, c=crime(); if(!d.power && !d.heat) return h;
   const bar=(n,v,dv,col)=>`<div class="dbar"><span>${n}</span><div class="db-t"><i style="width:${Math.max(0,v-Math.max(0,dv))}%;background:${col}"></i><i class="db-new" style="width:${Math.abs(dv)}%;background:${dv>=0?col:'transparent'};${dv<0?`outline:1px dashed ${col}`:''}"></i></div><b>${v} <small class="${dv>0?'up':dv<0?'down':''}">${dv>0?'+':''}${dv||''}</small></b></div>`;
@@ -34,7 +32,6 @@ ACH.push(
   {id:'cx_radar',n:`Under the Radar`,d:`Earn a low-level bonus on a network run.`,t:s=>!!(s.crime&&s.crime.radar)}
 );
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="launder"]'); if(!b||!S.st) return; const c=crime(); c.laundered=(c.laundered||0)+(c.dirty||0); }, true);
-(function(){ const _ap=applyResult; applyResult=function(st,job,f,res){ const before=new Set(Object.keys(st.ach||{})); const r=_ap(st,job,f,res); try{ const o=st.last&&st.last.out; if(o && o.notes.some(n=>/^Under the radar:/.test(n))) crime(st).radar=1; checkAch(st); const fresh=ACH.filter(a=>st.ach&&st.ach[a.id]&&!before.has(a.id)); fresh.forEach((a,i)=>setTimeout(()=>achPop(a), 1200+i*2600)); }catch(_){} return r; }; })();
 function achPop(a){ const d=document.createElement('div'); d.className='achpop'; d.innerHTML=`<span>Achievement</span><b>${esc(a.n)}</b><small>${esc(a.d)}</small>`; document.body.appendChild(d); try{ chimeUp&&chimeUp(); }catch(_){} setTimeout(()=>{ d.classList.add('out'); setTimeout(()=>d.remove(),500); }, 3800); }
 
 /* ---- 4 + 5. story page: trust with each person, your numbers, and replay any chapter's scenes ---- */

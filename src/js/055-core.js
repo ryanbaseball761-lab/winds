@@ -5,10 +5,6 @@ makeBonus = function(job){ const amt=Math.max(30, Math.round(job.pay*0.2/10)*10)
   return ({ butter:{k, amt, text:`Grease it: touch down under 150 fpm`, auto:'fpm'}, ontime:{k, amt, text:`Arrive on time: block time within 10% of the plan`, auto:'block'},
     zone:{k, amt, text:`Put it on the aiming point: touch down 400–1,800 ft past the threshold`, auto:'zone'}, center:{k, amt, text:`Land on the centerline: within 10 ft`, auto:'center'},
     comfort:{k, amt, text:`Keep the cabin happy: comfort 90 or better at the end`, auto:'comfort'} })[k]; };
-const _smApply = applyResult;
-applyResult = function(st, job, f, res){ try{ const b=job.bonus; if(b && f){ const A=f.tda;
-    if(b.auto==='zone') f.bonus = !!(A && A.zone==='aim'); else if(b.auto==='center') f.bonus = !!(A && !A.approx && Math.abs(A.xt)<=10); else if(b.auto==='comfort') f.bonus = f.comfort!=null && f.comfort>=90; else if(!b.auto) f.bonus = false; } }catch(_){}
-  return _smApply(st, job, f, res); };
 
 /* ---- the flight starts itself when MSFS shows you've started the engine at the departure airport ---- */
 const _smSim = renderSimBits;

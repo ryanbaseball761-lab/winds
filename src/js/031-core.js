@@ -5,27 +5,7 @@ const _wCanFly = canFly;
 canFly = function(st, id){ return _wCanFly(st, id) && !isGrounded(st, id); };
 const _wStoryAc = storyAircraft;
 storyAircraft = function(st, m){ return _wStoryAc(st, m).filter(k=>!isGrounded(st,k)); };
-const _wAfter = afterFlight;
-afterFlight = function(st, job, f, res, out){
-  const r=_wAfter(st, job, f, res, out); if(job.company) return r;
-  const A=airframe(st, job.ac); const t=(job._cab&&job._cab.tally)||{}; const why=[];
-  let dmg = 1;
-  if(res.crash){ dmg+=60; why.push('accident'); }
-  else if(f.landing==='hard'){ dmg+=12; why.push('hard landing'); } else if(f.landing==='firm'){ dmg+=3; }
-  if(f.simBounces>1){ dmg+=3*(f.simBounces-1); why.push('bounced landing'); }
-  if(f.simG && f.simG>1.8){ dmg+=8; why.push(`${f.simG} G touchdown`); }
-  if(t.flapOver){ dmg+=8*t.flapOver; why.push('flap overspeed'); } if(t.flapDmg){ dmg+=20; why.push('flap damage'); }
-  if(t.overspeed){ dmg+=6*t.overspeed; why.push('overspeed'); } if(t.gearOver){ dmg+=8; why.push('gear overspeed'); }
-  if(f.landing==='butter' && !res.crash) dmg=Math.max(0,dmg-1);
-  A.h = Math.max(0, A.h - dmg); A.log.unshift({day:st.day, d:dmg, why:why.join(', ')||'normal wear'}); A.log=A.log.slice(0,10);
-  if(dmg>=10 && !job.lend){ const cost=Math.round(dmg*18/10)*10; txn(st,-cost,'Accidents & fines',`Damage deductible: ${AC[job.ac].n}`); out.costs=(out.costs||0)+cost; out.notes.push(`Dez inspected the ${AC[job.ac].n}: ${why.join(', ')}. Your damage deductible is ${money(cost)}.`); }
-  out.notes.push(`${AC[job.ac].n} airframe health: ${A.h}%${dmg>1?` (−${dmg})`:''}.`);
-  if(A.h < 40){ A.grounded = st.day + (A.h<20?3:2); out.notes.push(`It's grounded for repairs until day ${A.grounded}. Dez is not happy.`); addJournal(st, `${AC[job.ac].n} grounded`, `Dez takes one look and reaches for his toolbox. "This one sits until I say so."`, ['dez'], 'flight'); }
-  return r;
-};
 /* Dez works on the fleet overnight */
-const _wRest = rest;
-rest = function(st){ const r=_wRest(st); for(const id in (st.airframes||{})){ const A=st.airframes[id]; A.h=Math.min(100, A.h + (isGrounded(st,id)?18:6)); if(A.grounded && st.day>=A.grounded && A.h>=40) A.grounded=0; } return r; };
 /* tired airframes sometimes misbehave */
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="accept"],[data-act="accept-story"],[data-act="call-yes"],[data-act="urg-yes"]'); if(!b) return;

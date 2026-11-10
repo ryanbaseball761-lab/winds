@@ -19,26 +19,6 @@ function seasonOf(st){ const d=new Date(Date.UTC(2026,5,1)+ (st.day-1)*864e5); c
   return m>=5 && m<=10 ? {n:`Hurricane season`, d:`June to November. Tropical waves and storms roll through. Relief flights pay well; watch the forecasts.`, c:'#3d5a80'}
     : m===11 || m<=3 ? {n:`High season`, d:`Winter tourists flood the islands. More VIP and charter work, busier airports.`, c:'#d9532f'}
     : {n:`Shoulder season`, d:`Quieter skies between the winter rush and the storms.`, c:'#0b746f'}; }
-const _wkAfter = afterFlight;
-afterFlight = function(st, job, f, res, out){
-  const r=_wkAfter(st, job, f, res, out); if(res.crash) return r;
-  const W=weeklyState(st); const to=st.log[0]?st.log[0].to:job.to; const c={st,job,f,res,out,to,fpm:f.verified?f.simFpm:null};
-  for(const ch of weekPicks(W.key)){ if(W.done[ch.id]) continue;
-    if(ch.set){ W.sets[ch.id]=W.sets[ch.id]||[]; const k=ch.key(c); if(k && !W.sets[ch.id].includes(k)) W.sets[ch.id].push(k); W.prog[ch.id]=W.sets[ch.id].length; }
-    else if(ch.test(c)) W.prog[ch.id]=(W.prog[ch.id]||0)+1;
-    if((W.prog[ch.id]||0)>=ch.goal){ W.done[ch.id]=true; txn(st, ch.cash, 'Gifts & windfalls', `Weekly challenge: ${ch.n}`); st.reputation=clamp(st.reputation+2,0,100); out.pay+=ch.cash; out.notes.push(`Weekly challenge complete: ${ch.n}! +${money(ch.cash)}, reputation +2.`); }
-  }
-  if(!W.champ && weekPicks(W.key).every(ch=>W.done[ch.id])){ W.champ=true; txn(st, 1000, 'Gifts & windfalls', 'Weekly champion'); out.pay+=1000; out.notes.push(`All three weekly challenges done. Weekly champion bonus: ${money(1000)}.`); st.weeksWon=(st.weeksWon||0)+1; }
-  // personal records
-  const R = st.records = st.records || {};
-  const nm = plan(job).dist;
-  if(f.verified && (R.fpm==null || f.simFpm < R.fpm.v)) { R.fpm={v:f.simFpm, at:`${job.from}→${to}`, day:st.day}; out.notes.push(`New personal record: softest landing, ${f.simFpm} fpm.`); }
-  if(!job.local && (R.long==null || nm > R.long.v)) R.long={v:nm, at:`${job.from}→${to}`, day:st.day};
-  if(R.score==null || res.score > R.score.v) R.score={v:res.score, at:`${job.from}→${to}`, day:st.day};
-  if(job.pax && typeof job.comfort==='number' && (R.comfort==null || job.comfort > R.comfort.v)) R.comfort={v:job.comfort, at:`${job.from}→${to}`, day:st.day};
-  R.streak = res.grade==='A' ? (R.streak||0)+1 : 0; if(!R.bestStreak || R.streak > R.bestStreak) R.bestStreak = R.streak;
-  return r;
-};
 function weeklyPanel(st){
   const W=weeklyState(st); const picks=weekPicks(W.key); const s=seasonOf(st);
   return `<section class="panel stack weekly"><div class="row between"><div><p class="label">This week · ${esc(W.key)}</p><h3>Weekly challenges</h3></div><span class="chip">${weekEnds()}</span></div>

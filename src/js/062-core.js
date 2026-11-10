@@ -14,23 +14,14 @@ touchdownAnalysis = function(code, td){ const A=_frTda(code, td); if(A && A.runw
 /* 4 + 5. fairer landing grades, and a checkride isn't failed for a firm 373 fpm landing */
 landingClass = function(fpm){ const d=diff(); const T = d==='expert' ? [80,170,320] : d==='casual' ? [130,260,600] : [110,220,450]; return fpm<T[0]?'butter':fpm<T[1]?'smooth':fpm<T[2]?'firm':'hard'; };
 LANDING.hard.pts = 10; LANDING.firm.pts = 20;
-const _frApplyCk = applyResult;
-applyResult = function(st, job, f, res){ if(job.kind==='check' && f && f.landing==='hard' && (f.simFpm||0) < 550 && !res.crash){ f.landing='firm'; } return _frApplyCk(st, job, f, res); };
 
 /* 6. local flights (tours, circuits, searches) were planned twice as long as they really take */
 const _frPlan = plan;
 plan = function(job){ const p=_frPlan(job); if(job && job.local){ p.est = Math.max(10, Math.round(p.est*0.6)); } return p; };
 
 /* 7. one rough landing shouldn't ground a plane: damage per flight is capped and Dez repairs more overnight */
-const _frAfter = afterFlight;
-afterFlight = function(st, job, f, res, out){ const before = st.airframes && st.airframes[job.ac] ? st.airframes[job.ac].h : 100; const r=_frAfter(st, job, f, res, out);
-  try{ const A=st.airframes&&st.airframes[job.ac]; if(A && !res.crash){ const lost=before-A.h; if(lost>12){ A.h=before-12; if(A.log[0]) A.log[0].d=12; } if(A.h>=25) A.grounded=0; out.notes=out.notes.map(n=>/airframe health:/.test(n)?n.replace(/\d+%( \(−\d+\))?/, `${A.h}%${before-A.h>1?` (−${before-A.h})`:''}`):n); } }catch(_){} return r; };
-const _frRest = rest;
-rest = function(st){ const r=_frRest(st); try{ for(const id in (st.airframes||{})){ const A=st.airframes[id]; A.h=Math.min(100, A.h+6); if(A.h>=25) A.grounded=0; } }catch(_){} return r; };
 
 /* 8. cargo flights are graded on the cargo, not on passengers who aren't there */
-const _frScore = score;
-score = function(job, f){ const r=_frScore(job, f); if(job && !job.pax && r.parts){ r.parts=r.parts.map(p=>/^Passenger experience/.test(p[0]) ? ['Cargo care', f.landing==='hard'?6:10, 10] : p); const tot=clamp(Math.round(r.parts.reduce((s,p)=>s+p[1],0)),0,100); r.score=tot; r.grade=gradeOf(tot); } return r; };
 
 /* 9. no "Finish flight" button before the flight has started (too easy to press by mistake) */
 const _frPass = boardingPass;

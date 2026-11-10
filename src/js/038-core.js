@@ -45,14 +45,6 @@ function paxVerdict(p, job, f, res, t){
   if(p.trait==='vip'){ s = res.grade==='A' && comfort>=90 ? 5 : res.grade<='B' ? 4 : 2; line = s===5?`"Flawless. I'll ask for you next time."`:s===4?`"Acceptable."`:`"My assistant will be in touch."`; }
   return {s, line};
 }
-const _mfAfter = afterFlight;
-afterFlight = function(st, job, f, res, out){
-  const r=_mfAfter(st, job, f, res, out); const M=job.manifest; if(!M || res.crash) return r;
-  const t=(job._cab&&job._cab.tally)||{}; const v=M.map(p=>Object.assign({p}, paxVerdict(p,job,f,res,t))); out.manifest=v;
-  const tips = v.reduce((sum,x)=>sum + (x.s===5 ? (x.p.trait==='vip'?60:20) : 0), 0);
-  if(tips>0 && !job.company){ txn(st,tips,'Tips & bonuses','Passenger tips'); out.pay+=tips; out.notes.push(`Passenger tips: ${money(tips)}.`); }
-  return r;
-};
 const _mfResult = resultView;
 resultView = function(){ const h=_mfResult(); const v=S.st.last&&S.st.last.out&&S.st.last.out.manifest; if(!v) return h;
   const sec=`<section class="panel stack"><p class="label">Your passengers</p><div class="mf-list">${v.map(x=>`<div class="mf"><span class="mf-ic">${TRAITS[x.p.trait].i}</span><div><b>${esc(x.p.name)}</b> <span class="stars small">${'★'.repeat(x.s)}${'☆'.repeat(5-x.s)}</span><span class="small">${esc(x.line)}</span></div></div>`).join('')}</div></section>`;

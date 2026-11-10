@@ -6,8 +6,6 @@ const SAFEHOUSES = [ {id:'flat',n:'Apartment in Philipsburg',cost:25000,perk:'He
   {id:'strip',n:'Private strip on a quiet cay',cost:600000,perk:'Network runs pay +20%, Heat −3 every new day'} ];
 function safeLevel(st){ const c=crime(st); return SAFEHOUSES.findIndex(s=>s.id===c.safe); }
 function dailyCosts(st){ const d=st.story.done; const L=[]; FLEET.forEach(f=>{ if(d[f[0]] && UPKEEP[f[1]]) L.push([`${f[2]} (${f[3]}) upkeep`, UPKEEP[f[1]]]); }); const c=crime(st); if(c.crew){ for(const k in WAGES) if(crewHas(st,k)) L.push([`${CREW.find(x=>x.id===k).n} wages`, WAGES[k]]); } return L; }
-(function(){ const _rs=rest; rest=function(st){ const r=_rs(st); try{ const c=crime(st); const L=dailyCosts(st); const tot=L.reduce((s,x)=>s+x[1],0); if(tot){ txn(st,-tot,'Operation','Fleet upkeep and crew wages'); setTimeout(()=>toast(`Daily costs: ${money(tot)} for your fleet and crew.`),400); }
-  const lv=safeLevel(st); if(lv>=0) crBump(c,'heat',-(lv+1)); }catch(_){} return r; }; })();
 (function(){ const _g=genJobs; genJobs=function(st){ const L=_g(st); try{ if(crime(st).safe==='strip') L.forEach(j=>{ if(j.network) j.pay=Math.round(j.pay*1.2/10)*10; }); }catch(_){} return L; }; })();
 const _ecLaunder = launderOpts;
 launderOpts = function(st){ const L=_ecLaunder(st); return safeLevel(st)>=1 ? L.map(o=>Object.assign({},o,{fee:Math.max(0.03,o.fee-0.05)})) : L; };

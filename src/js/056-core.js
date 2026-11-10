@@ -23,13 +23,6 @@ const _mrIf = inflightView;
 inflightView = function(){ const h=_mrIf(); const a=S.st&&S.st.active; if(!a || !a.job.ask || !a.askShown) return h; return h.replace(/(<section class="if-head">[\s\S]*?<\/section>)/, m=>m+`<section class="notice ask-note"><b>Cabin request (+${money(a.job.ask.amt)}):</b> ${esc(a.job.ask.text)}</section>`); };
 
 /* ---- 5. diversions for a good reason are paid fairly ---- */
-const _mrApply = applyResult;
-applyResult = function(st, job, f, res){ const r=_mrApply(st, job, f, res); try{ const o=st.last&&st.last.out; if(!o) return r; const rec=S.sim&&S.sim.recorder;
-    // cabin request
-    if(job.ask && !res.crash){ const met=askMet(job, rec); if(met===true){ txn(st, job.ask.amt, 'Tips & bonuses', 'Cabin request'); o.pay+=job.ask.amt; o.notes.push(`Cabin request done: +${money(job.ask.amt)}. The passengers noticed.`); } else if(met===false) o.notes.push(`Cabin request not done this time. No harm done.`); }
-    // fair diversion
-    const landed=f.landedAt||job.to; if(!res.crash && !job.local && !job.scen && landed!==job.to && AP[landed]){ const w=(S.sim&&S.sim.ext&&S.sim.ext.weather)||null; const lowFuel = res.fuelMin!=null && res.fuelMin < plan(job).reserveMin*1.2; const badWx = w && (w.visSm<3 || w.windKt>AC[job.ac].xw+5 || w.inCloud) || job.wx.ifr;
-      if(lowFuel || badWx){ const extra=Math.round(job.pay*0.35/10)*10; txn(st, extra, 'Flight pay', 'Diversion allowance'); o.pay+=extra; o.notes.push(`Good call diverting to ${landed} (${lowFuel?'fuel':'weather'}). The client pays three quarters of the fare.`); st.reputation=clamp(st.reputation+1,0,100); } } }catch(_){} return r; };
 
 /* ---- 6. a clear "how you did" at the top of the result ---- */
 function debriefSummary(L){ const {res,f,out,job}=L; const parts=(res.parts||[]).map(p=>({n:p[0], pts:p[1], max:p[2], r:p[2]?p[1]/p[2]:1}));

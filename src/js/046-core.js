@@ -11,8 +11,6 @@ function uiPrefs(){ const st=S.st; st.ui = st.ui || {}; return st.ui; }
 
 function checkUnlocks(){ const st=S.st; if(!st) return; const ui=uiPrefs(); ui.seen = ui.seen || {}; const label=Object.fromEntries(VIEWS);
   for(const k in TAB_UNLOCK){ if(ui.seen[k]) continue; if(TAB_UNLOCK[k].t(st)){ ui.seen[k]=1; if(st.flights>0) setTimeout(()=>toast(`New tab unlocked: ${label[k]||k}`), 1200); } } }
-const _dcApply = applyResult;
-applyResult = function(st, job, f, res){ const r=_dcApply(st, job, f, res); try{ checkUnlocks(); }catch(_){} return r; };
 
 /* ---- fewer interruptions ---- */
 
@@ -54,8 +52,6 @@ async function writeFlightLog(job, f, res){ const T=S.trace; if(!window.twNative
   const d=new Date(); const name=`${d.toISOString().slice(0,16).replace(/[:T]/g,'-')}_${job.from}_${job.local?job.from:job.to}.json`;
   const rec = S.sim && S.sim.recorder; const body={ app: (typeof TW_VERSION!=='undefined'?TW_VERSION:''), difficulty:diff(), job:{id:job.id,title:job.title,from:job.from,to:job.to,ac:job.ac,kind:job.kind,scen:job.scen||null,dep:job.dep,est:job.est}, result:{score:res.score, grade:res.grade, parts:res.parts}, input:Object.assign({}, f, {td:f.td||null}), recorder:rec||null, samples:(T&&T.id===job.id)?T.samples:[], aircraftTitle:S.sim&&S.sim.aircraft&&S.sim.aircraft.title, errors:errLog().slice(-10) };
   try{ await twNative.flightLog(name, JSON.stringify(body)); }catch(_){} S.trace=null; }
-const _dcApply2 = applyResult;
-applyResult = function(st, job, f, res){ const r=_dcApply2(st, job, f, res); try{ if(f && f.verified) writeFlightLog(job, f, res); }catch(_){} return r; };
 /* ---- a calmer job board ---- */
 const _dcDispatch = dispatchCard;
 dispatchCard = function(st){ let h=_dcDispatch(st); const n=(st.brief&&st.brief.msgs||[]).length;

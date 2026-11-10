@@ -37,9 +37,6 @@ playPrologue = function(m, done){ const st=S.st; const MC=mainChapters(); const 
   shots.push({card:true, kicker:`Chapter ${MC.indexOf(m)+1} of ${MC.length}`, title:m.title, sub:`<p>${esc((CH_GOAL[m.id]||[])[0]||'')}</p>`, auto:2600});
   cutscene({shots, col:act.col, art:sceneArt(m.from, m.dep, m.ac[0]), onEnd:done}); };
 
-/* ---- the right outcome text when choices changed the chapter ---- */
-(function(){ const _ap=applyResult; applyResult=function(st, job, f, res){ const r=_ap(st, job, f, res); try{ if(job.kind==='story' && CRIME_IDS.has(job.story) && !res.crash){ const o=st.last&&st.last.out; const m=CRIME.find(x=>x.id===job.story); const mm=dynM(st,m); const outs=job.out||mm.out;
-    const tone=(res.grade==='A'||res.grade==='B')?'good':res.grade==='C'?'ok':'bad'; if(o && outs && outs[tone]) o.story=outs[tone]; } }catch(_){} return r; }; })();
 
 /* ---- after a chapter: what happened, your decision, and what it led to, all as one scene ---- */
 function fxSub(o){ const b=[]; if(o.power) b.push(`Power ${o.power>0?'+':''}${o.power>=100?'max':o.power}`); if(o.heat) b.push(`Heat ${o.heat>0?'+':''}${o.heat<=-100?'cleared':o.heat}`); if(o.cash) b.push(`${o.cash>0?'+':'−'}${money(Math.abs(o.cash))}`); return b.join(' · '); }

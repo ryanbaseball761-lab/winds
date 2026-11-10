@@ -28,11 +28,6 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="practic
   const L=loadedAircraft(); const acId=(L.id && AC[L.id]) ? L.id : (eligibleAircraft(st).find(k=>apOk(st,code,k)) || 'C172');
   const dep=Math.round(st.clock/5)*5; const job={ id:'P-'+uid(), kind:'practice', practice:true, label:'Practice', cat:'pax', from:code, to:code, local:true, tourNm:15, ac:acId, pax:0, cargo:0, dep, wx:genWx(st,code,null,dep), title:`Practice landing at ${AP[code].isl}`, client:'', paras:[`Take off, fly a circuit, and land. No pay and nothing goes in your logbook: just your landing grade, the runway diagram and the copilot calls.`] };
   job.pay=0; job.est=plan(job).est; st.active={job, accepted:Date.now()}; save(); S.showResult=false; go('flight'); toast('Practice: start the engine in MSFS and fly a circuit.'); });
-const _tsApply = applyResult;
-applyResult = function(st, job, f, res){ if(!job.practice) return _tsApply(st, job, f, res);
-  const out={ id:job.id, title:job.title, grade:res.grade, score:res.score, parts:res.parts, pay:0, costs:0, notes:['Practice flight: no pay, and nothing was added to your logbook or career.'], ok:true, story:'', jobKind:'practice' };
-  if(f.verified) out.notes.push(`Recorded by MSFS: touchdown at ${f.simFpm} fpm${f.simBounces?`, ${f.simBounces} bounce${f.simBounces>1?'s':''}`:''}.`);
-  st.active=null; st.last={job, res, out, f}; save(); return out; };
 
 /* ---- "something's off": a note saved into the flight's log ---- */
 function noteBox(){ return `<div class="note-box" role="dialog" aria-label="Report something"><p class="label">Something's off?</p><textarea id="tw-note" rows="3" placeholder="What happened? e.g. callout came late, wrong runway, plane rolled on descent"></textarea><div class="row"><button class="btn sm primary" data-act="note-save">Save note</button><button class="btn sm ghost" data-act="note-cancel">Cancel</button></div></div>`; }
