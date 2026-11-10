@@ -11,7 +11,8 @@ const uid = () => Math.random().toString(36).slice(2,9);
 const money = n => (n<0?'-':'') + '$' + Math.abs(Math.round(n)).toLocaleString('en-US');
 const fmtH = min => (min/60).toFixed(1) + ' h';
 const pad = n => String(n).padStart(2,'0');
-const hhmm = m => { m = ((Math.round(m)%1440)+1440)%1440; return pad(Math.floor(m/60)) + ':' + pad(m%60); };
+/* Times of day are shown as 9:30 PM, the same way the story scenes write them. */
+const hhmm = m => { m = ((Math.round(m)%1440)+1440)%1440; const h=Math.floor(m/60); return `${(h%12)||12}:${pad(m%60)} ${h<12?'AM':'PM'}`; };
 const durTxt = m => { m = Math.round(m); const h = Math.floor(m/60); return h ? `${h} h ${pad(m%60)} min` : `${m} min`; };
 const toR = Math.PI/180;
 function distNm(a,b){ const R=3440.065; const dLat=(b.lat-a.lat)*toR, dLon=(b.lon-a.lon)*toR; const h=Math.sin(dLat/2)**2+Math.cos(a.lat*toR)*Math.cos(b.lat*toR)*Math.sin(dLon/2)**2; return 2*R*Math.asin(Math.sqrt(h)); }

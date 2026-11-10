@@ -98,6 +98,7 @@ function playAftermath(){
   splitOut(L.out.story).forEach(t=>shots.push([here, null, t]));
   const nextCard=()=>{ const nx=MC.find(x=>!st.story.done[x.id]); const cc=crime(st); const out=[];
     if(cc.ending){ epilogue(st).forEach(t=>out.push(['Years later', null, t])); out.push({card:true, kicker:'The end', title:{kingpin:'Kingpin',witness:'Witness',ghost:'Ghost'}[cc.ending]||'The end', sub:`<p>Thank you for playing the main story. Side jobs and the Starling story are still out there.</p>`}); return out; }
+    if(m.id==='CR4' && st.jetPaid) out.push([`Text message`, 'castillo', `Your jet training is paid for. ${money(st.jetPaid)} is in your account. Book the checkride. Don't make me wait.`]);
     out.push({card:true, kicker:'Chapter complete', title:m.title, sub:`${cc.on?`<p class="cut-meters"><span>Power ${cc.power}</span><span>Heat ${cc.heat}</span><span>${esc(crimeRank(cc))}</span></p>`:''}${nx?`<p>Next: <b>${esc(nx.title)}</b> · ${esc(nx.hook||'')}</p>`:''}`}); return out; };
   if(m.choice && c.choice[m.id]==null && !L.res.crash){
     const opts=m.choice.opts.map(o=>({t:o.t, why: (m.id==='CR17' && o.ending && typeof ENDING_REQ!=='undefined') ? ENDING_REQ[o.ending](c) : null}));

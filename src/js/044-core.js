@@ -12,7 +12,7 @@ function trySyncWx(){ const a=S.st&&S.st.active; if(!a || a.started || !syncPref
 const _syncChecks = preflightChecks;
 preflightChecks = function(job){ const out=_syncChecks(job); const m=simMinutes(); if(m==null) return out;
   const diffMin = Math.abs((((m - job.dep) % 1440) + 1440 + 720) % 1440 - 720); const ok = diffMin <= 45;
-  out.splice(2,0,{k:'time', ok, t: ok?`MSFS time ${S.sim.simLocalTime} matches`:`MSFS time is ${S.sim.simLocalTime}, flight planned for ${hhmm(job.dep)}`, d: ok?'':`Set the MSFS time to ${hhmm(job.dep)}, or move this flight to the sim's time.`, act: ok?null:'pf-usetime', actLabel:'Use MSFS time'});
+  out.splice(2,0,{k:'time', ok, t: ok?`MSFS time ${hhmm(simMinutes())} matches`:`MSFS time is ${hhmm(simMinutes())}, flight planned for ${hhmm(job.dep)}`, d: ok?'':`Set the MSFS time to ${hhmm(job.dep)}, or move this flight to the sim's time.`, act: ok?null:'pf-usetime', actLabel:'Use MSFS time'});
   const wxOk = !!(job.wx&&job.wx.live); out.push({k:'wx', ok:wxOk, t: wxOk?'Briefing uses live MSFS weather':'Briefing weather is generated', d: wxOk?'':(atDeparture(job)?'':'It switches to your MSFS weather once you\'re at the departure airport.'), act: (!wxOk && simWx())?'pf-usewx':null, actLabel:'Use MSFS weather'});
   return out; };
 /* show the per-item fix buttons */

@@ -59,7 +59,7 @@ function simPanelHTML(){
       <dt>Altitude</dt><dd class="mono">${pos.altFt.toLocaleString()} ft · ${m.vsFpm>0?'+':''}${m.vsFpm} fpm</dd>
       <dt>Fuel</dt><dd class="mono">${sys.fuelLb.toLocaleString()} lb (${sys.fuelGal} gal)</dd>
       ${distTo}
-      ${s.simLocalTime?`<dt>Sim time</dt><dd class="mono">${s.simLocalTime}${job?` (planned ${hhmm(job.dep)})`:''}</dd>`:''}
+      ${s.simLocalTime?`<dt>Sim time</dt><dd class="mono">${(t=>hhmm(Number(t[0])*60+Number(t[1])))(s.simLocalTime.split(":"))}${job?` (planned ${hhmm(job.dep)})`:''}</dd>`:''}
     </dl>
     ${rec ? `<div><p class="label">Flight recorder · ${esc(rec.phase.replace('-',' '))}</p><ul class="tight small" style="margin-top:4px">
       ${rec.blockOut?`<li>Block out recorded${rec.blockMinutes!=null?` · ${durTxt(rec.blockMinutes)} so far`:''}</li>`:'<li>Waiting for you to start taxiing</li>'}

@@ -176,6 +176,9 @@ const AFTER_RESULT = [
       else if(c.on){ crBump(c,'power',2); crBump(c,'heat',4); }
       if(o){ const m=CRIME.find(x=>x.id===job.story); if(m && m.choice) o.notes=o.notes.filter(n=>!/^Choices stick/.test(n)); } }
     else if(c.on && !res.crash && job.kind==='gen'){ crBump(c,'heat',-2); } },
+  /* The Offer (chapter 4): Castillo promised to pay for your jet rating, and he does, right away */
+  function castilloPaysJetRating(st, job, f, res){ if(job.story!=='CR4' || res.crash || st.jetPaid || st.ratings.JET) return; const amt=feeFor(st,'JET'); st.jetPaid=amt;
+    txn(st, amt, 'Gifts & windfalls', 'Castillo: your jet rating'); const o=st.last&&st.last.out; if(o){ o.pay+=amt; o.notes.unshift(`Castillo paid for your jet rating: +${money(amt)}. Book the Jet Type Rating checkride on the Pilot page.`); } },
   /* Caribe Cargo (chapter 16) becomes your own company: buy aircraft, hire crews and run routes from the Airline page */
   function caribeCargoCompany(st, job, f, res){ if(job.story!=='CR15' || res.crash) return; const o=st.last&&st.last.out;
     if(!st.company){ st.company={name:'Caribe Cargo', base:job.to, fleet:[], ledger:[], founded:st.day, story:true}; st.ratings.CO=true; if(o) o.notes.unshift('Caribe Cargo is your company now. Spend your money on aircraft, crews and routes on the Pilot → Airline page.'); }

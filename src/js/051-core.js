@@ -44,7 +44,18 @@ async function fetchParking(icao){ if(!S.mcp || S.park[icao] && (S.park[icao].sp
 function parkingRowHTML(job){ if(job.local===undefined) return ''; const s=suggestParking(job); const live=S.simState==='live'; const atDep = live && S.sim.position && distNm({lat:S.sim.position.lat,lon:S.sim.position.lon},AP[job.from])<3;
   return `<div class="park-row"><span class="pf-ic">P</span><div><b>Spawn at: ${esc(s.text)}</b><span class="tiny muted">${s.generic?`In the MSFS world map, choose ${esc(job.from)} and pick a parking spot of this type near runway ${s.rw?esc(s.rw.id):''}.`:'Pick this spot in the MSFS world map when you load in, or use the button once you\'re in the sim.'}</span></div>${!s.generic && atDep && S.sim.motion && S.sim.motion.gs<1 ? `<button class="btn xs" data-act="park-move">Move me there</button>`:''}</div>`; }
 async function autoClock(){ const a=S.st&&S.st.active; if(!a || a.started || a._clockSet || !(S.st.pro?S.st.pro.autoTime!==false:true) || S.simState!=='live' || !S.mcp) return; const s=S.sim; if(!s || !s.motion || !s.motion.onGround || !atDeparture(a.job)) return;
-  a._clockSet=true; try{ const r=await S.mcp.callTool(SIM_SERVER,'set_time',{localMin:a.job.dep},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} } if(o && o.ok) toast(`MSFS clock set to ${hhmm(a.job.dep)} for this flight.`); }catch(_){} }
+  a._clockSet=true; const r=await setSimClock(a.job.dep); if(r.ok) toast(`MSFS clock set to ${hhmm(a.job.dep)} for this flight.`); }
+/* Sets the MSFS clock, then reads back what MSFS actually shows and corrects it once if it's off
+   (MSFS can apply the time-zone shift differently from what the bridge expects). */
+async function setSimClock(target){
+  const send=async m=>{ const r=await S.mcp.callTool(SIM_SERVER,'set_time',{localMin:((Math.round(m)%1440)+1440)%1440},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} } return o||{}; };
+  const readBack=async()=>{ await new Promise(r=>setTimeout(r,2500)); try{ await simPoll(true); }catch(_){} return simMinutes(); };
+  const diffMin=(a,b)=>{ const d=((a-b)%1440+1440)%1440; return d>720?d-1440:d; };
+  try{ let o=await send(target); if(!o.ok) return o;
+    const now=await readBack(); if(now==null) return o;
+    const off=diffMin(now,target); if(Math.abs(off)<=3) return o;
+    o=await send(target-off); const again=await readBack(); return Object.assign({}, o, {ok: !!o.ok && (again==null || Math.abs(diffMin(again,target))<=3)});
+  }catch(e){ return {ok:false, error:e.message}; } }
 document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="park-move"]') || !S.st || !S.st.active) return; const s=suggestParking(S.st.active.job); if(!s.spot) return;
   try{ const r=await S.mcp.callTool(SIM_SERVER,'move_to',{lat:s.spot.lat, lon:s.spot.lon, hdg:s.spot.hdg},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} } toast(o&&o.ok?`Moved to ${s.spot.name}.`:`Couldn't move: ${o&&o.error||'update the MSFS Bridge'}`); }catch(err){ toast('Moving the aircraft needs the Trade Winds app (or MSFS Bridge 1.5).'); } });
 /* after "Start flight": keep the loading tools until you take off */
@@ -92,4 +103,4 @@ const MAINLAND = ['KMIA','KFLL','KPBI','KTEB','KJFK','KATL','KORD','MMUN','MZBZ'
 const _tfChecks = preflightChecks;
 preflightChecks = function(job){ const out=_tfChecks(job); const t=out.find(c=>c.k==='time'); if(t && !t.ok && window.twNative){ t.act='pf-settime'; t.actLabel=`Set MSFS to ${hhmm(job.dep)}`; t.d='Or set the time in the MSFS weather & time panel.'; } return out; };
 document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="pf-settime"]') || !S.st || !S.st.active || !S.mcp) return; const job=S.st.active.job;
-  try{ const r=await S.mcp.callTool(SIM_SERVER,'set_time',{localMin:job.dep},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} } toast(o&&o.ok?`MSFS clock set to ${hhmm(job.dep)}.`:`Couldn't set the clock: ${o&&o.error||'unknown'}`); setTimeout(()=>simPoll(true), 1200); }catch(_){ toast('Setting the clock needs the Trade Winds app.'); } });
+  const o=await setSimClock(job.dep); toast(o.ok?`MSFS clock set to ${hhmm(job.dep)}.`:`Couldn't set the clock${o.error?': '+o.error:''}. Set it in the MSFS time panel.`); setTimeout(()=>simPoll(true), 1200); });
