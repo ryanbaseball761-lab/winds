@@ -16,8 +16,6 @@ settingsHTML = function(){ let h=_p20Set(); const d=diff();
   return h.replace('<div class="set-grid">', '<div class="set-grid">'+extra); };
 
 /* 5. the copilot never reads out an impossible landing number */
-const _p20Say = copilotSay;
-copilotSay = function(text, key){ const m=String(text).match(/(\d{4,}) feet per minute/); if(m && Number(m[1])>1500) text='Down and safe.'; return _p20Say(text, key); };
 
 
 /* 7. result: what next, right at the top; the share card folds away */
@@ -54,10 +52,6 @@ pilotView = function(){ return _p20Pilot().replace(/(reputation \d+)/, '<span ti
 
 /* 12. sealed orders and cabin requests never pop up on short final */
 function nearDestination(a){ const s=S.sim; if(!a||!s||!s.position||S.simState!=='live') return false; const dest=a.job.local?AP[a.job.from]:AP[a.job.to]; return distNm({lat:s.position.lat,lon:s.position.lon},dest)<8 && (s.position.aglFt||0)<2000 && !a.job.local || (s.position.aglFt||0)<800; }
-const _p20Orders = openOrders;
-openOrders = function(a, how){ if(a && !a.opened && nearDestination(a)) return; return _p20Orders(a, how); };
-const _p20Take = takeover;
-takeover = function(o){ const a=S.st&&S.st.active; if(o && /Request from the cabin/.test(o.kicker||'') && nearDestination(a)) { if(a) a.askShown=false; return; } return _p20Take(o); };
 
 /* 13. the approach card on local flights only shows when you're coming back down */
 const _p20Appr = approachCard;

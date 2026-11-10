@@ -14,9 +14,6 @@ function askMet(job, rec){ const a=job.ask; if(!a || !rec) return null; const tr
   if(a.k==='coast') return tr.some(t=>t[2]<1500 && t[2]>300 && distNm({lat:t[0],lon:t[1]},to)>5 && distNm({lat:t[0],lon:t[1]},fr)>5);
   return null; }
 /* reveal the request once you're on your way */
-const _mrSim = renderSimBits;
-renderSimBits = function(){ _mrSim(); try{ const a=S.st&&S.st.active; if(!a || !a.started || !a.job.ask || a.askShown || S.simState!=='live') return; const s=S.sim; if(!s||!s.motion||s.motion.onGround) return;
-    const pr=ifProgress(a); if(pr.pct!=null && pr.pct<20) return; a.askShown=true; save(); takeover({kind:'orders', kicker:`Request from the cabin · +${money(a.job.ask.amt)}`, title:'Can you do something for us?', text:a.job.ask.text, sub:'Checked automatically from MSFS when you land. Optional.', ms:9000}); S.keepScroll=true; render(); }catch(_){} };
 const _mrIf = inflightView;
 inflightView = function(){ const h=_mrIf(); const a=S.st&&S.st.active; if(!a || !a.job.ask || !a.askShown) return h; return h.replace(/(<section class="if-head">[\s\S]*?<\/section>)/, m=>m+`<section class="notice ask-note"><b>Cabin request (+${money(a.job.ask.amt)}):</b> ${esc(a.job.ask.text)}</section>`); };
 
@@ -56,8 +53,6 @@ function adoptSpec(){ const s=S.sim, st=S.st; if(!s || !s.spec || S.simState!=='
   if(sp.maxGrossLb>sp.emptyLb && sp.emptyLb>500){ const u=sp.maxGrossLb-sp.emptyLb; if(Math.abs(u-a.useful)/a.useful<0.5) r.useful=Math.round(u); }
   const cap=(sp.fuelGal||0); if(cap>5 && a.burn>0){ const dens=a.fuel==='avgas'?6:6.7; const rng=Math.round(cap*dens/a.burn*(r.cruise||a.cruise)*0.85); if(Math.abs(rng-a.range)/a.range<0.6) r.range=rng; }
   if(Object.keys(r).length){ st.acReal[id]=r; Object.assign(a, r); save(); toast(`Using your MSFS ${a.n} numbers for planning.`); } else st.acReal[id]={}; }
-const _mrSim2 = renderSimBits;
-renderSimBits = function(){ _mrSim2(); try{ adoptSpec(); }catch(_){} };
 
 /* ---- 8. every main chapter says what's at stake ---- */
 const CH_GOAL = {

@@ -68,12 +68,6 @@ function simPanelHTML(){
       ${rec.blockIn?`<li>Block in: ${durTxt(rec.blockMinutes)} total, ${rec.fuelUsedLb} lb used</li>`:''}
     </ul></div>` : (a ? `<p class="small muted">${a.started?'Recorder not linked to this flight yet.':'Press Start flight and the recorder arms automatically.'}</p>` : '')}`;
 }
-function renderSimBits(){
-  const el=document.getElementById('simpanel'); if(el) el.innerHTML = simPanelHTML();
-  const h=document.getElementById('sim-hangar'); if(h) h.innerHTML = simHangarHTML();
-  const b=document.getElementById('sim-band'); if(b) b.innerHTML = S.simState==='live' ? '● MSFS live' : '';
-  const d=document.getElementById('sim-debrief'); if(d && S.st && S.st.active) d.innerHTML = simDebriefHTML(S.st.active.job);
-}
 function simHangarHTML(){
   return `<div class="row between"><h3>Live MSFS connection</h3>${simStatusLine()}</div>
   <p class="small">The MSFS Bridge is a small program on your PC that reads MSFS 2020 or 2024 through SimConnect and hands this page your position, fuel and an automatic flight recording: block out, takeoff, touchdown rate, landing spot and block in. The debrief fills itself in from it.</p>

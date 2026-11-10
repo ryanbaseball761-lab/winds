@@ -14,11 +14,7 @@ function connCard(st){ const live=S.simState==='live'; const s=S.sim||{}; const 
   </div></section>`; }
 const _tsBoard = boardView;
 boardView = function(){ const h=_tsBoard(); if(S.view!=='board'||!S.st) return h; return h.replace(/(<section[^>]*class="today[\s\S]*?<\/section>)/, m=>m+connCard(S.st)); };
-const _tsSim = renderSimBits;
-renderSimBits = function(){ _tsSim(); try{ if(S.view==='board'){ const el=document.querySelector('.conn-card'); if(el){ const t=tpl(connCard(S.st)); el.replaceWith(t.content.firstElementChild); } } }catch(_){} };
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="calm-test"]'); if(!b||!S.st) return; S.st.ui=S.st.ui||{}; S.st.ui.calmTest=b.checked; if(b.checked) (S.st.jobs||[]).forEach(j=>{ j.scen=null; delete j.ask; }); save(); toast(b.checked?'Calm test mode on: plain A-to-B flights.':'Calm test mode off.'); S.keepScroll=true; render(); });
-const _tsOrders = openOrders;
-openOrders = function(a, how){ if(testMode()) return; return _tsOrders(a, how); };
 
 /* ---- practice landing: no pay, no logbook, just the grade ---- */
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="practice"]') || !S.st || S.st.active) return; const st=S.st; const s=S.sim;

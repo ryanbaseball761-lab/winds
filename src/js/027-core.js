@@ -20,8 +20,6 @@ mapView = function(){
   const box = `<div class="livebox"><span class="dot-live"></span><b>Live</b><span>${esc(L.job.from)} → ${esc(L.job.local?L.job.from:L.job.to)}</span><span class="mono">${Math.round(L.togo)} nm to go</span>${L.eta!=null?`<span class="mono">ETA ${L.eta} min</span>`:''}<span class="mono">${L.gs} kt · ${L.alt.toLocaleString()} ft</span></div>`;
   return h.replace('<div class="grid-2">', box+'<div class="grid-2">');
 };
-const _lvRender = renderSimBits;
-renderSimBits = function(){ _lvRender(); if(S.view==='map' && S.st && S.st.active && S.simState==='live'){ S.keepScroll=true; render(); } };
 
 /* ---------- replay: keep the path and approach with the result ---------- */
 function replaySvgPath(track, w, h){

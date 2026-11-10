@@ -14,14 +14,6 @@ const VIEW_META = {
 const NAV_GROUP_NAMES = ['Fly','Career','Business'];
 function initials(n){ return n.split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('') || 'P'; }
 /* sim status text lives in the sidebar now */
-const _shellRenderSim = renderSimBits;
-renderSimBits = function(){
-  _shellRenderSim();
-  const b=document.getElementById('sim-band'); if(b) b.textContent = S.simState==='live' ? 'MSFS live' : 'Sim not connected';
-  const d=document.querySelector('.simdot'); if(d) d.classList.toggle('on', S.simState==='live');
-  try{ cabinTick(); }catch(e){}
-  document.querySelectorAll('.cabin-host').forEach(el=>{ el.innerHTML = cabinInner(); });
-};
 /* keep the mobile rail scrolled to the active tab */
 (function(){ const app=document.getElementById('app'); if(!app || !window.MutationObserver) return;
   new MutationObserver(()=>{ const t=app.querySelector('.mrail .tab[aria-current="page"]'); const rail=t&&t.parentElement; if(!rail || rail.scrollWidth<=rail.clientWidth) return; rail.scrollLeft=Math.max(0, t.offsetLeft-(rail.clientWidth-t.offsetWidth)/2); }).observe(app,{childList:true});

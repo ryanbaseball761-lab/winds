@@ -45,8 +45,6 @@ function speakNew(){
   for(const m of list){ const t=spokenText(m); if(!t) continue; const sp=speakerFor(m.who, a.job);
     try{ const u=new SpeechSynthesisUtterance(t); if(sp.voice) u.voice=sp.voice; u.rate=sp.rate; u.pitch=sp.pitch; u.volume=voiceVol(); speechSynthesis.speak(u); }catch(e){} }
 }
-const _vRender = renderSimBits;
-renderSimBits = function(){ autoArm(); _vRender(); try{ speakNew(); }catch(e){} };
 
 /* voice toggle in the Cabin & radio panel */
 const _vCabin = cabinInner;

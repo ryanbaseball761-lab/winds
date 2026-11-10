@@ -1654,12 +1654,6 @@ function simPanelHTML(){
       ${rec.blockIn?`<li>Block in: ${durTxt(rec.blockMinutes)} total, ${rec.fuelUsedLb} lb used</li>`:''}
     </ul></div>` : (a ? `<p class="small muted">${a.started?'Recorder not linked to this flight yet.':'Press Start flight and the recorder arms automatically.'}</p>` : '')}`;
 }
-function renderSimBits(){
-  const el=document.getElementById('simpanel'); if(el) el.innerHTML = simPanelHTML();
-  const h=document.getElementById('sim-hangar'); if(h) h.innerHTML = simHangarHTML();
-  const b=document.getElementById('sim-band'); if(b) b.innerHTML = S.simState==='live' ? '● MSFS live' : '';
-  const d=document.getElementById('sim-debrief'); if(d && S.st && S.st.active) d.innerHTML = simDebriefHTML(S.st.active.job);
-}
 function simHangarHTML(){
   return `<div class="row between"><h3>Live MSFS connection</h3>${simStatusLine()}</div>
   <p class="small">The MSFS Bridge is a small program on your PC that reads MSFS 2020 or 2024 through SimConnect and hands this page your position, fuel and an automatic flight recording: block out, takeoff, touchdown rate, landing spot and block in. The debrief fills itself in from it.</p>
@@ -3366,14 +3360,6 @@ const VIEW_META = {
 const NAV_GROUP_NAMES = ['Fly','Career','Business'];
 function initials(n){ return n.split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('') || 'P'; }
 /* sim status text lives in the sidebar now */
-const _shellRenderSim = renderSimBits;
-renderSimBits = function(){
-  _shellRenderSim();
-  const b=document.getElementById('sim-band'); if(b) b.textContent = S.simState==='live' ? 'MSFS live' : 'Sim not connected';
-  const d=document.querySelector('.simdot'); if(d) d.classList.toggle('on', S.simState==='live');
-  try{ cabinTick(); }catch(e){}
-  document.querySelectorAll('.cabin-host').forEach(el=>{ el.innerHTML = cabinInner(); });
-};
 /* keep the mobile rail scrolled to the active tab */
 (function(){ const app=document.getElementById('app'); if(!app || !window.MutationObserver) return;
   new MutationObserver(()=>{ const t=app.querySelector('.mrail .tab[aria-current="page"]'); const rail=t&&t.parentElement; if(!rail || rail.scrollWidth<=rail.clientWidth) return; rail.scrollLeft=Math.max(0, t.offsetLeft-(rail.clientWidth-t.offsetWidth)/2); }).observe(app,{childList:true});
@@ -3448,42 +3434,6 @@ const COACH = {
   stableApp:[`Stable approach. On speed, nice and steady. Keep it there.`],
   butter:[`Now THAT is how you land an airplane.`,`Greaser. I'm telling everyone.`]
 };
-function coachTick(){
-  const st=S.st; const a=st && st.active; const s=S.sim; if(!a || !s || S.simState!=='live' || !s.motion) return;
-  const rec = simRecFor(a); if(!rec) return;
-  a.cab = a.cab || {f:{}, log:[], comfort:100, cd:0}; const C=a.cab; C.cc=C.cc||{}; C.tally=C.tally||{};
-  const job=a.job, now=Date.now(), x=s.ext, m=s.motion, pos=s.position||{};
-  const who = shortName(coachFor(job));
-  const say = (key, text, cd=60000, crit=false, once=false) => {
-    if(once && C.cc[key]) return; if(C.cc[key] && now-C.cc[key] < cd) return;
-    C.cc[key]=now; C.tally[key]=(C.tally[key]||0)+1;
-    C.log.unshift({t:now, who, text, kind: crit?'crit':'coach'}); C.log=C.log.slice(0,14);
-    if(crit){ C.callout={t:now, who, text}; toast(`${who}: ${text}`.slice(0,150)); }
-  };
-  const air = !m.onGround && rec.takeoff && !(rec.touchdown && rec.phase!=='airborne');
-  const distTo = (!job.local && AP[job.to] && pos.lat!=null) ? distNm({lat:pos.lat,lon:pos.lon},AP[job.to]) : null;
-  const final = air && distTo!=null && distTo < 5 && pos.aglFt < 1200 && m.vsFpm < 200;
-  const vapp = vappOf(job.ac);
-  if(m.onGround && !rec.takeoff && m.gs < 1 && x && Math.abs(x.controls.yokeX) > 0.15) say('stickOff', pick(COACH.stickOff).replace('{p}', Math.round(Math.abs(x.controls.yokeX)*100)), 0, true, true);
-  if(x){
-    if(x.flaps.overspeed) say('flapOver', pick(COACH.flapOver), 20000, true);
-    if(x.flaps.damaged) say('flapDmg', pick(COACH.flapDmg), 0, true, true);
-    if(Math.abs(x.flaps.left - x.flaps.right) > 12) say('flapSplit', pick(COACH.flapSplit), 30000, true);
-    if(x.gear.overspeed) say('gearOver', pick(COACH.gearOver), 30000, true);
-    if(x.warnings.stall && air) say('stall', pick(COACH.stall), 15000, true);
-    if(x.warnings.overspeed && air) say('overspeed', pick(COACH.overspeed), 30000, true);
-    if(air && Math.abs(x.attitude.bank) > 45){ if(!C.cc.bank || now-C.cc.bank>=45000){ if(job.pax) C.comfort=Math.max(0,C.comfort-6); } say('bank', pick(COACH.bank), 45000, false); }
-    if(air && Math.abs(x.attitude.bank) > 40 && Math.abs(x.controls.yokeX) < 0.06 && !x.autopilot) say('rollNoInput', pick(COACH.rollNoInput).replace('{b}', Math.abs(x.attitude.bank)), 60000, true);
-    if(final && x.gear.retractable && !x.gear.down && pos.aglFt < 800) say('gearUp', pick(COACH.gearUp), 20000, true);
-    if(rec.takeoff && !C.cc.noLightChecked){ C.cc.noLightChecked=now; if(!x.lights.landing && now - rec.takeoff.t < 60000) say('noLight', pick(COACH.noLight), 0, false, true); }
-  }
-  if(air && rec.takeoff && now - rec.takeoff.t < 90000 && pos.aglFt > 400 && m.vsFpm > 300) say('goodTakeoff', pick(COACH.goodTakeoff), 0, false, true);
-  if(final && pos.aglFt < 700 && m.vsFpm < -1100) say('sink', pick(COACH.sink), 25000, true);
-  if(final && vapp && pos.aglFt < 1000 && m.ias > vapp + 20) say('fast', pick(COACH.fast).replace('{v}', vapp), 30000, false);
-  if(final && vapp && pos.aglFt < 600 && m.ias < vapp - 12) say('slow', pick(COACH.slow).replace('{v}', vapp), 30000, true);
-  if(final && vapp && pos.aglFt < 600 && pos.aglFt > 300 && Math.abs(m.ias - vapp) <= 8 && m.vsFpm > -900 && m.vsFpm < -300) say('stableApp', pick(COACH.stableApp), 0, false, true);
-  if(rec.touchdown && rec.touchdown.fpm < 100) say('butter', pick(COACH.butter), 0, false, true);
-}
 function coachSummary(job, C){
   if(!C || !C.tally) return null; const t=C.tally; const bad=['flapOver','flapDmg','flapSplit','gearOver','gearUp','stall','overspeed','bank','sink','fast','slow'];
   const lbl={flapOver:'flap overspeed',flapDmg:'flap damage',flapSplit:'split flaps',gearOver:'gear overspeed',gearUp:'gear-up warning',stall:'stall warning',overspeed:'overspeed',bank:'steep bank',sink:'sink rate on final',fast:'fast on final',slow:'slow on final'};
@@ -3492,8 +3442,6 @@ function coachSummary(job, C){
   return items.length ? `${who}'s notes: ${items.join(', ')}.` : (t.stableApp ? `${who}'s notes: clean flight, stable approach. Keep flying like that.` : null);
 }
 /* hook into the live loop */
-const _coachRender = renderSimBits;
-renderSimBits = function(){ try{ coachTick(); }catch(e){} _coachRender(); document.querySelectorAll('.callout-host').forEach(el=>{ el.innerHTML = calloutHTML(); }); };
 function calloutHTML(){ const a=S.st&&S.st.active; const c=a&&a.cab&&a.cab.callout; if(!c || Date.now()-c.t > 20000) return ''; return `<div class="callout"><span class="who">${esc(c.who)}</span><p>${esc(c.text)}</p></div>`; }
 function cabinInner(){
   const a=S.st && S.st.active; if(!a) return '';
@@ -3506,8 +3454,6 @@ function cabinInner(){
 const _coachCockpit = cockpitView;
 cockpitView = function(){ const h=_coachCockpit(); return h.replace('<main class="wrap stack fade cockpit">', '<main class="wrap stack fade cockpit"><div class="callout-host" aria-live="assertive">'+calloutHTML()+'</div>'); };
 /* keep a reference to the cabin on the job so the debrief can read it after the flight closes */
-const _coachTick2 = coachTick;
-coachTick = function(){ _coachTick2(); const a=S.st&&S.st.active; if(a && a.cab) a.job._cab = {tally:a.cab.tally}; };
 /* ===================== 2. LANDING REPLAY CARD (shareable image) ===================== */
 function drawFlightCard(st){
   const {job,res,f,out} = st.last; const W=1200, H=630;
@@ -3654,13 +3600,6 @@ document.addEventListener('click', e=>{
 /* ===================== 4. THINGS THAT HAPPEN TO YOU ===================== */
 
 /* ---- (a) real MSFS weather: track what you actually flew through, and pay for it ---- */
-const _evCoach = coachTick;
-coachTick = function(){
-  _evCoach();
-  const a=S.st&&S.st.active; const x=S.sim&&S.sim.ext; if(!a || !x || S.simState!=='live') return;
-  const w=x.weather; const W = a.job._wx = a.job._wx || {maxWind:0, minVis:99, cloud:false};
-  W.maxWind=Math.max(W.maxWind, w.windKt||0); W.minVis=Math.min(W.minVis, w.visSm||99); if(w.inCloud && !S.sim.motion.onGround) W.cloud=true;
-};
 function liveWxLine(){ const x=S.sim&&S.sim.ext; if(!x || S.simState!=='live') return ''; const w=x.weather;
   return `<div class="livewx"><span class="label">Live MSFS weather</span><span class="mono">${String(w.windDir).padStart(3,'0')}°/${w.windKt} kt · ${w.visSm>=10?'10+':w.visSm} sm · ${w.oatC} °C · ${w.qnhHpa} hPa${w.inCloud?' · in cloud':''}</span></div>`; }
 const _evCabin = cabinInner;
@@ -3838,8 +3777,6 @@ function speakNew(){
   for(const m of list){ const t=spokenText(m); if(!t) continue; const sp=speakerFor(m.who, a.job);
     try{ const u=new SpeechSynthesisUtterance(t); if(sp.voice) u.voice=sp.voice; u.rate=sp.rate; u.pitch=sp.pitch; u.volume=voiceVol(); speechSynthesis.speak(u); }catch(e){} }
 }
-const _vRender = renderSimBits;
-renderSimBits = function(){ autoArm(); _vRender(); try{ speakNew(); }catch(e){} };
 
 /* voice toggle in the Cabin & radio panel */
 const _vCabin = cabinInner;
@@ -3967,23 +3904,7 @@ document.addEventListener('click', e=>{
 
 /* ---- automatic debrief from the MSFS recorder ---- */
 
-function autoFinish(rec, how){
-  const st=S.st, a=st.active, job=a.job; if(!a || a._autoDone) return; a._autoDone=true;
-  const near = nearestAirport(rec.touchdown.lat, rec.touchdown.lon);
-  const landedAt = near.d < 6 ? near.code : (job.local ? job.from : job.to);
-  let landing = landingClass(rec.touchdown.fpm); if(rec.bounces>1 && landing==='butter') landing='smooth'; if(rec.bounces>2 && landing==='smooth') landing='firm';
-  const comfort = a.cab ? Math.round(a.cab.comfort) : null;
-  const block = rec.blockMinutes || Math.max(1, Math.round((Date.now()-(a.started||a.accepted))/60000));
-  const f = { landing, tdz: rec.touchdown.fpm < 400, center: rec.bounces===0, fuel: rec.fuelNowLb!=null?rec.fuelNowLb:0, fuelUnit:'lb', block, landedAt,
-    checklist: diff()==='expert' ? checklistDone(a) : true, radio:true, weather:true, smooth: comfort==null || comfort>=75, scen:null, tasks:[], bonus:false, request:false,
-    verified:true, td:rec.touchdown, simFpm:rec.touchdown.fpm, simBounces:rec.bounces, simG:rec.touchdown.g, comfort, auto:true };
-  const res = score(job, f); applyResult(st, job, f, res); S.debrief=false; S.showResult=true; S.busy.journalDone=false; save();
-  S.view='flight'; try{ history.replaceState(null,'','#flight'); }catch(_){} render(); window.scrollTo(0,0);
-  toast(how==='parked' ? 'Parked. Flight logged automatically from MSFS.' : 'Flight logged from MSFS.');
-}
 /* finish automatically once you're parked (engine off or parking brake) */
-const _dfRender = renderSimBits;
-renderSimBits = function(){ _dfRender(); const a=S.st&&S.st.active; if(!a || a._autoDone) return; const rec=autoReady(a); if(rec && rec.blockIn) autoFinish(rec,'parked'); };
 /* "Log the landing" skips the form when MSFS already has everything */
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="debrief"]'); if(!b || !S.st || !S.st.active) return;
@@ -4031,8 +3952,6 @@ document.addEventListener('click', e=>{
   st.active={job:j, accepted:Date.now()}; st.urgent=null; save(); S.debrief=false; S.showResult=false; go('flight');
 });
 /* record when the wheels actually left the ground */
-const _urRender = renderSimBits;
-renderSimBits = function(){ _urRender(); const a=S.st&&S.st.active; if(a && a.job.realtime && !a.job._toAt){ const rec=simRecFor(a); if(rec && rec.takeoff) { a.job._toAt=rec.takeoff.t; save(); } } };
 /* live countdowns + random dispatch calls while you're idle */
 setInterval(()=>{
   document.querySelectorAll('.urg-count').forEach(el=>{ el.textContent = mmss(Number(el.dataset.until)-Date.now()); });
@@ -4214,8 +4133,6 @@ function academyView(){
 }
 const _acBoard = boardView;
 boardView = function(){ return S.view==='academy' ? academyView() : _acBoard(); };
-const _acRender = renderSimBits;
-renderSimBits = function(){ _acRender(); try{ academyTick(); }catch(e){} };
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="ac-start"],[data-act="ac-next"],[data-act="ac-stop"]'); if(!b || !S.st) return; const A=acad(S.st);
   if(b.dataset.act==='ac-start'){ startLesson(b.dataset.id); return; }
@@ -4336,8 +4253,6 @@ mapView = function(){
   const box = `<div class="livebox"><span class="dot-live"></span><b>Live</b><span>${esc(L.job.from)} → ${esc(L.job.local?L.job.from:L.job.to)}</span><span class="mono">${Math.round(L.togo)} nm to go</span>${L.eta!=null?`<span class="mono">ETA ${L.eta} min</span>`:''}<span class="mono">${L.gs} kt · ${L.alt.toLocaleString()} ft</span></div>`;
   return h.replace('<div class="grid-2">', box+'<div class="grid-2">');
 };
-const _lvRender = renderSimBits;
-renderSimBits = function(){ _lvRender(); if(S.view==='map' && S.st && S.st.active && S.simState==='live'){ S.keepScroll=true; render(); } };
 
 /* ---------- replay: keep the path and approach with the result ---------- */
 function replaySvgPath(track, w, h){
@@ -4566,9 +4481,6 @@ document.addEventListener('click', e=>{
 /* going to the in-flight screen the moment you start */
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="start"]')){ S.ifBrief=false; setTimeout(()=>{ if(S.st && S.st.active && S.st.active.started){ S.view='flight'; render(); window.scrollTo(0,0); } },0); } });
 /* live refresh without disturbing the checklist */
-const _ifRender = renderSimBits;
-renderSimBits = function(){ _ifRender(); if(S.view==='flight' && S.st && S.st.active && S.st.active.started && !S.debrief && !S.showResult && !S.ifBrief){
-  const l=document.getElementById('if-live'); if(l) l.innerHTML=ifLiveHTML(); const m=document.getElementById('if-map'); if(m) m.innerHTML=ifMiniMap(S.st.active); } };
 setInterval(()=>{ const t=document.getElementById('if-timer'); if(t) t.textContent = durTxt(Math.round((Date.now()-Number(t.dataset.start))/60000)); }, 15000);
 /* ===================== PRE-FLIGHT SIM CHECK, LOAD THE PLANE, MSFS FLIGHT PLAN (.PLN) ===================== */
 function cruiseAltFor(job){ const a=AC[job.ac], d=plan(job).dist; const c=a.cls;
@@ -4632,8 +4544,6 @@ var renderPreflight; /* defined in full below (052-core.js) */
 const _pfFlight = flightView;
 flightView = function(){ const h=_pfFlight(); const a=S.st&&S.st.active; if(!a || a.started || S.debrief || S.showResult) return h;
   return h.replace(/(<\/section>)/, `$1<section class="panel stack preflight" id="preflight">${preflightHTML(a.job)}</section>`); };
-const _pfRender = renderSimBits;
-renderSimBits = function(){ _pfRender(); if(S.view==='flight') renderPreflight(); };
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="pf-load"],[data-act="pf-pln"],[data-act="pf-recheck"]'); if(!b || !S.st || !S.st.active) return; const job=S.st.active.job;
   if(b.dataset.act==='pf-load') loadIntoSim(job); else if(b.dataset.act==='pf-pln') savePLN(job); else { simPoll(true); toast('Checking MSFS…'); }
@@ -4720,16 +4630,6 @@ speakNew = function(){
 /* cabin chimes on the big moments, and the radio murmuring in the background */
 const ATC_CALLS = [`{cs}, descend and maintain four thousand.`,`{cs}, contact San Juan Center, one two four point six five.`,`{cs}, traffic two o'clock, five miles, opposite direction.`,`{cs}, turn left heading two seven zero, vectors for the I L S.`,`{cs}, climb and maintain flight level two four zero.`,`{cs}, roger, maintain V F R, report the field in sight.`,`{cs}, radar contact, altimeter three zero zero one.`,`{cs}, cleared to land runway one zero, wind zero nine zero at twelve.`];
 const CALLSIGNS = [`American twelve forty`,`JetBlue four sixty one`,`Winair one zero seven`,`LIAT three two two`,`Cessna two four Kilo Tango`,`Seaborne six zero five`,`Caribbean three five two`,`Delta eight eleven`,`Cape Air nine one`,`November five Alpha Victor`];
-let _sdFlags = {}, _sdNext = 0;
-const _sdRender = renderSimBits;
-renderSimBits = function(){ _sdRender(); const a=S.st&&S.st.active; if(!a || S.simState!=='live') return; const rec=simRecFor(a); if(!rec) return; const s=S.sim; const key=a.recId||'x'; const F=_sdFlags[key]=_sdFlags[key]||{};
-  if(a.job.pax){ if(rec.takeoff && !F.to){ F.to=1; setTimeout(()=>chime(),12000); }
-    if(!F.desc && rec.takeoff && s.motion && !s.motion.onGround && s.motion.vsFpm<-500 && s.position.aglFt<4000){ F.desc=1; chime(true); }
-    if(rec.blockIn && !F.in){ F.in=1; chime(); } }
-  const now=Date.now(); if(s.motion && !s.motion.onGround && rec.takeoff && voiceOn() && sfxOn() && window.speechSynthesis && !speechSynthesis.speaking){
-    if(!_sdNext) _sdNext = now + 45000 + Math.random()*40000;
-    if(now > _sdNext){ _sdNext = now + 70000 + Math.random()*80000; const t=pick(ATC_CALLS).replace('{cs}', pick(CALLSIGNS)); crackle(0.12,0.15); const u=new SpeechSynthesisUtterance(t); const v=pickVoice(false,1); if(v) u.voice=v; u.rate=1.18; u.pitch=0.9; u.volume=Math.min(1,voiceVol()*0.45); setTimeout(()=>{ try{ speechSynthesis.speak(u); }catch(_){} },150); } }
-};
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="sfx-toggle"]')) return; const on=!sfxOn(); try{ localStorage.setItem('tw.sfx', on?'on':'off'); }catch(_){} if(on){ crackle(); setTimeout(()=>chime(),300); } toast(on?'Radio sounds on.':'Radio sounds off.'); render(); });
 /* sound switch next to the voice switch */
 const _sdCabin = cabinInner;
@@ -4806,8 +4706,6 @@ function openBig(){ let el=document.getElementById('bigmode'); if(!el){ el=docum
 function closeBig(){ const el=document.getElementById('bigmode'); if(el) el.remove(); S.big=false; try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(_){} }
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && S.big) closeBig(); });
 document.addEventListener('fullscreenchange', ()=>{ if(!document.fullscreenElement && S.big){ /* stay open as an overlay */ } });
-const _bgRender = renderSimBits;
-renderSimBits = function(){ _bgRender(); if(S.big){ const el=document.getElementById('bigmode'); if(el) el.innerHTML=bigInner(); } };
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="big-open"]')){ e.stopPropagation(); openBig(); } });
 const _bgInflight = inflightView;
 inflightView = function(){ return _bgInflight().replace('<button class="btn sm ghost" data-act="if-brief">Briefing</button>', '<button class="btn sm ghost" data-act="big-open">⛶ Big display</button><button class="btn sm ghost" data-act="if-brief">Briefing</button>'); };
@@ -4860,8 +4758,6 @@ function cupTick(){
   S.cupResult={id:c.id, fpm, g:r.touchdown.g, b, medal, better, firstMedal}; save(); S.view='cup'; render();
   try{ if(typeof chime==='function') chime(true); if(window.speechSynthesis && voiceOn()){ const u=new SpeechSynthesisUtterance(medal?`${MEDAL[medal][1]} medal. ${fpm} feet per minute.`:`${fpm} feet per minute. No medal this time.`); u.volume=voiceVol(); speechSynthesis.speak(u); } }catch(_){}
 }
-const _cupRender = renderSimBits;
-renderSimBits = function(){ _cupRender(); try{ cupTick(); }catch(e){} };
 function cupView(){
   const st=S.st, C=cupState(st); const R=S.cupResult; const cur=C.cur?CUP.find(x=>x.id===C.cur):null;
   const golds=Object.values(C.best).filter(b=>b.medal==='gold').length;
@@ -5025,18 +4921,9 @@ function scenarioPlan(a){
   if(job.scen==='runway_closed'){ const o=divertOptions(job,pos,60); return Object.assign(base,{sim:`Hold near ${job.to} for about 20 minutes if fuel allows.${o[0]?` If not, your alternate is ${AP[o[0].k].n} (${o[0].k}), ${Math.round(o[0].d)} nm away.`:''}`, alt:o[0]?o[0].k:null}); }
   return base;
 }
-function openOrders(a, how){
-  if(a.opened) return; a.opened=true; a.scenAt=Date.now(); a.scenPlan=scenarioPlan(a); save();
-  S.ordersPop=true; toast(`Sealed orders: ${a.scenPlan.title}`);
-  try{ if(typeof crackle==='function') crackle(0.25,0.3); if(window.speechSynthesis && voiceOn()){ const u=new SpeechSynthesisUtterance(`Sealed orders. ${a.scenPlan.text} ${a.scenPlan.sim}`); u.volume=voiceVol(); const v=pickVoice(false,1); if(v) u.voice=v; speechSynthesis.cancel(); speechSynthesis.speak(u); } }catch(_){}
-  try{ if('Notification' in window && Notification.permission==='granted') new Notification('Trade Winds: sealed orders', {body:a.scenPlan.text}); }catch(_){}
-  S.keepScroll=true; render();
-}
 function ordersHTML(a, pop){ const P=a.scenPlan; if(!P) return '';
   return `<section class="orders ${pop?'pop':''}"><p class="label">Sealed orders · opened ${TRIG_LABEL[SCEN_TRIGGER[a.job.scen]||'mid']}</p><h3>${esc(P.title)}</h3><p>${esc(P.text)}</p><p class="small"><b>What to do:</b> ${esc(P.sim)}</p>${P.divert?`<p class="small"><b>New destination:</b> <span class="mono">${esc(P.target)}</span> · ${esc(AP[P.target].n)}</p>`:''}${pop?`<button class="btn sm" data-act="orders-ok">Got it</button>`:''}</section>`; }
 /* live check */
-const _orRender = renderSimBits;
-renderSimBits = function(){ _orRender(); const a=S.st&&S.st.active; if(a && a.job.scen && !a.opened && a.started && trigReached(a)) openOrders(a,'live'); };
 setInterval(()=>{ const a=S.st&&S.st.active; if(a && a.job.scen && !a.opened && a.started && S.simState!=='live' && trigReached(a)) openOrders(a,'timer'); }, 20000);
 /* no more "open" button: show when they'll open, and the orders once they do */
 const _orFlight = flightView;
@@ -5131,8 +5018,6 @@ function syncPrefs(){ const st=S.st; st.sync = st.sync || {wx:true, time:true}; 
 /* adopt live weather automatically while parked at the departure field */
 function trySyncWx(){ const a=S.st&&S.st.active; if(!a || a.started || !syncPrefs().wx) return; const job=a.job; if(job.wx&&job.wx.live) return; if(!atDeparture(job)) return;
   const w=simWx(job.wx); if(!w) return; job.wx=w; save(); toast('Briefing weather now matches MSFS.'); if(S.view==='flight') render(); }
-const _syncSim = renderSimBits;
-renderSimBits = function(){ _syncSim(); try{ trySyncWx(); }catch(_){} };
 const _syncChecks = preflightChecks;
 preflightChecks = function(job){ const out=_syncChecks(job); const m=simMinutes(); if(m==null) return out;
   const diffMin = Math.abs((((m - job.dep) % 1440) + 1440 + 720) % 1440 - 720); const ok = diffMin <= 45;
@@ -5293,8 +5178,6 @@ function traceSample(){ const a=S.st&&S.st.active, s=S.sim; if(!a || !a.started 
   if(!S.trace || S.trace.id!==a.job.id) S.trace={id:a.job.id, job:{from:a.job.from,to:a.job.to,ac:a.job.ac,title:a.job.title,kind:a.job.kind,scen:a.job.scen||null}, started:Date.now(), samples:[]};
   const T=S.trace, now=Date.now(); const last=T.samples[T.samples.length-1]; if(last && now-last.t < 4000) return; if(T.samples.length>3000) return;
   const x=s.ext||{}; T.samples.push({t:now, lat:+s.position.lat.toFixed(5), lon:+s.position.lon.toFixed(5), alt:s.position.altFt, agl:s.position.aglFt, hdg:s.position.hdg, ias:s.motion.ias, gs:s.motion.gs, vs:s.motion.vsFpm, g:s.motion.gForce, gnd:s.motion.onGround?1:0, fuel:s.systems&&s.systems.fuelLb, flaps:x.flaps&&x.flaps.handle, gear:x.gear?(x.gear.down?1:0):null, bank:x.attitude&&x.attitude.bank, pitch:x.attitude&&x.attitude.pitch, rate:x.simRate, wind:x.weather?`${x.weather.windDir}/${x.weather.windKt}`:null, phase:s.recorder&&s.recorder.phase}); }
-const _dcSim = renderSimBits;
-renderSimBits = function(){ _dcSim(); try{ traceSample(); }catch(_){} };
 async function writeFlightLog(job, f, res){ const T=S.trace; if(!window.twNative || !twNative.flightLog) return;
   const d=new Date(); const name=`${d.toISOString().slice(0,16).replace(/[:T]/g,'-')}_${job.from}_${job.local?job.from:job.to}.json`;
   const rec = S.sim && S.sim.recorder; const body={ app: (typeof TW_VERSION!=='undefined'?TW_VERSION:''), difficulty:diff(), job:{id:job.id,title:job.title,from:job.from,to:job.to,ac:job.ac,kind:job.kind,scen:job.scen||null,dep:job.dep,est:job.est}, result:{score:res.score, grade:res.grade, parts:res.parts}, input:Object.assign({}, f, {td:f.td||null}), recorder:rec||null, samples:(T&&T.id===job.id)?T.samples:[], aircraftTitle:S.sim&&S.sim.aircraft&&S.sim.aircraft.title, errors:errLog().slice(-10) };
@@ -5476,8 +5359,6 @@ document.addEventListener('click', async e=>{ const b=e.target.closest('[data-ac
 /* ---- 3. copilot callouts from live sim data ---- */
 function vrOf(acId){ const m=String(AC[acId]&&AC[acId].v||'').match(/(?:Vr|Lift-off)\s*~?(\d+)/); return m?Number(m[1]):55; }
 const CP = { id:null, said:{}, lastAgl:null, lastT:0 };
-function copilotSay(text, key){ if(CP.said[key]) return; CP.said[key]=1; S.copilotLast={text, t:Date.now()}; const a=S.st&&S.st.active; if(a && a.cab && a.cab.log){ const t=Date.now(); a.cab.log.unshift({t, who:'Copilot', text, kind:'copilot'}); a.cab.log=a.cab.log.slice(0,14); try{ VQ.lastT=Math.max(VQ.lastT,t); }catch(_){} }
-  if(!(typeof voiceOn==='function' && voiceOn()) || !window.speechSynthesis) return; try{ const u=new SpeechSynthesisUtterance(text); const v=pickVoice(false,2)||pickVoice(false,0); if(v) u.voice=v; u.rate=1.08; u.pitch=0.95; u.volume=voiceVol(); speechSynthesis.speak(u); }catch(_){} }
 function copilotTick(){ const a=S.st&&S.st.active, s=S.sim; if(!a || !a.started || proPrefs().copilot===false || S.simState!=='live' || !s || !s.motion || !s.position) return;
   if(CP.id!==a.job.id){ CP.id=a.job.id; CP.said={}; CP.lastAgl=null; }
   const m=s.motion, p=s.position, vr=vrOf(a.job.ac), rec=s.recorder||{}; const airborne=!m.onGround;
@@ -5494,8 +5375,6 @@ function copilotTick(){ const a=S.st&&S.st.active, s=S.sim; if(!a || !a.started 
   CP.lastAgl = p.aglFt;
   // poll faster close to the ground so the low callouts land on time
   const low = airborne && p.aglFt<400 && m.vsFpm<-50; clearTimeout(CP.fast); if(low) CP.fast=setTimeout(()=>{ try{ simPoll(true); }catch(_){} }, 500); }
-const _cpSim = renderSimBits;
-renderSimBits = function(){ _cpSim(); try{ copilotTick(); }catch(_){} };
 
 /* ---- 4. guided first flight ---- */
 const GUIDE = [
@@ -5516,8 +5395,6 @@ function guideActive(){ const st=S.st, a=st&&st.active; return !!(a && st.flight
 const _gdFlight = flightView;
 flightView = function(){ const h=_gdFlight(); if(!guideActive() || S.showResult || S.debrief) return h; const g=guideHTML(S.st.active); return h.replace(/(<main class="wrap[^>]*>[\s\S]*?<\/section>)/, (m)=>m+g); };
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="guide-next"],[data-act="guide-hide"]'); if(!b||!S.st) return; if(b.dataset.act==='guide-hide'){ proPrefs().noGuide=true; } else { const a=S.st.active; if(a){ a.guide=a.guide||{done:{}}; a.guide.done[b.dataset.k]=1; } } save(); S.keepScroll=true; render(); });
-const _gdSim = renderSimBits;
-renderSimBits = function(){ _gdSim(); try{ if(guideActive() && S.view==='flight'){ const a=S.st.active; const before=JSON.stringify(a.guide||{}); guideHTML(a); if(JSON.stringify(a.guide)!==before){ S.keepScroll=true; render(); } } }catch(_){} };
 
 /* ---- 5. weekend events ---- */
 const WEEKEND = [
@@ -5613,19 +5490,11 @@ checklistDone = function(a){ if(!a) return false; const ph=cockpitPhases(S.st, a
 checklistCount = function(a){ const ph=cockpitPhases(S.st, a.job); const ck=a.ck||{done:{}}; const n=(S.st.pro&&S.st.pro.fullChecklist)?4:2; let d=0,t=0; for(let i=0;i<Math.min(n,ph.length);i++) for(let j=0;j<ph[i].items.length;j++){ t++; if(ck.done[i+'-'+j]) d++; } return [d,t]; };
 
 /* ---- 2. no scripted ATC: MSFS ATC does that job ---- */
-try{ _sdNext = Infinity; }catch(_){}
 const ATC_WHO = /^(Ground|Radio|ATC|Approach|Tower|Center|Departure)$/i;
 const _tfCabin = cabinTick;
 cabinTick = function(){ const r=_tfCabin.apply(this, arguments); try{ const a=S.st&&S.st.active; if(a&&a.cab&&a.cab.log) a.cab.log=a.cab.log.filter(m=>!ATC_WHO.test(m.who||'')); }catch(_){} return r; };
 
 /* ---- 3. big moments take over the screen ---- */
-function takeover(o){ document.querySelectorAll('.takeover').forEach(x=>x.remove()); const d=document.createElement('div'); d.className='takeover tk-'+(o.kind||'orders'); d.setAttribute('role','alertdialog'); d.setAttribute('aria-label', o.title);
-  d.innerHTML=`${o.kind==='weather'?'<div class="tk-rain"></div><div class="fx-flash"></div>':''}<div class="tk-in"><p class="tk-kicker">${esc(o.kicker||'')}</p><h1>${esc(o.title)}</h1>${o.text?`<p class="tk-text">${esc(o.text)}</p>`:''}${o.sub?`<p class="tk-sub">${esc(o.sub)}</p>`:''}<button class="btn primary" data-act="tk-close">${esc(o.btn||'Got it')}</button></div><i class="tk-timer" style="--ttl:${o.ms||9000}ms"></i>`;
-  document.body.appendChild(d); try{ crackle && crackle(0.3,0.3); }catch(_){}
-  const close=()=>{ d.classList.add('out'); setTimeout(()=>d.remove(),400); }; d.addEventListener('click', e=>{ if(e.target.closest('[data-act="tk-close"]')) close(); }); setTimeout(close, o.ms||9000); }
-const _tfOrders = openOrders;
-openOrders = function(a, how){ const was=a&&a.opened; const r=_tfOrders(a, how); try{ if(!was && a.opened && a.scenPlan){ const sc=SCEN[a.job.scen]||{}; const wx=/squall|shower|storm|wave|weather|rain/i.test((a.job.scen||'')+' '+(sc.n||'')+' '+a.scenPlan.title);
-    takeover({kind:wx?'weather':'orders', kicker:'Sealed orders', title:a.scenPlan.title, text:a.scenPlan.text, sub:a.scenPlan.sim, ms:11000}); } }catch(_){} return r; };
 
 /* ---- 4. story briefing up top, like the opening of a chapter ---- */
 function chapterHero(job){ const m=STORY.find(x=>x.id===job.story); if(!m) return ''; const meta=arcMeta(m.arc); const chs=STORY.filter(x=>x.arc===m.arc); const idx=chs.indexOf(m)+1;
@@ -5668,8 +5537,6 @@ preflightHTML = function(job){ let h=_tfPfHTML(job); if(S.simState==='live') fet
   return h.replace('Briefing weather is generated', 'Briefing weather is generated').replace("It switches to your MSFS weather once you're at the departure airport.", "MSFS doesn't let add-ons change its weather, so the briefing follows MSFS instead: it switches to your sim's weather once you're at the departure airport. Live weather in MSFS works best."); };
 document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="park-move"]') || !S.st || !S.st.active) return; const s=suggestParking(S.st.active.job); if(!s.spot) return;
   try{ const r=await S.mcp.callTool(SIM_SERVER,'move_to',{lat:s.spot.lat, lon:s.spot.lon, hdg:s.spot.hdg},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} } toast(o&&o.ok?`Moved to ${s.spot.name}.`:`Couldn't move: ${o&&o.error||'update the MSFS Bridge'}`); }catch(err){ toast('Moving the aircraft needs the Trade Winds app (or MSFS Bridge 1.5).'); } });
-const _tfSim = renderSimBits;
-renderSimBits = function(){ _tfSim(); try{ autoClock(); }catch(_){} };
 /* after "Start flight": keep the loading tools until you take off */
 const _tfInflight = inflightView;
 inflightView = function(){ let h=_tfInflight(); const a=S.st&&S.st.active; if(!a) return h; const rec=S.sim&&S.sim.recorder; const airborne = S.simState==='live' && ((S.sim.motion&&!S.sim.motion.onGround) || (rec && rec.takeoff && simRecFor(a)));
@@ -5877,11 +5744,6 @@ makeBonus = function(job){ const amt=Math.max(30, Math.round(job.pay*0.2/10)*10)
     comfort:{k, amt, text:`Keep the cabin happy: comfort 90 or better at the end`, auto:'comfort'} })[k]; };
 
 /* ---- the flight starts itself when MSFS shows you've started the engine at the departure airport ---- */
-const _smSim = renderSimBits;
-renderSimBits = function(){ _smSim(); try{ const a=S.st&&S.st.active, s=S.sim; if(!a || a.started || S.simState!=='live' || !s || !s.motion || !s.systems) return;
-    if(!(s.systems.engineRunning || !s.motion.onGround) || !atDeparture(a.job)) return;
-    if(diff()==='expert' && !checklistDone(a)){ if(!a._ckNag){ a._ckNag=true; toast('Expert: finish the Before start and Start & taxi checklists to start the flight.'); } return; }
-    a.started=Date.now(); save(); if(!a.recId) simArm(); toast('Engine running: flight started.'); S.keepScroll=true; render(); }catch(_){} };
 
 /* ---- fewer interruptions: phone calls, urgent pop-ups and the end-of-day recap are off unless you turn them on ---- */
 maybeCall = function(){};
@@ -5914,9 +5776,6 @@ function askMet(job, rec){ const a=job.ask; if(!a || !rec) return null; const tr
   if(a.k==='coast') return tr.some(t=>t[2]<1500 && t[2]>300 && distNm({lat:t[0],lon:t[1]},to)>5 && distNm({lat:t[0],lon:t[1]},fr)>5);
   return null; }
 /* reveal the request once you're on your way */
-const _mrSim = renderSimBits;
-renderSimBits = function(){ _mrSim(); try{ const a=S.st&&S.st.active; if(!a || !a.started || !a.job.ask || a.askShown || S.simState!=='live') return; const s=S.sim; if(!s||!s.motion||s.motion.onGround) return;
-    const pr=ifProgress(a); if(pr.pct!=null && pr.pct<20) return; a.askShown=true; save(); takeover({kind:'orders', kicker:`Request from the cabin · +${money(a.job.ask.amt)}`, title:'Can you do something for us?', text:a.job.ask.text, sub:'Checked automatically from MSFS when you land. Optional.', ms:9000}); S.keepScroll=true; render(); }catch(_){} };
 const _mrIf = inflightView;
 inflightView = function(){ const h=_mrIf(); const a=S.st&&S.st.active; if(!a || !a.job.ask || !a.askShown) return h; return h.replace(/(<section class="if-head">[\s\S]*?<\/section>)/, m=>m+`<section class="notice ask-note"><b>Cabin request (+${money(a.job.ask.amt)}):</b> ${esc(a.job.ask.text)}</section>`); };
 
@@ -5956,8 +5815,6 @@ function adoptSpec(){ const s=S.sim, st=S.st; if(!s || !s.spec || S.simState!=='
   if(sp.maxGrossLb>sp.emptyLb && sp.emptyLb>500){ const u=sp.maxGrossLb-sp.emptyLb; if(Math.abs(u-a.useful)/a.useful<0.5) r.useful=Math.round(u); }
   const cap=(sp.fuelGal||0); if(cap>5 && a.burn>0){ const dens=a.fuel==='avgas'?6:6.7; const rng=Math.round(cap*dens/a.burn*(r.cruise||a.cruise)*0.85); if(Math.abs(rng-a.range)/a.range<0.6) r.range=rng; }
   if(Object.keys(r).length){ st.acReal[id]=r; Object.assign(a, r); save(); toast(`Using your MSFS ${a.n} numbers for planning.`); } else st.acReal[id]={}; }
-const _mrSim2 = renderSimBits;
-renderSimBits = function(){ _mrSim2(); try{ adoptSpec(); }catch(_){} };
 
 /* ---- 8. every main chapter says what's at stake ---- */
 const CH_GOAL = {
@@ -6004,11 +5861,7 @@ function connCard(st){ const live=S.simState==='live'; const s=S.sim||{}; const 
   </div></section>`; }
 const _tsBoard = boardView;
 boardView = function(){ const h=_tsBoard(); if(S.view!=='board'||!S.st) return h; return h.replace(/(<section[^>]*class="today[\s\S]*?<\/section>)/, m=>m+connCard(S.st)); };
-const _tsSim = renderSimBits;
-renderSimBits = function(){ _tsSim(); try{ if(S.view==='board'){ const el=document.querySelector('.conn-card'); if(el){ const t=tpl(connCard(S.st)); el.replaceWith(t.content.firstElementChild); } } }catch(_){} };
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="calm-test"]'); if(!b||!S.st) return; S.st.ui=S.st.ui||{}; S.st.ui.calmTest=b.checked; if(b.checked) (S.st.jobs||[]).forEach(j=>{ j.scen=null; delete j.ask; }); save(); toast(b.checked?'Calm test mode on: plain A-to-B flights.':'Calm test mode off.'); S.keepScroll=true; render(); });
-const _tsOrders = openOrders;
-openOrders = function(a, how){ if(testMode()) return; return _tsOrders(a, how); };
 
 /* ---- practice landing: no pay, no logbook, just the grade ---- */
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="practice"]') || !S.st || S.st.active) return; const st=S.st; const s=S.sim;
@@ -6036,25 +5889,11 @@ inflightView = function(){ return _tsIf().replace(/(<div class="row"><span class
 const _tsRes = resultView;
 resultView = function(){ const h=_tsRes(); return h.replace(/(<section class="panel how-did">)/, `<div class="row" style="justify-content:flex-end">${NOTE_BTN}</div>$1`); };
 /* ===================== QUICK WINS BEFORE TESTING ===================== */
-const _qkSim = renderSimBits;
-renderSimBits = function(){ const a=S.st&&S.st.active; const was=a&&a.started; _qkSim(); try{ if(a && !was && a.started && S.view!=='flight') go('flight'); }catch(_){} };
 
 /* 2 + 3 + 5. copilot safety calls: too fast, flaps too fast, sim rate on approach, fuel */
 const VWARN = { ga:145, stol:120, amph:120, hp:190, bush:145, twin:190, turbo:240, jet:290, regional:250, airliner:320, widebody:320 };
 const VFLAP = { ga:100, stol:85, amph:85, hp:120, bush:90, twin:130, turbo:150, jet:180, regional:170, airliner:200, widebody:200 };
 const SAFE = { id:null, t:{} };
-function safeSay(key, text, every){ const now=Date.now(); if(SAFE.t[key] && now-SAFE.t[key] < (every||60000)) return; if(SAFE.any && now-SAFE.any < 6000) return; SAFE.any=now; SAFE.t[key]=now; try{ copilotSay(text, key+':'+now); }catch(_){} }
-const _qkSim2 = renderSimBits;
-renderSimBits = function(){ _qkSim2(); try{ const a=S.st&&S.st.active, s=S.sim; if(!simRelevant(a) || !s.motion || s.motion.onGround) return;
-    if(SAFE.id!==a.job.id){ SAFE.id=a.job.id; SAFE.t={}; }
-    const cls=AC[a.job.ac].cls, ias=s.motion.ias, x=s.ext||{};
-    if(ias > (VWARN[cls]||200)) safeSay('fast', `Speed! ${ias} knots. Power back.`, 20000);
-    if(x.flaps && x.flaps.handle>0 && ias > (VFLAP[cls]||110)) safeSay('flapfast', `Too fast for flaps. Slow down before you extend them.`, 20000);
-    if(x.simRate>1 && s.motion.vsFpm < -300 && s.position && s.position.aglFt < 5000) safeSay('rate', `Sim rate back to one times for the descent.`, 45000);
-    // fuel: enough for the rest of the trip plus the reserve?
-    const dest=a.job.local?AP[a.job.from]:AP[a.job.to]; const p=plan(a.job); const ac=AC[a.job.ac];
-    if(s.systems && s.systems.fuelLb!=null && ac.burn>0 && s.position){ const togo=a.job.local?0:distNm({lat:s.position.lat,lon:s.position.lon},dest); const needLb=(togo/Math.max(60,s.motion.gs||ac.cruise)*60 + p.reserveMin*0.75)/60*ac.burn; if(s.systems.fuelLb < needLb) safeSay('fuel', `Fuel check. We're getting close to the reserve. Consider the nearest airport.`, 300000); }
-  }catch(_){} };
 
 /* 4. approach card: the landing runway, wind and approach speed, big, once you're close */
 function approachCard(a){ const s=S.sim; if(!s||!s.position||S.simState!=='live') return ''; const dest=a.job.local?AP[a.job.from]:AP[a.job.to]; const d=distNm({lat:s.position.lat,lon:s.position.lon},dest); if(d>15 || (s.motion&&s.motion.onGround)) return '';
@@ -6063,8 +5902,6 @@ function approachCard(a){ const s=S.sim; if(!s||!s.position||S.simState!=='live'
   return `<section class="appr-card"><div><span>Landing</span><b class="mono">${r&&!r.water?esc(r.rw):'into wind'}</b></div><div><span>Wind</span><b class="mono">${pad3(wx.dir)}°/${wx.spd}</b><small>${r&&!r.water?`${Math.round(Math.max(0,r.head))} head · ${Math.round(r.xw)} cross`:''}</small></div>${vapp?`<div><span>Approach</span><b class="mono">${vapp} kt</b><small>+5 if gusty</small></div>`:''}<div><span>Distance</span><b class="mono">${d.toFixed(1)} nm</b></div></section>`; }
 const _qkIf = inflightView;
 inflightView = function(){ const h=_qkIf(); const a=S.st&&S.st.active; if(!a) return h; const c=approachCard(a); return c ? h.replace(/(<section class="if-head">[\s\S]*?<\/section>)/, m=>m+c) : h; };
-const _qkSim3 = renderSimBits;
-renderSimBits = function(){ _qkSim3(); try{ const a=S.st&&S.st.active; if(!a||!a.started||S.view!=='flight') return; const want=!!approachCard(a); const has=!!document.querySelector('.appr-card'); if(want!==has){ S.keepScroll=true; render(); } else if(has){ const t=tpl(approachCard(a)); document.querySelector('.appr-card').replaceWith(t.content.firstElementChild); } }catch(_){} };
 /* ===================== GUARD: ignore MSFS menu scenes and anything that isn't your flight ===================== */
 /* the sim data only counts once the flight has started, and only near the route */
 function simRelevant(a){ const s=S.sim; if(!a || !a.started || S.simState!=='live' || !s || !s.position) return false; const p={lat:s.position.lat, lon:s.position.lon};
@@ -6112,11 +5949,6 @@ loadIntoSim = async function(job){ if(!S.mcp){ toast('MSFS isn\'t connected.'); 
 
 /* ---- 2. fuel warning: plan with cruise speed, not the slow takeoff groundspeed, and wait until you're established ---- */
 /* (replaces the check inside the safety calls by giving it honest inputs) */
-const _fbSafe = safeSay;
-safeSay = function(key, text, every){ if(key==='fuel'){ const a=S.st&&S.st.active, s=S.sim, rec=s&&s.recorder; if(!a||!s||!rec||!rec.takeoff||Date.now()-rec.takeoff.t<5*60000) return;
-    const ac=AC[a.job.ac], p=plan(a.job); const dest=a.job.local?AP[a.job.from]:AP[a.job.to]; const togo=a.job.local?0:distNm({lat:s.position.lat,lon:s.position.lon},dest);
-    const needLb=(togo/ac.cruise*60 + p.reserveMin*0.6)/60*ac.burn; if(!(s.systems && s.systems.fuelLb < needLb)) return; }
-  return _fbSafe(key, text, every); };
 
 /* ---- 5 + 6. no duty day, no "past midnight": the day rolls over by itself ---- */
 dutyAfter = function(){ return 0; };
@@ -6139,13 +5971,8 @@ ARCH.push({id:'special', label:'Special charter', kind:'vip', w:0, cls:['ga','st
 /* ---- sealed orders that don't match the sky: weather scenarios need real weather ---- */
 const WX_SCEN = new Set(['squall']);
 function skyIsClear(){ const w=S.simState==='live' && S.sim && S.sim.ext && S.sim.ext.weather; return !!(w && w.visSm>=7 && !w.inCloud); }
-const _fbOrders = openOrders;
-openOrders = function(a, how){ if(a && !a.opened && WX_SCEN.has(a.job.scen) && skyIsClear()){ const alt=['rough_engine','electrical','pax_medical','runway_closed'].filter(k=>SCEN[k] && (SCEN[k].cls==='*' || SCEN[k].cls.includes(AC[a.job.ac].cls)) && (!SCEN[k].pax || a.job.pax>0));
-    if(alt.length) a.job.scen=pick(alt); else { a.job.scen=null; return; } } return _fbOrders(a, how); };
 
 /* ---- comfort only counts when the cabin actually rode along ---- */
-const _fbAuto = autoFinish;
-autoFinish = function(rec, how){ const a=S.st&&S.st.active; if(a && a.cab && !(a.cab.log||[]).length && a.cab.comfort===0) a.cab.comfort=null; return _fbAuto(rec, how); };
 /* ---- the board's sky matches MSFS when you're sitting at that airport ---- */
 const _fbLocWx = genLocWx;
 genLocWx = function(st){ const base=_fbLocWx(st); try{ const s=S.sim; if(S.simState==='live' && s && s.position && distNm({lat:s.position.lat,lon:s.position.lon},AP[st.loc])<5){ const w=simWx(base); if(w) return w; } }catch(_){} return base; };
@@ -6155,8 +5982,6 @@ function saneTouchdown(td){ if(!td) return td; const t=Object.assign({}, td); co
   if(t.fpm>1500 && g<1.8){ t.fpm = g<1.15?120 : g<1.3?220 : g<1.6?350 : 500; t.estimated=true; }
   if(t.g>3.5 && t.fpm<900){ t.g = Math.round((1.15 + t.fpm/1200)*100)/100; t.gEstimated=true; }
   return t; }
-const _frAuto = autoFinish;
-autoFinish = function(rec, how){ if(rec && rec.touchdown){ rec = Object.assign({}, rec, {touchdown: saneTouchdown(rec.touchdown)}); } return _frAuto(rec, how); };
 
 /* 3. a touchdown "300 ft off the centerline" on a 150 ft runway means the runway data doesn't match the scenery, not your flying */
 const _frTda = touchdownAnalysis;
@@ -6183,8 +6008,6 @@ boardingPass = function(st, job, p, a, started){ const h=_frPass.apply(this, arg
  
 
 /* 11. the cabin never drops to 0 comfort from normal flying */
-const _frAuto2 = autoFinish;
-autoFinish = function(rec, how){ const a=S.st&&S.st.active; if(a && a.cab && a.cab.comfort!=null) a.cab.comfort=Math.max(25, a.cab.comfort); return _frAuto2(rec, how); };
 
 /* 12. result notes: no landing league, no "airframe 100%" line, at most four, the rest folded */
 const _frRes = resultView;
@@ -6219,8 +6042,6 @@ settingsHTML = function(){ let h=_p20Set(); const d=diff();
   return h.replace('<div class="set-grid">', '<div class="set-grid">'+extra); };
 
 /* 5. the copilot never reads out an impossible landing number */
-const _p20Say = copilotSay;
-copilotSay = function(text, key){ const m=String(text).match(/(\d{4,}) feet per minute/); if(m && Number(m[1])>1500) text='Down and safe.'; return _p20Say(text, key); };
 
 
 /* 7. result: what next, right at the top; the share card folds away */
@@ -6257,10 +6078,6 @@ pilotView = function(){ return _p20Pilot().replace(/(reputation \d+)/, '<span ti
 
 /* 12. sealed orders and cabin requests never pop up on short final */
 function nearDestination(a){ const s=S.sim; if(!a||!s||!s.position||S.simState!=='live') return false; const dest=a.job.local?AP[a.job.from]:AP[a.job.to]; return distNm({lat:s.position.lat,lon:s.position.lon},dest)<8 && (s.position.aglFt||0)<2000 && !a.job.local || (s.position.aglFt||0)<800; }
-const _p20Orders = openOrders;
-openOrders = function(a, how){ if(a && !a.opened && nearDestination(a)) return; return _p20Orders(a, how); };
-const _p20Take = takeover;
-takeover = function(o){ const a=S.st&&S.st.active; if(o && /Request from the cabin/.test(o.kicker||'') && nearDestination(a)) { if(a) a.askShown=false; return; } return _p20Take(o); };
 
 /* 13. the approach card on local flights only shows when you're coming back down */
 const _p20Appr = approachCard;
@@ -6605,16 +6422,9 @@ cabinPick = function(k, job){ if(job && job.kind!=='check' && IMC_LINES[k] && in
 
 /* water landings: wheels must be UP. No "check gear" calls asking for them down; a warning if they're down */
 function waterDest(a){ if(!a) return false; const code=a.job.local?a.job.from:a.job.to; return !!(AP[code] && AP[code].water); }
-function noGearCheck(fn){ return function(){ const a=S.st&&S.st.active; const g=S.sim&&S.sim.ext&&S.sim.ext.gear; if(g && waterDest(a)){ const r=g.retractable; g.retractable=false; try{ return fn.apply(this, arguments); } finally { g.retractable=r; } } return fn.apply(this, arguments); }; }
-coachTick = noGearCheck(coachTick);
 copilotTick = noGearCheck(copilotTick);
-const _vcSim = renderSimBits;
-renderSimBits = function(){ _vcSim(); try{ const a=S.st&&S.st.active, s=S.sim; if(!a||!a.started||!waterDest(a)||!s||!s.position||!s.motion||s.motion.onGround) return; const g=s.ext&&s.ext.gear; const dest=AP[a.job.local?a.job.from:a.job.to];
-  if(g && g.retractable && g.down && distNm({lat:s.position.lat,lon:s.position.lon},dest)<4 && s.position.aglFt<1500) safeSay('watergear', `Gear is down. Gear up for a water landing!`, 30000); }catch(_){} };
 
 /* the copilot never calls for gear on an airplane whose wheels don't move */
-const _vcSay = copilotSay;
-copilotSay = function(text, key){ const g=S.sim&&S.sim.ext&&S.sim.ext.gear; if(/gear/i.test(String(text)) && g && !g.retractable) text=String(text).replace(/\s*Check gear!?/i,' stable.').replace(/Five hundred\.\s+stable\./,'Five hundred, stable.'); return _vcSay(text, key); };
 
 /* checkride texts */
 try{ RATINGS.SEA.tasks = [`Takeoff and climb-out from Juliana`, `Water landing in Simpson Bay Lagoon: landing attitude, a steady 100–150 fpm down, no flaring by eye`, `Taxi slowly clear of boats`]; }catch(_){}
@@ -6675,9 +6485,6 @@ try{ const r=RIVALS.find(x=>/^Ana Reyes/.test(x.n)); if(r) r.n='Ana Ruiz (Winair
 (function(){ const _ct=cabinTick; cabinTick=function(){ const a=S.st&&S.st.active; S._cabMute=true; try{ return _ct.apply(this, arguments); } finally { S._cabMute=false; if(a&&a.cab&&a.cab.log) a.cab.log=a.cab.log.filter(m=>m.kind); } }; })();
 (function(){ const _t=toast; toast=function(msg){ if(S._cabMute) return; return _t.apply(this, arguments); }; })();
 (function(){ const _sp=spokenText; spokenText=function(m){ if(!m.kind) return null; return _sp(m); }; })();
-(function(){ const _tk=takeover; takeover=function(o){ if(o && /Request from the cabin/.test(o.kicker||'')) return; return _tk(o); }; })();
-/* no "sim rate" call on descent */
-(function(){ const _ss=safeSay; safeSay=function(key, text, every){ if(key==='rate') return; return _ss(key, text, every); }; })();
 
 /* ================= 2. choices carry forward ================= */
 const flagsOf = st => crime(st).flags;
@@ -6745,9 +6552,6 @@ function showBeat(a, b, idx){ const w=WHO[b.who]||WHO.self; document.querySelect
   if(!b.opts) setTimeout(close, 11000); else setTimeout(()=>{ if(d.isConnected && d.querySelector('.bt-o')) close(); }, 60000);
   if(a.cab && a.cab.log){ a.cab.log.unshift({t:Date.now(), who:w[0].replace(/^Phone · /,''), text:String(b.text).replace('|',' '), kind:'story'}); try{ VQ.lastT=Date.now(); }catch(_){} }
   speakBeat(b); }
-(function(){ const _rs=renderSimBits; renderSimBits=function(){ _rs(); try{ const a=S.st&&S.st.active; if(!a||!a.started||a.job.kind!=='story'||!BEATS[a.job.story]||!simRelevant(a)) return; if(Date.now()-BEAT.last<40000) return;
-  const ph=beatPhase(a); if(!ph) return; a.beatsDone=a.beatsDone||{}; const list=beatsFor(a);
-  for(let i=0;i<list.length;i++){ if(a.beatsDone[i]) continue; const b=list[i]; if(!ph[b.at]) break; a.beatsDone[i]=1; BEAT.last=Date.now(); save(); showBeat(a,b,i); break; } }catch(_){} }; })();
 
 /* ================= 5. who you are: the sidebar and profile follow the story ================= */
 function storyRole(st){ const c=crime(st); if(c.ending==='kingpin') return 'Kingpin'; if(c.ending==='witness') return 'New name, new island'; if(c.ending==='ghost') return 'Whereabouts unknown';
@@ -7194,18 +6998,6 @@ function rankMul(c){ return c.power>=65?1.3:c.power>=45?1.2:1; }
 const _twStrip = stripHTML;
 stripHTML = function(st, job, opts){ let h=_twStrip(st, job, opts); const tags=[]; if(job.drop) tags.push('<span class="chip warn">Night drop</span>'); if(job.lowLevel) tags.push('<span class="chip warn">Stay under 1,000 ft: +25%</span>'); if(job.hot) tags.push('<span class="chip warn">Hot airport</span>'); if(tags.length) h=h.replace('<div class="chips">', '<div class="chips">'+tags.join('')); return h; };
 
-/* ---- 7 + 8 + 18. what the sim tells us during the flight: low level, transponder, real fuel burn ---- */
-(function(){ const _rs=renderSimBits; renderSimBits=function(){ _rs(); try{ const a=S.st&&S.st.active, s=S.sim; if(!a||!a.started||!s||S.simState!=='live'||!s.motion||!s.position) return; const now=Date.now(); const T=a.track=a.track||{air:0,low:0,last:now,fuel:[]}; const dt=Math.min(20,(now-T.last)/1000); T.last=now;
-  if(!s.motion.onGround){ T.air+=dt; if((s.position.aglFt||0)<1000) T.low+=dt; }
-  if(s.systems && s.systems.fuelLb!=null){ T.fuel.push([now, s.systems.fuelLb]); while(T.fuel.length && now-T.fuel[0][0]>15*60000) T.fuel.shift(); }
-  const x=s.ext||{}; if(a.job.network && x.transponder!=null){ T.xpdrSeen=true; if(String(x.transponder.mode||x.transponder).match(/stby|standby|off/i)) T.dark=(T.dark||0)+dt; }
-  const c=crime(); if(a.job.network && c.heat>=50 && !a.cgCall && T.air>240){ a.cgCall=true; showBeat(a,{at:'cruise',who:'radio',text:`Aircraft on this frequency, U.S. Coast Guard. Be advised, we are conducting air interdiction operations in this sector.|Your Heat is high. They might be talking about you.`},99); }
-  }catch(_){} }; })();
-/* fuel check from your actual burn rate, not the book number */
-(function(){ const _ss=safeSay; safeSay=function(key, text, every){ if(key!=='fuel') return _ss(key, text, every); const a=S.st&&S.st.active, s=S.sim; const T=a&&a.track; if(!a||!s||!T||T.fuel.length<2||!s.position||!s.motion) return;
-  const [t0,f0]=T.fuel[0], [t1,f1]=T.fuel[T.fuel.length-1]; const mins=(t1-t0)/60000; if(mins<6) return; const burn=(f0-f1)/mins; if(!(burn>0)) return;
-  const dest=a.job.local?AP[a.job.from]:AP[a.job.to]; const togo=a.job.local?0:distNm({lat:s.position.lat,lon:s.position.lon},dest); const gs=Math.max(60,s.motion.gs||AC[a.job.ac].cruise);
-  const need=burn*(togo/gs*60 + 30); if(f1 < need) return _ss(key, `Fuel check. At this burn rate we'll land with less than thirty minutes left. Consider the nearest airport.`, every); }; })();
 
 function launderOpts(st){ const d=st.story.done; const L=[]; L.push({id:'dez',n:'Dez, cash under the counter',fee:0.25,heat:3}); if(d.CR5) L.push({id:'trust',n:'The Hartwell Reef Trust',fee:0.15,heat:1}); if(d.CR15) L.push({id:'caribe',n:'Caribe Cargo invoices',fee:0.08,heat:0}); return L; }
 function launderHTML(st){ const c=crime(st); if(!c.dirty) return ''; const L=launderOpts(st); return `<section class="panel launder"><div class="row between"><div><p class="label">Dirty cash</p><h3>${money(c.dirty)}</h3></div><p class="small muted" style="max-width:420px">Money from network runs. Launder it to move it into your cash. Better options unlock as the story goes on.</p></div><div class="row" style="flex-wrap:wrap;gap:8px;margin-top:10px">${L.map(o=>`<button class="btn sm" data-act="launder" data-v="${o.id}">${esc(o.n)} · ${Math.round(o.fee*100)}% fee${o.heat?` · Heat +${o.heat}`:''}</button>`).join('')}</div></section>`; }
@@ -7370,7 +7162,6 @@ function hudHTML(a){ const s=S.sim||{}; const live=S.simState==='live'&&s.positi
 const _u10If = inflightView;
 inflightView = function(){ const h=_u10If(); const a=S.st&&S.st.active; if(!a) return h; return h.replace(/(<main[^>]*>)/, `$1<div class="fm-bar"><span class="fm-dot"></span> Flight mode <button class="btn sm ghost" data-act="fm-menu">${S.fmMenu?'Hide menu':'Show menu'}</button></div>${hudHTML(a)}`); };
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="fm-menu"]')) return; S.fmMenu=!S.fmMenu; S.keepScroll=true; render(); });
-(function(){ const _rs=renderSimBits; renderSimBits=function(){ _rs(); try{ const a=S.st&&S.st.active; const el=document.querySelector('.fhud'); if(a&&el){ const t=tpl(hudHTML(a)); el.replaceWith(t.content.firstElementChild); } }catch(_){} }; })();
 
 /* ---- 4. command bar: Ctrl+K (or /) to jump anywhere ---- */
 function cmdItems(){ const st=S.st; const L=[]; if(!st) return L; const pg=(n,v,k)=>L.push({n, k:k||'Page', run:()=>go(v)});
@@ -7773,10 +7564,6 @@ function carrierFor(st, job){ const c=crime(st); if(job.network) return 'Unliste
 const _fxPass = boardingPass;
 boardingPass = function(st, job){ let h=_fxPass.apply(this, arguments); const n=carrierFor(st, job); if(n) h=h.replace(/(<span class="carrier">[\s\S]*?<b>)Coral Wing Air(<\/b>)/, `$1${n}$2`); return h; };
 
-/* 2. in-flight story moments never talk over the copilot or ATC, and stay quiet on short final */
-(function(){ const _rs=renderSimBits; let held=false; renderSimBits=function(){ const s=S.sim; const a=S.st&&S.st.active; let block=false;
-  try{ if(window.speechSynthesis && speechSynthesis.speaking) block=true; if(s&&s.position&&s.motion&&!s.motion.onGround && (s.position.aglFt||0)<1000 && a){ const L=beatsFor(a); const nxt=L.find((b,i)=>!(a.beatsDone||{})[i]); if(nxt && nxt.at!=='final') block=true; } }catch(_){}
-  if(block){ const keep=BEAT.last; BEAT.last=Date.now(); _rs(); BEAT.last=keep; return; } _rs(); }; })();
 
 /* 3. "Previously on" only when you've been away for a while (3+ hours) */
 (function(){ const _p=playRecapNow; playRecapNow=function(){ let last=0; try{ last=Number(localStorage.getItem('tw.lastSeen')||0); }catch(_){} if(Date.now()-last < 3*3600000) return; return _p(); }; setInterval(()=>{ try{ localStorage.setItem('tw.lastSeen', String(Date.now())); }catch(_){} }, 60000); window.addEventListener('beforeunload', ()=>{ try{ localStorage.setItem('tw.lastSeen', String(Date.now())); }catch(_){} }); })();
@@ -7794,8 +7581,6 @@ window.addEventListener('keydown', e=>{ if(document.querySelector('.title-screen
 /* 8. the story card shows roughly how long the flight is */
 (function(){ const _cc=campaignCard; campaignCard=function(st){ let h=_cc(st); try{ const next=mainChapters().find(m=>!st.story.done[m.id]); if(!next) return h; const ac=storyAircraft(st,next)[0]||next.ac[0]; const jj=storyJob(st,next,ac); const est=jj.est||plan(jj).est; h=h.replace(/(<div class="sc-meta"><b>[^<]*<\/b>)/, `$1<span>~${durTxt(est)}</span>`); }catch(_){} return h; }; })();
 
-/* 9. the aircraft you load in MSFS is added to your hangar list automatically */
-(function(){ const _rs=renderSimBits; renderSimBits=function(){ _rs(); try{ if(S.simState!=='live'||!S.st) return; const L=loadedAircraft(); if(L.id && S.st.hangar && !S.st.hangar[L.id]){ S.st.hangar[L.id]=true; save(); toast(`Added the ${AC[L.id].n} to your hangar list, since it's loaded in MSFS.`); } }catch(_){} }; })();
 
 /* 10 + 11. cutscenes: optional auto-play, and a progress line */
 window.cutAuto = ()=>!!uiP().autoCut;
@@ -8730,6 +8515,220 @@ function migrate(st){
   const r=finMigrate(st);
   if(r && !r._cabFix){ r._cabFix=true; if(r.active && r.active.cab) delete r.active.cab; if(r.active) delete r.active.recId; }
   return r;
+}
+/* ===================== LIVE SIM =====================
+   Everything that reacts to MSFS while it's connected.
+   renderSimBits() is the sim tick: it runs every time new data arrives from MSFS (about once a second)
+   and whenever the connection state changes. It is a list of named steps that run in order.
+   Add a step to SIM_TICK; don't wrap renderSimBits(). */
+
+const SIM_CHIMES = {};   // per flight: which cabin chimes have played
+
+/* Story moments wait while someone is talking, and stay quiet below 1,000 ft unless the next one is for short final. */
+function storyBeatsHeld(){
+  const s=S.sim; const a=S.st&&S.st.active; let held=false;
+  try{ if(window.speechSynthesis && speechSynthesis.speaking) held=true; if(s&&s.position&&s.motion&&!s.motion.onGround && (s.position.aglFt||0)<1000 && a){ const L=beatsFor(a); const nxt=L.find((b,i)=>!(a.beatsDone||{})[i]); if(nxt && nxt.at!=='final') held=true; } }catch(_){}
+  return held;
+}
+
+const SIM_TICK = [
+  function armRecorder(){ autoArm(); },
+  function instructorCalls(){ coachTick(); },
+  /* the small live panels on the page */
+  function livePanels(){
+    const el=document.getElementById('simpanel'); if(el) el.innerHTML = simPanelHTML();
+    const h=document.getElementById('sim-hangar'); if(h) h.innerHTML = simHangarHTML();
+    const d=document.getElementById('sim-debrief'); if(d && S.st && S.st.active) d.innerHTML = simDebriefHTML(S.st.active.job);
+    const b=document.getElementById('sim-band'); if(b) b.textContent = S.simState==='live' ? 'MSFS live' : 'Sim not connected';
+    const dot=document.querySelector('.simdot'); if(dot) dot.classList.toggle('on', S.simState==='live');
+  },
+  function cabin(){ try{ cabinTick(); }catch(e){} document.querySelectorAll('.cabin-host').forEach(el=>{ el.innerHTML = cabinInner(); }); },
+  function callouts(){ document.querySelectorAll('.callout-host').forEach(el=>{ el.innerHTML = calloutHTML(); }); },
+  function speakNewLines(){ speakNew(); },
+  /* parked with the engine off after landing: the flight is logged by itself */
+  function finishWhenParked(){ const a=S.st&&S.st.active; if(!a || a._autoDone) return; const rec=autoReady(a); if(rec && rec.blockIn) autoFinish(rec,'parked'); },
+  /* urgent jobs: note the takeoff time */
+  function urgentTakeoffTime(){ const a=S.st&&S.st.active; if(a && a.job.realtime && !a.job._toAt){ const rec=simRecFor(a); if(rec && rec.takeoff) { a.job._toAt=rec.takeoff.t; save(); } } },
+  function academy(){ academyTick(); },
+  function liveMap(){ if(S.view==='map' && S.st && S.st.active && S.simState==='live'){ S.keepScroll=true; render(); } },
+  function inflightPanels(){ if(S.view==='flight' && S.st && S.st.active && S.st.active.started && !S.debrief && !S.showResult && !S.ifBrief){
+    const l=document.getElementById('if-live'); if(l) l.innerHTML=ifLiveHTML(); const m=document.getElementById('if-map'); if(m) m.innerHTML=ifMiniMap(S.st.active); } },
+  function preflight(){ if(S.view==='flight') renderPreflight(); },
+  /* cabin chimes with passengers on board: after takeoff, top of descent, parked */
+  function cabinChimes(){ const a=S.st&&S.st.active; if(!a || S.simState!=='live') return; const rec=simRecFor(a); if(!rec) return; const s=S.sim; const key=a.recId||'x'; const F=SIM_CHIMES[key]=SIM_CHIMES[key]||{};
+    if(a.job.pax){ if(rec.takeoff && !F.to){ F.to=1; setTimeout(()=>chime(),12000); }
+      if(!F.desc && rec.takeoff && s.motion && !s.motion.onGround && s.motion.vsFpm<-500 && s.position.aglFt<4000){ F.desc=1; chime(true); }
+      if(rec.blockIn && !F.in){ F.in=1; chime(); } } },
+  function bigMode(){ if(S.big){ const el=document.getElementById('bigmode'); if(el) el.innerHTML=bigInner(); } },
+  function butterCup(){ cupTick(); },
+  /* sealed orders open when the trigger point is reached */
+  function sealedOrders(){ const a=S.st&&S.st.active; if(a && a.job.scen && !a.opened && a.started && trigReached(a)) openOrders(a,'live'); },
+  function syncWeather(){ trySyncWx(); },
+  function trace(){ traceSample(); },
+  function copilot(){ copilotTick(); },
+  /* the step-by-step flight guide moves on */
+  function flightGuide(){ if(guideActive() && S.view==='flight'){ const a=S.st.active; const before=JSON.stringify(a.guide||{}); guideHTML(a); if(JSON.stringify(a.guide)!==before){ S.keepScroll=true; render(); } } },
+  function clock(){ autoClock(); },
+  /* engine running at the departure airport: the flight starts by itself */
+  function startWhenEngineRuns(){ const a=S.st&&S.st.active, s=S.sim; if(!a || a.started || S.simState!=='live' || !s || !s.motion || !s.systems) return;
+    if(!(s.systems.engineRunning || !s.motion.onGround) || !atDeparture(a.job)) return;
+    if(diff()==='expert' && !checklistDone(a)){ if(!a._ckNag){ a._ckNag=true; toast('Expert: finish the Before start and Start & taxi checklists to start the flight.'); } return; }
+    a.started=Date.now(); save(); if(!a.recId) simArm(); toast('Engine running: flight started.'); S.keepScroll=true; render(); },
+  function adoptAircraftSpecs(){ adoptSpec(); },
+  function connectionCard(){ if(S.view==='board'){ const el=document.querySelector('.conn-card'); if(el){ const t=tpl(connCard(S.st)); el.replaceWith(t.content.firstElementChild); } } },
+  /* a flight that just started opens the Flight page */
+  function openFlightPage(tick){ const a=tick.active; if(a && !tick.wasStarted && a.started && S.view!=='flight') go('flight'); },
+  /* safety calls from the copilot: too fast, too fast for flaps, fuel */
+  function safetyCalls(){ const a=S.st&&S.st.active, s=S.sim; if(!simRelevant(a) || !s.motion || s.motion.onGround) return;
+    if(SAFE.id!==a.job.id){ SAFE.id=a.job.id; SAFE.t={}; }
+    const cls=AC[a.job.ac].cls, ias=s.motion.ias, x=s.ext||{};
+    if(ias > (VWARN[cls]||200)) safeSay('fast', `Speed! ${ias} knots. Power back.`, 20000);
+    if(x.flaps && x.flaps.handle>0 && ias > (VFLAP[cls]||110)) safeSay('flapfast', `Too fast for flaps. Slow down before you extend them.`, 20000);
+    // fuel: enough for the rest of the trip plus the reserve?
+    const dest=a.job.local?AP[a.job.from]:AP[a.job.to]; const p=plan(a.job); const ac=AC[a.job.ac];
+    if(s.systems && s.systems.fuelLb!=null && ac.burn>0 && s.position){ const togo=a.job.local?0:distNm({lat:s.position.lat,lon:s.position.lon},dest); const needLb=(togo/Math.max(60,s.motion.gs||ac.cruise)*60 + p.reserveMin*0.75)/60*ac.burn; if(s.systems.fuelLb < needLb) safeSay('fuel', `Fuel check. We're getting close to the reserve. Consider the nearest airport.`, 300000); } },
+  /* the approach card appears near the destination and stays current */
+  function approachCardLive(){ const a=S.st&&S.st.active; if(!a||!a.started||S.view!=='flight') return; const want=!!approachCard(a); const has=!!document.querySelector('.appr-card'); if(want!==has){ S.keepScroll=true; render(); } else if(has){ const t=tpl(approachCard(a)); document.querySelector('.appr-card').replaceWith(t.content.firstElementChild); } },
+  function waterLandingGear(){ const a=S.st&&S.st.active, s=S.sim; if(!a||!a.started||!waterDest(a)||!s||!s.position||!s.motion||s.motion.onGround) return; const g=s.ext&&s.ext.gear; const dest=AP[a.job.local?a.job.from:a.job.to];
+    if(g && g.retractable && g.down && distNm({lat:s.position.lat,lon:s.position.lon},dest)<4 && s.position.aglFt<1500) safeSay('watergear', `Gear is down. Gear up for a water landing!`, 30000); },
+  /* story moments during a chapter: at most one every 40 seconds, in order */
+  function storyBeats(tick){ const a=S.st&&S.st.active; if(!a||!a.started||a.job.kind!=='story'||!BEATS[a.job.story]||!simRelevant(a)) return; if(tick.beatsHeld || Date.now()-BEAT.last<40000) return;
+    const ph=beatPhase(a); if(!ph) return; a.beatsDone=a.beatsDone||{}; const list=beatsFor(a);
+    for(let i=0;i<list.length;i++){ if(a.beatsDone[i]) continue; const b=list[i]; if(!ph[b.at]) break; a.beatsDone[i]=1; BEAT.last=Date.now(); save(); showBeat(a,b,i); break; } },
+  /* what the flight is remembered for: time in the air, time below 1,000 ft, transponder, real fuel burn */
+  function trackFlight(){ const a=S.st&&S.st.active, s=S.sim; if(!a||!a.started||!s||S.simState!=='live'||!s.motion||!s.position) return; const now=Date.now(); const T=a.track=a.track||{air:0,low:0,last:now,fuel:[]}; const dt=Math.min(20,(now-T.last)/1000); T.last=now;
+    if(!s.motion.onGround){ T.air+=dt; if((s.position.aglFt||0)<1000) T.low+=dt; }
+    if(s.systems && s.systems.fuelLb!=null){ T.fuel.push([now, s.systems.fuelLb]); while(T.fuel.length && now-T.fuel[0][0]>15*60000) T.fuel.shift(); }
+    const x=s.ext||{}; if(a.job.network && x.transponder!=null){ T.xpdrSeen=true; if(String(x.transponder.mode||x.transponder).match(/stby|standby|off/i)) T.dark=(T.dark||0)+dt; }
+    const c=crime(); if(a.job.network && c.heat>=50 && !a.cgCall && T.air>240){ a.cgCall=true; showBeat(a,{at:'cruise',who:'radio',text:`Aircraft on this frequency, U.S. Coast Guard. Be advised, we are conducting air interdiction operations in this sector.|Your Heat is high. They might be talking about you.`},99); } },
+  /* the flight display at the top of flight mode */
+  function flightDisplay(){ const a=S.st&&S.st.active; const el=document.querySelector('.fhud'); if(a&&el){ const t=tpl(hudHTML(a)); el.replaceWith(t.content.firstElementChild); } },
+  /* the aircraft you load in MSFS is added to your hangar list */
+  function addLoadedAircraft(){ if(S.simState!=='live'||!S.st) return; const L=loadedAircraft(); if(L.id && S.st.hangar && !S.st.hangar[L.id]){ S.st.hangar[L.id]=true; save(); toast(`Added the ${AC[L.id].n} to your hangar list, since it's loaded in MSFS.`); } },
+];
+function renderSimBits(){
+  const a=S.st&&S.st.active;
+  const tick = { beatsHeld: storyBeatsHeld(), active:a, wasStarted: a&&a.started };
+  for(const step of SIM_TICK){ try{ step(tick); }catch(_){} }
+}
+
+/* ---------- the instructor / copilot voice ---------- */
+
+/* On a water landing the gear stays up, so the "check gear" calls are switched off while fn runs. */
+function noGearCheck(fn){ return function(){ const a=S.st&&S.st.active; const g=S.sim&&S.sim.ext&&S.sim.ext.gear; if(g && waterDest(a)){ const r=g.retractable; g.retractable=false; try{ return fn.apply(this, arguments); } finally { g.retractable=r; } } return fn.apply(this, arguments); }; }
+
+/* The instructor's calls (stall, overspeed, gear, unstable approach...), each with its own cool-down. */
+function coachCalls(){
+  const st=S.st; const a=st && st.active; const s=S.sim; if(!a || !s || S.simState!=='live' || !s.motion) return;
+  const rec = simRecFor(a); if(!rec) return;
+  a.cab = a.cab || {f:{}, log:[], comfort:100, cd:0}; const C=a.cab; C.cc=C.cc||{}; C.tally=C.tally||{};
+  const job=a.job, now=Date.now(), x=s.ext, m=s.motion, pos=s.position||{};
+  const who = shortName(coachFor(job));
+  const say = (key, text, cd=60000, crit=false, once=false) => {
+    if(once && C.cc[key]) return; if(C.cc[key] && now-C.cc[key] < cd) return;
+    C.cc[key]=now; C.tally[key]=(C.tally[key]||0)+1;
+    C.log.unshift({t:now, who, text, kind: crit?'crit':'coach'}); C.log=C.log.slice(0,14);
+    if(crit){ C.callout={t:now, who, text}; toast(`${who}: ${text}`.slice(0,150)); }
+  };
+  const air = !m.onGround && rec.takeoff && !(rec.touchdown && rec.phase!=='airborne');
+  const distTo = (!job.local && AP[job.to] && pos.lat!=null) ? distNm({lat:pos.lat,lon:pos.lon},AP[job.to]) : null;
+  const final = air && distTo!=null && distTo < 5 && pos.aglFt < 1200 && m.vsFpm < 200;
+  const vapp = vappOf(job.ac);
+  if(m.onGround && !rec.takeoff && m.gs < 1 && x && Math.abs(x.controls.yokeX) > 0.15) say('stickOff', pick(COACH.stickOff).replace('{p}', Math.round(Math.abs(x.controls.yokeX)*100)), 0, true, true);
+  if(x){
+    if(x.flaps.overspeed) say('flapOver', pick(COACH.flapOver), 20000, true);
+    if(x.flaps.damaged) say('flapDmg', pick(COACH.flapDmg), 0, true, true);
+    if(Math.abs(x.flaps.left - x.flaps.right) > 12) say('flapSplit', pick(COACH.flapSplit), 30000, true);
+    if(x.gear.overspeed) say('gearOver', pick(COACH.gearOver), 30000, true);
+    if(x.warnings.stall && air) say('stall', pick(COACH.stall), 15000, true);
+    if(x.warnings.overspeed && air) say('overspeed', pick(COACH.overspeed), 30000, true);
+    if(air && Math.abs(x.attitude.bank) > 45){ if(!C.cc.bank || now-C.cc.bank>=45000){ if(job.pax) C.comfort=Math.max(0,C.comfort-6); } say('bank', pick(COACH.bank), 45000, false); }
+    if(air && Math.abs(x.attitude.bank) > 40 && Math.abs(x.controls.yokeX) < 0.06 && !x.autopilot) say('rollNoInput', pick(COACH.rollNoInput).replace('{b}', Math.abs(x.attitude.bank)), 60000, true);
+    if(final && x.gear.retractable && !x.gear.down && pos.aglFt < 800) say('gearUp', pick(COACH.gearUp), 20000, true);
+    if(rec.takeoff && !C.cc.noLightChecked){ C.cc.noLightChecked=now; if(!x.lights.landing && now - rec.takeoff.t < 60000) say('noLight', pick(COACH.noLight), 0, false, true); }
+  }
+  if(air && rec.takeoff && now - rec.takeoff.t < 90000 && pos.aglFt > 400 && m.vsFpm > 300) say('goodTakeoff', pick(COACH.goodTakeoff), 0, false, true);
+  if(final && pos.aglFt < 700 && m.vsFpm < -1100) say('sink', pick(COACH.sink), 25000, true);
+  if(final && vapp && pos.aglFt < 1000 && m.ias > vapp + 20) say('fast', pick(COACH.fast).replace('{v}', vapp), 30000, false);
+  if(final && vapp && pos.aglFt < 600 && m.ias < vapp - 12) say('slow', pick(COACH.slow).replace('{v}', vapp), 30000, true);
+  if(final && vapp && pos.aglFt < 600 && pos.aglFt > 300 && Math.abs(m.ias - vapp) <= 8 && m.vsFpm > -900 && m.vsFpm < -300) say('stableApp', pick(COACH.stableApp), 0, false, true);
+  if(rec.touchdown && rec.touchdown.fpm < 100) say('butter', pick(COACH.butter), 0, false, true);
+}
+/* One instructor tick: the calls, then what the flight will be judged on (mistake tally, the weather you flew through). */
+function coachTickBody(){
+  coachCalls();
+  const a=S.st&&S.st.active; if(a && a.cab) a.job._cab = {tally:a.cab.tally};
+  const x=S.sim&&S.sim.ext; if(!a || !x || S.simState!=='live') return;
+  const w=x.weather; const W = a.job._wx = a.job._wx || {maxWind:0, minVis:99, cloud:false};
+  W.maxWind=Math.max(W.maxWind, w.windKt||0); W.minVis=Math.min(W.minVis, w.visSm||99); if(w.inCloud && !S.sim.motion.onGround) W.cloud=true;
+}
+function coachTick(){ return noGearCheck(coachTickBody)(); }
+
+/* A line from the copilot: shown in the flight log and spoken. Each key is said once. */
+function copilotSay(text, key){
+  const g=S.sim&&S.sim.ext&&S.sim.ext.gear; if(/gear/i.test(String(text)) && g && !g.retractable) text=String(text).replace(/\s*Check gear!?/i,' stable.').replace(/Five hundred\.\s+stable\./,'Five hundred, stable.');   // fixed gear: no gear call
+  const m=String(text).match(/(\d{4,}) feet per minute/); if(m && Number(m[1])>1500) text='Down and safe.';   // a bad sensor reading is never read out
+  if(CP.said[key]) return; CP.said[key]=1; S.copilotLast={text, t:Date.now()}; const a=S.st&&S.st.active; if(a && a.cab && a.cab.log){ const t=Date.now(); a.cab.log.unshift({t, who:'Copilot', text, kind:'copilot'}); a.cab.log=a.cab.log.slice(0,14); try{ VQ.lastT=Math.max(VQ.lastT,t); }catch(_){} }
+  if(!(typeof voiceOn==='function' && voiceOn()) || !window.speechSynthesis) return; try{ const u=new SpeechSynthesisUtterance(text); const v=pickVoice(false,2)||pickVoice(false,0); if(v) u.voice=v; u.rate=1.08; u.pitch=0.95; u.volume=voiceVol(); speechSynthesis.speak(u); }catch(_){}
+}
+
+/* A safety call: each kind has its own repeat time, and two calls are never closer than 6 seconds. */
+function safeSay(key, text, every){
+  if(key==='fuel'){ const a=S.st&&S.st.active, s=S.sim;
+    /* judged from your actual burn rate over the last minutes, not the book number */
+    const T=a&&a.track; if(!a||!s||!T||T.fuel.length<2||!s.position||!s.motion) return;
+    const [t0,f0]=T.fuel[0], [t1,f1]=T.fuel[T.fuel.length-1]; const mins=(t1-t0)/60000; if(mins<6) return; const burn=(f0-f1)/mins; if(!(burn>0)) return;
+    const dest=a.job.local?AP[a.job.from]:AP[a.job.to]; const togo=a.job.local?0:distNm({lat:s.position.lat,lon:s.position.lon},dest); const gs=Math.max(60,s.motion.gs||AC[a.job.ac].cruise);
+    const need=burn*(togo/gs*60 + 30); if(!(f1 < need)) return;
+    text=`Fuel check. At this burn rate we'll land with less than thirty minutes left. Consider the nearest airport.`;
+    /* and never in the first five minutes, or while the book numbers still say there's plenty */
+    const rec=s.recorder; if(!rec||!rec.takeoff||Date.now()-rec.takeoff.t<5*60000) return;
+    const ac=AC[a.job.ac], p=plan(a.job); const needLb=(togo/ac.cruise*60 + p.reserveMin*0.6)/60*ac.burn; if(!(s.systems && s.systems.fuelLb < needLb)) return; }
+  const now=Date.now(); if(SAFE.t[key] && now-SAFE.t[key] < (every||60000)) return; if(SAFE.any && now-SAFE.any < 6000) return; SAFE.any=now; SAFE.t[key]=now; try{ copilotSay(text, key+':'+now); }catch(_){}
+}
+
+/* ---------- finishing from MSFS ---------- */
+
+/* Logs the flight from what MSFS recorded. */
+function autoFinish(rec, how){
+  { const a=S.st&&S.st.active; if(a && a.cab && a.cab.comfort!=null) a.cab.comfort=Math.max(25, a.cab.comfort); }   // comfort never reads below 25
+  if(rec && rec.touchdown){ rec = Object.assign({}, rec, {touchdown: saneTouchdown(rec.touchdown)}); }
+  const st=S.st, a=st.active, job=a.job; if(!a || a._autoDone) return; a._autoDone=true;
+  const near = nearestAirport(rec.touchdown.lat, rec.touchdown.lon);
+  const landedAt = near.d < 6 ? near.code : (job.local ? job.from : job.to);
+  let landing = landingClass(rec.touchdown.fpm); if(rec.bounces>1 && landing==='butter') landing='smooth'; if(rec.bounces>2 && landing==='smooth') landing='firm';
+  const comfort = a.cab ? Math.round(a.cab.comfort) : null;
+  const block = rec.blockMinutes || Math.max(1, Math.round((Date.now()-(a.started||a.accepted))/60000));
+  const f = { landing, tdz: rec.touchdown.fpm < 400, center: rec.bounces===0, fuel: rec.fuelNowLb!=null?rec.fuelNowLb:0, fuelUnit:'lb', block, landedAt,
+    checklist: diff()==='expert' ? checklistDone(a) : true, radio:true, weather:true, smooth: comfort==null || comfort>=75, scen:null, tasks:[], bonus:false, request:false,
+    verified:true, td:rec.touchdown, simFpm:rec.touchdown.fpm, simBounces:rec.bounces, simG:rec.touchdown.g, comfort, auto:true };
+  const res = score(job, f); applyResult(st, job, f, res); S.debrief=false; S.showResult=true; S.busy.journalDone=false; save();
+  S.view='flight'; try{ history.replaceState(null,'','#flight'); }catch(_){} render(); window.scrollTo(0,0);
+  toast(how==='parked' ? 'Parked. Flight logged automatically from MSFS.' : 'Flight logged from MSFS.');
+}
+
+/* ---------- full-screen moments ---------- */
+
+/* A full-screen card (urgent job, sealed orders, a bust). Closes by itself after o.ms. */
+function takeover(o){ document.querySelectorAll('.takeover').forEach(x=>x.remove()); const d=document.createElement('div'); d.className='takeover tk-'+(o.kind||'orders'); d.setAttribute('role','alertdialog'); d.setAttribute('aria-label', o.title);
+  d.innerHTML=`${o.kind==='weather'?'<div class="tk-rain"></div><div class="fx-flash"></div>':''}<div class="tk-in"><p class="tk-kicker">${esc(o.kicker||'')}</p><h1>${esc(o.title)}</h1>${o.text?`<p class="tk-text">${esc(o.text)}</p>`:''}${o.sub?`<p class="tk-sub">${esc(o.sub)}</p>`:''}<button class="btn primary" data-act="tk-close">${esc(o.btn||'Got it')}</button></div><i class="tk-timer" style="--ttl:${o.ms||9000}ms"></i>`;
+  document.body.appendChild(d); try{ crackle && crackle(0.3,0.3); }catch(_){}
+  const close=()=>{ d.classList.add('out'); setTimeout(()=>d.remove(),400); }; d.addEventListener('click', e=>{ if(e.target.closest('[data-act="tk-close"]')) close(); }); setTimeout(close, o.ms||9000); }
+
+/* Opens the sealed orders for an in-flight emergency. */
+function openOrders(a, how){
+  if(a && !a.opened && nearDestination(a)) return;   // too late in the flight: it stays sealed
+  /* a weather emergency under a clear sky becomes a different emergency */
+  if(a && !a.opened && WX_SCEN.has(a.job.scen) && skyIsClear()){ const alt=['rough_engine','electrical','pax_medical','runway_closed'].filter(k=>SCEN[k] && (SCEN[k].cls==='*' || SCEN[k].cls.includes(AC[a.job.ac].cls)) && (!SCEN[k].pax || a.job.pax>0));
+    if(alt.length) a.job.scen=pick(alt); else { a.job.scen=null; return; } }
+  if(testMode()) return;
+  if(a.opened) return; a.opened=true; a.scenAt=Date.now(); a.scenPlan=scenarioPlan(a); save();
+  S.ordersPop=true; toast(`Sealed orders: ${a.scenPlan.title}`);
+  try{ if(typeof crackle==='function') crackle(0.25,0.3); if(window.speechSynthesis && voiceOn()){ const u=new SpeechSynthesisUtterance(`Sealed orders. ${a.scenPlan.text} ${a.scenPlan.sim}`); u.volume=voiceVol(); const v=pickVoice(false,1); if(v) u.voice=v; speechSynthesis.cancel(); speechSynthesis.speak(u); } }catch(_){}
+  try{ if('Notification' in window && Notification.permission==='granted') new Notification('Trade Winds: sealed orders', {body:a.scenPlan.text}); }catch(_){}
+  S.keepScroll=true; render();
+  try{ if(a.scenPlan){ const sc=SCEN[a.job.scen]||{}; const wx=/squall|shower|storm|wave|weather|rain/i.test((a.job.scen||'')+' '+(sc.n||'')+' '+a.scenPlan.title);
+    takeover({kind:wx?'weather':'orders', kicker:'Sealed orders', title:a.scenPlan.title, text:a.scenPlan.text, sub:a.scenPlan.sim, ms:11000}); } }catch(_){}
 }
 /* ===================== RENDER =====================
    render() redraws the whole page from S (what's on screen) and S.st (the career).

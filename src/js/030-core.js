@@ -60,8 +60,6 @@ var renderPreflight; /* defined in full below (052-core.js) */
 const _pfFlight = flightView;
 flightView = function(){ const h=_pfFlight(); const a=S.st&&S.st.active; if(!a || a.started || S.debrief || S.showResult) return h;
   return h.replace(/(<\/section>)/, `$1<section class="panel stack preflight" id="preflight">${preflightHTML(a.job)}</section>`); };
-const _pfRender = renderSimBits;
-renderSimBits = function(){ _pfRender(); if(S.view==='flight') renderPreflight(); };
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="pf-load"],[data-act="pf-pln"],[data-act="pf-recheck"]'); if(!b || !S.st || !S.st.active) return; const job=S.st.active.job;
   if(b.dataset.act==='pf-load') loadIntoSim(job); else if(b.dataset.act==='pf-pln') savePLN(job); else { simPoll(true); toast('Checking MSFS…'); }

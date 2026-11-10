@@ -18,7 +18,6 @@ function hudHTML(a){ const s=S.sim||{}; const live=S.simState==='live'&&s.positi
 const _u10If = inflightView;
 inflightView = function(){ const h=_u10If(); const a=S.st&&S.st.active; if(!a) return h; return h.replace(/(<main[^>]*>)/, `$1<div class="fm-bar"><span class="fm-dot"></span> Flight mode <button class="btn sm ghost" data-act="fm-menu">${S.fmMenu?'Hide menu':'Show menu'}</button></div>${hudHTML(a)}`); };
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="fm-menu"]')) return; S.fmMenu=!S.fmMenu; S.keepScroll=true; render(); });
-(function(){ const _rs=renderSimBits; renderSimBits=function(){ _rs(); try{ const a=S.st&&S.st.active; const el=document.querySelector('.fhud'); if(a&&el){ const t=tpl(hudHTML(a)); el.replaceWith(t.content.firstElementChild); } }catch(_){} }; })();
 
 /* ---- 4. command bar: Ctrl+K (or /) to jump anywhere ---- */
 function cmdItems(){ const st=S.st; const L=[]; if(!st) return L; const pg=(n,v,k)=>L.push({n, k:k||'Page', run:()=>go(v)});

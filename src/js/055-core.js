@@ -7,11 +7,6 @@ makeBonus = function(job){ const amt=Math.max(30, Math.round(job.pay*0.2/10)*10)
     comfort:{k, amt, text:`Keep the cabin happy: comfort 90 or better at the end`, auto:'comfort'} })[k]; };
 
 /* ---- the flight starts itself when MSFS shows you've started the engine at the departure airport ---- */
-const _smSim = renderSimBits;
-renderSimBits = function(){ _smSim(); try{ const a=S.st&&S.st.active, s=S.sim; if(!a || a.started || S.simState!=='live' || !s || !s.motion || !s.systems) return;
-    if(!(s.systems.engineRunning || !s.motion.onGround) || !atDeparture(a.job)) return;
-    if(diff()==='expert' && !checklistDone(a)){ if(!a._ckNag){ a._ckNag=true; toast('Expert: finish the Before start and Start & taxi checklists to start the flight.'); } return; }
-    a.started=Date.now(); save(); if(!a.recId) simArm(); toast('Engine running: flight started.'); S.keepScroll=true; render(); }catch(_){} };
 
 /* ---- fewer interruptions: phone calls, urgent pop-ups and the end-of-day recap are off unless you turn them on ---- */
 maybeCall = function(){};

@@ -26,11 +26,6 @@ loadIntoSim = async function(job){ if(!S.mcp){ toast('MSFS isn\'t connected.'); 
 
 /* ---- 2. fuel warning: plan with cruise speed, not the slow takeoff groundspeed, and wait until you're established ---- */
 /* (replaces the check inside the safety calls by giving it honest inputs) */
-const _fbSafe = safeSay;
-safeSay = function(key, text, every){ if(key==='fuel'){ const a=S.st&&S.st.active, s=S.sim, rec=s&&s.recorder; if(!a||!s||!rec||!rec.takeoff||Date.now()-rec.takeoff.t<5*60000) return;
-    const ac=AC[a.job.ac], p=plan(a.job); const dest=a.job.local?AP[a.job.from]:AP[a.job.to]; const togo=a.job.local?0:distNm({lat:s.position.lat,lon:s.position.lon},dest);
-    const needLb=(togo/ac.cruise*60 + p.reserveMin*0.6)/60*ac.burn; if(!(s.systems && s.systems.fuelLb < needLb)) return; }
-  return _fbSafe(key, text, every); };
 
 /* ---- 5 + 6. no duty day, no "past midnight": the day rolls over by itself ---- */
 dutyAfter = function(){ return 0; };
@@ -53,13 +48,8 @@ ARCH.push({id:'special', label:'Special charter', kind:'vip', w:0, cls:['ga','st
 /* ---- sealed orders that don't match the sky: weather scenarios need real weather ---- */
 const WX_SCEN = new Set(['squall']);
 function skyIsClear(){ const w=S.simState==='live' && S.sim && S.sim.ext && S.sim.ext.weather; return !!(w && w.visSm>=7 && !w.inCloud); }
-const _fbOrders = openOrders;
-openOrders = function(a, how){ if(a && !a.opened && WX_SCEN.has(a.job.scen) && skyIsClear()){ const alt=['rough_engine','electrical','pax_medical','runway_closed'].filter(k=>SCEN[k] && (SCEN[k].cls==='*' || SCEN[k].cls.includes(AC[a.job.ac].cls)) && (!SCEN[k].pax || a.job.pax>0));
-    if(alt.length) a.job.scen=pick(alt); else { a.job.scen=null; return; } } return _fbOrders(a, how); };
 
 /* ---- comfort only counts when the cabin actually rode along ---- */
-const _fbAuto = autoFinish;
-autoFinish = function(rec, how){ const a=S.st&&S.st.active; if(a && a.cab && !(a.cab.log||[]).length && a.cab.comfort===0) a.cab.comfort=null; return _fbAuto(rec, how); };
 /* ---- the board's sky matches MSFS when you're sitting at that airport ---- */
 const _fbLocWx = genLocWx;
 genLocWx = function(st){ const base=_fbLocWx(st); try{ const s=S.sim; if(S.simState==='live' && s && s.position && distNm({lat:s.position.lat,lon:s.position.lon},AP[st.loc])<5){ const w=simWx(base); if(w) return w; } }catch(_){} return base; };

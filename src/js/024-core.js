@@ -169,8 +169,6 @@ function academyView(){
 }
 const _acBoard = boardView;
 boardView = function(){ return S.view==='academy' ? academyView() : _acBoard(); };
-const _acRender = renderSimBits;
-renderSimBits = function(){ _acRender(); try{ academyTick(); }catch(e){} };
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="ac-start"],[data-act="ac-next"],[data-act="ac-stop"]'); if(!b || !S.st) return; const A=acad(S.st);
   if(b.dataset.act==='ac-start'){ startLesson(b.dataset.id); return; }

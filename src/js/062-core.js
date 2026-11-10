@@ -4,8 +4,6 @@ function saneTouchdown(td){ if(!td) return td; const t=Object.assign({}, td); co
   if(t.fpm>1500 && g<1.8){ t.fpm = g<1.15?120 : g<1.3?220 : g<1.6?350 : 500; t.estimated=true; }
   if(t.g>3.5 && t.fpm<900){ t.g = Math.round((1.15 + t.fpm/1200)*100)/100; t.gEstimated=true; }
   return t; }
-const _frAuto = autoFinish;
-autoFinish = function(rec, how){ if(rec && rec.touchdown){ rec = Object.assign({}, rec, {touchdown: saneTouchdown(rec.touchdown)}); } return _frAuto(rec, how); };
 
 /* 3. a touchdown "300 ft off the centerline" on a 150 ft runway means the runway data doesn't match the scenery, not your flying */
 const _frTda = touchdownAnalysis;
@@ -32,8 +30,6 @@ boardingPass = function(st, job, p, a, started){ const h=_frPass.apply(this, arg
  
 
 /* 11. the cabin never drops to 0 comfort from normal flying */
-const _frAuto2 = autoFinish;
-autoFinish = function(rec, how){ const a=S.st&&S.st.active; if(a && a.cab && a.cab.comfort!=null) a.cab.comfort=Math.max(25, a.cab.comfort); return _frAuto2(rec, how); };
 
 /* 12. result notes: no landing league, no "airframe 100%" line, at most four, the rest folded */
 const _frRes = resultView;

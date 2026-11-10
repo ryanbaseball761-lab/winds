@@ -83,7 +83,4 @@ document.addEventListener('click', e=>{
 /* going to the in-flight screen the moment you start */
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="start"]')){ S.ifBrief=false; setTimeout(()=>{ if(S.st && S.st.active && S.st.active.started){ S.view='flight'; render(); window.scrollTo(0,0); } },0); } });
 /* live refresh without disturbing the checklist */
-const _ifRender = renderSimBits;
-renderSimBits = function(){ _ifRender(); if(S.view==='flight' && S.st && S.st.active && S.st.active.started && !S.debrief && !S.showResult && !S.ifBrief){
-  const l=document.getElementById('if-live'); if(l) l.innerHTML=ifLiveHTML(); const m=document.getElementById('if-map'); if(m) m.innerHTML=ifMiniMap(S.st.active); } };
 setInterval(()=>{ const t=document.getElementById('if-timer'); if(t) t.textContent = durTxt(Math.round((Date.now()-Number(t.dataset.start))/60000)); }, 15000);

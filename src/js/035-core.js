@@ -17,8 +17,6 @@ function openBig(){ let el=document.getElementById('bigmode'); if(!el){ el=docum
 function closeBig(){ const el=document.getElementById('bigmode'); if(el) el.remove(); S.big=false; try{ if(document.fullscreenElement) document.exitFullscreen(); }catch(_){} }
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && S.big) closeBig(); });
 document.addEventListener('fullscreenchange', ()=>{ if(!document.fullscreenElement && S.big){ /* stay open as an overlay */ } });
-const _bgRender = renderSimBits;
-renderSimBits = function(){ _bgRender(); if(S.big){ const el=document.getElementById('bigmode'); if(el) el.innerHTML=bigInner(); } };
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="big-open"]')){ e.stopPropagation(); openBig(); } });
 const _bgInflight = inflightView;
 inflightView = function(){ return _bgInflight().replace('<button class="btn sm ghost" data-act="if-brief">Briefing</button>', '<button class="btn sm ghost" data-act="big-open">⛶ Big display</button><button class="btn sm ghost" data-act="if-brief">Briefing</button>'); };

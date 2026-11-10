@@ -30,18 +30,6 @@ function rankMul(c){ return c.power>=65?1.3:c.power>=45?1.2:1; }
 const _twStrip = stripHTML;
 stripHTML = function(st, job, opts){ let h=_twStrip(st, job, opts); const tags=[]; if(job.drop) tags.push('<span class="chip warn">Night drop</span>'); if(job.lowLevel) tags.push('<span class="chip warn">Stay under 1,000 ft: +25%</span>'); if(job.hot) tags.push('<span class="chip warn">Hot airport</span>'); if(tags.length) h=h.replace('<div class="chips">', '<div class="chips">'+tags.join('')); return h; };
 
-/* ---- 7 + 8 + 18. what the sim tells us during the flight: low level, transponder, real fuel burn ---- */
-(function(){ const _rs=renderSimBits; renderSimBits=function(){ _rs(); try{ const a=S.st&&S.st.active, s=S.sim; if(!a||!a.started||!s||S.simState!=='live'||!s.motion||!s.position) return; const now=Date.now(); const T=a.track=a.track||{air:0,low:0,last:now,fuel:[]}; const dt=Math.min(20,(now-T.last)/1000); T.last=now;
-  if(!s.motion.onGround){ T.air+=dt; if((s.position.aglFt||0)<1000) T.low+=dt; }
-  if(s.systems && s.systems.fuelLb!=null){ T.fuel.push([now, s.systems.fuelLb]); while(T.fuel.length && now-T.fuel[0][0]>15*60000) T.fuel.shift(); }
-  const x=s.ext||{}; if(a.job.network && x.transponder!=null){ T.xpdrSeen=true; if(String(x.transponder.mode||x.transponder).match(/stby|standby|off/i)) T.dark=(T.dark||0)+dt; }
-  const c=crime(); if(a.job.network && c.heat>=50 && !a.cgCall && T.air>240){ a.cgCall=true; showBeat(a,{at:'cruise',who:'radio',text:`Aircraft on this frequency, U.S. Coast Guard. Be advised, we are conducting air interdiction operations in this sector.|Your Heat is high. They might be talking about you.`},99); }
-  }catch(_){} }; })();
-/* fuel check from your actual burn rate, not the book number */
-(function(){ const _ss=safeSay; safeSay=function(key, text, every){ if(key!=='fuel') return _ss(key, text, every); const a=S.st&&S.st.active, s=S.sim; const T=a&&a.track; if(!a||!s||!T||T.fuel.length<2||!s.position||!s.motion) return;
-  const [t0,f0]=T.fuel[0], [t1,f1]=T.fuel[T.fuel.length-1]; const mins=(t1-t0)/60000; if(mins<6) return; const burn=(f0-f1)/mins; if(!(burn>0)) return;
-  const dest=a.job.local?AP[a.job.from]:AP[a.job.to]; const togo=a.job.local?0:distNm({lat:s.position.lat,lon:s.position.lon},dest); const gs=Math.max(60,s.motion.gs||AC[a.job.ac].cruise);
-  const need=burn*(togo/gs*60 + 30); if(f1 < need) return _ss(key, `Fuel check. At this burn rate we'll land with less than thirty minutes left. Consider the nearest airport.`, every); }; })();
 
 function launderOpts(st){ const d=st.story.done; const L=[]; L.push({id:'dez',n:'Dez, cash under the counter',fee:0.25,heat:3}); if(d.CR5) L.push({id:'trust',n:'The Hartwell Reef Trust',fee:0.15,heat:1}); if(d.CR15) L.push({id:'caribe',n:'Caribe Cargo invoices',fee:0.08,heat:0}); return L; }
 function launderHTML(st){ const c=crime(st); if(!c.dirty) return ''; const L=launderOpts(st); return `<section class="panel launder"><div class="row between"><div><p class="label">Dirty cash</p><h3>${money(c.dirty)}</h3></div><p class="small muted" style="max-width:420px">Money from network runs. Launder it to move it into your cash. Better options unlock as the story goes on.</p></div><div class="row" style="flex-wrap:wrap;gap:8px;margin-top:10px">${L.map(o=>`<button class="btn sm" data-act="launder" data-v="${o.id}">${esc(o.n)} · ${Math.round(o.fee*100)}% fee${o.heat?` · Heat +${o.heat}`:''}</button>`).join('')}</div></section>`; }

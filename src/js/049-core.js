@@ -33,8 +33,6 @@ document.addEventListener('click', async e=>{ const b=e.target.closest('[data-ac
 /* ---- 3. copilot callouts from live sim data ---- */
 function vrOf(acId){ const m=String(AC[acId]&&AC[acId].v||'').match(/(?:Vr|Lift-off)\s*~?(\d+)/); return m?Number(m[1]):55; }
 const CP = { id:null, said:{}, lastAgl:null, lastT:0 };
-function copilotSay(text, key){ if(CP.said[key]) return; CP.said[key]=1; S.copilotLast={text, t:Date.now()}; const a=S.st&&S.st.active; if(a && a.cab && a.cab.log){ const t=Date.now(); a.cab.log.unshift({t, who:'Copilot', text, kind:'copilot'}); a.cab.log=a.cab.log.slice(0,14); try{ VQ.lastT=Math.max(VQ.lastT,t); }catch(_){} }
-  if(!(typeof voiceOn==='function' && voiceOn()) || !window.speechSynthesis) return; try{ const u=new SpeechSynthesisUtterance(text); const v=pickVoice(false,2)||pickVoice(false,0); if(v) u.voice=v; u.rate=1.08; u.pitch=0.95; u.volume=voiceVol(); speechSynthesis.speak(u); }catch(_){} }
 function copilotTick(){ const a=S.st&&S.st.active, s=S.sim; if(!a || !a.started || proPrefs().copilot===false || S.simState!=='live' || !s || !s.motion || !s.position) return;
   if(CP.id!==a.job.id){ CP.id=a.job.id; CP.said={}; CP.lastAgl=null; }
   const m=s.motion, p=s.position, vr=vrOf(a.job.ac), rec=s.recorder||{}; const airborne=!m.onGround;
@@ -51,8 +49,6 @@ function copilotTick(){ const a=S.st&&S.st.active, s=S.sim; if(!a || !a.started 
   CP.lastAgl = p.aglFt;
   // poll faster close to the ground so the low callouts land on time
   const low = airborne && p.aglFt<400 && m.vsFpm<-50; clearTimeout(CP.fast); if(low) CP.fast=setTimeout(()=>{ try{ simPoll(true); }catch(_){} }, 500); }
-const _cpSim = renderSimBits;
-renderSimBits = function(){ _cpSim(); try{ copilotTick(); }catch(_){} };
 
 /* ---- 4. guided first flight ---- */
 const GUIDE = [
@@ -73,8 +69,6 @@ function guideActive(){ const st=S.st, a=st&&st.active; return !!(a && st.flight
 const _gdFlight = flightView;
 flightView = function(){ const h=_gdFlight(); if(!guideActive() || S.showResult || S.debrief) return h; const g=guideHTML(S.st.active); return h.replace(/(<main class="wrap[^>]*>[\s\S]*?<\/section>)/, (m)=>m+g); };
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="guide-next"],[data-act="guide-hide"]'); if(!b||!S.st) return; if(b.dataset.act==='guide-hide'){ proPrefs().noGuide=true; } else { const a=S.st.active; if(a){ a.guide=a.guide||{done:{}}; a.guide.done[b.dataset.k]=1; } } save(); S.keepScroll=true; render(); });
-const _gdSim = renderSimBits;
-renderSimBits = function(){ _gdSim(); try{ if(guideActive() && S.view==='flight'){ const a=S.st.active; const before=JSON.stringify(a.guide||{}); guideHTML(a); if(JSON.stringify(a.guide)!==before){ S.keepScroll=true; render(); } } }catch(_){} };
 
 /* ---- 5. weekend events ---- */
 const WEEKEND = [

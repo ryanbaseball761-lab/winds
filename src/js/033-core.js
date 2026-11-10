@@ -23,16 +23,6 @@ speakNew = function(){
 /* cabin chimes on the big moments, and the radio murmuring in the background */
 const ATC_CALLS = [`{cs}, descend and maintain four thousand.`,`{cs}, contact San Juan Center, one two four point six five.`,`{cs}, traffic two o'clock, five miles, opposite direction.`,`{cs}, turn left heading two seven zero, vectors for the I L S.`,`{cs}, climb and maintain flight level two four zero.`,`{cs}, roger, maintain V F R, report the field in sight.`,`{cs}, radar contact, altimeter three zero zero one.`,`{cs}, cleared to land runway one zero, wind zero nine zero at twelve.`];
 const CALLSIGNS = [`American twelve forty`,`JetBlue four sixty one`,`Winair one zero seven`,`LIAT three two two`,`Cessna two four Kilo Tango`,`Seaborne six zero five`,`Caribbean three five two`,`Delta eight eleven`,`Cape Air nine one`,`November five Alpha Victor`];
-let _sdFlags = {}, _sdNext = 0;
-const _sdRender = renderSimBits;
-renderSimBits = function(){ _sdRender(); const a=S.st&&S.st.active; if(!a || S.simState!=='live') return; const rec=simRecFor(a); if(!rec) return; const s=S.sim; const key=a.recId||'x'; const F=_sdFlags[key]=_sdFlags[key]||{};
-  if(a.job.pax){ if(rec.takeoff && !F.to){ F.to=1; setTimeout(()=>chime(),12000); }
-    if(!F.desc && rec.takeoff && s.motion && !s.motion.onGround && s.motion.vsFpm<-500 && s.position.aglFt<4000){ F.desc=1; chime(true); }
-    if(rec.blockIn && !F.in){ F.in=1; chime(); } }
-  const now=Date.now(); if(s.motion && !s.motion.onGround && rec.takeoff && voiceOn() && sfxOn() && window.speechSynthesis && !speechSynthesis.speaking){
-    if(!_sdNext) _sdNext = now + 45000 + Math.random()*40000;
-    if(now > _sdNext){ _sdNext = now + 70000 + Math.random()*80000; const t=pick(ATC_CALLS).replace('{cs}', pick(CALLSIGNS)); crackle(0.12,0.15); const u=new SpeechSynthesisUtterance(t); const v=pickVoice(false,1); if(v) u.voice=v; u.rate=1.18; u.pitch=0.9; u.volume=Math.min(1,voiceVol()*0.45); setTimeout(()=>{ try{ speechSynthesis.speak(u); }catch(_){} },150); } }
-};
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="sfx-toggle"]')) return; const on=!sfxOn(); try{ localStorage.setItem('tw.sfx', on?'on':'off'); }catch(_){} if(on){ crackle(); setTimeout(()=>chime(),300); } toast(on?'Radio sounds on.':'Radio sounds off.'); render(); });
 /* sound switch next to the voice switch */
 const _sdCabin = cabinInner;

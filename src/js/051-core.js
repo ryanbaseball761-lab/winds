@@ -19,19 +19,11 @@ checklistDone = function(a){ if(!a) return false; const ph=cockpitPhases(S.st, a
 checklistCount = function(a){ const ph=cockpitPhases(S.st, a.job); const ck=a.ck||{done:{}}; const n=(S.st.pro&&S.st.pro.fullChecklist)?4:2; let d=0,t=0; for(let i=0;i<Math.min(n,ph.length);i++) for(let j=0;j<ph[i].items.length;j++){ t++; if(ck.done[i+'-'+j]) d++; } return [d,t]; };
 
 /* ---- 2. no scripted ATC: MSFS ATC does that job ---- */
-try{ _sdNext = Infinity; }catch(_){}
 const ATC_WHO = /^(Ground|Radio|ATC|Approach|Tower|Center|Departure)$/i;
 const _tfCabin = cabinTick;
 cabinTick = function(){ const r=_tfCabin.apply(this, arguments); try{ const a=S.st&&S.st.active; if(a&&a.cab&&a.cab.log) a.cab.log=a.cab.log.filter(m=>!ATC_WHO.test(m.who||'')); }catch(_){} return r; };
 
 /* ---- 3. big moments take over the screen ---- */
-function takeover(o){ document.querySelectorAll('.takeover').forEach(x=>x.remove()); const d=document.createElement('div'); d.className='takeover tk-'+(o.kind||'orders'); d.setAttribute('role','alertdialog'); d.setAttribute('aria-label', o.title);
-  d.innerHTML=`${o.kind==='weather'?'<div class="tk-rain"></div><div class="fx-flash"></div>':''}<div class="tk-in"><p class="tk-kicker">${esc(o.kicker||'')}</p><h1>${esc(o.title)}</h1>${o.text?`<p class="tk-text">${esc(o.text)}</p>`:''}${o.sub?`<p class="tk-sub">${esc(o.sub)}</p>`:''}<button class="btn primary" data-act="tk-close">${esc(o.btn||'Got it')}</button></div><i class="tk-timer" style="--ttl:${o.ms||9000}ms"></i>`;
-  document.body.appendChild(d); try{ crackle && crackle(0.3,0.3); }catch(_){}
-  const close=()=>{ d.classList.add('out'); setTimeout(()=>d.remove(),400); }; d.addEventListener('click', e=>{ if(e.target.closest('[data-act="tk-close"]')) close(); }); setTimeout(close, o.ms||9000); }
-const _tfOrders = openOrders;
-openOrders = function(a, how){ const was=a&&a.opened; const r=_tfOrders(a, how); try{ if(!was && a.opened && a.scenPlan){ const sc=SCEN[a.job.scen]||{}; const wx=/squall|shower|storm|wave|weather|rain/i.test((a.job.scen||'')+' '+(sc.n||'')+' '+a.scenPlan.title);
-    takeover({kind:wx?'weather':'orders', kicker:'Sealed orders', title:a.scenPlan.title, text:a.scenPlan.text, sub:a.scenPlan.sim, ms:11000}); } }catch(_){} return r; };
 
 /* ---- 4. story briefing up top, like the opening of a chapter ---- */
 function chapterHero(job){ const m=STORY.find(x=>x.id===job.story); if(!m) return ''; const meta=arcMeta(m.arc); const chs=STORY.filter(x=>x.arc===m.arc); const idx=chs.indexOf(m)+1;
@@ -74,8 +66,6 @@ preflightHTML = function(job){ let h=_tfPfHTML(job); if(S.simState==='live') fet
   return h.replace('Briefing weather is generated', 'Briefing weather is generated').replace("It switches to your MSFS weather once you're at the departure airport.", "MSFS doesn't let add-ons change its weather, so the briefing follows MSFS instead: it switches to your sim's weather once you're at the departure airport. Live weather in MSFS works best."); };
 document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="park-move"]') || !S.st || !S.st.active) return; const s=suggestParking(S.st.active.job); if(!s.spot) return;
   try{ const r=await S.mcp.callTool(SIM_SERVER,'move_to',{lat:s.spot.lat, lon:s.spot.lon, hdg:s.spot.hdg},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} } toast(o&&o.ok?`Moved to ${s.spot.name}.`:`Couldn't move: ${o&&o.error||'update the MSFS Bridge'}`); }catch(err){ toast('Moving the aircraft needs the Trade Winds app (or MSFS Bridge 1.5).'); } });
-const _tfSim = renderSimBits;
-renderSimBits = function(){ _tfSim(); try{ autoClock(); }catch(_){} };
 /* after "Start flight": keep the loading tools until you take off */
 const _tfInflight = inflightView;
 inflightView = function(){ let h=_tfInflight(); const a=S.st&&S.st.active; if(!a) return h; const rec=S.sim&&S.sim.recorder; const airborne = S.simState==='live' && ((S.sim.motion&&!S.sim.motion.onGround) || (rec && rec.takeoff && simRecFor(a)));

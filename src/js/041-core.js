@@ -50,18 +50,9 @@ function scenarioPlan(a){
   if(job.scen==='runway_closed'){ const o=divertOptions(job,pos,60); return Object.assign(base,{sim:`Hold near ${job.to} for about 20 minutes if fuel allows.${o[0]?` If not, your alternate is ${AP[o[0].k].n} (${o[0].k}), ${Math.round(o[0].d)} nm away.`:''}`, alt:o[0]?o[0].k:null}); }
   return base;
 }
-function openOrders(a, how){
-  if(a.opened) return; a.opened=true; a.scenAt=Date.now(); a.scenPlan=scenarioPlan(a); save();
-  S.ordersPop=true; toast(`Sealed orders: ${a.scenPlan.title}`);
-  try{ if(typeof crackle==='function') crackle(0.25,0.3); if(window.speechSynthesis && voiceOn()){ const u=new SpeechSynthesisUtterance(`Sealed orders. ${a.scenPlan.text} ${a.scenPlan.sim}`); u.volume=voiceVol(); const v=pickVoice(false,1); if(v) u.voice=v; speechSynthesis.cancel(); speechSynthesis.speak(u); } }catch(_){}
-  try{ if('Notification' in window && Notification.permission==='granted') new Notification('Trade Winds: sealed orders', {body:a.scenPlan.text}); }catch(_){}
-  S.keepScroll=true; render();
-}
 function ordersHTML(a, pop){ const P=a.scenPlan; if(!P) return '';
   return `<section class="orders ${pop?'pop':''}"><p class="label">Sealed orders · opened ${TRIG_LABEL[SCEN_TRIGGER[a.job.scen]||'mid']}</p><h3>${esc(P.title)}</h3><p>${esc(P.text)}</p><p class="small"><b>What to do:</b> ${esc(P.sim)}</p>${P.divert?`<p class="small"><b>New destination:</b> <span class="mono">${esc(P.target)}</span> · ${esc(AP[P.target].n)}</p>`:''}${pop?`<button class="btn sm" data-act="orders-ok">Got it</button>`:''}</section>`; }
 /* live check */
-const _orRender = renderSimBits;
-renderSimBits = function(){ _orRender(); const a=S.st&&S.st.active; if(a && a.job.scen && !a.opened && a.started && trigReached(a)) openOrders(a,'live'); };
 setInterval(()=>{ const a=S.st&&S.st.active; if(a && a.job.scen && !a.opened && a.started && S.simState!=='live' && trigReached(a)) openOrders(a,'timer'); }, 20000);
 /* no more "open" button: show when they'll open, and the orders once they do */
 const _orFlight = flightView;

@@ -5,10 +5,6 @@ function carrierFor(st, job){ const c=crime(st); if(job.network) return 'Unliste
 const _fxPass = boardingPass;
 boardingPass = function(st, job){ let h=_fxPass.apply(this, arguments); const n=carrierFor(st, job); if(n) h=h.replace(/(<span class="carrier">[\s\S]*?<b>)Coral Wing Air(<\/b>)/, `$1${n}$2`); return h; };
 
-/* 2. in-flight story moments never talk over the copilot or ATC, and stay quiet on short final */
-(function(){ const _rs=renderSimBits; let held=false; renderSimBits=function(){ const s=S.sim; const a=S.st&&S.st.active; let block=false;
-  try{ if(window.speechSynthesis && speechSynthesis.speaking) block=true; if(s&&s.position&&s.motion&&!s.motion.onGround && (s.position.aglFt||0)<1000 && a){ const L=beatsFor(a); const nxt=L.find((b,i)=>!(a.beatsDone||{})[i]); if(nxt && nxt.at!=='final') block=true; } }catch(_){}
-  if(block){ const keep=BEAT.last; BEAT.last=Date.now(); _rs(); BEAT.last=keep; return; } _rs(); }; })();
 
 /* 3. "Previously on" only when you've been away for a while (3+ hours) */
 (function(){ const _p=playRecapNow; playRecapNow=function(){ let last=0; try{ last=Number(localStorage.getItem('tw.lastSeen')||0); }catch(_){} if(Date.now()-last < 3*3600000) return; return _p(); }; setInterval(()=>{ try{ localStorage.setItem('tw.lastSeen', String(Date.now())); }catch(_){} }, 60000); window.addEventListener('beforeunload', ()=>{ try{ localStorage.setItem('tw.lastSeen', String(Date.now())); }catch(_){} }); })();
@@ -26,8 +22,6 @@ window.addEventListener('keydown', e=>{ if(document.querySelector('.title-screen
 /* 8. the story card shows roughly how long the flight is */
 (function(){ const _cc=campaignCard; campaignCard=function(st){ let h=_cc(st); try{ const next=mainChapters().find(m=>!st.story.done[m.id]); if(!next) return h; const ac=storyAircraft(st,next)[0]||next.ac[0]; const jj=storyJob(st,next,ac); const est=jj.est||plan(jj).est; h=h.replace(/(<div class="sc-meta"><b>[^<]*<\/b>)/, `$1<span>~${durTxt(est)}</span>`); }catch(_){} return h; }; })();
 
-/* 9. the aircraft you load in MSFS is added to your hangar list automatically */
-(function(){ const _rs=renderSimBits; renderSimBits=function(){ _rs(); try{ if(S.simState!=='live'||!S.st) return; const L=loadedAircraft(); if(L.id && S.st.hangar && !S.st.hangar[L.id]){ S.st.hangar[L.id]=true; save(); toast(`Added the ${AC[L.id].n} to your hangar list, since it's loaded in MSFS.`); } }catch(_){} }; })();
 
 /* 10 + 11. cutscenes: optional auto-play, and a progress line */
 window.cutAuto = ()=>!!uiP().autoCut;

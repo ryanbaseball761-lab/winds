@@ -34,8 +34,6 @@ function cupTick(){
   S.cupResult={id:c.id, fpm, g:r.touchdown.g, b, medal, better, firstMedal}; save(); S.view='cup'; render();
   try{ if(typeof chime==='function') chime(true); if(window.speechSynthesis && voiceOn()){ const u=new SpeechSynthesisUtterance(medal?`${MEDAL[medal][1]} medal. ${fpm} feet per minute.`:`${fpm} feet per minute. No medal this time.`); u.volume=voiceVol(); speechSynthesis.speak(u); } }catch(_){}
 }
-const _cupRender = renderSimBits;
-renderSimBits = function(){ _cupRender(); try{ cupTick(); }catch(e){} };
 function cupView(){
   const st=S.st, C=cupState(st); const R=S.cupResult; const cur=C.cur?CUP.find(x=>x.id===C.cur):null;
   const golds=Object.values(C.best).filter(b=>b.medal==='gold').length;

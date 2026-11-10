@@ -9,8 +9,6 @@ function syncPrefs(){ const st=S.st; st.sync = st.sync || {wx:true, time:true}; 
 /* adopt live weather automatically while parked at the departure field */
 function trySyncWx(){ const a=S.st&&S.st.active; if(!a || a.started || !syncPrefs().wx) return; const job=a.job; if(job.wx&&job.wx.live) return; if(!atDeparture(job)) return;
   const w=simWx(job.wx); if(!w) return; job.wx=w; save(); toast('Briefing weather now matches MSFS.'); if(S.view==='flight') render(); }
-const _syncSim = renderSimBits;
-renderSimBits = function(){ _syncSim(); try{ trySyncWx(); }catch(_){} };
 const _syncChecks = preflightChecks;
 preflightChecks = function(job){ const out=_syncChecks(job); const m=simMinutes(); if(m==null) return out;
   const diffMin = Math.abs((((m - job.dep) % 1440) + 1440 + 720) % 1440 - 720); const ok = diffMin <= 45;

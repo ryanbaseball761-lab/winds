@@ -102,5 +102,6 @@
 chrome.js
 game-flow.js
 jobs.js
+sim-live.js
 ui-render.js
 zz-boot.js

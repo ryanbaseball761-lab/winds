@@ -24,23 +24,7 @@ document.addEventListener('click', e=>{
 
 /* ---- automatic debrief from the MSFS recorder ---- */
 
-function autoFinish(rec, how){
-  const st=S.st, a=st.active, job=a.job; if(!a || a._autoDone) return; a._autoDone=true;
-  const near = nearestAirport(rec.touchdown.lat, rec.touchdown.lon);
-  const landedAt = near.d < 6 ? near.code : (job.local ? job.from : job.to);
-  let landing = landingClass(rec.touchdown.fpm); if(rec.bounces>1 && landing==='butter') landing='smooth'; if(rec.bounces>2 && landing==='smooth') landing='firm';
-  const comfort = a.cab ? Math.round(a.cab.comfort) : null;
-  const block = rec.blockMinutes || Math.max(1, Math.round((Date.now()-(a.started||a.accepted))/60000));
-  const f = { landing, tdz: rec.touchdown.fpm < 400, center: rec.bounces===0, fuel: rec.fuelNowLb!=null?rec.fuelNowLb:0, fuelUnit:'lb', block, landedAt,
-    checklist: diff()==='expert' ? checklistDone(a) : true, radio:true, weather:true, smooth: comfort==null || comfort>=75, scen:null, tasks:[], bonus:false, request:false,
-    verified:true, td:rec.touchdown, simFpm:rec.touchdown.fpm, simBounces:rec.bounces, simG:rec.touchdown.g, comfort, auto:true };
-  const res = score(job, f); applyResult(st, job, f, res); S.debrief=false; S.showResult=true; S.busy.journalDone=false; save();
-  S.view='flight'; try{ history.replaceState(null,'','#flight'); }catch(_){} render(); window.scrollTo(0,0);
-  toast(how==='parked' ? 'Parked. Flight logged automatically from MSFS.' : 'Flight logged from MSFS.');
-}
 /* finish automatically once you're parked (engine off or parking brake) */
-const _dfRender = renderSimBits;
-renderSimBits = function(){ _dfRender(); const a=S.st&&S.st.active; if(!a || a._autoDone) return; const rec=autoReady(a); if(rec && rec.blockIn) autoFinish(rec,'parked'); };
 /* "Log the landing" skips the form when MSFS already has everything */
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="debrief"]'); if(!b || !S.st || !S.st.active) return;

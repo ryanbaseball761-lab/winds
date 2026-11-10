@@ -33,8 +33,6 @@ document.addEventListener('click', e=>{
   st.active={job:j, accepted:Date.now()}; st.urgent=null; save(); S.debrief=false; S.showResult=false; go('flight');
 });
 /* record when the wheels actually left the ground */
-const _urRender = renderSimBits;
-renderSimBits = function(){ _urRender(); const a=S.st&&S.st.active; if(a && a.job.realtime && !a.job._toAt){ const rec=simRecFor(a); if(rec && rec.takeoff) { a.job._toAt=rec.takeoff.t; save(); } } };
 /* live countdowns + random dispatch calls while you're idle */
 setInterval(()=>{
   document.querySelectorAll('.urg-count').forEach(el=>{ el.textContent = mmss(Number(el.dataset.until)-Date.now()); });

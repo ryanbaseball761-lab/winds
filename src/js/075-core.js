@@ -38,7 +38,4 @@ function showBeat(a, b, idx){ const w=WHO[b.who]||WHO.self; document.querySelect
   if(!b.opts) setTimeout(close, 11000); else setTimeout(()=>{ if(d.isConnected && d.querySelector('.bt-o')) close(); }, 60000);
   if(a.cab && a.cab.log){ a.cab.log.unshift({t:Date.now(), who:w[0].replace(/^Phone · /,''), text:String(b.text).replace('|',' '), kind:'story'}); try{ VQ.lastT=Date.now(); }catch(_){} }
   speakBeat(b); }
-(function(){ const _rs=renderSimBits; renderSimBits=function(){ _rs(); try{ const a=S.st&&S.st.active; if(!a||!a.started||a.job.kind!=='story'||!BEATS[a.job.story]||!simRelevant(a)) return; if(Date.now()-BEAT.last<40000) return;
-  const ph=beatPhase(a); if(!ph) return; a.beatsDone=a.beatsDone||{}; const list=beatsFor(a);
-  for(let i=0;i<list.length;i++){ if(a.beatsDone[i]) continue; const b=list[i]; if(!ph[b.at]) break; a.beatsDone[i]=1; BEAT.last=Date.now(); save(); showBeat(a,b,i); break; } }catch(_){} }; })();
 

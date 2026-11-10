@@ -26,42 +26,6 @@ const COACH = {
   stableApp:[`Stable approach. On speed, nice and steady. Keep it there.`],
   butter:[`Now THAT is how you land an airplane.`,`Greaser. I'm telling everyone.`]
 };
-function coachTick(){
-  const st=S.st; const a=st && st.active; const s=S.sim; if(!a || !s || S.simState!=='live' || !s.motion) return;
-  const rec = simRecFor(a); if(!rec) return;
-  a.cab = a.cab || {f:{}, log:[], comfort:100, cd:0}; const C=a.cab; C.cc=C.cc||{}; C.tally=C.tally||{};
-  const job=a.job, now=Date.now(), x=s.ext, m=s.motion, pos=s.position||{};
-  const who = shortName(coachFor(job));
-  const say = (key, text, cd=60000, crit=false, once=false) => {
-    if(once && C.cc[key]) return; if(C.cc[key] && now-C.cc[key] < cd) return;
-    C.cc[key]=now; C.tally[key]=(C.tally[key]||0)+1;
-    C.log.unshift({t:now, who, text, kind: crit?'crit':'coach'}); C.log=C.log.slice(0,14);
-    if(crit){ C.callout={t:now, who, text}; toast(`${who}: ${text}`.slice(0,150)); }
-  };
-  const air = !m.onGround && rec.takeoff && !(rec.touchdown && rec.phase!=='airborne');
-  const distTo = (!job.local && AP[job.to] && pos.lat!=null) ? distNm({lat:pos.lat,lon:pos.lon},AP[job.to]) : null;
-  const final = air && distTo!=null && distTo < 5 && pos.aglFt < 1200 && m.vsFpm < 200;
-  const vapp = vappOf(job.ac);
-  if(m.onGround && !rec.takeoff && m.gs < 1 && x && Math.abs(x.controls.yokeX) > 0.15) say('stickOff', pick(COACH.stickOff).replace('{p}', Math.round(Math.abs(x.controls.yokeX)*100)), 0, true, true);
-  if(x){
-    if(x.flaps.overspeed) say('flapOver', pick(COACH.flapOver), 20000, true);
-    if(x.flaps.damaged) say('flapDmg', pick(COACH.flapDmg), 0, true, true);
-    if(Math.abs(x.flaps.left - x.flaps.right) > 12) say('flapSplit', pick(COACH.flapSplit), 30000, true);
-    if(x.gear.overspeed) say('gearOver', pick(COACH.gearOver), 30000, true);
-    if(x.warnings.stall && air) say('stall', pick(COACH.stall), 15000, true);
-    if(x.warnings.overspeed && air) say('overspeed', pick(COACH.overspeed), 30000, true);
-    if(air && Math.abs(x.attitude.bank) > 45){ if(!C.cc.bank || now-C.cc.bank>=45000){ if(job.pax) C.comfort=Math.max(0,C.comfort-6); } say('bank', pick(COACH.bank), 45000, false); }
-    if(air && Math.abs(x.attitude.bank) > 40 && Math.abs(x.controls.yokeX) < 0.06 && !x.autopilot) say('rollNoInput', pick(COACH.rollNoInput).replace('{b}', Math.abs(x.attitude.bank)), 60000, true);
-    if(final && x.gear.retractable && !x.gear.down && pos.aglFt < 800) say('gearUp', pick(COACH.gearUp), 20000, true);
-    if(rec.takeoff && !C.cc.noLightChecked){ C.cc.noLightChecked=now; if(!x.lights.landing && now - rec.takeoff.t < 60000) say('noLight', pick(COACH.noLight), 0, false, true); }
-  }
-  if(air && rec.takeoff && now - rec.takeoff.t < 90000 && pos.aglFt > 400 && m.vsFpm > 300) say('goodTakeoff', pick(COACH.goodTakeoff), 0, false, true);
-  if(final && pos.aglFt < 700 && m.vsFpm < -1100) say('sink', pick(COACH.sink), 25000, true);
-  if(final && vapp && pos.aglFt < 1000 && m.ias > vapp + 20) say('fast', pick(COACH.fast).replace('{v}', vapp), 30000, false);
-  if(final && vapp && pos.aglFt < 600 && m.ias < vapp - 12) say('slow', pick(COACH.slow).replace('{v}', vapp), 30000, true);
-  if(final && vapp && pos.aglFt < 600 && pos.aglFt > 300 && Math.abs(m.ias - vapp) <= 8 && m.vsFpm > -900 && m.vsFpm < -300) say('stableApp', pick(COACH.stableApp), 0, false, true);
-  if(rec.touchdown && rec.touchdown.fpm < 100) say('butter', pick(COACH.butter), 0, false, true);
-}
 function coachSummary(job, C){
   if(!C || !C.tally) return null; const t=C.tally; const bad=['flapOver','flapDmg','flapSplit','gearOver','gearUp','stall','overspeed','bank','sink','fast','slow'];
   const lbl={flapOver:'flap overspeed',flapDmg:'flap damage',flapSplit:'split flaps',gearOver:'gear overspeed',gearUp:'gear-up warning',stall:'stall warning',overspeed:'overspeed',bank:'steep bank',sink:'sink rate on final',fast:'fast on final',slow:'slow on final'};
@@ -70,8 +34,6 @@ function coachSummary(job, C){
   return items.length ? `${who}'s notes: ${items.join(', ')}.` : (t.stableApp ? `${who}'s notes: clean flight, stable approach. Keep flying like that.` : null);
 }
 /* hook into the live loop */
-const _coachRender = renderSimBits;
-renderSimBits = function(){ try{ coachTick(); }catch(e){} _coachRender(); document.querySelectorAll('.callout-host').forEach(el=>{ el.innerHTML = calloutHTML(); }); };
 function calloutHTML(){ const a=S.st&&S.st.active; const c=a&&a.cab&&a.cab.callout; if(!c || Date.now()-c.t > 20000) return ''; return `<div class="callout"><span class="who">${esc(c.who)}</span><p>${esc(c.text)}</p></div>`; }
 function cabinInner(){
   const a=S.st && S.st.active; if(!a) return '';
@@ -84,5 +46,3 @@ function cabinInner(){
 const _coachCockpit = cockpitView;
 cockpitView = function(){ const h=_coachCockpit(); return h.replace('<main class="wrap stack fade cockpit">', '<main class="wrap stack fade cockpit"><div class="callout-host" aria-live="assertive">'+calloutHTML()+'</div>'); };
 /* keep a reference to the cabin on the job so the debrief can read it after the flight closes */
-const _coachTick2 = coachTick;
-coachTick = function(){ _coachTick2(); const a=S.st&&S.st.active; if(a && a.cab) a.job._cab = {tally:a.cab.tally}; };
