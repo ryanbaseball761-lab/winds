@@ -51,31 +51,6 @@ function ifChecklistHTML(a){
     <div class="if-phases">${ph.map((x,i)=>`<button class="${i===cur?'on':''}" data-act="ck-phase" data-i="${i}">${x.items.every((_,j)=>a.ck.done[i+'-'+j])?'✓ ':''}${esc(x.n)}</button>`).join('')}</div>
     <div class="if-ck">${P.items.map((t,i)=>{ const on=!!a.ck.done[cur+'-'+i]; return `<button class="ck ${on?'on':''}" data-act="ck-item" data-k="${cur}-${i}" aria-pressed="${on}"><span class="box">${on?'✓':''}</span><span>${esc(t)}</span></button>`; }).join('')}</div>`;
 }
-function inflightView(){
-  const st=S.st, a=st.active, job=a.job, ac=AC[job.ac];
-  const mins = Math.round((Date.now()-a.started)/60000);
-  return `<main class="wrap stack fade inflight">
-    <section class="if-head">
-      <div style="min-width:0"><p class="label">In flight · ${esc(flightNo(job))} · ${esc(ac.n)}</p><h1>${esc(job.title)}</h1></div>
-      <div class="row"><span class="if-timer mono" id="if-timer" data-start="${a.started}">${durTxt(mins)}</span>
-        <button class="btn sm ghost" data-act="if-brief">Briefing</button><button class="btn sm ghost" data-act="nav" data-v="cockpit">Full checklist</button>
-        <button class="btn action" data-act="debrief">${S.simState==='live'?'Finish flight':'Log the landing'}</button></div>
-    </section>
-    <div class="callout-host" aria-live="assertive">${typeof calloutHTML==='function'?calloutHTML():''}</div>
-    <section class="panel stack if-live" id="if-live">${ifLiveHTML()}</section>
-    <div class="if-grid">
-      <div class="stack"><section class="panel if-mapwrap" id="if-map">${ifMiniMap(a)}</section><section class="panel stack">${ifChecklistHTML(a)}</section></div>
-      <div class="stack">${typeof cabinBlock==='function'?cabinBlock():''}
-        <section class="panel stack small"><h3>Quick reference</h3><dl class="kv"><dt>Speeds</dt><dd class="mono">${esc(ac.v)}</dd><dt>Departure</dt><dd>${esc(job.from)} runway ${esc(rwyAnalysis(job.from,job.wx,job.ac).rw)}</dd>${job.local?'':`<dt>Arrival</dt><dd>${esc(job.to)} runway ${esc(rwyAnalysis(job.to,job.wx,job.ac).rw)}</dd>`}<dt>Wind</dt><dd class="mono">${pad3(job.wx.dir)}° / ${job.wx.spd}${job.wx.gust?'G'+job.wx.gust:''} kt</dd><dt>Load</dt><dd>${job.pax?job.pax+' pax':''}${job.pax&&job.cargo?' + ':''}${job.cargo?job.cargo+' lb':''}</dd></dl>
-        ${job.scen?`<button class="btn sm" data-act="if-brief">Sealed orders: open in the briefing</button>`:''}<button class="btn sm ghost danger" data-act="cancel">Cancel flight</button></section>
-      </div>
-    </div>
-  </main>`;
-}
-const _ifFlight = flightView;
-flightView = function(){ const st=S.st, a=st&&st.active;
-  if(a && a.started && !S.debrief && !S.showResult && !S.ifBrief && !S.confirm) return inflightView();
-  const h=_ifFlight(); return (a && a.started && S.ifBrief && !S.debrief && !S.showResult) ? h.replace(/(<main class="wrap[^>]*>)/, '$1<div style="margin-bottom:14px"><button class="btn sm primary" data-act="if-back">← Back to in-flight view</button></div>') : h; };
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="if-brief"],[data-act="if-back"]'); if(!b) return;
   S.ifBrief = b.dataset.act==='if-brief'; render(); window.scrollTo(0,0);

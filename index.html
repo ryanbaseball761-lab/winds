@@ -2285,104 +2285,6 @@ function autoTeach(st, job, p){
   out.push(`Read the METAR: wind ${pad3(job.wx.dir)}° at ${job.wx.spd} kt${job.wx.gust?`, gusting ${job.wx.gust}`:''}; visibility ${job.wx.vis>=10?'10+ miles':job.wx.vis+' miles'}; ${job.wx.cl.map(c=>({FEW:'few',SCT:'scattered',BKN:'broken',OVC:'overcast'}[c[0]])+' clouds at '+c[1].toLocaleString()+' ft'+(c[2]?' with cumulonimbus':'')).join(', ')}; ${job.wx.t} °C.`);
   return out.slice(0,6);
 }
-function flightView(){
-  const st=S.st;
-  if(S.showResult && st.last) return resultView();
-  if(!st.active){
-    return `<main class="wrap"><div class="empty fade"><h3>No flight booked</h3><p>Pick a job from the board to get your briefing.</p><p style="margin-top:14px"><button class="btn primary" data-act="nav" data-v="board">Go to the job board</button>${st.last?` <button class="btn" data-act="show-last">See last result</button>`:''}</p></div></main>`;
-  }
-  const job = st.active.job; const a=AC[job.ac]; const p=plan(job); const from=AP[job.from], to=AP[job.to];
-  if(S.debrief) return debriefView(job, p);
-  const sc = job.scen ? SCEN[job.scen] : null;
-  const started = st.active.started; const mins = started ? Math.round((Date.now()-started)/60000) : 0;
-  const rwDep = rwyAnalysis(job.from, job.wx, job.ac), rwArr = rwyAnalysis(job.to, job.wx, job.ac);
-  const ai = job.ai;
-  const teach = [...(job.teachStory||[]), ...autoTeach(st, job, p)];
-  const loadRows = [
-    ['Passengers', job.pax ? `${job.pax} × ${a.cls==='airliner'||a.cls==='widebody'?185:190} lb = ${p.paxLb.toLocaleString()} lb` : '—'],
-    ['Bags', p.bagLb ? `${p.bagLb.toLocaleString()} lb` : '—'],
-    ['Cargo', job.cargo ? `${job.cargo.toLocaleString()} lb${job.cargoLabel?` (${esc(job.cargoLabel)})`:''}` : '—'],
-    ['Pilot', `170 lb`],
-    ['Payload', `${p.payload.toLocaleString()} lb`],
-  ];
-  const fuelRows = a.fuel==='elec' ? [['Energy', `Battery-electric with hybrid reserve. Leave with at least 20% battery for reserve.`]] : [
-    ['Trip', `${p.tripLb.toLocaleString()} lb`],['Contingency 10%', `${p.contLb.toLocaleString()} lb`],[`Reserve (${p.reserveMin} min)`, `${p.resLb.toLocaleString()} lb`],
-    ...(p.altLb?[[`Alternate ${p.altCode} (${p.altNm} nm)`, `${p.altLb.toLocaleString()} lb`]]:[]),['Taxi', `${Math.round(a.burn*0.08).toLocaleString()} lb`],
-    ['Minimum fuel', `<b>${p.fuelLb.toLocaleString()} lb</b> (${p.gal.toLocaleString()} US gal ${a.fuel==='avgas'?'avgas':'Jet-A'})${['airliner','widebody'].includes(a.cls)?` · ${Math.round(p.fuelLb/2.2046).toLocaleString()} kg`:''}`]];
-  return `<main class="wrap stack fade">
-    ${boardingPass(st, job, p, a, started, mins, ai)}
-    <div class="grid-2">
-     <div class="stack">
-      <section class="panel stack">
-        <div class="row between"><h2>Briefing</h2>${S.sample && !S.sampleOff ? `<button class="btn sm" data-act="ai-brief" ${S.busy.brief?'disabled':''}>${S.busy.brief?'Writing…':ai?'Rewrite with Claude':'Write the full story with Claude'}</button>`:''}</div>
-        <div class="brief ${ai?'ai':''}">${(ai?ai.paragraphs:job.paras).map(t=>`<p>${esc(t)}</p>`).join('')}</div>
-        ${ai?.passenger_note?`<p class="small"><b>What matters to them:</b> ${esc(ai.passenger_note)}</p>`:''}
-        ${S.busy.briefErr?`<p class="small" style="color:var(--bad)">${esc(S.busy.briefErr)}</p>`:''}
-      </section>
-      ${job.kind==='check' ? `<section class="panel"><h2>Checkride tasks</h2><p class="small muted" style="margin-top:4px">Fly every task. You'll tick off the ones you completed in the debrief.</p><ul class="tight">${job.tasks.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></section>`:''}
-      ${job.bonus?`<section class="notice"><b>Bonus objective (+${money(job.bonus.amt)}):</b> ${esc(job.bonus.text)}${job.bonus.auto==='fpm'?' <span class="muted small">(checked from your landing)</span>':job.bonus.auto==='block'?' <span class="muted small">(checked from your block time)</span>':''}</section>`:''}
-      ${job.festival?`<section class="notice"><b>${esc(job.festival)}</b> is on at the destination: busy ramp, crowded frequency, and 40% extra pay.</section>`:''}
-      ${job.stormName?`<section class="notice bad"><b>Hurricane ${esc(job.stormName)}</b> is affecting this route. Expect instrument conditions, strong gusts and heavy rain. Turning back is always an option.</section>`:''}
-      <section class="teach"><h3>What this flight teaches</h3><ul class="tight small">${teach.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></section>
-      ${sc ? (st.active.opened ? `<section class="opened"><p class="label">Sealed orders, opened</p><h3 style="margin:4px 0 6px">${esc(sc.n)}</h3><p>${esc(sc.text)}</p><p class="small" style="margin-top:8px"><b>In the sim:</b> ${esc(sc.sim)}</p></section>`
-        : `<section class="sealed"><p class="label">Sealed orders</p><h3 style="margin:4px 0 6px">Do not open yet</h3><p class="small">${esc(sc.trigger)} Something will happen on this flight. You'll be graded on how you handle it.</p>${S.confirm==='open' ? `<div class="row" style="margin-top:10px"><span class="small">Have you reached the trigger point?</span><button class="btn action sm" data-act="open-yes">Open them</button><button class="btn sm" data-act="confirm-no">Not yet</button></div>`:`<button class="btn action sm" style="margin-top:10px" data-act="open">Open sealed orders</button>`}</section>`) : ''}
-      ${surpriseFlightHTML(job)}
-      <section class="panel stack">
-        <h2>Conditions</h2>
-        <p><b>${esc(job.wx.n)}</b> <span class="chip ${job.wx.cat==='VFR'?'good':job.wx.cat==='MVFR'?'warn':'bad'}">${job.wx.cat}</span></p>
-        <p class="small muted">${esc(job.wx.desc)}</p>
-        <div><p class="label">Departure ${esc(job.from)}</p><div class="metar">${esc(metar(job.from, job.wx, st.day, job.dep))}</div></div>
-        ${job.local?'':`<div><p class="label">Destination ${esc(job.to)}</p><div class="metar">${esc(metar(job.to, job.wx, st.day, job.dep + p.est))}</div></div>`}
-        <dl class="kv">
-          <dt>Departure runway</dt><dd>${rwDep.water?'Water':esc(rwDep.rw)} · ${Math.round(rwDep.head)} kt head, ${Math.round(rwDep.xw)} kt cross</dd>
-          ${job.local?'':`<dt>Arrival runway</dt><dd>${rwArr.water?'Into the wind':esc(rwArr.rw)} · ${Math.round(rwArr.head)} kt head, ${Math.round(rwArr.xw)} kt cross ${rwArr.over?'<span class="chip bad">Over crosswind limit</span>':''}</dd>`}
-          ${from.water?'':`<dt>Density altitude</dt><dd>${densityAlt(from.el, job.wx.t, job.wx.qnh).toLocaleString()} ft at ${esc(job.from)}</dd>`}
-        </dl>
-      </section>
-      <section class="panel stack">
-        <h2>Load & fuel</h2>
-        <div class="cards" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
-          <div><p class="label">Load sheet</p><dl class="kv" style="margin-top:6px">${loadRows.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('')}</dl></div>
-          <div><p class="label">Fuel plan</p><dl class="kv" style="margin-top:6px">${fuelRows.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('')}</dl></div>
-        </div>
-        <p class="small">Takeoff weight check: payload ${a.fuel==='elec'?'':'+ fuel '}= ${p.total.toLocaleString()} lb of ${p.useful.toLocaleString()} lb useful load. ${p.over>0?`<b style="color:var(--bad)">Over by ${p.over} lb.</b>`:`<span style="color:var(--good)">Within limits.</span>`}</p>
-      </section>
-     </div>
-     <aside class="stack">
-      <section class="panel stack" id="simpanel">${simPanelHTML()}</section>
-      <section class="panel stack">
-        <h3>Set up MSFS</h3>
-        <ol class="tight small">
-          <li><b>Aircraft:</b> ${esc(a.n)}, any livery.</li>
-          <li><b>Departure:</b> ${esc(job.from)}${from.water?'':`, runway ${esc(rwDep.rw)} or a parking spot`}.</li>
-          <li><b>Destination:</b> ${job.local?`local flight, back to ${esc(job.from)}`:to.water?`${esc(to.n)}: add a custom waypoint at ${to.lat.toFixed(3)}, ${to.lon.toFixed(3)} and land on the water nearby`:`${esc(job.to)} (${esc(to.n)})`}.</li>
-          <li><b>Time:</b> ${hhmm(job.dep)} local, ${dateOf(st.day).toLocaleDateString('en-US',{month:'long',day:'numeric',timeZone:'UTC'})}.</li>
-          <li><b>Weather (custom):</b> wind ${pad3(job.wx.dir)}° at ${job.wx.spd} kt${job.wx.gust?` gusting ${job.wx.gust}`:''}, ${job.wx.t} °C, visibility ${job.wx.vis>=10?'10+ sm':job.wx.vis+' sm'}${job.wx.wx?` with ${({HZ:'haze','-SHRA':'light showers',SHRA:'showers',TSRA:'thunderstorms'})[job.wx.wx]||job.wx.wx}`:''}, ${job.wx.cl.map(c=>`${c[0]} ${c[1].toLocaleString()} ft`).join(', ')}, pressure ${job.wx.qnh} hPa. Or use live weather and fly what you get.</li>
-          <li><b>Fuel:</b> ${a.fuel==='elec'?'full charge':`at least ${p.fuelLb.toLocaleString()} lb (${p.gal} gal), more if you like a bigger margin`}. <b>Payload:</b> ${p.payload.toLocaleString()} lb.</li>
-          ${job.scen?`<li><b>Failures:</b> leave them off. Your sealed orders will tell you what to simulate.</li>`:''}
-        </ol>
-      </section>
-      <section class="panel stack">
-        <h3>Route</h3>
-        <dl class="kv">
-          <dt>Distance</dt><dd>${p.dist} nm${job.local?' (suggested loop)':''}</dd>
-          ${p.hdg!=null?`<dt>Course</dt><dd>${pad3(p.hdg)}° true</dd>`:''}
-          <dt>Planned time</dt><dd>${durTxt(p.est)} block</dd>
-          <dt>Alternate</dt><dd>${p.altCode?`${esc(p.altCode)}, ${esc(AP[p.altCode].isl)} (${p.altNm} nm)`:'—'}</dd>
-          <dt>Rules</dt><dd>${p.ifr?'IFR':'VFR'}${isNight(job.dep)?' · night':''}</dd>
-          <dt>Pay</dt><dd>${job.kind==='check'?'Checkride (no pay)':job.company?`${money(Math.round(job.pay*2.6))} revenue, ${money(a.op)}/h operating cost`:money(job.pay)+' (scaled by your grade)'}</dd>
-        </dl>
-      </section>
-      <section class="panel stack">
-        <div class="row between"><h3>${esc(a.n)}</h3>${!st.types[job.ac]?'<span class="chip new">New type</span>':`<span class="chip">${st.types[job.ac]} flight${st.types[job.ac]===1?'':'s'}</span>`}</div>
-        <p class="small">${esc(a.note)}</p>
-        <p class="small mono">${esc(a.v)}</p>
-        <p class="small muted">${a.pax} pax · ${a.cruise} kt · ${a.range.toLocaleString()} nm range · needs ${a.rwy.toLocaleString()} ft runway</p>
-      </section>
-      ${job.local?'':`<section class="panel stack"><h3>${esc(to.n)}</h3><p class="small muted">${esc(to.isl)} · ${esc(COUNTRY[to.c])}</p><p class="small">${esc(to.note)}</p>${to.rw?`<p class="small mono">${to.rw.map(r=>`${r[0]} · ${r[1].toLocaleString()} ft`).join(' / ')}</p>`:''}</section>`}
-     </aside>
-    </div></main>`;
-}
 function debriefView(job, p){
   const st=S.st; const a=AC[job.ac]; const started=st.active.started; const mins = started ? Math.max(5,Math.round((Date.now()-started)/60000)) : p.est;
   const sc = job.scen ? SCEN[job.scen] : null;
@@ -3013,42 +2915,6 @@ function planLinks(job){
   const t = ICAO_TYPE[job.ac]; const sb = `https://dispatch.simbrief.com/options/custom?orig=${job.from}&dest=${job.to}${t?`&type=${t}`:''}`; const sv = `https://skyvector.com/?fpl=${job.from}%20${job.to}`;
   return `<div class="row small"><a class="btn sm ghost" href="${sb}" target="_blank" rel="noopener">Plan in SimBrief ↗</a><a class="btn sm ghost" href="${sv}" target="_blank" rel="noopener">View on SkyVector ↗</a></div>`;
 }
-function boardingPass(st, job, p, a, started, mins, ai){
-  const from=AP[job.from], to=AP[job.to]; const carrier = job.lend ? (job.ac==='CJ4'?'Starling II · Private':'Starling · Private') : job.company ? st.company.name : job.airline ? 'Antilles Blue Airways' : 'Coral Wing Air';
-  return `<section class="pass">
-    <div class="pass-main">
-      <div class="row between"><span class="carrier">${LOGO}<b>${esc(carrier)}</b></span><span class="row">${chipsFor(st,job)}</span></div>
-      <p class="label" style="margin-top:12px">${esc(job.label)}${job.client?` · ${esc(job.client)}`:''}</p>
-      <h1 class="pass-title">${esc(ai?.headline || job.title)}</h1>
-      <div class="pass-route">
-        <div><div class="code">${esc(job.from)}</div><div class="city">${esc(from.isl)}</div></div>
-        <div class="pass-arc" aria-hidden="true"><svg viewBox="0 0 200 40"><path d="M4 34 Q100 -14 196 34" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 5"/></svg><span>✈</span></div>
-        <div style="text-align:right"><div class="code">${job.local?'↺':esc(job.to)}</div><div class="city">${job.local?'Local flight':esc(to.isl)}</div></div>
-      </div>
-      <div class="pass-fields">
-        <div><span>Flight</span><b class="mono">${esc(flightNo(job))}</b></div>
-        <div><span>Departs</span><b class="mono">${hhmm(job.dep)}</b></div>
-        <div><span>Block</span><b class="mono">${durTxt(p.est)}</b></div>
-        <div><span>Aircraft</span><b>${esc(a.n.replace(/^(Cessna|Beechcraft|Diamond|CubCrafters|Zlin|ICON|de Havilland Canada|Grumman|Pilatus|Daher|Douglas|Cirrus|Airbus|Boeing|Heart Aerospace)\s/,''))}</b></div>
-        <div><span>Distance</span><b class="mono">${p.dist} nm</b></div>
-        <div><span>Pay</span><b class="mono">${job.kind==='check'?'—':money(job.pay)}</b></div>
-      </div>
-      <div class="row" style="margin-top:14px">
-        ${started ? `<span class="chip good">Block timer running: ${durTxt(mins)}</span>` : `<button class="btn action" data-act="start">Start flight</button>`}
-        <button class="btn primary" data-act="debrief">Log the landing</button>
-        <button class="btn" data-act="nav" data-v="cockpit">Open cockpit checklist</button>
-        ${S.confirm==='cancel' ? `<span class="small">Cancel this job? ${job.kind==='story'||job.kind==='check'?'You can pick it up again later.':'The client will remember.'}</span><button class="btn danger sm" data-act="cancel-yes">Yes, cancel</button><button class="btn sm" data-act="confirm-no">Keep it</button>` : `<button class="btn ghost" data-act="cancel">Cancel job</button>`}
-      </div>
-      ${planLinks(job)}
-    </div>
-    <div class="pass-stub" aria-hidden="true">
-      <span class="label">Pilot in command</span><b>${esc(st.pilot.name)}</b>
-      <span class="label">Seat</span><b>Left</b>
-      <span class="label">Date</span><b class="mono">${dateTxt(st.day)}</b>
-      <div class="barcode"></div>
-    </div>
-  </section>`;
-}
 
 /* ---------- score ring ---------- */
 function scoreRing(res){ const r=46, c=2*Math.PI*r, off=c*(1-res.score/100);
@@ -3359,8 +3225,6 @@ function cabinTick(){
 function cabinBlock(){ return S.st && S.st.active ? `<section class="panel stack cabin-host">${cabinInner()}</section>` : ''; }
 const _shellCockpit = cockpitView;
 cockpitView = function(){ const h=_shellCockpit(); return h.replace(/<\/main>\s*$/, cabinBlock()+'</main>'); };
-const _shellFlight = flightView;
-flightView = function(){ const h=_shellFlight(); if(!S.st.active || S.debrief) return h; return h.replace('<section class="panel stack" id="simpanel">', cabinBlock()+'<section class="panel stack" id="simpanel">'); };
 /* comfort pays */
 /* ===================== 1. A CHARACTER IN YOUR EAR: live coaching from real sim data ===================== */
 const COACH_PILOTS = ['mari','abe','wilkins','dez','devries','marchetti','calloway','celeste'];
@@ -3837,13 +3701,6 @@ function diff(){ return (S.st && S.st.difficulty) || 'standard'; }
  // Preflight, Start, Taxi, Before takeoff
 var checklistDone; /* defined in full below (051-core.js) */
 var checklistCount; /* defined in full below (051-core.js) */
-const _dfPass = boardingPass;
-boardingPass = function(st, job, p, a, started, mins, ai){
-  let h=_dfPass(st, job, p, a, started, mins, ai);
-  if(diff()==='expert' && !started && !checklistDone(st.active)){ const [n,t]=checklistCount(st.active);
-    h=h.replace('<button class="btn action" data-act="start">Start flight</button>', `<button class="btn action" data-act="nav" data-v="cockpit">Complete checklist (${n}/${t})</button><span class="chip warn">Expert: checklist required before engine start</span>`); }
-  return h;
-};
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="diff"]'); if(b && S.st){ S.st.difficulty=b.dataset.v; save(); toast(`${DIFF[b.dataset.v].n}: ${DIFF[b.dataset.v].d}`); S.keepScroll=true; render(); return; }
   const s=e.target.closest('[data-act="start"]'); if(s && S.st && S.st.active && diff()==='expert' && !checklistDone(S.st.active)){ e.stopImmediatePropagation(); e.preventDefault(); toast('Expert mode: finish the checklist first.'); go('cockpit'); }
@@ -3858,13 +3715,6 @@ document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="debrief"]'); if(!b || !S.st || !S.st.active) return;
   const rec=autoReady(S.st.active); if(!rec) return; e.stopImmediatePropagation(); e.preventDefault(); autoFinish(rec,'button');
 }, true);
-const _dfPass2 = boardingPass;
-boardingPass = function(st, job, p, a, started, mins, ai){
-  let h=_dfPass2(st, job, p, a, started, mins, ai);
-  const live = S.simState==='live';
-  if(live) h=h.replace('>Log the landing<', '>Finish flight<');
-  return h;
-};
 /* ===================== URGENT DISPATCH: real-time 2× jobs ===================== */
 const URG_ACCEPT_MIN = 5;   // minutes to say yes
 const URG_TAKEOFF_MIN = 15; // minutes from yes to wheels up
@@ -4135,11 +3985,6 @@ stripHTML = function(st, job, opts={}){
   return h.replace(/(<article class="jcard[^>]*>)/, '$1'+art);
 };
 /* boarding pass: destination postcard header */
-const _artPass = boardingPass;
-boardingPass = function(st, job, p, a, started, mins, ai){
-  const h=_artPass(st, job, p, a, started, mins, ai);
-  return h.replace('<section class="pass">', `<section class="pass"><div class="pass-art">${islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 170, job.ac)}</div>`);
-};
 /* hangar cards get a silhouette */
 /* ===================== STORY: THE BUYOUT (main story, early career) ===================== */
 CAST.preston = {n:`Preston Vale`,role:`CEO, Azure Caribbean Air`,col:'#2d4f9e',bio:`Former investment banker with a fleet of brand-new turboprops and a smile that never reaches his eyes. Wants to own every small airline in the islands.`};
@@ -4385,31 +4230,6 @@ function ifChecklistHTML(a){
     <div class="if-phases">${ph.map((x,i)=>`<button class="${i===cur?'on':''}" data-act="ck-phase" data-i="${i}">${x.items.every((_,j)=>a.ck.done[i+'-'+j])?'✓ ':''}${esc(x.n)}</button>`).join('')}</div>
     <div class="if-ck">${P.items.map((t,i)=>{ const on=!!a.ck.done[cur+'-'+i]; return `<button class="ck ${on?'on':''}" data-act="ck-item" data-k="${cur}-${i}" aria-pressed="${on}"><span class="box">${on?'✓':''}</span><span>${esc(t)}</span></button>`; }).join('')}</div>`;
 }
-function inflightView(){
-  const st=S.st, a=st.active, job=a.job, ac=AC[job.ac];
-  const mins = Math.round((Date.now()-a.started)/60000);
-  return `<main class="wrap stack fade inflight">
-    <section class="if-head">
-      <div style="min-width:0"><p class="label">In flight · ${esc(flightNo(job))} · ${esc(ac.n)}</p><h1>${esc(job.title)}</h1></div>
-      <div class="row"><span class="if-timer mono" id="if-timer" data-start="${a.started}">${durTxt(mins)}</span>
-        <button class="btn sm ghost" data-act="if-brief">Briefing</button><button class="btn sm ghost" data-act="nav" data-v="cockpit">Full checklist</button>
-        <button class="btn action" data-act="debrief">${S.simState==='live'?'Finish flight':'Log the landing'}</button></div>
-    </section>
-    <div class="callout-host" aria-live="assertive">${typeof calloutHTML==='function'?calloutHTML():''}</div>
-    <section class="panel stack if-live" id="if-live">${ifLiveHTML()}</section>
-    <div class="if-grid">
-      <div class="stack"><section class="panel if-mapwrap" id="if-map">${ifMiniMap(a)}</section><section class="panel stack">${ifChecklistHTML(a)}</section></div>
-      <div class="stack">${typeof cabinBlock==='function'?cabinBlock():''}
-        <section class="panel stack small"><h3>Quick reference</h3><dl class="kv"><dt>Speeds</dt><dd class="mono">${esc(ac.v)}</dd><dt>Departure</dt><dd>${esc(job.from)} runway ${esc(rwyAnalysis(job.from,job.wx,job.ac).rw)}</dd>${job.local?'':`<dt>Arrival</dt><dd>${esc(job.to)} runway ${esc(rwyAnalysis(job.to,job.wx,job.ac).rw)}</dd>`}<dt>Wind</dt><dd class="mono">${pad3(job.wx.dir)}° / ${job.wx.spd}${job.wx.gust?'G'+job.wx.gust:''} kt</dd><dt>Load</dt><dd>${job.pax?job.pax+' pax':''}${job.pax&&job.cargo?' + ':''}${job.cargo?job.cargo+' lb':''}</dd></dl>
-        ${job.scen?`<button class="btn sm" data-act="if-brief">Sealed orders: open in the briefing</button>`:''}<button class="btn sm ghost danger" data-act="cancel">Cancel flight</button></section>
-      </div>
-    </div>
-  </main>`;
-}
-const _ifFlight = flightView;
-flightView = function(){ const st=S.st, a=st&&st.active;
-  if(a && a.started && !S.debrief && !S.showResult && !S.ifBrief && !S.confirm) return inflightView();
-  const h=_ifFlight(); return (a && a.started && S.ifBrief && !S.debrief && !S.showResult) ? h.replace(/(<main class="wrap[^>]*>)/, '$1<div style="margin-bottom:14px"><button class="btn sm primary" data-act="if-back">← Back to in-flight view</button></div>') : h; };
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="if-brief"],[data-act="if-back"]'); if(!b) return;
   S.ifBrief = b.dataset.act==='if-brief'; render(); window.scrollTo(0,0);
@@ -4469,17 +4289,7 @@ async function savePLN(job){
   try{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'application/xml'})); a.download=name; a.click(); }catch(_){ toast('Saving isn\'t available here.'); }
 }
 var loadIntoSim; /* defined in full below (061-core.js) */
-function preflightHTML(job){
-  const C=preflightChecks(job); const p=plan(job); const allOk=C.every(c=>c.ok); const live=S.simState==='live';
-  return `<div class="row between"><div><p class="label">Before you start</p><h3>Pre-flight sim check ${allOk?'<span class="chip good">All set</span>':''}</h3></div><button class="btn sm ghost" data-act="pf-recheck">Check again</button></div>
-    <ul class="pf-list">${C.map(c=>`<li class="${c.ok?'ok':'no'}"><span class="pf-ic">${c.ok?'✓':'!'}</span><div><b>${esc(c.t)}</b>${c.d?`<span class="tiny muted">${esc(c.d)}</span>`:''}</div></li>`).join('')}</ul>
-    <div class="row">${live?`<button class="btn sm primary" data-act="pf-load" ${S.loading?'disabled':''}>${S.loading?'Loading…':`Load ${Math.ceil(Math.max(p.gal*1.3, p.gal+5))} gal + ${Math.max(0,p.payload-170)} lb into MSFS`}</button>`:''}<button class="btn sm" data-act="pf-pln">Download MSFS flight plan (.pln)</button></div>
-    <p class="tiny muted">Cruise altitude in the plan: ${cruiseAltFor(job).toLocaleString()} ft. Loading works with most default aircraft; some add-ons manage fuel and weights in their own tablet.</p>`;
-}
 var renderPreflight; /* defined in full below (052-core.js) */
-const _pfFlight = flightView;
-flightView = function(){ const h=_pfFlight(); const a=S.st&&S.st.active; if(!a || a.started || S.debrief || S.showResult) return h;
-  return h.replace(/(<\/section>)/, `$1<section class="panel stack preflight" id="preflight">${preflightHTML(a.job)}</section>`); };
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="pf-load"],[data-act="pf-pln"],[data-act="pf-recheck"]'); if(!b || !S.st || !S.st.active) return; const job=S.st.active.job;
   if(b.dataset.act==='pf-load') loadIntoSim(job); else if(b.dataset.act==='pf-pln') savePLN(job); else { simPoll(true); toast('Checking MSFS…'); }
@@ -4634,8 +4444,6 @@ function closeBig(){ const el=document.getElementById('bigmode'); if(el) el.remo
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && S.big) closeBig(); });
 document.addEventListener('fullscreenchange', ()=>{ if(!document.fullscreenElement && S.big){ /* stay open as an overlay */ } });
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="big-open"]')){ e.stopPropagation(); openBig(); } });
-const _bgInflight = inflightView;
-inflightView = function(){ return _bgInflight().replace('<button class="btn sm ghost" data-act="if-brief">Briefing</button>', '<button class="btn sm ghost" data-act="big-open">⛶ Big display</button><button class="btn sm ghost" data-act="if-brief">Briefing</button>'); };
 /* ===================== STABILITY: crash screen, automatic backups ===================== */
 let _stFails = 0;
 document.addEventListener('click', e=>{
@@ -4724,10 +4532,6 @@ function makeManifest(job){
 function manifestHTML(job){ const M=job.manifest; if(!M) return '';
   return `<section class="panel stack manifest"><div class="row between"><h3>Passenger manifest</h3><span class="small muted">${M.length} aboard</span></div><div class="mf-list">${M.map(p=>`<div class="mf"><span class="mf-ic" title="${esc(TRAITS[p.trait].n)}">${TRAITS[p.trait].i}</span><div><b>${esc(p.name)}</b><span class="tiny muted">Seat ${p.seat} · ${esc(TRAITS[p.trait].n)}</span></div></div>`).join('')}</div><p class="tiny muted">${[...new Set(M.map(p=>p.trait))].map(t=>`${TRAITS[t].i} ${esc(TRAITS[t].d)}`).join(' ')}</p></section>`; }
 /* give every passenger job a manifest when it becomes active */
-const _mfFlight = flightView;
-flightView = function(){ const h=_mfFlight(); const a=S.st&&S.st.active; if(!a || !a.job.manifest || S.debrief || S.showResult) return h;
-  if(a.started && !S.ifBrief) return h.replace(/(<div class="stack">)(<section class="panel stack cabin-host">)/, `$1$2`).replace('<section class="panel stack small"><h3>Quick reference</h3>', manifestHTML(a.job)+'<section class="panel stack small"><h3>Quick reference</h3>');
-  return h.replace('<section class="panel stack preflight"', manifestHTML(a.job)+'<section class="panel stack preflight"'); };
 /* passengers react by name */
 const _mfPick = cabinPick;
 cabinPick = function(k, job){ const M=job.manifest; if(M){ const has=t=>M.find(p=>p.trait===t);
@@ -4846,14 +4650,6 @@ function ordersHTML(a, pop){ const P=a.scenPlan; if(!P) return '';
 /* live check */
 setInterval(()=>{ const a=S.st&&S.st.active; if(a && a.job.scen && !a.opened && a.started && S.simState!=='live' && trigReached(a)) openOrders(a,'timer'); }, 20000);
 /* no more "open" button: show when they'll open, and the orders once they do */
-const _orFlight = flightView;
-flightView = function(){ let h=_orFlight(); const a=S.st&&S.st.active; if(!a || !a.job.scen) return h;
-  h = h.replace(/<section class="sealed">[\s\S]*?<\/section>/, `<section class="sealed"><p class="label">Sealed orders</p><h3 style="margin:4px 0 6px">They'll open on their own</h3><p class="small">Something will happen on this flight ${TRIG_LABEL[SCEN_TRIGGER[a.job.scen]||'mid']}. The orders pop up automatically, and you'll be graded on how you handle it.</p></section>`);
-  if(a.scenPlan) h = h.replace(/<section class="opened">[\s\S]*?<\/section>/, ordersHTML(a,false));
-  return h; };
-const _orInflight = inflightView;
-inflightView = function(){ const a=S.st.active; let h=_orInflight(); if(a.job.scen && a.opened && a.scenPlan) h=h.replace('<section class="panel stack if-live"', ordersHTML(a,!!S.ordersPop)+'<section class="panel stack if-live"');
-  else if(a.job.scen) h=h.replace('<section class="panel stack if-live"', `<div class="notice small">📩 Sealed orders aboard. They open automatically ${TRIG_LABEL[SCEN_TRIGGER[a.job.scen]||'mid']}.</div><section class="panel stack if-live"`); return h; };
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="orders-ok"]')){ S.ordersPop=false; S.keepScroll=true; render(); } });
 /* flights with sealed orders log themselves too, graded on what you actually did */
 var autoReady; /* defined in full below (060-core.js) */
@@ -4943,8 +4739,6 @@ preflightChecks = function(job){ const out=_syncChecks(job); const m=simMinutes(
   const wxOk = !!(job.wx&&job.wx.live); out.push({k:'wx', ok:wxOk, t: wxOk?'Briefing uses live MSFS weather':'Briefing weather is generated', d: wxOk?'':(atDeparture(job)?'':'It switches to your MSFS weather once you\'re at the departure airport.'), act: (!wxOk && simWx())?'pf-usewx':null, actLabel:'Use MSFS weather'});
   return out; };
 /* show the per-item fix buttons */
-const _syncPfHTML = preflightHTML;
-preflightHTML = function(job){ let h=_syncPfHTML(job); for(const c of preflightChecks(job)){ if(!c.act) continue; h=h.replace(`<b>${esc(c.t)}</b>`, `<b>${esc(c.t)}</b> <button class="btn xs" data-act="${c.act}">${esc(c.actLabel)}</button>`); } return h; };
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="pf-usetime"],[data-act="pf-usewx"]'); if(!b || !S.st || !S.st.active) return; const job=S.st.active.job;
   if(b.dataset.act==='pf-usewx'){ const w=simWx(job.wx); if(w){ job.wx=w; toast('Briefing weather now matches MSFS.'); } }
   else { const m=simMinutes(); if(m==null) return; if(isNight(m) && !hasRating(S.st,'COMM')){ toast('Trainee pilots fly in daylight only. Set MSFS to daytime.'); return; } job.dep=Math.round(m/5)*5; if(job.dep>S.st.clock || S.st.clock-job.dep<720) S.st.clock=Math.max(S.st.clock, job.dep-5); toast(`Flight moved to ${hhmm(job.dep)} to match MSFS.`); }
@@ -5140,8 +4934,6 @@ function passPlane(){ const a=S.st&&S.st.active; let pct=null; try{ if(a && a.st
   const path='M4 34 Q100 -14 196 34';
   const anim = pct!=null ? `<animateMotion dur="1.4s" fill="freeze" rotate="auto" keyPoints="0;${pct.toFixed(3)}" keyTimes="0;1" calcMode="linear" path="${path}"/>` : (calmMotion()?`<animateMotion dur="1ms" fill="freeze" rotate="auto" keyPoints="0.5;0.5" keyTimes="0;1" calcMode="linear" path="${path}"/>`:`<animateMotion dur="7s" repeatCount="indefinite" rotate="auto" path="${path}"/>`);
   return `<div class="pass-arc" aria-hidden="true"><svg viewBox="0 -6 200 46"><path d="${path}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 5" opacity=".7"/><path d="${path}" fill="none" stroke="currentColor" stroke-width="2.5" pathLength="1" stroke-dasharray="${pct!=null?pct.toFixed(3):0} 1"/><g>${anim}<path d="M-7 0 L5 -1.2 L7 0 L5 1.2 Z M-1 0 L-4 -6 L-2 -6 L3 0 L-2 6 L-4 6 Z M-6 0 L-8 -3 L-7 -3 L-5 0 L-7 3 L-8 3 Z" fill="currentColor"/></g></svg></div>`; }
-const _flPass = boardingPass;
-boardingPass = function(){ const h=_flPass.apply(this, arguments); return h.replace(/<div class="pass-arc" aria-hidden="true">[\s\S]*?<\/svg><span>✈<\/span><\/div>/, passPlane()); };
 
 /* 9. toasts: stacked, with an icon, slide in, and a timer bar */
 function toastKind(msg){ const m=String(msg).toLowerCase(); if(/couldn|can't|cannot|not connected|fail|error|expert mode|grounded|fine/.test(m)) return 'warn'; if(/unlocked|saved|logged|loaded|matches|repaired|moved|welcome|you're now|passed|earned/.test(m)) return 'ok'; return 'info'; }
@@ -5294,8 +5086,6 @@ function guideHTML(a){ const s=S.simState==='live'?S.sim:null; const G=a.guide=a
     <ol class="guide-steps">${GUIDE.map((g,i)=>`<li class="${G.done[g.k]?'done':i===cur?'cur':''}"><b>${esc(g.t)}</b>${i===cur?`<span class="small">${esc(g.d)}</span>${!s?`<button class="btn xs" data-act="guide-next" data-k="${g.k}">Done</button>`:''}`:''}</li>`).join('')}</ol>
     ${!s?'<p class="tiny muted">MSFS isn\'t connected, so tick each step yourself.</p>':''}</section>`; }
 function guideActive(){ const st=S.st, a=st&&st.active; return !!(a && st.flights<1 && !proPrefs().noGuide); }
-const _gdFlight = flightView;
-flightView = function(){ const h=_gdFlight(); if(!guideActive() || S.showResult || S.debrief) return h; const g=guideHTML(S.st.active); return h.replace(/(<main class="wrap[^>]*>[\s\S]*?<\/section>)/, (m)=>m+g); };
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="guide-next"],[data-act="guide-hide"]'); if(!b||!S.st) return; if(b.dataset.act==='guide-hide'){ proPrefs().noGuide=true; } else { const a=S.st.active; if(a){ a.guide=a.guide||{done:{}}; a.guide.done[b.dataset.k]=1; } } save(); S.keepScroll=true; render(); });
 
 /* ---- 5. weekend events ---- */
@@ -5395,21 +5185,6 @@ cabinTick = function(){ const r=_tfCabin.apply(this, arguments); try{ const a=S.
 /* ---- 3. big moments take over the screen ---- */
 
 /* ---- 4. story briefing up top, like the opening of a chapter ---- */
-function chapterHero(job){ const m=STORY.find(x=>x.id===job.story); if(!m) return ''; const meta=arcMeta(m.arc); const chs=STORY.filter(x=>x.arc===m.arc); const idx=chs.indexOf(m)+1;
-  const col = m.side ? '#e8782a' : (meta.main ? '#1f9d55' : (meta.col||'#0b746f'));
-  const to=job.local?AP[job.from]:AP[job.to]; const d=job.local?(job.tourNm||40):Math.round(distNm(AP[job.from],AP[job.to]));
-  const feat = m.feature || (m.teach&&m.teach[0]) || '';
-  const art = typeof islandArt==='function' ? (()=>{ try{ return islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 300, job.ac); }catch(_){ return ''; } })() : '';
-  return `<section class="chapter-hero" style="--arc:${col}">${art?`<div class="ch-art" aria-hidden="true">${art}</div>`:''}<div class="ch-in">
-    <div class="row between"><p class="ch-kicker">${esc(m.arc)} · Chapter ${idx} of ${chs.length}${m.side?' · side story':''}</p><div class="row ch-cast">${(m.chars||[]).filter(k=>CAST[k]).map(k=>avatar(k)).join('')}</div></div>
-    <h1>${esc(m.title)}</h1>
-    <div class="ch-brief">${(job.paras||m.brief||[]).map(t=>`<p>${esc(t)}</p>`).join('')}</div>
-    <div class="ch-feature"><div><span class="label">Featured flight</span><b class="mono">${esc(job.from)} → ${esc(job.local?job.from:job.to)}</b><span class="small">${esc(to.n)}, ${esc(to.isl)} · ${d.toLocaleString()} nm</span></div>${feat?`<p class="small">${esc(feat)}</p>`:''}</div>
-  </div></section>`; }
-const _tfFlight = flightView;
-flightView = function(){ let h=_tfFlight(); const a=S.st&&S.st.active; if(!a || a.started || S.showResult || S.debrief || a.job.kind!=='story') return h;
-  h = h.replace(/<section class="panel stack">\s*<div class="row between"><h2>Briefing<\/h2>[\s\S]*?<\/section>/, '');
-  return h.replace(/(<main class="wrap[^>]*>)/, '$1'+chapterHero(a.job)); };
 
 /* ---- 5 + 6 + 7. load the plane, suggested parking and the sim clock, also once the flight has started ---- */
 const PARK_PREF = { ga:['ramp_ga_small','ramp_ga','ramp_ga_medium'], stol:['ramp_ga_small','ramp_ga','ramp_ga_medium'], amph:['ramp_ga_small','ramp_ga','dock_ga'], hp:['ramp_ga_small','ramp_ga','ramp_ga_medium'], bush:['ramp_ga_medium','ramp_ga','ramp_ga_small'],
@@ -5429,16 +5204,9 @@ function parkingRowHTML(job){ if(job.local===undefined) return ''; const s=sugge
   return `<div class="park-row"><span class="pf-ic">P</span><div><b>Spawn at: ${esc(s.text)}</b><span class="tiny muted">${s.generic?`In the MSFS world map, choose ${esc(job.from)} and pick a parking spot of this type near runway ${s.rw?esc(s.rw.id):''}.`:'Pick this spot in the MSFS world map when you load in, or use the button once you\'re in the sim.'}</span></div>${!s.generic && atDep && S.sim.motion && S.sim.motion.gs<1 ? `<button class="btn xs" data-act="park-move">Move me there</button>`:''}</div>`; }
 async function autoClock(){ const a=S.st&&S.st.active; if(!a || a.started || a._clockSet || !(S.st.pro?S.st.pro.autoTime!==false:true) || S.simState!=='live' || !S.mcp) return; const s=S.sim; if(!s || !s.motion || !s.motion.onGround || !atDeparture(a.job)) return;
   a._clockSet=true; try{ const r=await S.mcp.callTool(SIM_SERVER,'set_time',{localMin:a.job.dep},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} } if(o && o.ok) toast(`MSFS clock set to ${hhmm(a.job.dep)} for this flight.`); }catch(_){} }
-const _tfPfHTML = preflightHTML;
-preflightHTML = function(job){ let h=_tfPfHTML(job); if(S.simState==='live') fetchParking(job.from);
-  h = h.replace('<ul class="pf-list">', parkingRowHTML(job)+'<ul class="pf-list">');
-  return h.replace('Briefing weather is generated', 'Briefing weather is generated').replace("It switches to your MSFS weather once you're at the departure airport.", "MSFS doesn't let add-ons change its weather, so the briefing follows MSFS instead: it switches to your sim's weather once you're at the departure airport. Live weather in MSFS works best."); };
 document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="park-move"]') || !S.st || !S.st.active) return; const s=suggestParking(S.st.active.job); if(!s.spot) return;
   try{ const r=await S.mcp.callTool(SIM_SERVER,'move_to',{lat:s.spot.lat, lon:s.spot.lon, hdg:s.spot.hdg},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} } toast(o&&o.ok?`Moved to ${s.spot.name}.`:`Couldn't move: ${o&&o.error||'update the MSFS Bridge'}`); }catch(err){ toast('Moving the aircraft needs the Trade Winds app (or MSFS Bridge 1.5).'); } });
 /* after "Start flight": keep the loading tools until you take off */
-const _tfInflight = inflightView;
-inflightView = function(){ let h=_tfInflight(); const a=S.st&&S.st.active; if(!a) return h; const rec=S.sim&&S.sim.recorder; const airborne = S.simState==='live' && ((S.sim.motion&&!S.sim.motion.onGround) || (rec && rec.takeoff && simRecFor(a)));
-  if(airborne) return h; return h.replace(/(<main class="wrap[^>]*>[\s\S]*?<\/section>)/, m=>m+`<section class="panel stack preflight" id="preflight">${preflightHTML(a.job)}</section>`); };
 
 
 /* settings */
@@ -5484,8 +5252,6 @@ const _tfChecks = preflightChecks;
 preflightChecks = function(job){ const out=_tfChecks(job); const t=out.find(c=>c.k==='time'); if(t && !t.ok && window.twNative){ t.act='pf-settime'; t.actLabel=`Set MSFS to ${hhmm(job.dep)}`; t.d='Or set the time in the MSFS weather & time panel.'; } return out; };
 document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="pf-settime"]') || !S.st || !S.st.active || !S.mcp) return; const job=S.st.active.job;
   try{ const r=await S.mcp.callTool(SIM_SERVER,'set_time',{localMin:job.dep},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} } toast(o&&o.ok?`MSFS clock set to ${hhmm(job.dep)}.`:`Couldn't set the clock: ${o&&o.error||'unknown'}`); setTimeout(()=>simPoll(true), 1200); }catch(_){ toast('Setting the clock needs the Trade Winds app.'); } });
-const _tfPf2 = preflightHTML;
-preflightHTML = function(job){ const h=_tfPf2(job); return (S.st&&S.st.active&&S.st.active.started) ? h.replace('<p class="label">Before you start</p>','<p class="label">Before takeoff</p>') : h; };
 /* ===================== CLARITY: one main story, fly from the story card, an obvious flight setup, calmer screens ===================== */
 /* ---- the main story is one line, in this order; everything else is a side story ---- */
 const MAIN_ORDER = ['Coral Wing','The Buyout','Hartwell','Own Wings','The Tour','Your Company'];
@@ -5518,29 +5284,8 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="sig
 /* ---- flight setup: big, obvious tiles for runway, fuel, clock, parking and weather ---- */
 function runwayPlan(job){ const dep=rwyAnalysis(job.from, job.wx, job.ac); const arr=job.local?null:rwyAnalysis(job.to, job.wx, job.ac); return {dep, arr}; }
 function windTxt(r){ if(!r) return ''; if(r.water) return 'into the wind'; return `${Math.round(Math.max(0,r.head))} kt headwind, ${Math.round(r.xw)} kt crosswind${r.head<0?' (tailwind!)':''}`; }
-preflightHTML = function(job){
-  const C = preflightChecks(job); const get=k=>C.find(c=>c.k===k); const p=plan(job); const live=S.simState==='live'; const R=runwayPlan(job); const wx=job.wx;
-  const fuelGal=Math.ceil(Math.max(p.gal*1.3, p.gal+5)), payload=Math.max(0,p.payload-170); const fuel=get('fuel'), time=get('time'), wxc=get('wx'); const park=suggestParking(job);
-  if(live) fetchParking(job.from);
-  const tile=(cls, icon, title, body, action)=>`<div class="su-tile ${cls}"><div class="su-ic" aria-hidden="true">${icon}</div><div class="su-b"><p class="label">${title}</p>${body}</div>${action?`<div class="su-a">${action}</div>`:''}</div>`;
-  const rwBig = R.dep && !R.dep.water ? `<div class="su-rw"><span><small>Take off</small><b class="mono">${esc(R.dep.rw)}</b></span>${R.arr?`<i>→</i><span><small>Land</small><b class="mono">${esc(R.arr.water?'water':R.arr.rw)}</b></span>`:''}</div>` : `<div class="su-rw"><span><b>Into the wind</b></span></div>`;
-  const tiles = [
-    tile('rw','🛫','Runways', `${rwBig}<p class="tiny">Wind ${pad3(wx.dir)}° at ${wx.spd}${wx.gust?'G'+wx.gust:''} kt · ${esc(windTxt(R.dep))}${R.dep&&R.dep.over?' · <b class="bad-t">over this aircraft\'s crosswind limit</b>':''}</p>`, ''),
-    tile(fuel&&fuel.ok?'ok':'todo','⛽','Fuel & cargo', `<b>${fuelGal} gal · ${payload} lb</b><p class="tiny">${fuel?esc(fuel.t):'Plan '+p.gal+' gal plus reserve'}</p>`, live?`<button class="btn primary" data-act="pf-load" ${S.loading?'disabled':''}>${S.loading?'Loading…':'Load into MSFS'}</button>`:`<span class="tiny muted">Set in the MSFS fuel &amp; payload menu</span>`),
-    tile(time? (time.ok?'ok':'todo') : '', '🕙','Time of day', `<b>${hhmm(job.dep)} local</b><p class="tiny">${time?esc(time.t):'Set this time in MSFS before you load in.'}</p>`, time&&!time.ok&&time.act?`<button class="btn primary" data-act="${time.act}">${esc(time.actLabel)}</button>`:''),
-    tile('', '🅿','Parking spot', `<b>${esc(park.spot?park.spot.name:'GA ramp')}</b><p class="tiny">${esc(park.text)}</p>`, park.spot && live && S.sim.position && distNm({lat:S.sim.position.lat,lon:S.sim.position.lon},AP[job.from])<3 && S.sim.motion && S.sim.motion.gs<1 ? `<button class="btn" data-act="park-move">Move me there</button>`:''),
-    tile(wxc&&wxc.ok?'ok':'', '☁','Weather', `<b>${esc(wx.n)}</b><p class="tiny">${wxc?esc(wxc.ok?wxc.t:'MSFS can\'t be changed by add-ons. Use Live weather in MSFS and the briefing matches it.'):'Generated for this flight.'}</p>`, wxc&&wxc.act?`<button class="btn" data-act="${wxc.act}">${esc(wxc.actLabel)}</button>`:'')
-  ].join('');
-  const small = C.filter(c=>['sim','pos','ac','park'].includes(c.k)).map(c=>`<span class="su-chip ${c.ok?'ok':'no'}" title="${esc(c.d||'')}">${c.ok?'✓':'!'} ${esc(c.t)}</span>`).join('');
-  return `<div class="row between"><div><p class="label">${S.st.active&&S.st.active.started?'Before takeoff':'Flight setup'}</p><h3>Set up MSFS for this flight</h3></div><div class="row"><button class="btn sm ghost" data-act="pf-pln">Flight plan (.pln)</button><button class="btn sm ghost" data-act="pf-recheck">Check again</button></div></div>
-    <div class="su-chips">${small}</div><div class="su-grid">${tiles}</div>`; };
 renderPreflight = function(){ const el=document.getElementById('preflight'); const a=S.st&&S.st.active; if(el && a) el.innerHTML=preflightHTML(a.job); };
 /* setup sits right under the boarding pass */
-const _clFlight = flightView;
-flightView = function(){ const h=_clFlight(); const a=S.st&&S.st.active; if(!a || a.started || S.showResult || S.debrief) return h; const t=document.createElement('template'); t.innerHTML=h;
-  const pf=t.content.querySelector('#preflight'), pass=t.content.querySelector('.pass'); if(pf && pass){ pf.classList.add('fsetup'); pass.after(pf); } return t.innerHTML; };
-const _clInflight = inflightView;
-inflightView = function(){ let h=_clInflight(); const a=S.st&&S.st.active; if(!a) return h; try{ const R=runwayPlan(a.job); if(R.dep) h=h.replace(/(<p class="label">In flight[^<]*<\/p>)/, `$1<p class="if-rw">Take off <b class="mono">${esc(R.dep.water?'into wind':R.dep.rw)}</b>${R.arr?` · Land <b class="mono">${esc(R.arr.water?'into wind':R.arr.rw)}</b>`:''} · wind ${pad3(a.job.wx.dir)}°/${a.job.wx.spd} kt</p>`); }catch(_){} return h.replace('id="preflight"','id="preflight" data-x="1"').replace('class="panel stack preflight"','class="panel stack preflight fsetup"'); };
 
 /* ---- each screen gets its own atmosphere ---- */
 
@@ -5548,8 +5293,6 @@ inflightView = function(){ let h=_clInflight(); const a=S.st&&S.st.active; if(!a
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="hg-tab"]'); if(!b) return; S.hangarTab=b.dataset.v; S.keepScroll=true; render(); });
 
 /* the old 'Set up MSFS' list in the sidebar is now the Flight setup panel */
-const _clFlight2 = flightView;
-flightView = function(){ const h=_clFlight2(); return h.replace(/<section class="panel stack">\s*<h3>Set up MSFS<\/h3>[\s\S]*?<\/section>/, ''); };
 /* ===================== MORE AIRCRAFT ON THE BOARD ===================== */
 /* 1. spread the board across your fleet: no aircraft takes more than two jobs if another one fits */
 function refitJob(st, j, acId){ const keep={ac:j.ac,cargo:j.cargo,pax:j.pax}; j.ac=acId; let p=plan(j); if(p.over>0){ j.cargo=Math.max(0,j.cargo-p.over-20); p=plan(j); }
@@ -5594,13 +5337,6 @@ document.addEventListener('click', e=>{ if(e.target.closest('[data-act="all-jobs
 const _cmGo = go; go = function(v){ if(v!=='board') S.allJobs=false; return _cmGo.apply(this, arguments); };
 
 /* ---- flight briefing: the essentials, then one "Flight details" drawer ---- */
-const _cmFlight = flightView;
-flightView = function(){ const h=_cmFlight(); const a=S.st&&S.st.active; if(!a || a.started || S.showResult || S.debrief) return h; const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h;
-  const grid=main.querySelector(':scope > .grid-2'); const moved=[];
-  if(grid){ const brief=[...grid.querySelectorAll('section')].find(s=>/^Briefing/.test(headText(s))); if(brief){ brief.remove(); main.insertBefore(brief, grid); } moved.push(grid); grid.remove(); }
-  main.querySelectorAll(':scope > section.manifest').forEach(s=>{ s.remove(); moved.unshift(s); });
-  const d=wrapDetails(moved, 'Flight details: conditions, weights, route, aircraft and passengers', 'flight-more'); if(d) main.appendChild(d);
-  return t.innerHTML; };
 
 /* ---- pilot page: ratings first, the rest folded ---- */
 const _cmPilot = pilotView;
@@ -5662,8 +5398,6 @@ function askMet(job, rec){ const a=job.ask; if(!a || !rec) return null; const tr
   if(a.k==='coast') return tr.some(t=>t[2]<1500 && t[2]>300 && distNm({lat:t[0],lon:t[1]},to)>5 && distNm({lat:t[0],lon:t[1]},fr)>5);
   return null; }
 /* reveal the request once you're on your way */
-const _mrIf = inflightView;
-inflightView = function(){ const h=_mrIf(); const a=S.st&&S.st.active; if(!a || !a.job.ask || !a.askShown) return h; return h.replace(/(<section class="if-head">[\s\S]*?<\/section>)/, m=>m+`<section class="notice ask-note"><b>Cabin request (+${money(a.job.ask.amt)}):</b> ${esc(a.job.ask.text)}</section>`); };
 
 /* ---- 5. diversions for a good reason are paid fairly ---- */
 
@@ -5711,8 +5445,6 @@ const CH_GOAL = {
   TR4:['Fly into New York at night for Madison Square Garden.','The biggest show of Nova\'s life.'], TR5:['Bring Nova home over Maho Beach at sunset.','The tour is over.'],
   CO1:['Choose your company\'s first pilot.','Your own airline is real.'], CO2:['Turn down Vale\'s offer, or don\'t.','Preston Vale has one more play.'], CO3:['Hear Mari\'s announcement in the air over Maho Beach.','The last chapter.']
 };
-const _mrHero = chapterHero;
-chapterHero = function(job){ const h=_mrHero(job); const g=CH_GOAL[job.story]; if(!g) return h; return h.replace('</h1>', `</h1><div class="ch-goal"><p class="ch-prev"><span>Previously</span> ${esc(g[1])}</p><p class="ch-obj"><span>Your goal</span> ${esc(g[0])}</p></div>`); };
 /* ===================== EVERY STORYLINE HAS ITS OWN COLOR ===================== */
 const ARC_COLORS = {
   'Coral Wing':'#0b8a7a', 'The Buyout':'#2d4f9e', 'Hartwell':'#a0671c', 'Own Wings':'#c2410c', 'The Tour':'#b0306a', 'Your Company':'#1f9d55',
@@ -5722,8 +5454,6 @@ for(const k in ARC_COLORS){ if(ARC_META[k]) ARC_META[k].col = ARC_COLORS[k]; }
 function arcColor(arc){ return ARC_COLORS[arc] || (ARC_META[arc]&&ARC_META[arc].col) || '#0b8a7a'; }
 const _clrKind = jobKind;
 jobKind = function(job){ const k=_clrKind(job); if(job.kind==='story'){ const m=STORY.find(x=>x.id===job.story); if(m) k.c=arcColor(m.arc); } return k; };
-const _clrHero = chapterHero;
-chapterHero = function(job){ const h=_clrHero(job); const m=STORY.find(x=>x.id===job.story); return m ? h.replace(/style="--arc:[^"]*"/, `style="--arc:${arcColor(m.arc)}"`) : h; };
 
 
 /* ===================== TESTING TOOLS: connection check, practice landings, calm test mode, "something's off" notes ===================== */
@@ -5765,8 +5495,6 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="not
   if(b.dataset.act==='note-save'){ const v=(document.getElementById('tw-note')||{}).value||''; if(v.trim()) saveNote(v.trim()); }
   if(box) box.remove(); });
 const NOTE_BTN = `<button class="btn sm ghost note-btn" data-act="note-open">Something's off?</button>`;
-const _tsIf = inflightView;
-inflightView = function(){ return _tsIf().replace(/(<div class="row"><span class="if-timer)/, NOTE_BTN+'$1'); };
 /* ===================== QUICK WINS BEFORE TESTING ===================== */
 
 /* 2 + 3 + 5. copilot safety calls: too fast, flaps too fast, sim rate on approach, fuel */
@@ -5779,8 +5507,6 @@ function approachCard(a){ const s=S.sim; if(!s||!s.position||S.simState!=='live'
   const code=a.job.local?a.job.from:a.job.to; const w=(s.ext&&s.ext.weather)||null; const wx = w ? Object.assign({}, a.job.wx, {dir:w.windDir, spd:w.windKt, gust:0}) : a.job.wx; let r=null; try{ r=rwyAnalysis(code, wx, a.job.ac); }catch(_){}
   const vapp=(String(AC[a.job.ac].v||'').match(/(?:Approach|Vref|Vapp)\s*~?(\d+)/)||[])[1];
   return `<section class="appr-card"><div><span>Landing</span><b class="mono">${r&&!r.water?esc(r.rw):'into wind'}</b></div><div><span>Wind</span><b class="mono">${pad3(wx.dir)}°/${wx.spd}</b><small>${r&&!r.water?`${Math.round(Math.max(0,r.head))} head · ${Math.round(r.xw)} cross`:''}</small></div>${vapp?`<div><span>Approach</span><b class="mono">${vapp} kt</b><small>+5 if gusty</small></div>`:''}<div><span>Distance</span><b class="mono">${d.toFixed(1)} nm</b></div></section>`; }
-const _qkIf = inflightView;
-inflightView = function(){ const h=_qkIf(); const a=S.st&&S.st.active; if(!a) return h; const c=approachCard(a); return c ? h.replace(/(<section class="if-head">[\s\S]*?<\/section>)/, m=>m+c) : h; };
 /* ===================== GUARD: ignore MSFS menu scenes and anything that isn't your flight ===================== */
 /* the sim data only counts once the flight has started, and only near the route */
 function simRelevant(a){ const s=S.sim; if(!a || !a.started || S.simState!=='live' || !s || !s.position) return false; const p={lat:s.position.lat, lon:s.position.lon};
@@ -5803,20 +5529,8 @@ autoReady = function(a){ if(!a || !a.started) return null; const rec=simRecFor(a
 /* ===================== FROM TEST FLIGHT #2 ===================== */
 
 /* ---- 1. flight screen reads top to bottom: briefing, setup steps, then the boarding pass with Start ---- */
-const _fbFlight = flightView;
-flightView = function(){ const h=_fbFlight(); const a=S.st&&S.st.active; if(!a || a.started || S.showResult || S.debrief) return h; const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h;
-  const hero=main.querySelector(':scope > .chapter-hero'); const brief=[...main.querySelectorAll(':scope > section')].find(s=>/^Briefing/.test(headText(s))); const setup=main.querySelector('#preflight'); const pass=main.querySelector(':scope > .pass');
-  const top=hero||brief; if(top) main.prepend(top); if(setup) (top?top.after(setup):main.prepend(setup)); if(pass && setup) setup.after(pass);
-  return t.innerHTML; };
 /* setup tiles in the order you do them, numbered; parking first */
 const STEP_ORDER = [['Parking spot','Spawn here'],['Fuel & cargo','Fuel & weight'],['Time of day','Time of day'],['Runways','Runways'],['Weather','Weather']];
-const _fbPf = preflightHTML;
-preflightHTML = function(job){ const a=S.st&&S.st.active; const s=S.sim; const started=a&&a.started; const moving = S.simState==='live' && s && s.motion && (!s.motion.onGround || s.motion.gs>2);
-  if(started && moving) return `<div class="row between"><div><p class="label">Flight setup</p><h3>Done. You're on your way.</h3></div></div><p class="small muted">Fuel and weights are locked once you're moving.</p>`;
-  const t=tpl(_fbPf(job)); const grid=t.content.querySelector('.su-grid'); if(grid){ const tiles=[...grid.children]; let n=1;
-    STEP_ORDER.forEach(([label,newLabel])=>{ const tl=tiles.find(x=>((x.querySelector('.label')||{}).textContent||'')===label); if(tl){ tl.querySelector('.label').textContent=`${n++}. ${newLabel}`; grid.appendChild(tl); } }); }
-  if(started) t.content.querySelectorAll('.su-chip').forEach(c=>{ if(/nm from|Moving|Parked|At [A-Z]{4}/.test(c.textContent)) c.remove(); });
-  return t.innerHTML; };
 /* fuel and weights are locked once you're rolling or airborne; and only fuel is loaded, so the plane can't tip over */
 loadIntoSim = async function(job){ if(!S.mcp){ toast('MSFS isn\'t connected.'); return; } const s=S.sim; const rec=s&&s.recorder;
   if(s && s.motion && (!s.motion.onGround || s.motion.gs>2) || (rec && rec.takeoff && S.st.active && S.st.active.started)){ toast('Fuel is locked once you\'re moving.'); return; }
@@ -5879,8 +5593,6 @@ plan = function(job){ const p=_frPlan(job); if(job && job.local){ p.est = Math.m
 /* 8. cargo flights are graded on the cargo, not on passengers who aren't there */
 
 /* 9. no "Finish flight" button before the flight has started (too easy to press by mistake) */
-const _frPass = boardingPass;
-boardingPass = function(st, job, p, a, started){ const h=_frPass.apply(this, arguments); return started ? h : h.replace(/<button[^>]*data-act="debrief"[^>]*>[\s\S]*?<\/button>/, ''); };
 
 /* 10. free deadheads say so */
  
@@ -5894,10 +5606,6 @@ boardingPass = function(st, job, p, a, started){ const h=_frPass.apply(this, arg
 window.addEventListener('click', e=>{ const b=e.target.closest('[data-act="diff"]'); if(!b || !S.st || !S.st.active || !S.st.active.started) return; e.stopImmediatePropagation(); e.preventDefault(); toast('Change difficulty between flights, not during one.'); }, true);
 
 /* 14. if a different aircraft you can fly is loaded in MSFS, switch the job to it in one tap */
-const _frPf = preflightHTML;
-preflightHTML = function(job){ let h=_frPf(job); try{ const a=S.st&&S.st.active; if(!a || a.started || S.simState!=='live') return h; const L=loadedAircraft(); if(!L.id || L.id===job.ac || !canFly(S.st, L.id)) return h;
-    const probe=JSON.parse(JSON.stringify(job)); if(!refitJob(S.st, probe, L.id)) return h;
-    h=h.replace('<div class="su-chips">', `<div class="notice switch-ac"><b>MSFS has the ${esc(AC[L.id].n)} loaded.</b> <button class="btn sm primary" data-act="use-loaded">Fly this job in it instead</button></div><div class="su-chips">`); }catch(_){} return h; };
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="use-loaded"]') || !S.st || !S.st.active) return; const L=loadedAircraft(); const job=S.st.active.job; if(L.id && refitJob(S.st, job, L.id)){ save(); toast(`Switched to the ${AC[L.id].n}.`); S.keepScroll=true; render(); } else toast('That aircraft can\'t do this job.'); });
 
 /* 15. sealed orders only on flights long enough to need them, and never on checkrides or first flights */
@@ -6558,9 +6266,6 @@ window.addEventListener('click', e=>{ const b=e.target.closest('[data-act="accep
   e.stopImmediatePropagation(); e.preventDefault(); c.proSeen[id]=1; save();
   playPrologue(m, ()=>{ S._proPass=true; const again=document.querySelector(`[data-act="${b.dataset.act}"][data-id="${id}"]`)||b; again.click(); S._proPass=false; }); }, true);
 /* replay from the flight screen */
-const _proFlight = flightView;
-flightView = function(){ const h=_proFlight(); const a=S.st&&S.st.active; if(!a || a.started || a.job.kind!=='story' || !CRIME_IDS.has(a.job.story) || !proFor(a.job.story)) return h;
-  return h.replace(/(<div class="ch-hero-in">|<section[^>]*class="chapter-hero[^"]*"[^>]*>)/, `$1<button class="btn sm ghost pro-replay" data-act="pro-replay">▶ Replay prologue</button>`); };
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="pro-replay"]')||!S.st||!S.st.active) return; const m=CRIME.find(x=>x.id===S.st.active.job.story); if(m) playPrologue(m, ()=>{}); });
 
 (function(){ const css=`
@@ -6584,8 +6289,6 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="pro-rep
 /* ===================== the chapter story lives in the cutscene; the flight screen stays short ===================== */
 (function(){ const _pf=proFor; proFor=function(id){ const base=_pf(id); const m=CRIME.find(x=>x.id===id); if(!m) return base; const mm=(typeof dynM==='function'&&S.st)?dynM(S.st,m):m;
   const here=AP[m.from]?`${AP[m.from].n}`:''; const brief=(mm.brief||[]).map(t=>[here, null, t]); return (base||[]).concat(brief); }; })();
-const _tsHero = chapterHero;
-chapterHero = function(job){ const h=_tsHero(job); return (job && CRIME_IDS.has(job.story)) ? h.replace(/<div class="ch-brief">[\s\S]*?<\/div>\s*(?=<div class="ch-feature">)/, '') : h; };
 
 /* ===================== TESTING: skip any flight with a perfect grade ===================== */
 function testSkip(){ const st=S.st, a=st&&st.active; if(!a) return; const job=a.job; a.started=a.started||Date.now();
@@ -6595,8 +6298,6 @@ function testSkip(){ const st=S.st, a=st&&st.active; if(!a) return; const job=a.
   S.debrief=false; S.showResult=true; S.busy.journalDone=false; save(); go('flight'); window.scrollTo(0,0); }
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="test-skip"]')) testSkip(); });
 const SKIP_BTN = `<button class="btn sm test-skip" data-act="test-skip" title="Testing only: finishes this flight as a perfect A">Skip flight (test) · 100% A</button>`;
-const _tsFlight = flightView;
-flightView = function(){ const h=_tsFlight(); const a=S.st&&S.st.active; if(!a || S.showResult || S.debrief) return h; return h.replace(/(<main[^>]*>)/, `$1<div class="test-skip-bar">${SKIP_BTN}<span class="tiny muted">Testing shortcut</span></div>`); };
 (function(){ const s=document.createElement('style'); s.textContent=`.test-skip-bar{display:flex;gap:10px;align-items:center;justify-content:flex-end;margin:0 0 10px}.test-skip{border:1px dashed #c8962a;color:#c8962a;background:transparent}`; document.head.appendChild(s); })();
 /* ===================== EVERYTHING IS A CUTSCENE: one engine for prologues, aftermaths, choices and endings ===================== */
 /* shot types:
@@ -6679,25 +6380,6 @@ window.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cancel-ye
   else txn(st, p.fee, 'Licenses & training', `Refund: ${R.n} checkride (cancelled)`);
   j.paid=null; setTimeout(()=>toast(`Checkride cancelled. ${p.how==='bond'?'Your training bond was cancelled.':`${money(p.fee)} refunded.`}`), 300); }, true);
 /* ===================== FLIGHT SCREEN, REORGANIZED: ticket first, then three plain steps ===================== */
-const _flLay = flightView;
-flightView = function(){ const h=_flLay(); const a=S.st&&S.st.active; if(!a || a.started || S.showResult || S.debrief) return h; const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h;
-  const job=a.job; const to=job.local?job.from:job.to; const toN=AP[to]?AP[to].n:to, fromN=AP[job.from]?AP[job.from].n:job.from;
-  const skip=main.querySelector(':scope > .test-skip-bar'); const hero=main.querySelector(':scope > .chapter-hero'); const pass=main.querySelector(':scope > .pass'); const setup=main.querySelector(':scope > #preflight, :scope > .preflight');
-  const brief=[...main.querySelectorAll(':scope > section')].find(s=>/^Briefing/.test(headText(s)));
-  const more=[...main.querySelectorAll(':scope > .flight-more, :scope > details')];
-  /* how it works, in three steps */
-  const how=document.createElement('section'); how.className='fl-how';
-  how.innerHTML=`<div class="fl-step"><span>1</span><div><b>Set up MSFS</b><p>Load the ${esc(AC[job.ac]?AC[job.ac].n:job.ac)} at <b>${esc(job.from)}</b> using the setup below: parking spot, fuel, time and weather.</p></div></div>
-    <div class="fl-step"><span>2</span><div><b>Fly ${esc(job.from)} → ${esc(to)}</b><p>${job.local?`Take off from ${esc(fromN)}, fly the circuit or tour, and come back.`:`Take off from ${esc(fromN)} and fly to ${esc(toN)}.`} The app tracks you once the engine is running, or press <b>Start flight</b>.</p></div></div>
-    <div class="fl-step"><span>3</span><div><b>Land at ${esc(to)}</b><p>Land and slow to taxi speed. The flight finishes and is graded automatically.</p></div></div>`;
-  /* checkride tasks: visible, not hidden in a drawer */
-  let tasks=null; if(job.kind==='check' && job.tasks && job.tasks.length){ tasks=document.createElement('section'); tasks.className='panel fl-tasks'; tasks.innerHTML=`<p class="label">What the examiner is grading</p><ul class="tight">${job.tasks.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`; more.forEach(d=>{ if(/Checkride tasks/.test(headText(d)||d.textContent.slice(0,40))) d.remove(); }); }
-  /* order: (test bar) · chapter hero · ticket · how it works · checkride tasks · setup · briefing (folded) · details */
-  const order=[skip, hero, pass, how, tasks, setup].filter(Boolean);
-  order.slice().reverse().forEach(n=>main.prepend(n));
-  if(setup){ const lab=setup.querySelector('.label'); if(lab) lab.textContent='Step 1 · set up MSFS'; }
-  if(brief){ brief.remove(); if(job.kind!=='story'){ const d=wrapDetails([brief], job.kind==='check'?'About this checkride':'Client briefing'); if(d) (setup?setup.after(d):main.appendChild(d)); } }
-  return t.innerHTML; };
 (function(){ const s=document.createElement('style'); s.textContent=`
 .fl-how{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}
 .fl-step{display:grid;grid-template-columns:30px 1fr;gap:10px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
@@ -6711,8 +6393,6 @@ const ILS_FIELDS = [ // [airport, runway, ILS, RNAV]
   ['TJSJ','10','ILS RWY 10','RNAV (GPS) RWY 10'], ['TISX','10','ILS RWY 10','RNAV (GPS) RWY 10'], ['TBPB','09','ILS RWY 09','RNAV (GNSS) RWY 09'],
   ['TFFR','12','ILS RWY 12','RNAV (GNSS) RWY 12'], ['MDPC','09','ILS RWY 09','RNAV (GNSS) RWY 09'], ['TAPA','07','ILS RWY 07','RNAV (GNSS) RWY 07'] ];
 /* the runway card shows the ILS runway for this checkride */
-const _atpPf = preflightHTML;
-preflightHTML = function(job){ let h=_atpPf(job); if(job && job.kind==='check' && job.rating==='ATP' && job.ilsRwy){ h=h.replace(/(<small>Land<\/small><b[^>]*>)\s*[0-9]{2}[LRC]?\s*(<\/b>)/i, `$1${job.ilsRwy}$2`); h=h.replace(/(class="su-tile[^"]*"[^>]*>[\s\S]*?Runways[\s\S]*?)(<\/div>\s*<\/div>)/, `$1<p class="small" style="margin-top:6px"><b>Approach: ILS ${job.ilsRwy}</b>, RNAV ${job.ilsRwy} as backup</p>$2`); } return h; };
 /* ===================== REWORK: a calm story card and a clean Side jobs page ===================== */
 
 /* ---- the next-chapter action, in plain words ---- */
@@ -6998,13 +6678,6 @@ const NAV5 = [
 function navGroup(v){ return NAV5.find(g=>g.v===v || (g.tabs||[]).some(t=>t[0]===v)) || NAV5.find(g=>g.v==='pilot' && ['profile','log','company','cockpit'].includes(v)) || null; }
 
 /* ---- 3. flight mode: once you're flying, the flight takes over the screen ---- */
-function hudHTML(a){ const s=S.sim||{}; const live=S.simState==='live'&&s.position; const job=a.job; const to=job.local?job.from:job.to; const dest=AP[to];
-  const togo=live?distNm({lat:s.position.lat,lon:s.position.lon},dest):null; const gs=live&&s.motion?Math.round(s.motion.gs||0):null; const eta=togo!=null&&gs>40?Math.round(togo/gs*60):null;
-  const fuel=live&&s.systems&&s.systems.fuelLb!=null?Math.round(s.systems.fuelLb):null; const alt=live?Math.round((s.position.altFt||0)/10)*10:null;
-  const cell=(k,v,u)=>`<div class="hud-c"><span>${k}</span><b>${v==null?'—':v}${v==null?'':`<small>${u||''}</small>`}</b></div>`;
-  return `<section class="fhud"><div class="fhud-route"><b>${esc(job.from)}</b><i></i><b>${esc(to)}</b><span>${esc(job.title)}</span></div><div class="fhud-cells">${cell('To go',togo!=null?Math.round(togo):null,' nm')}${cell('ETA',eta,' min')}${cell('Ground speed',gs,' kt')}${cell('Altitude',alt!=null?alt.toLocaleString():null,' ft')}${cell('Fuel',fuel!=null?fuel.toLocaleString():null,' lb')}</div>${live?'':'<p class="small muted" style="margin:8px 0 0">MSFS isn\'t connected, so live numbers are off. The flight still finishes with the Finish button.</p>'}</section>`; }
-const _u10If = inflightView;
-inflightView = function(){ const h=_u10If(); const a=S.st&&S.st.active; if(!a) return h; return h.replace(/(<main[^>]*>)/, `$1<div class="fm-bar"><span class="fm-dot"></span> Flight mode <button class="btn sm ghost" data-act="fm-menu">${S.fmMenu?'Hide menu':'Show menu'}</button></div>${hudHTML(a)}`); };
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="fm-menu"]')) return; S.fmMenu=!S.fmMenu; S.keepScroll=true; render(); });
 
 /* ---- 4. command bar: Ctrl+K (or /) to jump anywhere ---- */
@@ -7106,14 +6779,6 @@ body.flying #app > .side,body.flying .topbar .hud .now-pill{display:none}body.fl
 
 /* ---- 1. flight HUD v2: heading to the destination, runway and wind on approach, and the chapter goal ---- */
 function brg(a,b){ const r=Math.PI/180, y=Math.sin((b.lon-a.lon)*r)*Math.cos(b.lat*r), x=Math.cos(a.lat*r)*Math.sin(b.lat*r)-Math.sin(a.lat*r)*Math.cos(b.lat*r)*Math.cos((b.lon-a.lon)*r); return (Math.atan2(y,x)/r+360)%360; }
-const _m1Hud = hudHTML;
-hudHTML = function(a){ let h=_m1Hud(a); try{ const s=S.sim||{}; const job=a.job; const to=job.local?job.from:job.to; const dest=AP[to]; const live=S.simState==='live'&&s.position;
-  const extra=[]; if(live){ const b=Math.round(brg({lat:s.position.lat,lon:s.position.lon},dest)); const hdg=s.motion&&s.motion.hdg!=null?Math.round(s.motion.hdg):null; const off=hdg!=null?((b-hdg+540)%360)-180:0;
-    extra.push(`<div class="hud-c hud-brg"><span>Course to ${esc(to)}</span><b>${pad3(b)}°</b><i style="transform:rotate(${off}deg)">↑</i></div>`);
-    const togo=distNm({lat:s.position.lat,lon:s.position.lon},dest); if(togo<20 && !dest.water){ const w=s.ext&&s.ext.weather; const wx=w?Object.assign({},job.wx,{dir:w.windDir,spd:w.windKt,gust:0}):job.wx; let r=null; try{ r=rwyAnalysis(to,wx,job.ac); }catch(_){} if(r&&!r.water) extra.push(`<div class="hud-c hud-rw"><span>Land runway</span><b>${esc(r.rw)}</b><small>${pad3(wx.dir)}°/${wx.spd} kt</small></div>`); } }
-  const goal = job.kind==='story' && typeof CH_GOAL!=='undefined' && CH_GOAL[job.story] ? `<p class="hud-goal"><span>Goal</span> ${esc(CH_GOAL[job.story][0])}</p>` : job.kind==='check' ? `<p class="hud-goal"><span>Checkride</span> ${esc((job.tasks||[]).join(' · '))}</p>` : job.network ? `<p class="hud-goal"><span>Network run</span> ${job.lowLevel?'Stay under 1,000 ft for the bonus. ':''}${job.drop?'Night drop at a closed strip. ':''}Heat +5 when you land.</p>` : '';
-  if(extra.length) h=h.replace('<div class="fhud-cells">','<div class="fhud-cells">'+extra.join(''));
-  if(goal) h=h.replace('</section>', goal+'</section>'); }catch(_){} return h; };
 
 
 /* ---- 3. story achievements ---- */
@@ -7388,8 +7053,6 @@ Object.keys(SCENES).forEach(k=>{ const f=SCENES[k]; SCENES[k]=()=>ART.scenes[k] 
 
 /* 1. the ticket names the right operator as the story moves on */
 function carrierFor(st, job){ const c=crime(st); if(job.network) return 'Unlisted charter'; if(job.kind==='story' && CRIME_IDS.has(job.story)){ if(st.story.done.CR15 || job.story==='CR15') return 'Caribe Cargo'; if(c.on || ['CR5','CR6','CR7','CR8','CR9','CR10'].includes(job.story)) return 'Castillo Logistics'; } if(job.kind==='check') return 'Flight examination'; return null; }
-const _fxPass = boardingPass;
-boardingPass = function(st, job){ let h=_fxPass.apply(this, arguments); const n=carrierFor(st, job); if(n) h=h.replace(/(<span class="carrier">[\s\S]*?<b>)Coral Wing Air(<\/b>)/, `$1${n}$2`); return h; };
 
 
 /* 3. "Previously on" only when you've been away for a while (3+ hours) */
@@ -7522,12 +7185,6 @@ document.addEventListener('input', e=>{ if(!e.target.closest('.cmd-box input')) 
 
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cold-again"]')) return; const st=S.st; const f=st.flights, d=st.story.done.CW1; st.flights=0; delete st.story.done.CW1; const shots=coldOpenShots(); st.flights=f; if(d) st.story.done.CW1=d; cutscene({shots, col:'#c8962a', art:SCENES.ramp(), onEnd:()=>{}}); });
 
-/* 8 + 9. flight display: time in the air, and how far along the route you are */
-(function(){ const _h=hudHTML; hudHTML=function(a){ let h=_h(a); try{ const s=S.sim||{}; const rec=s.recorder; const job=a.job; const from=AP[job.from], to=AP[job.local?job.from:job.to]; const tot=Math.max(1,distNm(from,to)); const live=S.simState==='live'&&s.position;
-    const togo=live?distNm({lat:s.position.lat,lon:s.position.lon},to):tot; const pct=job.local?null:Math.max(0,Math.min(100,Math.round((1-togo/tot)*100)));
-    const air=rec&&rec.takeoff?Math.round((Date.now()-rec.takeoff.t)/60000):null;
-    h=h.replace('<div class="fhud-cells">', `${pct!=null?`<div class="fhud-prog"><i style="width:${pct}%"></i><span>${pct}%</span></div>`:''}<div class="fhud-cells">`);
-    if(air!=null) h=h.replace('<div class="fhud-cells">', `<div class="fhud-cells"><div class="hud-c"><span>In the air</span><b>${air}<small> min</small></b></div>`); }catch(_){} return h; }; })();
 
 /* 10. notifications: a Clear button */
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="bell"]'); if(!b) return; setTimeout(()=>{ const p=document.querySelector('.notif-pane'); if(p && S.notifs.length && !p.querySelector('.np-clear')){ const c=document.createElement('button'); c.className='btn sm ghost np-clear'; c.textContent='Clear'; c.onclick=()=>{ S.notifs=[]; S.notifSeen=0; p.remove(); }; p.querySelector('.label').after(c); } }, 0); });
@@ -7648,8 +7305,6 @@ window.addEventListener('keydown', e=>{ if(e.key!=='Escape') return; const w=doc
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="launder"]'); if(!b||!S.st) return; const o=launderOpts(S.st).find(x=>x.id===b.dataset.v); if(o&&o.heat) setTimeout(()=>toast(`Heat +${o.heat} from laundering.`), 700); });
 
 
-/* 39. cancelling a story chapter takes you back to the Story page, and says you can replay it */
-(function(){ const _fv=flightView; flightView=function(){ const h=_fv(); const a=S.st&&S.st.active; return a && a.job.kind==='story' ? h.replace(/>Cancel job</, '>Cancel chapter (play it again any time)<') : h; }; })();
 window.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cancel-yes"]')||!S.st||!S.st.active) return; if(S.st.active.job.kind==='story') setTimeout(()=>{ if(!S.st.active){ go('story'); } }, 50); }, true);
 
 /* 40. the result screen starts at the top after the scene */
@@ -8717,6 +8372,273 @@ function resultView(){
       </div></div>
       <div class="calm-more-in">${cardSection()}</div>
     </div></details></main>`;
+}
+/* ===================== FLIGHT PAGE =====================
+   flightView() shows one of five things:
+     1. the result of the flight you just finished      -> resultView()   (page-result.js)
+     2. "No flight booked"
+     3. the manual debrief form (no MSFS connection)     -> debriefView()
+     4. flight mode, once the flight has started         -> inflightView()
+     5. the pre-flight page: the ticket, three steps, the MSFS setup, then the details
+   While flying you can open the briefing again (S.ifBrief); that shows the full briefing layout. */
+
+/* ---------- pieces ---------- */
+
+/* The flight display at the top of flight mode: route, progress, live numbers, and the goal. */
+function hudHTML(a){
+  const s=S.sim||{}; const live=S.simState==='live'&&s.position; const job=a.job; const to=job.local?job.from:job.to; const dest=AP[to];
+  const togo=live?distNm({lat:s.position.lat,lon:s.position.lon},dest):null; const gs=live&&s.motion?Math.round(s.motion.gs||0):null; const eta=togo!=null&&gs>40?Math.round(togo/gs*60):null;
+  const fuel=live&&s.systems&&s.systems.fuelLb!=null?Math.round(s.systems.fuelLb):null; const alt=live?Math.round((s.position.altFt||0)/10)*10:null;
+  const cell=(k,v,u)=>`<div class="hud-c"><span>${k}</span><b>${v==null?'—':v}${v==null?'':`<small>${u||''}</small>`}</b></div>`;
+  let prog='', airCell='', extra='', goal='';
+  try{ /* how far along the route, and minutes since takeoff */
+    const tot=Math.max(1,distNm(AP[job.from],dest)); const left=live?togo:tot; const pct=job.local?null:Math.max(0,Math.min(100,Math.round((1-left/tot)*100)));
+    const rec=s.recorder; const air=rec&&rec.takeoff?Math.round((Date.now()-rec.takeoff.t)/60000):null;
+    if(pct!=null) prog=`<div class="fhud-prog"><i style="width:${pct}%"></i><span>${pct}%</span></div>`;
+    if(air!=null) airCell=`<div class="hud-c"><span>In the air</span><b>${air}<small> min</small></b></div>`; }catch(_){}
+  try{ /* course to the destination, the landing runway when close, and what this flight is for */
+    const cells=[]; if(live){ const b=Math.round(brg({lat:s.position.lat,lon:s.position.lon},dest)); const hdg=s.motion&&s.motion.hdg!=null?Math.round(s.motion.hdg):null; const off=hdg!=null?((b-hdg+540)%360)-180:0;
+      cells.push(`<div class="hud-c hud-brg"><span>Course to ${esc(to)}</span><b>${pad3(b)}°</b><i style="transform:rotate(${off}deg)">↑</i></div>`);
+      if(togo<20 && !dest.water){ const w=s.ext&&s.ext.weather; const wx=w?Object.assign({},job.wx,{dir:w.windDir,spd:w.windKt,gust:0}):job.wx; let r=null; try{ r=rwyAnalysis(to,wx,job.ac); }catch(_){} if(r&&!r.water) cells.push(`<div class="hud-c hud-rw"><span>Land runway</span><b>${esc(r.rw)}</b><small>${pad3(wx.dir)}°/${wx.spd} kt</small></div>`); } }
+    const g = job.kind==='story' && typeof CH_GOAL!=='undefined' && CH_GOAL[job.story] ? `<p class="hud-goal"><span>Goal</span> ${esc(CH_GOAL[job.story][0])}</p>` : job.kind==='check' ? `<p class="hud-goal"><span>Checkride</span> ${esc((job.tasks||[]).join(' · '))}</p>` : job.network ? `<p class="hud-goal"><span>Network run</span> ${job.lowLevel?'Stay under 1,000 ft for the bonus. ':''}${job.drop?'Night drop at a closed strip. ':''}Heat +5 when you land.</p>` : '';
+    extra=cells.join(''); goal=g; }catch(_){}
+  return `<section class="fhud"><div class="fhud-route"><b>${esc(job.from)}</b><i></i><b>${esc(to)}</b><span>${esc(job.title)}</span></div>${prog}<div class="fhud-cells">${airCell}${extra}${cell('To go',togo!=null?Math.round(togo):null,' nm')}${cell('ETA',eta,' min')}${cell('Ground speed',gs,' kt')}${cell('Altitude',alt!=null?alt.toLocaleString():null,' ft')}${cell('Fuel',fuel!=null?fuel.toLocaleString():null,' lb')}</div>${live?'':'<p class="small muted" style="margin:8px 0 0">MSFS isn\'t connected, so live numbers are off. The flight still finishes with the Finish button.</p>'}${goal}</section>`;
+}
+
+/* The banner at the top of a story chapter's pre-flight page. `lead` is extra HTML placed first inside it. */
+function chapterHero(job, lead=''){
+  const m=STORY.find(x=>x.id===job.story); if(!m) return ''; const chs=STORY.filter(x=>x.arc===m.arc); const idx=chs.indexOf(m)+1;
+  const to=job.local?AP[job.from]:AP[job.to]; const d=job.local?(job.tourNm||40):Math.round(distNm(AP[job.from],AP[job.to]));
+  const feat = m.feature || (m.teach&&m.teach[0]) || '';
+  const art = typeof islandArt==='function' ? (()=>{ try{ return islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 300, job.ac); }catch(_){ return ''; } })() : '';
+  const g=CH_GOAL[job.story];
+  return `<section class="chapter-hero" style="--arc:${arcColor(m.arc)}">${lead}${art?`<div class="ch-art" aria-hidden="true">${art}</div>`:''}<div class="ch-in">
+    <div class="row between"><p class="ch-kicker">${esc(m.arc)} · Chapter ${idx} of ${chs.length}${m.side?' · side story':''}</p><div class="row ch-cast">${(m.chars||[]).filter(k=>CAST[k]).map(k=>avatar(k)).join('')}</div></div>
+    <h1>${esc(m.title)}</h1>${g?`<div class="ch-goal"><p class="ch-prev"><span>Previously</span> ${esc(g[1])}</p><p class="ch-obj"><span>Your goal</span> ${esc(g[0])}</p></div>`:''}
+    ${CRIME_IDS.has(job.story) ? '' : `<div class="ch-brief">${(job.paras||m.brief||[]).map(t=>`<p>${esc(t)}</p>`).join('')}</div>`}
+    <div class="ch-feature"><div><span class="label">Featured flight</span><b class="mono">${esc(job.from)} → ${esc(job.local?job.from:job.to)}</b><span class="small">${esc(to.n)}, ${esc(to.isl)} · ${d.toLocaleString()} nm</span></div>${feat?`<p class="small">${esc(feat)}</p>`:''}</div>
+  </div></section>`;
+}
+
+/* The ticket: who you're flying for, the route, and the Start / Finish / Cancel buttons. */
+function boardingPass(st, job, p, a, started, mins, ai){
+  const from=AP[job.from], to=AP[job.to];
+  const base = job.lend ? (job.ac==='CJ4'?'Starling II · Private':'Starling · Private') : job.company ? st.company.name : job.airline ? 'Antilles Blue Airways' : 'Coral Wing Air';
+  const storyCarrier = carrierFor(st, job);   // the story changes who you fly for
+  const carrier = base==='Coral Wing Air' && storyCarrier ? storyCarrier : esc(base);
+  let startBtn = `<button class="btn action" data-act="start">Start flight</button>`;
+  if(diff()==='expert' && !started && !checklistDone(st.active)){ const [n,t]=checklistCount(st.active); startBtn=`<button class="btn action" data-act="nav" data-v="cockpit">Complete checklist (${n}/${t})</button><span class="chip warn">Expert: checklist required before engine start</span>`; }
+  return `<section class="pass"><div class="pass-art">${islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 170, job.ac)}</div>
+    <div class="pass-main">
+      <div class="row between"><span class="carrier">${LOGO}<b>${carrier}</b></span><span class="row">${chipsFor(st,job)}</span></div>
+      <p class="label" style="margin-top:12px">${esc(job.label)}${job.client?` · ${esc(job.client)}`:''}</p>
+      <h1 class="pass-title">${esc(ai?.headline || job.title)}</h1>
+      <div class="pass-route">
+        <div><div class="code">${esc(job.from)}</div><div class="city">${esc(from.isl)}</div></div>
+        ${passPlane()}
+        <div style="text-align:right"><div class="code">${job.local?'↺':esc(job.to)}</div><div class="city">${job.local?'Local flight':esc(to.isl)}</div></div>
+      </div>
+      <div class="pass-fields">
+        <div><span>Flight</span><b class="mono">${esc(flightNo(job))}</b></div>
+        <div><span>Departs</span><b class="mono">${hhmm(job.dep)}</b></div>
+        <div><span>Block</span><b class="mono">${durTxt(p.est)}</b></div>
+        <div><span>Aircraft</span><b>${esc(a.n.replace(/^(Cessna|Beechcraft|Diamond|CubCrafters|Zlin|ICON|de Havilland Canada|Grumman|Pilatus|Daher|Douglas|Cirrus|Airbus|Boeing|Heart Aerospace)\s/,''))}</b></div>
+        <div><span>Distance</span><b class="mono">${p.dist} nm</b></div>
+        <div><span>Pay</span><b class="mono">${job.kind==='check'?'—':money(job.pay)}</b></div>
+      </div>
+      <div class="row" style="margin-top:14px">
+        ${started ? `<span class="chip good">Block timer running: ${durTxt(mins)}</span>` : startBtn}
+        ${started ? `<button class="btn primary" data-act="debrief">${S.simState==='live'?'Finish flight':'Log the landing'}</button>` : ''}
+        <button class="btn" data-act="nav" data-v="cockpit">Open cockpit checklist</button>
+        ${S.confirm==='cancel' ? `<span class="small">Cancel this job? ${job.kind==='story'||job.kind==='check'?'You can pick it up again later.':'The client will remember.'}</span><button class="btn danger sm" data-act="cancel-yes">Yes, cancel</button><button class="btn sm" data-act="confirm-no">Keep it</button>` : `<button class="btn ghost" data-act="cancel">${job.kind==='story'?'Cancel chapter (play it again any time)':'Cancel job'}</button>`}
+      </div>
+      ${planLinks(job)}
+    </div>
+    <div class="pass-stub" aria-hidden="true">
+      <span class="label">Pilot in command</span><b>${esc(st.pilot.name)}</b>
+      <span class="label">Seat</span><b>Left</b>
+      <span class="label">Date</span><b class="mono">${dateTxt(st.day)}</b>
+      <div class="barcode"></div>
+    </div>
+  </section>`;
+}
+
+/* "Set up MSFS for this flight": five numbered tiles and a row of quick checks. Redrawn on every sim tick. */
+function preflightHTML(job){
+  const act=S.st&&S.st.active; const s=S.sim; const started=act&&act.started; const live=S.simState==='live';
+  const moving = live && s && s.motion && (!s.motion.onGround || s.motion.gs>2);
+  if(started && moving) return `<div class="row between"><div><p class="label">Flight setup</p><h3>Done. You're on your way.</h3></div></div><p class="small muted">Fuel and weights are locked once you're moving.</p>`;
+  const C = preflightChecks(job); const get=k=>C.find(c=>c.k===k); const p=plan(job); const R=runwayPlan(job); const wx=job.wx;
+  const fuelGal=Math.ceil(Math.max(p.gal*1.3, p.gal+5)), payload=Math.max(0,p.payload-170); const fuel=get('fuel'), time=get('time'), wxc=get('wx'); const park=suggestParking(job);
+  if(live) fetchParking(job.from);
+  const tile=(cls, icon, title, body, action)=>`<div class="su-tile ${cls}"><div class="su-ic" aria-hidden="true">${icon}</div><div class="su-b"><p class="label">${title}</p>${body}</div>${action?`<div class="su-a">${action}</div>`:''}</div>`;
+  /* the airline checkride lands on the ILS runway */
+  const ils = job.kind==='check' && job.rating==='ATP' && job.ilsRwy ? job.ilsRwy : null;
+  const landRw = R.arr ? (R.arr.water ? 'water' : (ils && /^\s*[0-9]{2}[LRC]?\s*$/i.test(R.arr.rw) ? ils : esc(R.arr.rw))) : '';
+  const rwBig = R.dep && !R.dep.water ? `<div class="su-rw"><span><small>Take off</small><b class="mono">${esc(R.dep.rw)}</b></span>${R.arr?`<i>→</i><span><small>Land</small><b class="mono">${landRw}</b></span>`:''}</div>` : `<div class="su-rw"><span><b>Into the wind</b></span></div>`;
+  const tiles = [
+    tile('', '🅿','1. Spawn here', `<b>${esc(park.spot?park.spot.name:'GA ramp')}</b><p class="tiny">${esc(park.text)}</p>`, park.spot && live && S.sim.position && distNm({lat:S.sim.position.lat,lon:S.sim.position.lon},AP[job.from])<3 && S.sim.motion && S.sim.motion.gs<1 ? `<button class="btn" data-act="park-move">Move me there</button>`:''),
+    tile(fuel&&fuel.ok?'ok':'todo','⛽','2. Fuel &amp; weight', `<b>${fuelGal} gal · ${payload} lb</b><p class="tiny">${fuel?esc(fuel.t):'Plan '+p.gal+' gal plus reserve'}</p>`, live?`<button class="btn primary" data-act="pf-load" ${S.loading?'disabled':''}>${S.loading?'Loading…':'Load into MSFS'}</button>`:`<span class="tiny muted">Set in the MSFS fuel &amp; payload menu</span>`),
+    tile(time? (time.ok?'ok':'todo') : '', '🕙','3. Time of day', `<b>${hhmm(job.dep)} local</b><p class="tiny">${time?esc(time.t):'Set this time in MSFS before you load in.'}</p>`, time&&!time.ok&&time.act?`<button class="btn primary" data-act="${time.act}">${esc(time.actLabel)}</button>`:''),
+    tile('rw','🛫','4. Runways', `${rwBig}<p class="tiny">Wind ${pad3(wx.dir)}° at ${wx.spd}${wx.gust?'G'+wx.gust:''} kt · ${esc(windTxt(R.dep))}${R.dep&&R.dep.over?' · <b class="bad-t">over this aircraft\'s crosswind limit</b>':''}</p>${ils?`<p class="small" style="margin-top:6px"><b>Approach: ILS ${ils}</b>, RNAV ${ils} as backup</p>`:''}`, ''),
+    tile(wxc&&wxc.ok?'ok':'', '☁','5. Weather', `<b>${esc(wx.n)}</b><p class="tiny">${wxc?esc(wxc.ok?wxc.t:'MSFS can\'t be changed by add-ons. Use Live weather in MSFS and the briefing matches it.'):'Generated for this flight.'}</p>`, wxc&&wxc.act?`<button class="btn" data-act="${wxc.act}">${esc(wxc.actLabel)}</button>`:'')
+  ].join('');
+  const chipTxt=c=>`${c.ok?'✓':'!'} ${c.t}`;
+  const small = C.filter(c=>['sim','pos','ac','park'].includes(c.k)).filter(c=>!(started && /nm from|Moving|Parked|At [A-Z]{4}/.test(chipTxt(c)))).map(c=>`<span class="su-chip ${c.ok?'ok':'no'}" title="${esc(c.d||'')}">${c.ok?'✓':'!'} ${esc(c.t)}</span>`).join('');
+  /* MSFS has a different aircraft loaded that can fly this job: offer to switch */
+  let switchAc='';
+  try{ if(act && !started && live){ const L=loadedAircraft(); if(L.id && L.id!==job.ac && canFly(S.st, L.id) && refitJob(S.st, JSON.parse(JSON.stringify(job)), L.id))
+      switchAc=`<div class="notice switch-ac"><b>MSFS has the ${esc(AC[L.id].n)} loaded.</b> <button class="btn sm primary" data-act="use-loaded">Fly this job in it instead</button></div>`; } }catch(_){}
+  return `<div class="row between"><div><p class="label">${started?'Before takeoff':'Step 1 · set up MSFS'}</p><h3>Set up MSFS for this flight</h3></div><div class="row"><button class="btn sm ghost" data-act="pf-pln">Flight plan (.pln)</button><button class="btn sm ghost" data-act="pf-recheck">Check again</button></div></div>
+    ${switchAc}<div class="su-chips">${small}</div><div class="su-grid">${tiles}</div>`;
+}
+
+/* ---------- flight mode ---------- */
+
+function inflightView(){
+  const st=S.st, a=st.active, job=a.job, ac=AC[job.ac];
+  const mins = Math.round((Date.now()-a.started)/60000);
+  const rec=S.sim&&S.sim.recorder; const airborne = S.simState==='live' && ((S.sim.motion&&!S.sim.motion.onGround) || (rec && rec.takeoff && simRecFor(a)));
+  let runways=''; try{ const R=runwayPlan(job); if(R.dep) runways=`<p class="if-rw">Take off <b class="mono">${esc(R.dep.water?'into wind':R.dep.rw)}</b>${R.arr?` · Land <b class="mono">${esc(R.arr.water?'into wind':R.arr.rw)}</b>`:''} · wind ${pad3(job.wx.dir)}°/${job.wx.spd} kt</p>`; }catch(_){}
+  const orders = job.scen && a.opened && a.scenPlan ? ordersHTML(a,!!S.ordersPop) : job.scen ? `<div class="notice small">📩 Sealed orders aboard. They open automatically ${TRIG_LABEL[SCEN_TRIGGER[job.scen]||'mid']}.</div>` : '';
+  return `<main class="wrap stack fade inflight"><div class="test-skip-bar">${SKIP_BTN}<span class="tiny muted">Testing shortcut</span></div><div class="fm-bar"><span class="fm-dot"></span> Flight mode <button class="btn sm ghost" data-act="fm-menu">${S.fmMenu?'Hide menu':'Show menu'}</button></div>${hudHTML(a)}${guideActive()?guideHTML(a):''}
+    <section class="if-head">
+      <div style="min-width:0"><p class="label">In flight · ${esc(flightNo(job))} · ${esc(ac.n)}</p>${runways}<h1>${esc(job.title)}</h1></div>
+      ${NOTE_BTN}<div class="row"><span class="if-timer mono" id="if-timer" data-start="${a.started}">${durTxt(mins)}</span>
+        <button class="btn sm ghost" data-act="big-open">⛶ Big display</button><button class="btn sm ghost" data-act="if-brief">Briefing</button><button class="btn sm ghost" data-act="nav" data-v="cockpit">Full checklist</button>
+        <button class="btn action" data-act="debrief">${S.simState==='live'?'Finish flight':'Log the landing'}</button></div>
+    </section>${approachCard(a)||''}${airborne?'':`<section class="panel stack preflight fsetup" id="preflight" data-x="1">${preflightHTML(job)}</section>`}
+    <div class="callout-host" aria-live="assertive">${typeof calloutHTML==='function'?calloutHTML():''}</div>
+    ${orders}<section class="panel stack if-live" id="if-live">${ifLiveHTML()}</section>
+    <div class="if-grid">
+      <div class="stack"><section class="panel if-mapwrap" id="if-map">${ifMiniMap(a)}</section><section class="panel stack">${ifChecklistHTML(a)}</section></div>
+      <div class="stack">${typeof cabinBlock==='function'?cabinBlock():''}
+        ${job.manifest?manifestHTML(job):''}<section class="panel stack small"><h3>Quick reference</h3><dl class="kv"><dt>Speeds</dt><dd class="mono">${esc(ac.v)}</dd><dt>Departure</dt><dd>${esc(job.from)} runway ${esc(rwyAnalysis(job.from,job.wx,job.ac).rw)}</dd>${job.local?'':`<dt>Arrival</dt><dd>${esc(job.to)} runway ${esc(rwyAnalysis(job.to,job.wx,job.ac).rw)}</dd>`}<dt>Wind</dt><dd class="mono">${pad3(job.wx.dir)}° / ${job.wx.spd}${job.wx.gust?'G'+job.wx.gust:''} kt</dd><dt>Load</dt><dd>${job.pax?job.pax+' pax':''}${job.pax&&job.cargo?' + ':''}${job.cargo?job.cargo+' lb':''}</dd></dl>
+        ${job.scen?`<button class="btn sm" data-act="if-brief">Sealed orders: open in the briefing</button>`:''}<button class="btn sm ghost danger" data-act="cancel">Cancel flight</button></section>
+      </div>
+    </div>
+  </main>`;
+}
+
+/* ---------- the briefing ---------- */
+
+function briefingSection(job){ const ai=job.ai;
+  return `<section class="panel stack">
+        <div class="row between"><h2>Briefing</h2>${S.sample && !S.sampleOff ? `<button class="btn sm" data-act="ai-brief" ${S.busy.brief?'disabled':''}>${S.busy.brief?'Writing…':ai?'Rewrite with Claude':'Write the full story with Claude'}</button>`:''}</div>
+        <div class="brief ${ai?'ai':''}">${(ai?ai.paragraphs:job.paras).map(t=>`<p>${esc(t)}</p>`).join('')}</div>
+        ${ai?.passenger_note?`<p class="small"><b>What matters to them:</b> ${esc(ai.passenger_note)}</p>`:''}
+        ${S.busy.briefErr?`<p class="small" style="color:var(--bad)">${esc(S.busy.briefErr)}</p>`:''}
+      </section>`; }
+
+/* Sealed orders in the briefing: closed until they open on their own, then the orders themselves. */
+function sealedOrdersSection(act){ const job=act.job; const sc = job.scen ? SCEN[job.scen] : null; if(!sc) return '';
+  if(!act.opened) return `<section class="sealed"><p class="label">Sealed orders</p><h3 style="margin:4px 0 6px">They'll open on their own</h3><p class="small">Something will happen on this flight ${TRIG_LABEL[SCEN_TRIGGER[job.scen]||'mid']}. The orders pop up automatically, and you'll be graded on how you handle it.</p></section>`;
+  return act.scenPlan ? ordersHTML(act,false) : `<section class="opened"><p class="label">Sealed orders, opened</p><h3 style="margin:4px 0 6px">${esc(sc.n)}</h3><p>${esc(sc.text)}</p><p class="small" style="margin-top:8px"><b>In the sim:</b> ${esc(sc.sim)}</p></section>`; }
+
+/* The two-column briefing: conditions, load and fuel on the left; live sim, route, aircraft and destination on the right. */
+function briefingGrid(st, job, p, withBriefing){
+  const a=AC[job.ac]; const from=AP[job.from], to=AP[job.to];
+  const rwDep = rwyAnalysis(job.from, job.wx, job.ac), rwArr = rwyAnalysis(job.to, job.wx, job.ac);
+  const teach = [...(job.teachStory||[]), ...autoTeach(st, job, p)];
+  const loadRows = [
+    ['Passengers', job.pax ? `${job.pax} × ${a.cls==='airliner'||a.cls==='widebody'?185:190} lb = ${p.paxLb.toLocaleString()} lb` : '—'],
+    ['Bags', p.bagLb ? `${p.bagLb.toLocaleString()} lb` : '—'],
+    ['Cargo', job.cargo ? `${job.cargo.toLocaleString()} lb${job.cargoLabel?` (${esc(job.cargoLabel)})`:''}` : '—'],
+    ['Pilot', `170 lb`],
+    ['Payload', `${p.payload.toLocaleString()} lb`],
+  ];
+  const fuelRows = a.fuel==='elec' ? [['Energy', `Battery-electric with hybrid reserve. Leave with at least 20% battery for reserve.`]] : [
+    ['Trip', `${p.tripLb.toLocaleString()} lb`],['Contingency 10%', `${p.contLb.toLocaleString()} lb`],[`Reserve (${p.reserveMin} min)`, `${p.resLb.toLocaleString()} lb`],
+    ...(p.altLb?[[`Alternate ${p.altCode} (${p.altNm} nm)`, `${p.altLb.toLocaleString()} lb`]]:[]),['Taxi', `${Math.round(a.burn*0.08).toLocaleString()} lb`],
+    ['Minimum fuel', `<b>${p.fuelLb.toLocaleString()} lb</b> (${p.gal.toLocaleString()} US gal ${a.fuel==='avgas'?'avgas':'Jet-A'})${['airliner','widebody'].includes(a.cls)?` · ${Math.round(p.fuelLb/2.2046).toLocaleString()} kg`:''}`]];
+  return `<div class="grid-2">
+     <div class="stack">
+      ${withBriefing?briefingSection(job):''}
+      ${job.kind==='check' ? `<section class="panel"><h2>Checkride tasks</h2><p class="small muted" style="margin-top:4px">Fly every task. You'll tick off the ones you completed in the debrief.</p><ul class="tight">${job.tasks.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></section>`:''}
+      ${job.bonus?`<section class="notice"><b>Bonus objective (+${money(job.bonus.amt)}):</b> ${esc(job.bonus.text)}${job.bonus.auto==='fpm'?' <span class="muted small">(checked from your landing)</span>':job.bonus.auto==='block'?' <span class="muted small">(checked from your block time)</span>':''}</section>`:''}
+      ${job.festival?`<section class="notice"><b>${esc(job.festival)}</b> is on at the destination: busy ramp, crowded frequency, and 40% extra pay.</section>`:''}
+      ${job.stormName?`<section class="notice bad"><b>Hurricane ${esc(job.stormName)}</b> is affecting this route. Expect instrument conditions, strong gusts and heavy rain. Turning back is always an option.</section>`:''}
+      <section class="teach"><h3>What this flight teaches</h3><ul class="tight small">${teach.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></section>
+      ${sealedOrdersSection(st.active)}
+      ${surpriseFlightHTML(job)}
+      <section class="panel stack">
+        <h2>Conditions</h2>
+        <p><b>${esc(job.wx.n)}</b> <span class="chip ${job.wx.cat==='VFR'?'good':job.wx.cat==='MVFR'?'warn':'bad'}">${job.wx.cat}</span></p>
+        <p class="small muted">${esc(job.wx.desc)}</p>
+        <div><p class="label">Departure ${esc(job.from)}</p><div class="metar">${esc(metar(job.from, job.wx, st.day, job.dep))}</div></div>
+        ${job.local?'':`<div><p class="label">Destination ${esc(job.to)}</p><div class="metar">${esc(metar(job.to, job.wx, st.day, job.dep + p.est))}</div></div>`}
+        <dl class="kv">
+          <dt>Departure runway</dt><dd>${rwDep.water?'Water':esc(rwDep.rw)} · ${Math.round(rwDep.head)} kt head, ${Math.round(rwDep.xw)} kt cross</dd>
+          ${job.local?'':`<dt>Arrival runway</dt><dd>${rwArr.water?'Into the wind':esc(rwArr.rw)} · ${Math.round(rwArr.head)} kt head, ${Math.round(rwArr.xw)} kt cross ${rwArr.over?'<span class="chip bad">Over crosswind limit</span>':''}</dd>`}
+          ${from.water?'':`<dt>Density altitude</dt><dd>${densityAlt(from.el, job.wx.t, job.wx.qnh).toLocaleString()} ft at ${esc(job.from)}</dd>`}
+        </dl>
+      </section>
+      <section class="panel stack">
+        <h2>Load & fuel</h2>
+        <div class="cards" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr))">
+          <div><p class="label">Load sheet</p><dl class="kv" style="margin-top:6px">${loadRows.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('')}</dl></div>
+          <div><p class="label">Fuel plan</p><dl class="kv" style="margin-top:6px">${fuelRows.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('')}</dl></div>
+        </div>
+        <p class="small">Takeoff weight check: payload ${a.fuel==='elec'?'':'+ fuel '}= ${p.total.toLocaleString()} lb of ${p.useful.toLocaleString()} lb useful load. ${p.over>0?`<b style="color:var(--bad)">Over by ${p.over} lb.</b>`:`<span style="color:var(--good)">Within limits.</span>`}</p>
+      </section>
+     </div>
+     <aside class="stack">
+      ${cabinBlock()}<section class="panel stack" id="simpanel">${simPanelHTML()}</section>
+      <section class="panel stack">
+        <h3>Route</h3>
+        <dl class="kv">
+          <dt>Distance</dt><dd>${p.dist} nm${job.local?' (suggested loop)':''}</dd>
+          ${p.hdg!=null?`<dt>Course</dt><dd>${pad3(p.hdg)}° true</dd>`:''}
+          <dt>Planned time</dt><dd>${durTxt(p.est)} block</dd>
+          <dt>Alternate</dt><dd>${p.altCode?`${esc(p.altCode)}, ${esc(AP[p.altCode].isl)} (${p.altNm} nm)`:'—'}</dd>
+          <dt>Rules</dt><dd>${p.ifr?'IFR':'VFR'}${isNight(job.dep)?' · night':''}</dd>
+          <dt>Pay</dt><dd>${job.kind==='check'?'Checkride (no pay)':job.company?`${money(Math.round(job.pay*2.6))} revenue, ${money(a.op)}/h operating cost`:money(job.pay)+' (scaled by your grade)'}</dd>
+        </dl>
+      </section>
+      <section class="panel stack">
+        <div class="row between"><h3>${esc(a.n)}</h3>${!st.types[job.ac]?'<span class="chip new">New type</span>':`<span class="chip">${st.types[job.ac]} flight${st.types[job.ac]===1?'':'s'}</span>`}</div>
+        <p class="small">${esc(a.note)}</p>
+        <p class="small mono">${esc(a.v)}</p>
+        <p class="small muted">${a.pax} pax · ${a.cruise} kt · ${a.range.toLocaleString()} nm range · needs ${a.rwy.toLocaleString()} ft runway</p>
+      </section>
+      ${job.local?'':`<section class="panel stack"><h3>${esc(to.n)}</h3><p class="small muted">${esc(to.isl)} · ${esc(COUNTRY[to.c])}</p><p class="small">${esc(to.note)}</p>${to.rw?`<p class="small mono">${to.rw.map(r=>`${r[0]} · ${r[1].toLocaleString()} ft`).join(' / ')}</p>`:''}</section>`}
+     </aside>
+    </div>`;
+}
+
+/* ---------- the page ---------- */
+
+function flightView(){
+  const st=S.st; const act=st.active;
+  if(S.showResult && st.last) return resultView();
+  if(!act) return `<main class="wrap"><div class="empty fade"><h3>No flight booked</h3><p>Pick a job from the board to get your briefing.</p><p style="margin-top:14px"><button class="btn primary" data-act="nav" data-v="board">Go to the job board</button>${st.last?` <button class="btn" data-act="show-last">See last result</button>`:''}</p></div></main>`;
+  const job = act.job; const a=AC[job.ac]; const p=plan(job);
+  const started = act.started;
+  if(started && !S.debrief && !S.showResult && !S.ifBrief && !S.confirm) return inflightView();
+  if(S.debrief) return debriefView(job, p);
+  const mins = started ? Math.round((Date.now()-started)/60000) : 0;
+  const skipBar = `<div class="test-skip-bar">${SKIP_BTN}<span class="tiny muted">Testing shortcut</span></div>`;
+  const pass = boardingPass(st, job, p, a, started, mins, job.ai);
+  const guide = guideActive() ? guideHTML(act) : '';
+
+  /* flying, with the briefing open (or a confirm question showing): the full briefing */
+  if(started) return `<main class="wrap stack fade">${skipBar}${S.ifBrief?`<div style="margin-bottom:14px"><button class="btn sm primary" data-act="if-back">← Back to in-flight view</button></div>`:''}
+    ${pass}${guide}
+    ${briefingGrid(st, job, p, true)}</main>`;
+
+  /* before the flight */
+  const to=job.local?job.from:job.to; const toN=AP[to]?AP[to].n:to, fromN=AP[job.from]?AP[job.from].n:job.from;
+  const isStory = job.kind==='story', isCheck = job.kind==='check' && job.tasks && job.tasks.length;
+  const hero = isStory ? chapterHero(job, CRIME_IDS.has(job.story) && proFor(job.story) ? `<button class="btn sm ghost pro-replay" data-act="pro-replay">▶ Replay prologue</button>` : '') : '';
+  const how = `<section class="fl-how"><div class="fl-step"><span>1</span><div><b>Set up MSFS</b><p>Load the ${esc(AC[job.ac]?AC[job.ac].n:job.ac)} at <b>${esc(job.from)}</b> using the setup below: parking spot, fuel, time and weather.</p></div></div>
+    <div class="fl-step"><span>2</span><div><b>Fly ${esc(job.from)} → ${esc(to)}</b><p>${job.local?`Take off from ${esc(fromN)}, fly the circuit or tour, and come back.`:`Take off from ${esc(fromN)} and fly to ${esc(toN)}.`} The app tracks you once the engine is running, or press <b>Start flight</b>.</p></div></div>
+    <div class="fl-step"><span>3</span><div><b>Land at ${esc(to)}</b><p>Land and slow to taxi speed. The flight finishes and is graded automatically.</p></div></div></section>`;
+  const tasks = isCheck ? `<section class="panel fl-tasks"><p class="label">What the examiner is grading</p><ul class="tight">${job.tasks.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>` : '';
+  const setup = `<section class="panel stack preflight fsetup" id="preflight">${preflightHTML(job)}</section>`;
+  const briefing = isStory ? '' : `<details class="calm-more"><summary>${job.kind==='check'?'About this checkride':'Client briefing'}</summary><div class="calm-more-in">${briefingSection(job)}</div></details>`;
+  /* a checkride shows only the ticket, the tasks and the setup */
+  const details = isCheck ? '' : `<details class="calm-more flight-more"><summary>Flight details: conditions, weights, route, aircraft and passengers</summary><div class="calm-more-in">${job.manifest?manifestHTML(job):''}${briefingGrid(st, job, p, false)}</div></details>`;
+  return `<main class="wrap stack fade">${skipBar}${hero}${pass}${how}${tasks}${setup}${briefing}${guide}${details}</main>`;
 }
 /* ===================== RENDER =====================
    render() redraws the whole page from S (what's on screen) and S.st (the career).

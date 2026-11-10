@@ -24,13 +24,6 @@ document.addEventListener('click', e=>{ if(e.target.closest('[data-act="all-jobs
 const _cmGo = go; go = function(v){ if(v!=='board') S.allJobs=false; return _cmGo.apply(this, arguments); };
 
 /* ---- flight briefing: the essentials, then one "Flight details" drawer ---- */
-const _cmFlight = flightView;
-flightView = function(){ const h=_cmFlight(); const a=S.st&&S.st.active; if(!a || a.started || S.showResult || S.debrief) return h; const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h;
-  const grid=main.querySelector(':scope > .grid-2'); const moved=[];
-  if(grid){ const brief=[...grid.querySelectorAll('section')].find(s=>/^Briefing/.test(headText(s))); if(brief){ brief.remove(); main.insertBefore(brief, grid); } moved.push(grid); grid.remove(); }
-  main.querySelectorAll(':scope > section.manifest').forEach(s=>{ s.remove(); moved.unshift(s); });
-  const d=wrapDetails(moved, 'Flight details: conditions, weights, route, aircraft and passengers', 'flight-more'); if(d) main.appendChild(d);
-  return t.innerHTML; };
 
 /* ---- pilot page: ratings first, the rest folded ---- */
 const _cmPilot = pilotView;

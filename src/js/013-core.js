@@ -57,6 +57,4 @@ function cabinTick(){
 function cabinBlock(){ return S.st && S.st.active ? `<section class="panel stack cabin-host">${cabinInner()}</section>` : ''; }
 const _shellCockpit = cockpitView;
 cockpitView = function(){ const h=_shellCockpit(); return h.replace(/<\/main>\s*$/, cabinBlock()+'</main>'); };
-const _shellFlight = flightView;
-flightView = function(){ const h=_shellFlight(); if(!S.st.active || S.debrief) return h; return h.replace('<section class="panel stack" id="simpanel">', cabinBlock()+'<section class="panel stack" id="simpanel">'); };
 /* comfort pays */

@@ -55,14 +55,6 @@ function ordersHTML(a, pop){ const P=a.scenPlan; if(!P) return '';
 /* live check */
 setInterval(()=>{ const a=S.st&&S.st.active; if(a && a.job.scen && !a.opened && a.started && S.simState!=='live' && trigReached(a)) openOrders(a,'timer'); }, 20000);
 /* no more "open" button: show when they'll open, and the orders once they do */
-const _orFlight = flightView;
-flightView = function(){ let h=_orFlight(); const a=S.st&&S.st.active; if(!a || !a.job.scen) return h;
-  h = h.replace(/<section class="sealed">[\s\S]*?<\/section>/, `<section class="sealed"><p class="label">Sealed orders</p><h3 style="margin:4px 0 6px">They'll open on their own</h3><p class="small">Something will happen on this flight ${TRIG_LABEL[SCEN_TRIGGER[a.job.scen]||'mid']}. The orders pop up automatically, and you'll be graded on how you handle it.</p></section>`);
-  if(a.scenPlan) h = h.replace(/<section class="opened">[\s\S]*?<\/section>/, ordersHTML(a,false));
-  return h; };
-const _orInflight = inflightView;
-inflightView = function(){ const a=S.st.active; let h=_orInflight(); if(a.job.scen && a.opened && a.scenPlan) h=h.replace('<section class="panel stack if-live"', ordersHTML(a,!!S.ordersPop)+'<section class="panel stack if-live"');
-  else if(a.job.scen) h=h.replace('<section class="panel stack if-live"', `<div class="notice small">📩 Sealed orders aboard. They open automatically ${TRIG_LABEL[SCEN_TRIGGER[a.job.scen]||'mid']}.</div><section class="panel stack if-live"`); return h; };
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="orders-ok"]')){ S.ordersPop=false; S.keepScroll=true; render(); } });
 /* flights with sealed orders log themselves too, graded on what you actually did */
 var autoReady; /* defined in full below (060-core.js) */

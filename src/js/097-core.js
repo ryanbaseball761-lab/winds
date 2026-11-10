@@ -2,8 +2,6 @@
 
 /* 1. the ticket names the right operator as the story moves on */
 function carrierFor(st, job){ const c=crime(st); if(job.network) return 'Unlisted charter'; if(job.kind==='story' && CRIME_IDS.has(job.story)){ if(st.story.done.CR15 || job.story==='CR15') return 'Caribe Cargo'; if(c.on || ['CR5','CR6','CR7','CR8','CR9','CR10'].includes(job.story)) return 'Castillo Logistics'; } if(job.kind==='check') return 'Flight examination'; return null; }
-const _fxPass = boardingPass;
-boardingPass = function(st, job){ let h=_fxPass.apply(this, arguments); const n=carrierFor(st, job); if(n) h=h.replace(/(<span class="carrier">[\s\S]*?<b>)Coral Wing Air(<\/b>)/, `$1${n}$2`); return h; };
 
 
 /* 3. "Previously on" only when you've been away for a while (3+ hours) */

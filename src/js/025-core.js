@@ -48,9 +48,4 @@ stripHTML = function(st, job, opts={}){
   return h.replace(/(<article class="jcard[^>]*>)/, '$1'+art);
 };
 /* boarding pass: destination postcard header */
-const _artPass = boardingPass;
-boardingPass = function(st, job, p, a, started, mins, ai){
-  const h=_artPass(st, job, p, a, started, mins, ai);
-  return h.replace('<section class="pass">', `<section class="pass"><div class="pass-art">${islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 170, job.ac)}</div>`);
-};
 /* hangar cards get a silhouette */

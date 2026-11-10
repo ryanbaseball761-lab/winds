@@ -23,12 +23,6 @@ document.addEventListener('input', e=>{ if(!e.target.closest('.cmd-box input')) 
 
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cold-again"]')) return; const st=S.st; const f=st.flights, d=st.story.done.CW1; st.flights=0; delete st.story.done.CW1; const shots=coldOpenShots(); st.flights=f; if(d) st.story.done.CW1=d; cutscene({shots, col:'#c8962a', art:SCENES.ramp(), onEnd:()=>{}}); });
 
-/* 8 + 9. flight display: time in the air, and how far along the route you are */
-(function(){ const _h=hudHTML; hudHTML=function(a){ let h=_h(a); try{ const s=S.sim||{}; const rec=s.recorder; const job=a.job; const from=AP[job.from], to=AP[job.local?job.from:job.to]; const tot=Math.max(1,distNm(from,to)); const live=S.simState==='live'&&s.position;
-    const togo=live?distNm({lat:s.position.lat,lon:s.position.lon},to):tot; const pct=job.local?null:Math.max(0,Math.min(100,Math.round((1-togo/tot)*100)));
-    const air=rec&&rec.takeoff?Math.round((Date.now()-rec.takeoff.t)/60000):null;
-    h=h.replace('<div class="fhud-cells">', `${pct!=null?`<div class="fhud-prog"><i style="width:${pct}%"></i><span>${pct}%</span></div>`:''}<div class="fhud-cells">`);
-    if(air!=null) h=h.replace('<div class="fhud-cells">', `<div class="fhud-cells"><div class="hud-c"><span>In the air</span><b>${air}<small> min</small></b></div>`); }catch(_){} return h; }; })();
 
 /* 10. notifications: a Clear button */
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="bell"]'); if(!b) return; setTimeout(()=>{ const p=document.querySelector('.notif-pane'); if(p && S.notifs.length && !p.querySelector('.np-clear')){ const c=document.createElement('button'); c.className='btn sm ghost np-clear'; c.textContent='Clear'; c.onclick=()=>{ S.notifs=[]; S.notifSeen=0; p.remove(); }; p.querySelector('.label').after(c); } }, 0); });

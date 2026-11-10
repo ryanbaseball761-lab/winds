@@ -30,29 +30,8 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="sig
 /* ---- flight setup: big, obvious tiles for runway, fuel, clock, parking and weather ---- */
 function runwayPlan(job){ const dep=rwyAnalysis(job.from, job.wx, job.ac); const arr=job.local?null:rwyAnalysis(job.to, job.wx, job.ac); return {dep, arr}; }
 function windTxt(r){ if(!r) return ''; if(r.water) return 'into the wind'; return `${Math.round(Math.max(0,r.head))} kt headwind, ${Math.round(r.xw)} kt crosswind${r.head<0?' (tailwind!)':''}`; }
-preflightHTML = function(job){
-  const C = preflightChecks(job); const get=k=>C.find(c=>c.k===k); const p=plan(job); const live=S.simState==='live'; const R=runwayPlan(job); const wx=job.wx;
-  const fuelGal=Math.ceil(Math.max(p.gal*1.3, p.gal+5)), payload=Math.max(0,p.payload-170); const fuel=get('fuel'), time=get('time'), wxc=get('wx'); const park=suggestParking(job);
-  if(live) fetchParking(job.from);
-  const tile=(cls, icon, title, body, action)=>`<div class="su-tile ${cls}"><div class="su-ic" aria-hidden="true">${icon}</div><div class="su-b"><p class="label">${title}</p>${body}</div>${action?`<div class="su-a">${action}</div>`:''}</div>`;
-  const rwBig = R.dep && !R.dep.water ? `<div class="su-rw"><span><small>Take off</small><b class="mono">${esc(R.dep.rw)}</b></span>${R.arr?`<i>→</i><span><small>Land</small><b class="mono">${esc(R.arr.water?'water':R.arr.rw)}</b></span>`:''}</div>` : `<div class="su-rw"><span><b>Into the wind</b></span></div>`;
-  const tiles = [
-    tile('rw','🛫','Runways', `${rwBig}<p class="tiny">Wind ${pad3(wx.dir)}° at ${wx.spd}${wx.gust?'G'+wx.gust:''} kt · ${esc(windTxt(R.dep))}${R.dep&&R.dep.over?' · <b class="bad-t">over this aircraft\'s crosswind limit</b>':''}</p>`, ''),
-    tile(fuel&&fuel.ok?'ok':'todo','⛽','Fuel & cargo', `<b>${fuelGal} gal · ${payload} lb</b><p class="tiny">${fuel?esc(fuel.t):'Plan '+p.gal+' gal plus reserve'}</p>`, live?`<button class="btn primary" data-act="pf-load" ${S.loading?'disabled':''}>${S.loading?'Loading…':'Load into MSFS'}</button>`:`<span class="tiny muted">Set in the MSFS fuel &amp; payload menu</span>`),
-    tile(time? (time.ok?'ok':'todo') : '', '🕙','Time of day', `<b>${hhmm(job.dep)} local</b><p class="tiny">${time?esc(time.t):'Set this time in MSFS before you load in.'}</p>`, time&&!time.ok&&time.act?`<button class="btn primary" data-act="${time.act}">${esc(time.actLabel)}</button>`:''),
-    tile('', '🅿','Parking spot', `<b>${esc(park.spot?park.spot.name:'GA ramp')}</b><p class="tiny">${esc(park.text)}</p>`, park.spot && live && S.sim.position && distNm({lat:S.sim.position.lat,lon:S.sim.position.lon},AP[job.from])<3 && S.sim.motion && S.sim.motion.gs<1 ? `<button class="btn" data-act="park-move">Move me there</button>`:''),
-    tile(wxc&&wxc.ok?'ok':'', '☁','Weather', `<b>${esc(wx.n)}</b><p class="tiny">${wxc?esc(wxc.ok?wxc.t:'MSFS can\'t be changed by add-ons. Use Live weather in MSFS and the briefing matches it.'):'Generated for this flight.'}</p>`, wxc&&wxc.act?`<button class="btn" data-act="${wxc.act}">${esc(wxc.actLabel)}</button>`:'')
-  ].join('');
-  const small = C.filter(c=>['sim','pos','ac','park'].includes(c.k)).map(c=>`<span class="su-chip ${c.ok?'ok':'no'}" title="${esc(c.d||'')}">${c.ok?'✓':'!'} ${esc(c.t)}</span>`).join('');
-  return `<div class="row between"><div><p class="label">${S.st.active&&S.st.active.started?'Before takeoff':'Flight setup'}</p><h3>Set up MSFS for this flight</h3></div><div class="row"><button class="btn sm ghost" data-act="pf-pln">Flight plan (.pln)</button><button class="btn sm ghost" data-act="pf-recheck">Check again</button></div></div>
-    <div class="su-chips">${small}</div><div class="su-grid">${tiles}</div>`; };
 renderPreflight = function(){ const el=document.getElementById('preflight'); const a=S.st&&S.st.active; if(el && a) el.innerHTML=preflightHTML(a.job); };
 /* setup sits right under the boarding pass */
-const _clFlight = flightView;
-flightView = function(){ const h=_clFlight(); const a=S.st&&S.st.active; if(!a || a.started || S.showResult || S.debrief) return h; const t=document.createElement('template'); t.innerHTML=h;
-  const pf=t.content.querySelector('#preflight'), pass=t.content.querySelector('.pass'); if(pf && pass){ pf.classList.add('fsetup'); pass.after(pf); } return t.innerHTML; };
-const _clInflight = inflightView;
-inflightView = function(){ let h=_clInflight(); const a=S.st&&S.st.active; if(!a) return h; try{ const R=runwayPlan(a.job); if(R.dep) h=h.replace(/(<p class="label">In flight[^<]*<\/p>)/, `$1<p class="if-rw">Take off <b class="mono">${esc(R.dep.water?'into wind':R.dep.rw)}</b>${R.arr?` · Land <b class="mono">${esc(R.arr.water?'into wind':R.arr.rw)}</b>`:''} · wind ${pad3(a.job.wx.dir)}°/${a.job.wx.spd} kt</p>`); }catch(_){} return h.replace('id="preflight"','id="preflight" data-x="1"').replace('class="panel stack preflight"','class="panel stack preflight fsetup"'); };
 
 /* ---- each screen gets its own atmosphere ---- */
 
@@ -60,5 +39,3 @@ inflightView = function(){ let h=_clInflight(); const a=S.st&&S.st.active; if(!a
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="hg-tab"]'); if(!b) return; S.hangarTab=b.dataset.v; S.keepScroll=true; render(); });
 
 /* the old 'Set up MSFS' list in the sidebar is now the Flight setup panel */
-const _clFlight2 = flightView;
-flightView = function(){ const h=_clFlight2(); return h.replace(/<section class="panel stack">\s*<h3>Set up MSFS<\/h3>[\s\S]*?<\/section>/, ''); };

@@ -66,8 +66,6 @@ window.addEventListener('keydown', e=>{ if(e.key!=='Escape') return; const w=doc
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="launder"]'); if(!b||!S.st) return; const o=launderOpts(S.st).find(x=>x.id===b.dataset.v); if(o&&o.heat) setTimeout(()=>toast(`Heat +${o.heat} from laundering.`), 700); });
 
 
-/* 39. cancelling a story chapter takes you back to the Story page, and says you can replay it */
-(function(){ const _fv=flightView; flightView=function(){ const h=_fv(); const a=S.st&&S.st.active; return a && a.job.kind==='story' ? h.replace(/>Cancel job</, '>Cancel chapter (play it again any time)<') : h; }; })();
 window.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cancel-yes"]')||!S.st||!S.st.active) return; if(S.st.active.job.kind==='story') setTimeout(()=>{ if(!S.st.active){ go('story'); } }, 50); }, true);
 
 /* 40. the result screen starts at the top after the scene */

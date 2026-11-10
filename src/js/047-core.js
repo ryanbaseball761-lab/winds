@@ -48,8 +48,6 @@ function passPlane(){ const a=S.st&&S.st.active; let pct=null; try{ if(a && a.st
   const path='M4 34 Q100 -14 196 34';
   const anim = pct!=null ? `<animateMotion dur="1.4s" fill="freeze" rotate="auto" keyPoints="0;${pct.toFixed(3)}" keyTimes="0;1" calcMode="linear" path="${path}"/>` : (calmMotion()?`<animateMotion dur="1ms" fill="freeze" rotate="auto" keyPoints="0.5;0.5" keyTimes="0;1" calcMode="linear" path="${path}"/>`:`<animateMotion dur="7s" repeatCount="indefinite" rotate="auto" path="${path}"/>`);
   return `<div class="pass-arc" aria-hidden="true"><svg viewBox="0 -6 200 46"><path d="${path}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 5" opacity=".7"/><path d="${path}" fill="none" stroke="currentColor" stroke-width="2.5" pathLength="1" stroke-dasharray="${pct!=null?pct.toFixed(3):0} 1"/><g>${anim}<path d="M-7 0 L5 -1.2 L7 0 L5 1.2 Z M-1 0 L-4 -6 L-2 -6 L3 0 L-2 6 L-4 6 Z M-6 0 L-8 -3 L-7 -3 L-5 0 L-7 3 L-8 3 Z" fill="currentColor"/></g></svg></div>`; }
-const _flPass = boardingPass;
-boardingPass = function(){ const h=_flPass.apply(this, arguments); return h.replace(/<div class="pass-arc" aria-hidden="true">[\s\S]*?<\/svg><span>✈<\/span><\/div>/, passPlane()); };
 
 /* 9. toasts: stacked, with an icon, slide in, and a timer bar */
 function toastKind(msg){ const m=String(msg).toLowerCase(); if(/couldn|can't|cannot|not connected|fail|error|expert mode|grounded|fine/.test(m)) return 'warn'; if(/unlocked|saved|logged|loaded|matches|repaired|moved|welcome|you're now|passed|earned/.test(m)) return 'ok'; return 'info'; }

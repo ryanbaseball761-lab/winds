@@ -26,21 +26,6 @@ cabinTick = function(){ const r=_tfCabin.apply(this, arguments); try{ const a=S.
 /* ---- 3. big moments take over the screen ---- */
 
 /* ---- 4. story briefing up top, like the opening of a chapter ---- */
-function chapterHero(job){ const m=STORY.find(x=>x.id===job.story); if(!m) return ''; const meta=arcMeta(m.arc); const chs=STORY.filter(x=>x.arc===m.arc); const idx=chs.indexOf(m)+1;
-  const col = m.side ? '#e8782a' : (meta.main ? '#1f9d55' : (meta.col||'#0b746f'));
-  const to=job.local?AP[job.from]:AP[job.to]; const d=job.local?(job.tourNm||40):Math.round(distNm(AP[job.from],AP[job.to]));
-  const feat = m.feature || (m.teach&&m.teach[0]) || '';
-  const art = typeof islandArt==='function' ? (()=>{ try{ return islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 300, job.ac); }catch(_){ return ''; } })() : '';
-  return `<section class="chapter-hero" style="--arc:${col}">${art?`<div class="ch-art" aria-hidden="true">${art}</div>`:''}<div class="ch-in">
-    <div class="row between"><p class="ch-kicker">${esc(m.arc)} · Chapter ${idx} of ${chs.length}${m.side?' · side story':''}</p><div class="row ch-cast">${(m.chars||[]).filter(k=>CAST[k]).map(k=>avatar(k)).join('')}</div></div>
-    <h1>${esc(m.title)}</h1>
-    <div class="ch-brief">${(job.paras||m.brief||[]).map(t=>`<p>${esc(t)}</p>`).join('')}</div>
-    <div class="ch-feature"><div><span class="label">Featured flight</span><b class="mono">${esc(job.from)} → ${esc(job.local?job.from:job.to)}</b><span class="small">${esc(to.n)}, ${esc(to.isl)} · ${d.toLocaleString()} nm</span></div>${feat?`<p class="small">${esc(feat)}</p>`:''}</div>
-  </div></section>`; }
-const _tfFlight = flightView;
-flightView = function(){ let h=_tfFlight(); const a=S.st&&S.st.active; if(!a || a.started || S.showResult || S.debrief || a.job.kind!=='story') return h;
-  h = h.replace(/<section class="panel stack">\s*<div class="row between"><h2>Briefing<\/h2>[\s\S]*?<\/section>/, '');
-  return h.replace(/(<main class="wrap[^>]*>)/, '$1'+chapterHero(a.job)); };
 
 /* ---- 5 + 6 + 7. load the plane, suggested parking and the sim clock, also once the flight has started ---- */
 const PARK_PREF = { ga:['ramp_ga_small','ramp_ga','ramp_ga_medium'], stol:['ramp_ga_small','ramp_ga','ramp_ga_medium'], amph:['ramp_ga_small','ramp_ga','dock_ga'], hp:['ramp_ga_small','ramp_ga','ramp_ga_medium'], bush:['ramp_ga_medium','ramp_ga','ramp_ga_small'],
@@ -60,16 +45,9 @@ function parkingRowHTML(job){ if(job.local===undefined) return ''; const s=sugge
   return `<div class="park-row"><span class="pf-ic">P</span><div><b>Spawn at: ${esc(s.text)}</b><span class="tiny muted">${s.generic?`In the MSFS world map, choose ${esc(job.from)} and pick a parking spot of this type near runway ${s.rw?esc(s.rw.id):''}.`:'Pick this spot in the MSFS world map when you load in, or use the button once you\'re in the sim.'}</span></div>${!s.generic && atDep && S.sim.motion && S.sim.motion.gs<1 ? `<button class="btn xs" data-act="park-move">Move me there</button>`:''}</div>`; }
 async function autoClock(){ const a=S.st&&S.st.active; if(!a || a.started || a._clockSet || !(S.st.pro?S.st.pro.autoTime!==false:true) || S.simState!=='live' || !S.mcp) return; const s=S.sim; if(!s || !s.motion || !s.motion.onGround || !atDeparture(a.job)) return;
   a._clockSet=true; try{ const r=await S.mcp.callTool(SIM_SERVER,'set_time',{localMin:a.job.dep},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} } if(o && o.ok) toast(`MSFS clock set to ${hhmm(a.job.dep)} for this flight.`); }catch(_){} }
-const _tfPfHTML = preflightHTML;
-preflightHTML = function(job){ let h=_tfPfHTML(job); if(S.simState==='live') fetchParking(job.from);
-  h = h.replace('<ul class="pf-list">', parkingRowHTML(job)+'<ul class="pf-list">');
-  return h.replace('Briefing weather is generated', 'Briefing weather is generated').replace("It switches to your MSFS weather once you're at the departure airport.", "MSFS doesn't let add-ons change its weather, so the briefing follows MSFS instead: it switches to your sim's weather once you're at the departure airport. Live weather in MSFS works best."); };
 document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="park-move"]') || !S.st || !S.st.active) return; const s=suggestParking(S.st.active.job); if(!s.spot) return;
   try{ const r=await S.mcp.callTool(SIM_SERVER,'move_to',{lat:s.spot.lat, lon:s.spot.lon, hdg:s.spot.hdg},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} } toast(o&&o.ok?`Moved to ${s.spot.name}.`:`Couldn't move: ${o&&o.error||'update the MSFS Bridge'}`); }catch(err){ toast('Moving the aircraft needs the Trade Winds app (or MSFS Bridge 1.5).'); } });
 /* after "Start flight": keep the loading tools until you take off */
-const _tfInflight = inflightView;
-inflightView = function(){ let h=_tfInflight(); const a=S.st&&S.st.active; if(!a) return h; const rec=S.sim&&S.sim.recorder; const airborne = S.simState==='live' && ((S.sim.motion&&!S.sim.motion.onGround) || (rec && rec.takeoff && simRecFor(a)));
-  if(airborne) return h; return h.replace(/(<main class="wrap[^>]*>[\s\S]*?<\/section>)/, m=>m+`<section class="panel stack preflight" id="preflight">${preflightHTML(a.job)}</section>`); };
 
 
 /* settings */
@@ -115,5 +93,3 @@ const _tfChecks = preflightChecks;
 preflightChecks = function(job){ const out=_tfChecks(job); const t=out.find(c=>c.k==='time'); if(t && !t.ok && window.twNative){ t.act='pf-settime'; t.actLabel=`Set MSFS to ${hhmm(job.dep)}`; t.d='Or set the time in the MSFS weather & time panel.'; } return out; };
 document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="pf-settime"]') || !S.st || !S.st.active || !S.mcp) return; const job=S.st.active.job;
   try{ const r=await S.mcp.callTool(SIM_SERVER,'set_time',{localMin:job.dep},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} } toast(o&&o.ok?`MSFS clock set to ${hhmm(job.dep)}.`:`Couldn't set the clock: ${o&&o.error||'unknown'}`); setTimeout(()=>simPoll(true), 1200); }catch(_){ toast('Setting the clock needs the Trade Winds app.'); } });
-const _tfPf2 = preflightHTML;
-preflightHTML = function(job){ const h=_tfPf2(job); return (S.st&&S.st.active&&S.st.active.started) ? h.replace('<p class="label">Before you start</p>','<p class="label">Before takeoff</p>') : h; };

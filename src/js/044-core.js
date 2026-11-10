@@ -16,8 +16,6 @@ preflightChecks = function(job){ const out=_syncChecks(job); const m=simMinutes(
   const wxOk = !!(job.wx&&job.wx.live); out.push({k:'wx', ok:wxOk, t: wxOk?'Briefing uses live MSFS weather':'Briefing weather is generated', d: wxOk?'':(atDeparture(job)?'':'It switches to your MSFS weather once you\'re at the departure airport.'), act: (!wxOk && simWx())?'pf-usewx':null, actLabel:'Use MSFS weather'});
   return out; };
 /* show the per-item fix buttons */
-const _syncPfHTML = preflightHTML;
-preflightHTML = function(job){ let h=_syncPfHTML(job); for(const c of preflightChecks(job)){ if(!c.act) continue; h=h.replace(`<b>${esc(c.t)}</b>`, `<b>${esc(c.t)}</b> <button class="btn xs" data-act="${c.act}">${esc(c.actLabel)}</button>`); } return h; };
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="pf-usetime"],[data-act="pf-usewx"]'); if(!b || !S.st || !S.st.active) return; const job=S.st.active.job;
   if(b.dataset.act==='pf-usewx'){ const w=simWx(job.wx); if(w){ job.wx=w; toast('Briefing weather now matches MSFS.'); } }
   else { const m=simMinutes(); if(m==null) return; if(isNight(m) && !hasRating(S.st,'COMM')){ toast('Trainee pilots fly in daylight only. Set MSFS to daytime.'); return; } job.dep=Math.round(m/5)*5; if(job.dep>S.st.clock || S.st.clock-job.dep<720) S.st.clock=Math.max(S.st.clock, job.dep-5); toast(`Flight moved to ${hhmm(job.dep)} to match MSFS.`); }

@@ -18,5 +18,3 @@ function closeBig(){ const el=document.getElementById('bigmode'); if(el) el.remo
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && S.big) closeBig(); });
 document.addEventListener('fullscreenchange', ()=>{ if(!document.fullscreenElement && S.big){ /* stay open as an overlay */ } });
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="big-open"]')){ e.stopPropagation(); openBig(); } });
-const _bgInflight = inflightView;
-inflightView = function(){ return _bgInflight().replace('<button class="btn sm ghost" data-act="if-brief">Briefing</button>', '<button class="btn sm ghost" data-act="big-open">⛶ Big display</button><button class="btn sm ghost" data-act="if-brief">Briefing</button>'); };

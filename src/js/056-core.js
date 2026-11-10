@@ -14,8 +14,6 @@ function askMet(job, rec){ const a=job.ask; if(!a || !rec) return null; const tr
   if(a.k==='coast') return tr.some(t=>t[2]<1500 && t[2]>300 && distNm({lat:t[0],lon:t[1]},to)>5 && distNm({lat:t[0],lon:t[1]},fr)>5);
   return null; }
 /* reveal the request once you're on your way */
-const _mrIf = inflightView;
-inflightView = function(){ const h=_mrIf(); const a=S.st&&S.st.active; if(!a || !a.job.ask || !a.askShown) return h; return h.replace(/(<section class="if-head">[\s\S]*?<\/section>)/, m=>m+`<section class="notice ask-note"><b>Cabin request (+${money(a.job.ask.amt)}):</b> ${esc(a.job.ask.text)}</section>`); };
 
 /* ---- 5. diversions for a good reason are paid fairly ---- */
 
@@ -63,5 +61,3 @@ const CH_GOAL = {
   TR4:['Fly into New York at night for Madison Square Garden.','The biggest show of Nova\'s life.'], TR5:['Bring Nova home over Maho Beach at sunset.','The tour is over.'],
   CO1:['Choose your company\'s first pilot.','Your own airline is real.'], CO2:['Turn down Vale\'s offer, or don\'t.','Preston Vale has one more play.'], CO3:['Hear Mari\'s announcement in the air over Maho Beach.','The last chapter.']
 };
-const _mrHero = chapterHero;
-chapterHero = function(job){ const h=_mrHero(job); const g=CH_GOAL[job.story]; if(!g) return h; return h.replace('</h1>', `</h1><div class="ch-goal"><p class="ch-prev"><span>Previously</span> ${esc(g[1])}</p><p class="ch-obj"><span>Your goal</span> ${esc(g[0])}</p></div>`); };

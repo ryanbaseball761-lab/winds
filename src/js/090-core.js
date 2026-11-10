@@ -2,14 +2,6 @@
 
 /* ---- 1. flight HUD v2: heading to the destination, runway and wind on approach, and the chapter goal ---- */
 function brg(a,b){ const r=Math.PI/180, y=Math.sin((b.lon-a.lon)*r)*Math.cos(b.lat*r), x=Math.cos(a.lat*r)*Math.sin(b.lat*r)-Math.sin(a.lat*r)*Math.cos(b.lat*r)*Math.cos((b.lon-a.lon)*r); return (Math.atan2(y,x)/r+360)%360; }
-const _m1Hud = hudHTML;
-hudHTML = function(a){ let h=_m1Hud(a); try{ const s=S.sim||{}; const job=a.job; const to=job.local?job.from:job.to; const dest=AP[to]; const live=S.simState==='live'&&s.position;
-  const extra=[]; if(live){ const b=Math.round(brg({lat:s.position.lat,lon:s.position.lon},dest)); const hdg=s.motion&&s.motion.hdg!=null?Math.round(s.motion.hdg):null; const off=hdg!=null?((b-hdg+540)%360)-180:0;
-    extra.push(`<div class="hud-c hud-brg"><span>Course to ${esc(to)}</span><b>${pad3(b)}°</b><i style="transform:rotate(${off}deg)">↑</i></div>`);
-    const togo=distNm({lat:s.position.lat,lon:s.position.lon},dest); if(togo<20 && !dest.water){ const w=s.ext&&s.ext.weather; const wx=w?Object.assign({},job.wx,{dir:w.windDir,spd:w.windKt,gust:0}):job.wx; let r=null; try{ r=rwyAnalysis(to,wx,job.ac); }catch(_){} if(r&&!r.water) extra.push(`<div class="hud-c hud-rw"><span>Land runway</span><b>${esc(r.rw)}</b><small>${pad3(wx.dir)}°/${wx.spd} kt</small></div>`); } }
-  const goal = job.kind==='story' && typeof CH_GOAL!=='undefined' && CH_GOAL[job.story] ? `<p class="hud-goal"><span>Goal</span> ${esc(CH_GOAL[job.story][0])}</p>` : job.kind==='check' ? `<p class="hud-goal"><span>Checkride</span> ${esc((job.tasks||[]).join(' · '))}</p>` : job.network ? `<p class="hud-goal"><span>Network run</span> ${job.lowLevel?'Stay under 1,000 ft for the bonus. ':''}${job.drop?'Night drop at a closed strip. ':''}Heat +5 when you land.</p>` : '';
-  if(extra.length) h=h.replace('<div class="fhud-cells">','<div class="fhud-cells">'+extra.join(''));
-  if(goal) h=h.replace('</section>', goal+'</section>'); }catch(_){} return h; };
 
 
 /* ---- 3. story achievements ---- */

@@ -1,20 +1,8 @@
 /* ===================== FROM TEST FLIGHT #2 ===================== */
 
 /* ---- 1. flight screen reads top to bottom: briefing, setup steps, then the boarding pass with Start ---- */
-const _fbFlight = flightView;
-flightView = function(){ const h=_fbFlight(); const a=S.st&&S.st.active; if(!a || a.started || S.showResult || S.debrief) return h; const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h;
-  const hero=main.querySelector(':scope > .chapter-hero'); const brief=[...main.querySelectorAll(':scope > section')].find(s=>/^Briefing/.test(headText(s))); const setup=main.querySelector('#preflight'); const pass=main.querySelector(':scope > .pass');
-  const top=hero||brief; if(top) main.prepend(top); if(setup) (top?top.after(setup):main.prepend(setup)); if(pass && setup) setup.after(pass);
-  return t.innerHTML; };
 /* setup tiles in the order you do them, numbered; parking first */
 const STEP_ORDER = [['Parking spot','Spawn here'],['Fuel & cargo','Fuel & weight'],['Time of day','Time of day'],['Runways','Runways'],['Weather','Weather']];
-const _fbPf = preflightHTML;
-preflightHTML = function(job){ const a=S.st&&S.st.active; const s=S.sim; const started=a&&a.started; const moving = S.simState==='live' && s && s.motion && (!s.motion.onGround || s.motion.gs>2);
-  if(started && moving) return `<div class="row between"><div><p class="label">Flight setup</p><h3>Done. You're on your way.</h3></div></div><p class="small muted">Fuel and weights are locked once you're moving.</p>`;
-  const t=tpl(_fbPf(job)); const grid=t.content.querySelector('.su-grid'); if(grid){ const tiles=[...grid.children]; let n=1;
-    STEP_ORDER.forEach(([label,newLabel])=>{ const tl=tiles.find(x=>((x.querySelector('.label')||{}).textContent||'')===label); if(tl){ tl.querySelector('.label').textContent=`${n++}. ${newLabel}`; grid.appendChild(tl); } }); }
-  if(started) t.content.querySelectorAll('.su-chip').forEach(c=>{ if(/nm from|Moving|Parked|At [A-Z]{4}/.test(c.textContent)) c.remove(); });
-  return t.innerHTML; };
 /* fuel and weights are locked once you're rolling or airborne; and only fuel is loaded, so the plane can't tip over */
 loadIntoSim = async function(job){ if(!S.mcp){ toast('MSFS isn\'t connected.'); return; } const s=S.sim; const rec=s&&s.recorder;
   if(s && s.motion && (!s.motion.onGround || s.motion.gs>2) || (rec && rec.takeoff && S.st.active && S.st.active.started)){ toast('Fuel is locked once you\'re moving.'); return; }

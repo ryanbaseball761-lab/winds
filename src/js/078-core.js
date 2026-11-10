@@ -77,9 +77,6 @@ window.addEventListener('click', e=>{ const b=e.target.closest('[data-act="accep
   e.stopImmediatePropagation(); e.preventDefault(); c.proSeen[id]=1; save();
   playPrologue(m, ()=>{ S._proPass=true; const again=document.querySelector(`[data-act="${b.dataset.act}"][data-id="${id}"]`)||b; again.click(); S._proPass=false; }); }, true);
 /* replay from the flight screen */
-const _proFlight = flightView;
-flightView = function(){ const h=_proFlight(); const a=S.st&&S.st.active; if(!a || a.started || a.job.kind!=='story' || !CRIME_IDS.has(a.job.story) || !proFor(a.job.story)) return h;
-  return h.replace(/(<div class="ch-hero-in">|<section[^>]*class="chapter-hero[^"]*"[^>]*>)/, `$1<button class="btn sm ghost pro-replay" data-act="pro-replay">▶ Replay prologue</button>`); };
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="pro-replay"]')||!S.st||!S.st.active) return; const m=CRIME.find(x=>x.id===S.st.active.job.story); if(m) playPrologue(m, ()=>{}); });
 
 (function(){ const css=`

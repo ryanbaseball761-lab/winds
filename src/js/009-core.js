@@ -70,42 +70,6 @@ function planLinks(job){
   const t = ICAO_TYPE[job.ac]; const sb = `https://dispatch.simbrief.com/options/custom?orig=${job.from}&dest=${job.to}${t?`&type=${t}`:''}`; const sv = `https://skyvector.com/?fpl=${job.from}%20${job.to}`;
   return `<div class="row small"><a class="btn sm ghost" href="${sb}" target="_blank" rel="noopener">Plan in SimBrief ↗</a><a class="btn sm ghost" href="${sv}" target="_blank" rel="noopener">View on SkyVector ↗</a></div>`;
 }
-function boardingPass(st, job, p, a, started, mins, ai){
-  const from=AP[job.from], to=AP[job.to]; const carrier = job.lend ? (job.ac==='CJ4'?'Starling II · Private':'Starling · Private') : job.company ? st.company.name : job.airline ? 'Antilles Blue Airways' : 'Coral Wing Air';
-  return `<section class="pass">
-    <div class="pass-main">
-      <div class="row between"><span class="carrier">${LOGO}<b>${esc(carrier)}</b></span><span class="row">${chipsFor(st,job)}</span></div>
-      <p class="label" style="margin-top:12px">${esc(job.label)}${job.client?` · ${esc(job.client)}`:''}</p>
-      <h1 class="pass-title">${esc(ai?.headline || job.title)}</h1>
-      <div class="pass-route">
-        <div><div class="code">${esc(job.from)}</div><div class="city">${esc(from.isl)}</div></div>
-        <div class="pass-arc" aria-hidden="true"><svg viewBox="0 0 200 40"><path d="M4 34 Q100 -14 196 34" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 5"/></svg><span>✈</span></div>
-        <div style="text-align:right"><div class="code">${job.local?'↺':esc(job.to)}</div><div class="city">${job.local?'Local flight':esc(to.isl)}</div></div>
-      </div>
-      <div class="pass-fields">
-        <div><span>Flight</span><b class="mono">${esc(flightNo(job))}</b></div>
-        <div><span>Departs</span><b class="mono">${hhmm(job.dep)}</b></div>
-        <div><span>Block</span><b class="mono">${durTxt(p.est)}</b></div>
-        <div><span>Aircraft</span><b>${esc(a.n.replace(/^(Cessna|Beechcraft|Diamond|CubCrafters|Zlin|ICON|de Havilland Canada|Grumman|Pilatus|Daher|Douglas|Cirrus|Airbus|Boeing|Heart Aerospace)\s/,''))}</b></div>
-        <div><span>Distance</span><b class="mono">${p.dist} nm</b></div>
-        <div><span>Pay</span><b class="mono">${job.kind==='check'?'—':money(job.pay)}</b></div>
-      </div>
-      <div class="row" style="margin-top:14px">
-        ${started ? `<span class="chip good">Block timer running: ${durTxt(mins)}</span>` : `<button class="btn action" data-act="start">Start flight</button>`}
-        <button class="btn primary" data-act="debrief">Log the landing</button>
-        <button class="btn" data-act="nav" data-v="cockpit">Open cockpit checklist</button>
-        ${S.confirm==='cancel' ? `<span class="small">Cancel this job? ${job.kind==='story'||job.kind==='check'?'You can pick it up again later.':'The client will remember.'}</span><button class="btn danger sm" data-act="cancel-yes">Yes, cancel</button><button class="btn sm" data-act="confirm-no">Keep it</button>` : `<button class="btn ghost" data-act="cancel">Cancel job</button>`}
-      </div>
-      ${planLinks(job)}
-    </div>
-    <div class="pass-stub" aria-hidden="true">
-      <span class="label">Pilot in command</span><b>${esc(st.pilot.name)}</b>
-      <span class="label">Seat</span><b>Left</b>
-      <span class="label">Date</span><b class="mono">${dateTxt(st.day)}</b>
-      <div class="barcode"></div>
-    </div>
-  </section>`;
-}
 
 /* ---------- score ring ---------- */
 function scoreRing(res){ const r=46, c=2*Math.PI*r, off=c*(1-res.score/100);

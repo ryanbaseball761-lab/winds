@@ -37,5 +37,3 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="not
   if(b.dataset.act==='note-save'){ const v=(document.getElementById('tw-note')||{}).value||''; if(v.trim()) saveNote(v.trim()); }
   if(box) box.remove(); });
 const NOTE_BTN = `<button class="btn sm ghost note-btn" data-act="note-open">Something's off?</button>`;
-const _tsIf = inflightView;
-inflightView = function(){ return _tsIf().replace(/(<div class="row"><span class="if-timer)/, NOTE_BTN+'$1'); };

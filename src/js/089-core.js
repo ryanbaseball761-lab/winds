@@ -10,13 +10,6 @@ const NAV5 = [
 function navGroup(v){ return NAV5.find(g=>g.v===v || (g.tabs||[]).some(t=>t[0]===v)) || NAV5.find(g=>g.v==='pilot' && ['profile','log','company','cockpit'].includes(v)) || null; }
 
 /* ---- 3. flight mode: once you're flying, the flight takes over the screen ---- */
-function hudHTML(a){ const s=S.sim||{}; const live=S.simState==='live'&&s.position; const job=a.job; const to=job.local?job.from:job.to; const dest=AP[to];
-  const togo=live?distNm({lat:s.position.lat,lon:s.position.lon},dest):null; const gs=live&&s.motion?Math.round(s.motion.gs||0):null; const eta=togo!=null&&gs>40?Math.round(togo/gs*60):null;
-  const fuel=live&&s.systems&&s.systems.fuelLb!=null?Math.round(s.systems.fuelLb):null; const alt=live?Math.round((s.position.altFt||0)/10)*10:null;
-  const cell=(k,v,u)=>`<div class="hud-c"><span>${k}</span><b>${v==null?'—':v}${v==null?'':`<small>${u||''}</small>`}</b></div>`;
-  return `<section class="fhud"><div class="fhud-route"><b>${esc(job.from)}</b><i></i><b>${esc(to)}</b><span>${esc(job.title)}</span></div><div class="fhud-cells">${cell('To go',togo!=null?Math.round(togo):null,' nm')}${cell('ETA',eta,' min')}${cell('Ground speed',gs,' kt')}${cell('Altitude',alt!=null?alt.toLocaleString():null,' ft')}${cell('Fuel',fuel!=null?fuel.toLocaleString():null,' lb')}</div>${live?'':'<p class="small muted" style="margin:8px 0 0">MSFS isn\'t connected, so live numbers are off. The flight still finishes with the Finish button.</p>'}</section>`; }
-const _u10If = inflightView;
-inflightView = function(){ const h=_u10If(); const a=S.st&&S.st.active; if(!a) return h; return h.replace(/(<main[^>]*>)/, `$1<div class="fm-bar"><span class="fm-dot"></span> Flight mode <button class="btn sm ghost" data-act="fm-menu">${S.fmMenu?'Hide menu':'Show menu'}</button></div>${hudHTML(a)}`); };
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="fm-menu"]')) return; S.fmMenu=!S.fmMenu; S.keepScroll=true; render(); });
 
 /* ---- 4. command bar: Ctrl+K (or /) to jump anywhere ---- */

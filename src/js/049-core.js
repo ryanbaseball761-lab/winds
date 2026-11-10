@@ -66,8 +66,6 @@ function guideHTML(a){ const s=S.simState==='live'?S.sim:null; const G=a.guide=a
     <ol class="guide-steps">${GUIDE.map((g,i)=>`<li class="${G.done[g.k]?'done':i===cur?'cur':''}"><b>${esc(g.t)}</b>${i===cur?`<span class="small">${esc(g.d)}</span>${!s?`<button class="btn xs" data-act="guide-next" data-k="${g.k}">Done</button>`:''}`:''}</li>`).join('')}</ol>
     ${!s?'<p class="tiny muted">MSFS isn\'t connected, so tick each step yourself.</p>':''}</section>`; }
 function guideActive(){ const st=S.st, a=st&&st.active; return !!(a && st.flights<1 && !proPrefs().noGuide); }
-const _gdFlight = flightView;
-flightView = function(){ const h=_gdFlight(); if(!guideActive() || S.showResult || S.debrief) return h; const g=guideHTML(S.st.active); return h.replace(/(<main class="wrap[^>]*>[\s\S]*?<\/section>)/, (m)=>m+g); };
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="guide-next"],[data-act="guide-hide"]'); if(!b||!S.st) return; if(b.dataset.act==='guide-hide'){ proPrefs().noGuide=true; } else { const a=S.st.active; if(a){ a.guide=a.guide||{done:{}}; a.guide.done[b.dataset.k]=1; } } save(); S.keepScroll=true; render(); });
 
 /* ---- 5. weekend events ---- */

@@ -22,8 +22,6 @@ plan = function(job){ const p=_frPlan(job); if(job && job.local){ p.est = Math.m
 /* 8. cargo flights are graded on the cargo, not on passengers who aren't there */
 
 /* 9. no "Finish flight" button before the flight has started (too easy to press by mistake) */
-const _frPass = boardingPass;
-boardingPass = function(st, job, p, a, started){ const h=_frPass.apply(this, arguments); return started ? h : h.replace(/<button[^>]*data-act="debrief"[^>]*>[\s\S]*?<\/button>/, ''); };
 
 /* 10. free deadheads say so */
  
@@ -37,10 +35,6 @@ boardingPass = function(st, job, p, a, started){ const h=_frPass.apply(this, arg
 window.addEventListener('click', e=>{ const b=e.target.closest('[data-act="diff"]'); if(!b || !S.st || !S.st.active || !S.st.active.started) return; e.stopImmediatePropagation(); e.preventDefault(); toast('Change difficulty between flights, not during one.'); }, true);
 
 /* 14. if a different aircraft you can fly is loaded in MSFS, switch the job to it in one tap */
-const _frPf = preflightHTML;
-preflightHTML = function(job){ let h=_frPf(job); try{ const a=S.st&&S.st.active; if(!a || a.started || S.simState!=='live') return h; const L=loadedAircraft(); if(!L.id || L.id===job.ac || !canFly(S.st, L.id)) return h;
-    const probe=JSON.parse(JSON.stringify(job)); if(!refitJob(S.st, probe, L.id)) return h;
-    h=h.replace('<div class="su-chips">', `<div class="notice switch-ac"><b>MSFS has the ${esc(AC[L.id].n)} loaded.</b> <button class="btn sm primary" data-act="use-loaded">Fly this job in it instead</button></div><div class="su-chips">`); }catch(_){} return h; };
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="use-loaded"]') || !S.st || !S.st.active) return; const L=loadedAircraft(); const job=S.st.active.job; if(L.id && refitJob(S.st, job, L.id)){ save(); toast(`Switched to the ${AC[L.id].n}.`); S.keepScroll=true; render(); } else toast('That aircraft can\'t do this job.'); });
 
 /* 15. sealed orders only on flights long enough to need them, and never on checkrides or first flights */

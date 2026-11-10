@@ -10,5 +10,3 @@ function approachCard(a){ const s=S.sim; if(!s||!s.position||S.simState!=='live'
   const code=a.job.local?a.job.from:a.job.to; const w=(s.ext&&s.ext.weather)||null; const wx = w ? Object.assign({}, a.job.wx, {dir:w.windDir, spd:w.windKt, gust:0}) : a.job.wx; let r=null; try{ r=rwyAnalysis(code, wx, a.job.ac); }catch(_){}
   const vapp=(String(AC[a.job.ac].v||'').match(/(?:Approach|Vref|Vapp)\s*~?(\d+)/)||[])[1];
   return `<section class="appr-card"><div><span>Landing</span><b class="mono">${r&&!r.water?esc(r.rw):'into wind'}</b></div><div><span>Wind</span><b class="mono">${pad3(wx.dir)}°/${wx.spd}</b><small>${r&&!r.water?`${Math.round(Math.max(0,r.head))} head · ${Math.round(r.xw)} cross`:''}</small></div>${vapp?`<div><span>Approach</span><b class="mono">${vapp} kt</b><small>+5 if gusty</small></div>`:''}<div><span>Distance</span><b class="mono">${d.toFixed(1)} nm</b></div></section>`; }
-const _qkIf = inflightView;
-inflightView = function(){ const h=_qkIf(); const a=S.st&&S.st.active; if(!a) return h; const c=approachCard(a); return c ? h.replace(/(<section class="if-head">[\s\S]*?<\/section>)/, m=>m+c) : h; };
