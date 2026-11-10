@@ -45,8 +45,6 @@ function drawProfileCard(st){
   g.fillStyle='rgba(255,255,255,.7)'; g.font=`500 18px ${body}`; g.fillText(`${P.ach} achievements · ${P.chapters} story chapters · ${P.nm.toLocaleString()} nm flown in Microsoft Flight Simulator`,80,H-70);
   return cv;
 }
-const _pfBoard2 = boardView;
-boardView = function(){ return S.view==='profile' ? profileView() : _pfBoard2(); };
 document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="pf-card"]') || !S.st) return; const cv=drawProfileCard(S.st); const blob=await new Promise(r=>cv.toBlob(r,'image/png')); const name=`TradeWinds-profile-${S.st.pilot.name.replace(/\W+/g,'')}.png`;
   try{ if(window.twNative && twNative.saveFile){ const ok=await twNative.saveFile(name,new Uint8Array(await blob.arrayBuffer())); if(ok) toast('Profile card saved.'); return; } }catch(_){}
   try{ const dl=window.claude && await claude.use('downloads'); if(dl){ await dl.save({filename:name, data:blob}); toast('Profile card saved.'); return; } }catch(err){ if(err&&err.code==='declined') return; }

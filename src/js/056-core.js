@@ -27,18 +27,9 @@ function debriefSummary(L){ const {res,f,out,job}=L; const parts=(res.parts||[])
   </div></section>`; }
 
 /* ---- 2. one-tap filters on the job board ---- */
-const _mrBoard = boardView;
-boardView = function(){ const h=_mrBoard(); if(S.view!=='board'||!S.st) return h; const p=boardPrefs(); const on=k=>p.quick===k||(k==='pay'&&p.sort==='pay'&&!p.quick)?'on':'';
-  const bar=`<div class="quick-f"><button class="${!p.quick&&p.sort!=='pay'?'on':''}" data-act="qf" data-v="all">All</button><button class="${on('short')}" data-act="qf" data-v="short">Under 30 min</button><button class="${on('pay')}" data-act="qf" data-v="pay">Best pay</button><button data-act="nav" data-v="story">Story</button></div>`;
-  return h.replace(/(<h2>Jobs at [^<]*<\/h2>)/, '$1'+bar); };
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="qf"]'); if(!b) return; const p=boardPrefs(); const v=b.dataset.v; if(v==='all'){ delete p.quick; p.sort='dep'; } else if(v==='short'){ p.quick='short'; p.sort='dep'; } else if(v==='pay'){ delete p.quick; p.sort='pay'; } setBoardPrefs(p); S.keepScroll=true; render(); });
 
 /* ---- 3. first flight: the board shows only what matters ---- */
-const _mrBoard2 = boardView;
-boardView = function(){ const h=_mrBoard2(); const st=S.st; if(S.view!=='board' || !st || st.flights>0 || st.active) return h; const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h;
-  main.querySelectorAll('aside, .jgrid, .calm-showmore, .quick-f, .board-tools').forEach(e=>e.remove()); main.querySelectorAll('.section-title').forEach(e=>{ if(/Jobs at/.test(e.textContent)) e.remove(); });
-  const note=document.createElement('section'); note.className='panel first-note'; note.innerHTML=`<p class="label">Start here</p><h3>Fly your first story chapter</h3><p class="small">Press <b>Fly this chapter</b> above. The game walks you through loading into MSFS, and the job board opens up after your first landing.</p>`;
-  const camp=main.querySelector('.campaign'); if(camp) camp.after(note); return t.innerHTML; };
 
 /* ---- 4. use the real numbers of the aircraft loaded in MSFS ---- */
 function adoptSpec(){ const s=S.sim, st=S.st; if(!s || !s.spec || S.simState!=='live' || !st) return; const L=loadedAircraft(); if(!L || !L.id || !AC[L.id]) return; const id=L.id; st.acReal=st.acReal||{}; if(st.acReal[id]) return;

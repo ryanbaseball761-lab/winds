@@ -26,8 +26,6 @@ mapView = function(){ const h=_uiMap(); try{ const st=S.st; const v=MAPV[S.mapZo
   const next=MC.find(m=>!st.story.done[m.id]); if(next && AP[next.to]){ const b=AP[next.to], a=AP[next.from]; g+=`<line x1="${X(a.lon)}" y1="${Y(a.lat)}" x2="${X(b.lon)}" y2="${Y(b.lat)}" stroke="#d23b2c" stroke-width="3"/><circle cx="${X(b.lon)}" cy="${Y(b.lat)}" r="9" fill="none" stroke="#d23b2c" stroke-width="3" class="map-pulse"/><text x="${X(b.lon)+12}" y="${Y(b.lat)-12}" class="map-next">Next: ${esc(next.title)}</text>`; }
   g+='</g>'; const i=h.indexOf('</svg>'); return i>0 ? h.slice(0,i)+g+h.slice(i) : h; }catch(_){ return h; } };
 
-/* ---- dirty cash, fleet, crew and rank rewards on the right pages ---- */
-(function(){ const _b=boardView; boardView=function(){ const h=_b(); try{ const l=launderHTML(S.st); return l ? h.replace('<div class="b2-head">', l+'<div class="b2-head">') : h; }catch(_){ return h; } }; })();
 (function(){ const _m=moneyView; moneyView=function(){ const h=_m(); try{ const l=launderHTML(S.st); return l ? h.replace(/(<main[^>]*>)/, '$1'+l) : h; }catch(_){ return h; } }; })();
 (function(){ const _sv=storyView; storyView=function(){ const h=_sv(); try{ const c=crime(S.st); if(!c.on) return h; const perks=RANK_PERKS.map(([v,n,p])=>`<li class="${c.power>=v?'on':''}"><b>${n}</b> <span class="mono small">${v}+</span><p>${esc(p)}</p></li>`).join('');
   const f=fleetCrewHTML(S.st); return h.replace('<section class="panel"><h3>The five acts</h3>', `<div class="sh-grid">${f||''}<section class="panel"><h3>Rank rewards <span class="small muted">Power ${c.power}</span></h3><ul class="perks">${perks}</ul></section></div><section class="panel"><h3>The five acts</h3>`); }catch(_){ return h; } }; })();
@@ -39,8 +37,6 @@ document.addEventListener('click', async e=>{ const b=e.target.closest('[data-ac
   if(!testSession()){ const json=JSON.stringify(S.st); try{ localStorage.setItem(TEST_KEY, json); }catch(_){ toast('Could not save a backup.'); return; } try{ if(window.twNative&&twNative.flightLog) await twNative.flightLog('real-career-backup.json', json); }catch(_){} S.st.ui=S.st.ui||{}; S.st.ui.testTools=true; save(); toast('Test session started. Your real career is backed up.'); }
   else { let json=null; try{ json=localStorage.getItem(TEST_KEY); }catch(_){} if(!json) return; S.st=JSON.parse(json); S.st.savedAt=Date.now(); try{ localStorage.removeItem(TEST_KEY); }catch(_){} save(); toast('Test session ended. Your real career is back.'); }
   S.keepScroll=true; render(); });
-(function(){ const _b=boardView; boardView=function(){ const h=_b(); const on=testSession(); const box=`<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><button class="btn sm ${on?'action':''}" data-act="test-session">${on?'End test session · restore my real career':'Start a test session'}</button><span class="tiny muted">${on?'Anything you do now is thrown away when you end the session.':'Backs up your career first, so you can skip and experiment freely.'}</span></div>`;
-  return h.replace('<button class="btn sm" data-act="practice"', box+'<button class="btn sm" data-act="practice"'); }; })();
 
 /* ---- 20. leftovers from the old career: Academy, Butter Cup and old names ---- */
 TEXT_FIX.push([/Coral Wing's (pilots|crews|chief pilot)/g,'the island pilots'],[/Mari says,?/g,'Your instructor says'],[/the Coral Wing (team|family)/g,'the islands']);

@@ -2196,77 +2196,6 @@ function avatar(k){ const c=CAST[k]; const ini=c.n.replace(/".*?"\s*/,'').split(
 
 /* ---------- board ---------- */
 
-function boardView(){
-  const st=S.st; ensureJobs(st);
-  const here=AP[st.loc];
-  const _sa = storyAvailable(st); const stories = _sa.filter(m=>!m.side).slice(0,2).concat(_sa.filter(m=>m.side).slice(0,1));
-  const ready = RATING_ORDER.filter(r=>r!=='CO' && checkrideReady(st,r).ok);
-  const locWx = genLocWx(st);
-  const dutyPct = Math.min(100, st.duty/DUTY_MAX*100);
-  let storyHTML = stories.map(m=>{
-    const acs = storyAircraft(st, m);
-    if(st.loc!==m.from){
-      const dh = deadheadCost(st, m.from);
-      const pseudo = storyJob(st, m, acs[0]||m.ac[0]);
-      return stripHTML(st, pseudo, {btn: `<button class="btn sm" data-act="deadhead" data-to="${m.from}" ${st.active||st.cash<dh.cost?'disabled':''}>Deadhead to ${m.from} · ${money(dh.cost)}</button>`});
-    }
-    if(!acs.length){ const pseudo = storyJob(st, m, m.ac[0]); return stripHTML(st, pseudo, {locked:true, btn:`<span class="chip warn">Needs: ${m.ac.map(k=>AC[k].n.replace(/^(Cessna|Beechcraft|Diamond|CubCrafters|Zlin|ICON|de Havilland Canada|Grumman|Pilatus|Daher|Douglas|Cirrus|Airbus|Boeing|Heart Aerospace)\s/,'')).slice(0,3).join(' / ')}</span>`}); }
-    const job = storyJob(st, m, acs[0]);
-    const sel = acs.length>1 ? `<label class="row small" style="margin-top:8px;gap:6px"><span class="muted">Fly it in</span><select data-story-ac="${m.id}" style="width:auto;max-width:100%;padding:5px 8px;font-size:13px">${acs.map(k=>`<option value="${k}">${esc(AC[k].n)}</option>`).join('')}</select></label>` : '';
-    return stripHTML(st, job, {extra:sel, btn: st.active ? `<button class="btn sm" disabled>Flight booked</button>` : `<button class="btn action sm" data-act="accept-story" data-id="${m.id}">Accept</button>`});
-  }).join('');
-  const jobsHTML = st.jobs.length ? st.jobs.map(j=>stripHTML(st,j)).join('') : `<div class="empty"><h3>No work at ${esc(st.loc)} right now</h3><p>Rest until tomorrow for new jobs, or deadhead to a busier airport.</p></div>`;
-  const regions = allowedRegions(st);
-  const dests = Object.keys(AP).filter(k=>k!==st.loc && !AP[k].water && regions.includes(AP[k].r)).sort((a,b)=>AP[a].isl.localeCompare(AP[b].isl));
-  const tv = S.travelTo && dests.includes(S.travelTo) ? S.travelTo : dests[0];
-  const dh = tv ? deadheadCost(st, tv) : null;
-  const rw = rwyAnalysis(st.loc, locWx);
-  return `<main class="wrap">${todayHero(st)}<div class="grid-2">
-   <div class="stack fade">
-    ${campaignCard(st)}${dispatchCard(st)}
-    ${st.active ? `<div class="notice"><b>Flight booked:</b> ${esc(st.active.job.title)} (${esc(st.active.job.from)} → ${esc(st.active.job.to)}). <a href="#flight" data-act="nav" data-v="flight">Open the briefing</a></div>`:''}
-    ${st.clock>=1440 || st.duty>=DUTY_MAX ? `<div class="notice warn"><b>You're out of duty time for today.</b> Rest to start a new day with fresh jobs.</div>`:''}
-    ${stories.length ? `<section><div class="section-title"><h2>Story missions</h2><span class="muted small">Chapters you can fly from here today</span></div><div class="jgrid">${storyHTML}</div></section>`:''}
-    ${ready.length ? `<div class="notice"><b>Checkride ready:</b> ${ready.map(r=>RATINGS[r].n).join(', ')}. <a href="#pilot" data-act="nav" data-v="pilot">Book it on the Pilot tab</a></div>`:''}
-    <section><div class="section-title"><h2>Jobs at ${esc(st.loc)}</h2><div class="row"><span class="muted small">${st.company?'Coral Wing work and your own company\'s contracts':'Posted by Coral Wing dispatch'}</span>${S.sample && !S.sampleOff?`<button class="btn sm action" data-act="ai-surprise" ${S.busy.surprise||st.active?'disabled':''}>${S.busy.surprise?'Dispatch is on the phone…':'Surprise me'}</button>`:''}</div></div>${S.busy.surpriseErr?`<p class="small" style="color:var(--bad);margin-bottom:8px">${esc(S.busy.surpriseErr)}</p>`:''}<div class="jgrid">${jobsHTML}</div></section>
-   </div>
-   <aside class="stack">
-    ${goalsHTML(st)}
-    <div class="panel">
-      <p class="label">${esc(COUNTRY[here.c])}</p>
-      <h2 style="margin-top:2px">${esc(here.n)}</h2>
-      <p class="muted small">${esc(here.isl)} · ${esc(st.loc)} · elevation ${here.el} ft</p>
-      <div class="metar" style="margin-top:12px">${esc(metar(st.loc, locWx, st.day, st.clock))}</div>
-      <dl class="kv" style="margin-top:12px">
-        <dt>Weather</dt><dd>${esc(locWx.n)}</dd>
-        <dt>Runways</dt><dd class="mono">${here.rw.map(r=>`${r[0]} · ${r[1].toLocaleString()} ft`).join('<br>')}</dd>
-        <dt>In use</dt><dd>Runway ${esc(rw.rw)} · ${Math.round(rw.head)} kt headwind, ${Math.round(rw.xw)} kt crosswind</dd>
-        <dt>Fuel</dt><dd class="mono">Avgas $${fuelPrice(st,st.loc,'avgas').toFixed(2)} · Jet-A $${fuelPrice(st,st.loc,'jeta').toFixed(2)}</dd>
-      </dl>
-      <p class="small" style="margin-top:10px">${esc(here.note)}</p>
-    </div>
-    <div class="panel stack">
-      <div class="row between"><h3>Duty day</h3><span class="mono small">${durTxt(st.duty)} / 10 h</span></div>
-      <div class="meter ${dutyPct>85?'bad':dutyPct>65?'warn':''}"><i style="width:${dutyPct}%"></i></div>
-      <p class="small muted">Pilots get 10 hours of duty per day, counting waiting time, flights and turnarounds.</p>
-      <button class="btn" data-act="rest" ${st.active?'disabled':''}>Rest until tomorrow, 07:00</button>
-    </div>
-    <div class="panel stack">
-      <h3>Travel as a passenger</h3>
-      <p class="small muted">Deadhead on an airline seat to another airport. Costs a ticket and some duty time, and you don't log the hours.</p>
-      <label class="field"><span class="sr">Destination</span><select id="travel-to">${dests.map(k=>`<option value="${k}" ${k===tv?'selected':''}>${esc(AP[k].isl)} · ${k}</option>`).join('')}</select></label>
-      ${dh?`<p class="small mono">${dh.d} nm · ${money(dh.cost)} · ~${durTxt(dh.min)}</p>`:''}
-      <button class="btn" data-act="deadhead" data-to="${tv||''}" ${st.active||!dh||st.cash<dh.cost?'disabled':''}>Book the seat</button>
-    </div>
-    <details class="panel"><summary>How a flight works</summary>
-      <ol class="tight small" style="margin-top:8px">
-        <li>Accept a job. The Flight tab gives you the story, the route, the weather to set in MSFS and the load sheet.</li>
-        <li>Set up MSFS exactly as the briefing says, then press <b>Start flight</b> to run the block timer.</li>
-        <li>If there are sealed orders, open them at the trigger point and handle the situation.</li>
-        <li>After shutdown, press <b>Log the landing</b> and report honestly. Your grade drives pay, reputation and story outcomes.</li>
-      </ol></details>
-   </aside></div></main>`;
-}
 function genLocWx(st){ const k=st.loc+'|'+st.day; if(!st.locWx || st.locWx.k!==k){ st.locWx = {k, wx: genWx(st, st.loc, null, st.clock)}; } return st.locWx.wx; }
 
 /* ---------- flight ---------- */
@@ -3136,36 +3065,6 @@ const WX_ICON = {
 function wxIconKey(w){ const k=w.key||''; return k==='tstorm'?'storm': k==='showers'||k==='wave'?'rain': k==='dust'?'haze': k==='north'?'wind': (w.cl&&w.cl.some(c=>c[0]==='BKN'||c[0]==='OVC'))?'cloud':'sun'; }
 
 const ICO_PLANE = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15.5 13.5 11V5.5a1.5 1.5 0 0 0-3 0V11L3 15.5v2l7.5-2.3V19l-2 1.5V22l3.5-1 3.5 1v-1.5l-2-1.5v-3.8l7.5 2.3z"/></svg>`;
-function stripHTML(st, job, opts={}){
-  const extra = opts.extra||'';
-  const a=AC[job.ac]; const p=plan(job); const kd=jobKind(job);
-  const duty = dutyAfter(st, job); const overDuty = duty > DUTY_MAX;
-  const load = job.pax ? `${job.pax} pax${job.cargo?` · ${job.cargo} lb`:''}` : job.cargo ? `${job.cargo} lb cargo` : 'Ferry, empty';
-  const payTxt = job.kind==='check' ? 'Checkride' : job.company ? money(Math.round(job.pay*2.6 - a.op*job.est/60)) : money(job.pay);
-  const payLbl = job.kind==='check' ? '' : job.company ? 'est. profit' : 'pay';
-  const btn = opts.btn!==undefined ? opts.btn : (st.active ? `<button class="btn sm" disabled>Flight booked</button>` : overDuty ? `<span class="chip warn">Over duty limit</span>` : `<button class="btn primary jc-go" data-act="accept" data-id="${job.id}">Accept ${ICO_PLANE}</button>`);
-  const from = AP[job.from], to = job.mystery ? null : AP[job.to];
-  const toCode = job.mystery ? '????' : job.local ? job.from : job.to;
-  const toName = job.mystery ? 'Sealed destination' : job.local ? 'Local flight' : to.isl.replace(/\s*\(.*\)/,'');
-  const dist = job.mystery ? '' : job.local ? `${p.dist} nm loop` : `${p.dist} nm`;
-  const w = job.wx;
-  const wxHTML = job.mystery
-    ? `<span class="jc-wx"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3M6 11h12v9H6z"/></svg>${job.celeb?'Rumor: someone famous':job.aiGen?'A very odd booking':'Sealed until you accept'}</span>`
-    : `<span class="jc-wx" title="${esc(w.n)}"><svg viewBox="0 0 24 24" aria-hidden="true">${WX_ICON[wxIconKey(w)]}</svg><span>${esc((x=>x.charAt(0).toUpperCase()+x.slice(1))(w.n.replace(/^(Classic|Passing) /,'')))}</span><span class="mono">${pad3(w.dir)}°/${w.spd}${w.gust?'G'+w.gust:''}</span></span>`;
-  const title = job.mystery ? (job.aiGen?esc(job.title):'Confidential charter') : esc(job.title);
-  return `<article class="jcard k-${kd.k} ${opts.locked?'locked':''}" style="--k:${kd.c}">
-    <div class="jc-top"><span class="jc-type">${esc(kd.t)}</span><span class="jc-pay"><b>${payTxt}</b>${payLbl?`<small>${payLbl}</small>`:''}</span></div>
-    <div class="jc-route">
-      <div><b>${esc(job.from)}</b><span>${esc(from.isl.replace(/\s*\(.*\)/,''))}</span></div>
-      <div class="jc-line" aria-hidden="true"><i></i>${ICO_PLANE}<i></i></div>
-      <div class="r"><b>${esc(toCode)}</b><span>${esc(toName)}</span></div>
-    </div>
-    <h3 class="jc-title">${title}</h3>
-    <p class="jc-meta">${esc(a.n.replace(/^(Cessna|Beechcraft|Diamond|CubCrafters|Zlin|ICON|de Havilland Canada|Grumman|Pilatus|Daher|Douglas|Cirrus|Airbus|Boeing|Heart Aerospace)\s/,''))} · ${load}${dist?` · ${dist}`:''} · ~${durTxt(p.est)} · <span class="mono">STD ${hhmm(job.dep)}</span></p>
-    <div class="chips">${chipsFor(st,job)}</div>${extra}
-    <div class="jc-foot">${wxHTML}${btn}</div>
-  </article>`;
-}
 /* ===================== APP SHELL (sidebar + top bar) & LIVE CABIN ===================== */
 const VIEW_META = {
   board:['Job board','Today\'s flying, story missions and dispatch'],
@@ -3372,8 +3271,6 @@ function loadedBanner(st){
   const a=AC[L.id]; const ok=canFly(st,L.id);
   return `<div class="notice row between" style="gap:10px"><span><b>Loaded in MSFS: ${esc(a.n)}.</b> ${ok?`Jobs for it are at the top of the board.`:`You'll need ${a.req.filter(r=>!st.ratings[r]).map(r=>RATINGS[r].n).join(' + ')} to fly it for pay.`}</span>${ok?'<span class="chip sea">Your plane</span>':''}</div>`;
 }
-const _myBoard = boardView;
-boardView = function(){ const h=_myBoard(); return h.replace('<section><div class="section-title"><h2>Jobs at', loadedBanner(S.st)+'<section><div class="section-title"><h2>Jobs at'); };
 
 /* Hangar: bring your own aircraft */
 function byoSection(st){
@@ -3504,8 +3401,6 @@ function weeklyPanel(st){
     <div class="season" style="--c:${s.c}"><b>${esc(s.n)}</b><span class="tiny">${esc(s.d)}</span></div>
   </section>`;
 }
-const _wkBoard = boardView;
-boardView = function(){ const h=_wkBoard(); const i=h.indexOf('<aside class="stack">'); return i<0 ? h : h.slice(0,i)+'<aside class="stack">'+weeklyPanel(S.st)+h.slice(i+'<aside class="stack">'.length); };
 function recordsPanel(st){
   const R=st.records||{}; const row=(lbl,r,fmt)=>`<div class="rec"><span class="label">${lbl}</span><b class="mono">${r?fmt(r.v):'—'}</b><span class="tiny muted">${r&&r.at?esc(r.at)+' · day '+r.day:'Not set yet'}</span></div>`;
   return `<section><div class="section-title"><h2>Personal records</h2><span class="small muted">${st.weeksWon?`${st.weeksWon} weekly championship${st.weeksWon>1?'s':''}`:'Beat your best'}</span></div>
@@ -3927,8 +3822,6 @@ function academyView(){
     <div class="ac-grid">${LESSONS.map((l,i)=>`<article class="ac-card ${A.done[l.id]?'done':''} ${A.cur===l.id?'cur':''}"><div class="ac-ic">${l.icon}</div><div style="min-width:0"><p class="label">Lesson ${i+1} · ${esc(l.lvl)}</p><h3>${esc(l.n)}</h3><p class="small muted">${esc(l.why.split('. ')[0])}.</p><div class="row" style="margin-top:8px">${A.done[l.id]?'<span class="chip good">✓ Complete</span>':''}<span class="chip">${l.min} min</span><button class="btn sm ${A.cur===l.id?'':'primary'}" data-act="ac-start" data-id="${l.id}">${A.cur===l.id?'In progress':A.done[l.id]?'Fly again':'Start'}</button></div></div></article>`).join('')}</div>
   </main>`;
 }
-const _acBoard = boardView;
-boardView = function(){ return S.view==='academy' ? academyView() : _acBoard(); };
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="ac-start"],[data-act="ac-next"],[data-act="ac-stop"]'); if(!b || !S.st) return; const A=acad(S.st);
   if(b.dataset.act==='ac-start'){ startLesson(b.dataset.id); return; }
@@ -3978,12 +3871,6 @@ function silType(acId){ const a=AC[acId]; if(!a) return 'high';
 function acSvgInner(acId, color){ return `<g fill="${color||'currentColor'}" style="color:${color||'currentColor'}">${SIL[silType(acId)]}</g>`; }
 function acSvg(acId, cls){ return `<svg class="${cls||'sil'}" viewBox="0 0 120 40" aria-hidden="true">${acSvgInner(acId)}</svg>`; }
 /* job cards: a postcard of the destination with your aircraft */
-const _artStrip = stripHTML;
-stripHTML = function(st, job, opts={}){
-  const h=_artStrip(st, job, opts);
-  const art = `<div class="jc-art">${islandArt(job.mystery?'????':job.local?job.from+'L':job.to, job.dep, 600, 120, job.ac)}</div>`;
-  return h.replace(/(<article class="jcard[^>]*>)/, '$1'+art);
-};
 /* boarding pass: destination postcard header */
 /* hangar cards get a silhouette */
 /* ===================== STORY: THE BUYOUT (main story, early career) ===================== */
@@ -4418,8 +4305,6 @@ function drawProfileCard(st){
   g.fillStyle='rgba(255,255,255,.7)'; g.font=`500 18px ${body}`; g.fillText(`${P.ach} achievements · ${P.chapters} story chapters · ${P.nm.toLocaleString()} nm flown in Microsoft Flight Simulator`,80,H-70);
   return cv;
 }
-const _pfBoard2 = boardView;
-boardView = function(){ return S.view==='profile' ? profileView() : _pfBoard2(); };
 document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="pf-card"]') || !S.st) return; const cv=drawProfileCard(S.st); const blob=await new Promise(r=>cv.toBlob(r,'image/png')); const name=`TradeWinds-profile-${S.st.pilot.name.replace(/\W+/g,'')}.png`;
   try{ if(window.twNative && twNative.saveFile){ const ok=await twNative.saveFile(name,new Uint8Array(await blob.arrayBuffer())); if(ok) toast('Profile card saved.'); return; } }catch(_){}
   try{ const dl=window.claude && await claude.use('downloads'); if(dl){ await dl.save({filename:name, data:blob}); toast('Profile card saved.'); return; } }catch(err){ if(err&&err.code==='declined') return; }
@@ -4504,8 +4389,6 @@ function cupView(){
       <button class="btn ${C.cur===c.id?'':'primary'} sm" data-act="cup-start" data-id="${c.id}" ${C.cur&&C.cur!==c.id?'disabled':''}>${C.cur===c.id?'In progress':b?'Try again':'Start attempt'}</button></div></article>`; }).join('')}</div>
   </main>`;
 }
-const _cupBoard = boardView;
-boardView = function(){ return S.view==='cup' ? cupView() : _cupBoard(); };
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="cup-start"],[data-act="cup-stop"],[data-act="cup-dismiss"]'); if(!b || !S.st) return; const C=cupState(S.st);
   if(b.dataset.act==='cup-start') startCup(b.dataset.id);
@@ -4797,11 +4680,6 @@ function jobPerHour(j){ const est=j.est||plan(j).est; return j.pay / Math.max(0.
 function boardTools(st){ const p=boardPrefs(); const acs=[...new Set(st.jobs.map(j=>j.ac))];
   const sel=(k,opts)=>`<select data-act="bp" data-k="${k}" aria-label="${k}">${opts.map(([v,l])=>`<option value="${v}" ${ (p[k]||opts[0][0])===v?'selected':''}>${esc(l)}</option>`).join('')}</select>`;
   return `<div class="board-tools">${sel('sort',[['dep','Soonest'],['pay','Highest pay'],['rate','Best pay per hour'],['short','Shortest'],['long','Longest']])}${sel('kind',[['all','All jobs'],['pax','Passengers'],['cargo','Cargo'],['vip','VIP'],['urgent','Urgent'],['local','Local tours']])}${acs.length>1?sel('ac',[['all','Any aircraft'],...acs.map(k=>[k,AC[k].n])]):''}</div>`; }
-const _gpBoard = boardView;
-boardView = function(){ const st=S.st; if(!st || S.view!=='board') return _gpBoard(); try{ ensureJobs(st); }catch(_){} if(!st.jobs) return _gpBoard(); const all=st.jobs; const shown=filterJobs(all);
-  st.jobs=shown; let h; try{ h=_gpBoard(); } finally { st.jobs=all; }
-  const hidden=all.length-shown.length;
-  return h.replace(/(<h2>Jobs at [^<]*<\/h2>)/, `$1${boardTools(st)}${hidden?`<span class="tiny muted">${hidden} hidden by filters</span>`:''}`); };
 document.addEventListener('change', e=>{ const s=e.target.closest('[data-act="bp"]'); if(!s) return; const p=boardPrefs(); p[s.dataset.k]=s.value; setBoardPrefs(p); S.keepScroll=true; render(); });
 
 /* ---- difficulty with teeth ---- */
@@ -5100,10 +4978,6 @@ const WEEKEND = [
 ].filter(e=>AP[e.ap]);
 function weekendEvent(st){ const d=dateOf(st.day); const wd=d.getUTCDay(); if(wd!==5 && wd!==6 && wd!==0) return null; const sat = wd===0 ? st.day-1 : wd===5 ? st.day+1 : st.day; const wk=Math.floor(sat/7); return WEEKEND[wk % WEEKEND.length]; }
 function weekendBanner(st){ const ev=weekendEvent(st); if(!ev) return ''; return `<section class="panel weekend"><div class="row between"><div><p class="label">This weekend · ${esc(AP[ev.ap].isl)}</p><h3>${esc(ev.n)}</h3></div><span class="chip good">+35% pay to ${esc(ev.ap)}</span></div><p class="small">${esc(ev.d)}</p></section>`; }
-const _weBoard = boardView;
-boardView = function(){ const h=_weBoard(); if(S.view!=='board' || !S.st) return h; const b=weekendBanner(S.st); return b ? h.replace(/(<section><div class="section-title"><h2>Jobs at)/, b+'$1') : h; };
-const _weStrip = stripHTML;
-stripHTML = function(st, job, opts){ const h=_weStrip(st, job, opts); return job.event ? h.replace('<article class="jcard', `<article data-event="1" class="jcard event`) : h; };
 
 /* ---- 6. new side story: Coast Watch ---- */
 CAST.ortiz = {n:`Lt. Daniela Ortiz`, col:'#c2410c', role:`US Coast Guard, Air Station Borinquen`, bio:`Flew Jayhawks with Mari a lifetime ago. Calm on the radio, terrifying in a debrief.`};
@@ -5309,8 +5183,6 @@ const CHECKOUT_TXT = {
   stol:`This one gets into strips you'd never try in a Skyhawk. Fly slow, stay ahead of it, and use every bit of the short-field technique.`
 };
 /* checkout jobs show an instructor tag on the card */
-const _fmStrip = stripHTML;
-stripHTML = function(st, job, opts){ const h=_fmStrip(st, job, opts); return job.checkout ? h.replace('<article class="jcard', '<article data-checkout="1" class="jcard checkout') : h; };
 /* ===================== CALM: fewer things on every screen ===================== */
 function tpl(h){ const t=document.createElement('template'); t.innerHTML=h; return t; }
 function headText(el){ return ((el.querySelector('h1,h2,h3,.label')||{}).textContent||'').trim(); }
@@ -5320,19 +5192,6 @@ function wrapDetails(nodes, title, cls){ if(!nodes.length) return null; const d=
 
 /* ---- job board ---- */
 const CHIP_KEEP = /urgent|vip|sealed|bonus|owner|ifr|night|instructor|festival|storm|hurricane|2×|double/i;
-const _cmBoard = boardView;
-boardView = function(){ const h=_cmBoard(); if(S.view!=='board' || !S.st) return h; const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h; const st=S.st;
-  // story chapters already live in the story card, and the morning dispatch is noise
-  main.querySelectorAll('section').forEach(sec=>{ const ht=headText(sec); if(/^Story missions/.test(ht) || sec.classList.contains('dispatch')) sec.remove(); });
-  // sidebar: keep the day (duty, rest, travel); everything else folds away
-  const aside=main.querySelector('aside.stack'); if(aside){ const extra=[]; [...aside.children].forEach(el=>{ const ht=headText(el); if(/duty day/i.test(ht) || /travel as a passenger/i.test(ht)) return; if(/how a flight works|goals|weekly|this week|hurricane|landing league/i.test(ht) || el.classList.contains('weekly')) { el.remove(); return; } extra.push(el); });
-    const d=wrapDetails(extra.filter(e=>e.parentNode).map(e=>{ e.remove(); return e; }), `About ${esc(AP[st.loc].n)}`, 'aside-more'); if(d) aside.appendChild(d); }
-  // job cards: two tags at most, and only six cards until you ask for more
-  main.querySelectorAll('.jcard').forEach(c=>{ const chips=[...c.querySelectorAll('.chip')]; let kept=0; chips.forEach(ch=>{ if(CHIP_KEEP.test(ch.textContent) && kept<2){ kept++; } else ch.remove(); }); });
-  const grid=[...main.querySelectorAll('.jgrid')].pop(); if(grid && !S.allJobs){ const cards=[...grid.children]; if(cards.length>6){ cards.slice(6).forEach(c=>c.remove()); const more=document.createElement('button'); more.className='btn ghost calm-showmore'; more.dataset.act='all-jobs'; more.textContent=`Show all ${cards.length} jobs`; grid.after(more); } }
-  // story card: the main chapter plus at most two side stories
-  const rows=[...main.querySelectorAll('.campaign .side-row')]; if(rows.length>2){ rows.slice(2).forEach(r=>r.remove()); const a=document.createElement('button'); a.className='btn sm ghost'; a.dataset.act='nav'; a.dataset.v='story'; a.textContent=`${rows.length-2} more side stor${rows.length-2>1?'ies':'y'} on the story map`; main.querySelector('.campaign .side-list').appendChild(a); }
-  return t.innerHTML; };
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="all-jobs"]')){ S.allJobs=true; S.keepScroll=true; render(); } });
 const _cmGo = go; go = function(v){ if(v!=='board') S.allJobs=false; return _cmGo.apply(this, arguments); };
 
@@ -5411,18 +5270,9 @@ function debriefSummary(L){ const {res,f,out,job}=L; const parts=(res.parts||[])
   </div></section>`; }
 
 /* ---- 2. one-tap filters on the job board ---- */
-const _mrBoard = boardView;
-boardView = function(){ const h=_mrBoard(); if(S.view!=='board'||!S.st) return h; const p=boardPrefs(); const on=k=>p.quick===k||(k==='pay'&&p.sort==='pay'&&!p.quick)?'on':'';
-  const bar=`<div class="quick-f"><button class="${!p.quick&&p.sort!=='pay'?'on':''}" data-act="qf" data-v="all">All</button><button class="${on('short')}" data-act="qf" data-v="short">Under 30 min</button><button class="${on('pay')}" data-act="qf" data-v="pay">Best pay</button><button data-act="nav" data-v="story">Story</button></div>`;
-  return h.replace(/(<h2>Jobs at [^<]*<\/h2>)/, '$1'+bar); };
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="qf"]'); if(!b) return; const p=boardPrefs(); const v=b.dataset.v; if(v==='all'){ delete p.quick; p.sort='dep'; } else if(v==='short'){ p.quick='short'; p.sort='dep'; } else if(v==='pay'){ delete p.quick; p.sort='pay'; } setBoardPrefs(p); S.keepScroll=true; render(); });
 
 /* ---- 3. first flight: the board shows only what matters ---- */
-const _mrBoard2 = boardView;
-boardView = function(){ const h=_mrBoard2(); const st=S.st; if(S.view!=='board' || !st || st.flights>0 || st.active) return h; const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h;
-  main.querySelectorAll('aside, .jgrid, .calm-showmore, .quick-f, .board-tools').forEach(e=>e.remove()); main.querySelectorAll('.section-title').forEach(e=>{ if(/Jobs at/.test(e.textContent)) e.remove(); });
-  const note=document.createElement('section'); note.className='panel first-note'; note.innerHTML=`<p class="label">Start here</p><h3>Fly your first story chapter</h3><p class="small">Press <b>Fly this chapter</b> above. The game walks you through loading into MSFS, and the job board opens up after your first landing.</p>`;
-  const camp=main.querySelector('.campaign'); if(camp) camp.after(note); return t.innerHTML; };
 
 /* ---- 4. use the real numbers of the aircraft loaded in MSFS ---- */
 function adoptSpec(){ const s=S.sim, st=S.st; if(!s || !s.spec || S.simState!=='live' || !st) return; const L=loadedAircraft(); if(!L || !L.id || !AC[L.id]) return; const id=L.id; st.acReal=st.acReal||{}; if(st.acReal[id]) return;
@@ -5470,8 +5320,6 @@ function connCard(st){ const live=S.simState==='live'; const s=S.sim||{}; const 
     <button class="btn sm" data-act="practice" ${st.active?'disabled':''}>Practice landing</button>
     <label class="row cc-t"><input type="checkbox" data-act="calm-test" ${testMode()?'checked':''}> Calm test mode <span class="tiny muted">(no sealed orders, cabin requests or urgent jobs)</span></label>
   </div></section>`; }
-const _tsBoard = boardView;
-boardView = function(){ const h=_tsBoard(); if(S.view!=='board'||!S.st) return h; return h.replace(/(<section[^>]*class="today[\s\S]*?<\/section>)/, m=>m+connCard(S.st)); };
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="calm-test"]'); if(!b||!S.st) return; S.st.ui=S.st.ui||{}; S.st.ui.calmTest=b.checked; if(b.checked) (S.st.jobs||[]).forEach(j=>{ j.scen=null; delete j.ask; }); save(); toast(b.checked?'Calm test mode on: plain A-to-B flights.':'Calm test mode off.'); S.keepScroll=true; render(); });
 
 /* ---- practice landing: no pay, no logbook, just the grade ---- */
@@ -5545,11 +5393,6 @@ loadIntoSim = async function(job){ if(!S.mcp){ toast('MSFS isn\'t connected.'); 
 
 /* ---- 5 + 6. no duty day, no "past midnight": the day rolls over by itself ---- */
 dutyAfter = function(){ return 0; };
-const _fbBoard = boardView;
-boardView = function(){ const h=_fbBoard(); if(S.view!=='board'||!S.st) return h; const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h;
-  main.querySelectorAll('section, .notice, aside > *').forEach(s=>{ if(!s.parentNode) return; const ht=headText(s); if((/Duty day/.test(ht) || /out of duty time/i.test(s.textContent)) && !/Travel as a passenger/.test(s.textContent)) s.remove(); });
-  const aside=main.querySelector('aside.stack'); if(aside){ const nd=document.createElement('section'); nd.className='panel stack'; nd.innerHTML=`<div class="row between"><h3>Want different work?</h3></div><p class="small muted">Start a new day for a fresh set of jobs.</p><button class="btn" data-act="rest">New day</button>`; aside.prepend(nd); }
-  return t.innerHTML; };
 
 /* ---- 7. Coral Wing pays your deadhead tickets until you run your own company ---- */
 const _fbDh = deadheadCost;
@@ -5615,8 +5458,6 @@ const _p20Toast = toast;
 toast = function(msg){ const m=String(msg); if(/^New tab unlocked: (Logbook|Profile|Company|Cockpit)/.test(m)) return; const now=Date.now(); if(S._lt===m && now-(S._ltT||0)<20000) return; S._lt=m; S._ltT=now; return _p20Toast(msg); };
 
 /* 2. a past departure time reads "Ready now" */
-const _p20Strip = stripHTML;
-stripHTML = function(st, job, opts){ let h=_p20Strip(st, job, opts); if(job.dep<=st.clock) h=h.replace(`STD ${hhmm(job.dep)}`, 'Ready now'); return h; };
 
 /* 3 + 4. difficulty and theme move out of the top bar and sidebar into Hangar > Settings */
 
@@ -5651,12 +5492,8 @@ const _p20Appr = approachCard;
 approachCard = function(a){ const s=S.sim; if(a && a.job.local && s && s.motion && !(s.motion.vsFpm<-200 && (s.position.aglFt||0)<2500)) return ''; return _p20Appr(a); };
 
 /* 14. the New day button says what it costs */
-const _p20Board = boardView;
-boardView = function(){ const h=_p20Board(); try{ const F=fin(S.st); const H=HOUSING[F.housing]||HOUSING.bunk; return h.replace('<button class="btn" data-act="rest">New day</button>', `<button class="btn" data-act="rest">New day · rent ${money(H.rent)}</button>`); }catch(_){ return h; } };
 
 /* 15. story chapters and jobs prefer the aircraft you already have loaded in MSFS */
-const _p20Strip2 = stripHTML;
-stripHTML = function(st, job, opts){ const h=_p20Strip2(st, job, opts); const ld=S.simState==='live'?loadedAircraft():{}; return (ld.id && job.ac===ld.id) ? h.replace(/(<article[^>]*class="jcard[^"]*"[^>]*>)/, '$1<span class="loaded-tag">Loaded in MSFS</span>') : h; };
 
 /* 16. new pilots don't get sealed orders or cabin requests until they've settled in */
 
@@ -5669,8 +5506,6 @@ const _p20Pilot2 = pilotView;
 pilotView = function(){ return _p20Pilot2().replace(/<select([^>]*)aria-label="Checkride fee"/g, '<select$1aria-label="Checkride fee" title="Faster checkrides cost more"'); };
 
 /* 19. "Checkride ready" on the board is a button that takes you there */
-const _p20Board2 = boardView;
-boardView = function(){ return _p20Board2().replace(/<a[^>]*>Book it on the Pilot tab<\/a>/, '<button class="btn sm" data-act="nav" data-v="pilot">Book checkride</button>'); };
 
 /* 20. very long job titles are clamped to two lines (CSS) */
 /* ===================== HW2 "Below the Surface": a short hand-flown hop on St. Martin, landing in Simpson Bay Lagoon beside TNCM ===================== */
@@ -5931,14 +5766,6 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="cri
 
 
 /* ---- side jobs grow with the story: 2 at the start, up to 6 by Act 3 ---- */
-const _crBoard = boardView;
-boardView = function(){ const h=_crBoard(); if(S.view!=='board' || !S.st) return h; const t=tpl(h); const mainEl=t.content.querySelector('main'); if(!mainEl) return h;
-  const hq=mainEl.querySelector('.hq'); if(hq){ const anchor=mainEl.querySelector('.conn-card')||mainEl.querySelector('.grid-2'); if(anchor) anchor.before(hq); }
-  const MC=mainChapters(); const n=MC.filter(m=>S.st.story.done[m.id]).length;
-  if(!S.allJobs && n<MC.length){ const lim=Math.min(6, 2+Math.floor(n/2)); const grid=[...mainEl.querySelectorAll('.jgrid')].pop();
-    if(grid){ const cards=[...grid.children].filter(c=>c.tagName==='ARTICLE'||c.classList.contains('jcard'));
-      if(cards.length>lim){ cards.slice(lim).forEach(c=>c.remove()); if(!mainEl.querySelector('[data-act="all-jobs"]')){ const more=document.createElement('button'); more.className='btn ghost calm-showmore'; more.dataset.act='all-jobs'; more.textContent='Show more jobs'; grid.after(more); } } } }
-  return t.innerHTML; };
 
 /* ---- styles ---- */
 (function(){ const css=`
@@ -6076,8 +5903,6 @@ function epilogue(st){ const f=flagsOf(st), L=[]; if(f.mari) L.push(`Mari runs t
 /* ================= 3. Power and Heat matter ================= */
 /* network runs: higher pay, more heat; there are more of them as your Power grows */
 const NET_TITLES = [`Unmarked crates`,`Sealed cargo`,`"Medical supplies"`,`Cash bags`,`"Spare parts"`,`Wrapped bundles`];
-const _netStrip = stripHTML;
-stripHTML = function(st, job, opts){ const h=_netStrip(st, job, opts); return job.network ? h.replace(/(<article[^>]*class="jcard[^"]*"[^>]*>)/, '$1<span class="net-tag">Network · +Heat</span>') : h; };
 
 /* ================= 4. in-flight story moments: thoughts, phone calls, radio ================= */
 const WHO = { self:['Your thoughts',false,0.95,0.9], radio:['Radio',false,1.12,0.85], dez:['Phone · Dez',false,1.08,1], castillo:['Phone · Castillo',false,0.92,0.8], reyes:['Phone · Reyes',true,1,1], mari:['Phone · Mari',true,1,1.05], tico:['Phone · Unknown number',false,1.1,1.05], medina:['Phone · Medina',false,0.95,0.85], hartwell:['Hartwell',false,0.95,0.9] };
@@ -6159,9 +5984,6 @@ storyView = function(){ const st=S.st; const c=crime(st); const MC=mainChapters(
 /* the story card uses the right cast, and the nerve line */
 
 /* nav: "Main story" first; the app opens on it */
-/* side-jobs board: the story banner first, above everything */
-(function(){ const _b=boardView; boardView=function(){ const h=_b(); if(S.view!=='board'||!S.st) return h; const t=tpl(h); const main=t.content.querySelector('main'); const hq=main&&main.querySelector('.hq'); if(!hq) return h; const head=main.querySelector(':scope > .page-head, :scope > header'); const top=main.firstElementChild; (head&&head.nextSibling)?head.after(hq):main.prepend(hq);
-  const posted=[...main.querySelectorAll('p,div')].find(x=>!x.children.length && /^Posted by Coral Wing dispatch/.test(x.textContent.trim())); if(posted) posted.textContent = crime(S.st).on ? 'Legit jobs cool your Heat down. Network runs pay more and heat you up.' : 'Posted by Coral Wing dispatch'; return t.innerHTML; }; })();
 
 /* ---- styles ---- */
 (function(){ const css=`
@@ -6428,44 +6250,6 @@ campaignCard = function(st){ const c=crime(st); const MC=mainChapters(); const a
 
 /* ---- the Side jobs page ---- */
 function jobTabOf(j){ return j.network?'network':j.special||j.vip?'special':'legit'; }
-boardView = function(){ const st=S.st; ensureJobs(st); const here=AP[st.loc]; const c=crime(st); const live=S.simState==='live'; const L=live?loadedAircraft():{};
-  const MC=mainChapters(); const next=MC.find(m=>!st.story.done[m.id]); const availSet=new Set(storyAvailable(st).map(m=>m.id));
-  let w=null; try{ w=genLocWx(st); }catch(_){}
-  const H=(()=>{ try{ return HOUSING[fin(st).housing]||HOUSING.bunk; }catch(_){ return {rent:0}; } })();
-  /* status line */
-  const status=`<div class="b2-status">
-    <span class="b2-here"><b>${esc(st.loc)}</b> ${esc(here.isl||here.n)}</span>
-    <span>${hhmm(st.clock)} local</span>${w&&w.dir!=null?`<span>Wind ${pad3(w.dir)}°/${w.spd} kt</span>`:''}
-    <span class="b2-dot ${live?'ok':''}">${live?'MSFS connected':'MSFS not connected'}</span>${L.id?`<span>Loaded: ${esc(AC[L.id].n)}</span>`:''}
-    <span class="b2-sp"></span><button class="btn sm" data-act="rest" ${st.active?'disabled':''}>New day · rent ${money(H.rent||0)}</button></div>`;
-  /* story strip */
-  let strip=''; if(next){ const n=MC.indexOf(next)+1; const act=CRIME_ACTS.find(a=>a.arc===next.arc)||CRIME_ACTS[0]; const pa=playAction(st,next,availSet,n);
-    strip=`<section class="b2-story" style="--arc:${act.col}"><div><p class="sc-k">Main story · Chapter ${n} of ${MC.length}</p><b>${esc(next.title)}</b><span class="small muted"> ${esc(next.hook||'')}</span></div><div class="b2-story-go">${pa.btn.replace('btn action big','btn action')}<button class="btn ghost sm" data-act="nav" data-v="story">Story</button></div></section>`; }
-  /* notices */
-  const ready=RATING_ORDER.filter(r=>r!=='CO' && !st.ratings[r] && checkrideReady(st,r).ok);
-  const notes=[ st.active?`<div class="b2-note"><b>Flight booked:</b> ${esc(st.active.job.title)} (${esc(st.active.job.from)} → ${esc(st.active.job.local?st.active.job.from:st.active.job.to)}) <button class="btn sm action" data-act="nav" data-v="flight">Open flight</button></div>`:'',
-    ready.length?`<div class="b2-note"><b>Checkride ready:</b> ${ready.map(r=>esc(RATINGS[r].n)).join(', ')} <button class="btn sm" data-act="nav" data-v="pilot">Book checkride</button></div>`:'' ].join('');
-  /* jobs */
-  const tab=S.jobTab||'all'; let jobs=(st.jobs||[]).slice(); try{ jobs=filterJobs(jobs); }catch(_){}
-  const count=k=>(st.jobs||[]).filter(j=>k==='all'||jobTabOf(j)===k).length;
-  if(tab!=='all') jobs=jobs.filter(j=>jobTabOf(j)===tab);
-  const sort=S.jobSort||'pay'; if(sort==='pay') jobs.sort((a,b)=>b.pay-a.pay); else if(sort==='short') jobs.sort((a,b)=>(a.est||plan(a).est)-(b.est||plan(b).est)); else jobs.sort((a,b)=>a.dep-b.dep);
-  const lim=S.allJobs?999:6; const shown=jobs.slice(0,lim);
-  const tabs=[['all','All'],['network','Network runs'],['legit','Legit'],['special','Charters']].filter(([k])=>k==='all'||count(k)).map(([k,n])=>`<button class="${tab===k?'on':''}" data-act="job-tab" data-v="${k}">${n} <small>${count(k)}</small></button>`).join('');
-  const cards = shown.length ? shown.map(j=>stripHTML(st,j)).join('') : `<div class="empty"><h3>No jobs here right now</h3><p>Start a new day, or travel to a busier airport.</p></div>`;
-  /* travel */
-  const regions=allowedRegions(st); const dests=Object.keys(AP).filter(k=>k!==st.loc && !AP[k].water && regions.includes(AP[k].r)).sort((a,b)=>AP[a].isl.localeCompare(AP[b].isl)); const tv=S.travelTo&&dests.includes(S.travelTo)?S.travelTo:dests[0]; const dh=tv?deadheadCost(st,tv):null;
-  return `<main class="wrap board2 fade">
-    ${status}${strip}${notes}
-    <div class="b2-head"><h2>Jobs at ${esc(st.loc)}</h2><div class="b2-tabs">${tabs}</div>
-      <select data-act="job-sort" aria-label="Sort jobs"><option value="pay" ${sort==='pay'?'selected':''}>Best pay</option><option value="short" ${sort==='short'?'selected':''}>Shortest</option><option value="soon" ${sort==='soon'?'selected':''}>Soonest</option></select></div>
-    ${c.on?`<p class="small muted b2-hint">Network runs pay more and raise your Heat. Legit jobs cool it down.</p>`:''}
-    <div class="jgrid b2-grid">${cards}</div>
-    ${jobs.length>lim?`<button class="btn ghost calm-showmore" data-act="all-jobs">Show all ${jobs.length} jobs</button>`:''}
-    <div class="b2-foot">
-      <details class="panel b2-more"><summary>Travel as a passenger</summary><div class="stack" style="margin-top:10px"><label class="field"><span class="sr">Destination</span><select id="travel-to">${dests.map(k=>`<option value="${k}" ${k===tv?'selected':''}>${esc(AP[k].isl)} · ${k}</option>`).join('')}</select></label>${dh?`<p class="small mono">${dh.d} nm · ${dh.cost?money(dh.cost):'free'} · ~${durTxt(dh.min)}</p>`:''}<button class="btn" data-act="deadhead" data-to="${tv||''}" ${st.active||!dh||st.cash<dh.cost?'disabled':''}>Book the seat</button></div></details>
-      <details class="panel b2-more"><summary>Practice and testing</summary><div class="stack" style="margin-top:10px"><button class="btn sm" data-act="practice" ${st.active?'disabled':''}>Practice landing (no pay, just a grade)</button><label class="row"><input type="checkbox" data-act="calm-test" ${testMode()?'checked':''}> Calm test mode <span class="tiny muted">(no sealed orders or urgent jobs)</span></label></div></details>
-    </div></main>`; };
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="job-tab"]'); if(!b) return; S.jobTab=b.dataset.v; S.allJobs=false; S.keepScroll=true; render(); });
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="job-sort"]'); if(!b) return; S.jobSort=b.value; S.keepScroll=true; render(); });
 const _b2Story = storyView; storyView = function(){ return _b2Story().replace(/ &amp; start · \$0/g,' &amp; start (free)').replace(/ & start · \$0/g,' & start (free)').replace(/(<li class="[^"]*">[^<]*<\/li>)/g,'$1'); };
@@ -6532,8 +6316,6 @@ Object.keys(MID).forEach(id=>{ if(BEATS[id]) BEATS[id].push(MID[id]); else BEATS
 const DROP_STRIPS = ['TAPH','TUPA','TNCE','TRPG','TFFS','TFFM','TQPF','TNCS','MBGT','MYAN'];
 const RANK_PERKS = [[12,'Courier','Network runs unlocked'],[28,'Runner','One more network run a day, night runs pay +15%'],[45,'Lieutenant','Network runs in jets, +20% pay'],[65,'Partner','Airliner network runs, +30% pay'],[85,'Boss','Heat cools by 2 every new day']];
 function rankMul(c){ return c.power>=65?1.3:c.power>=45?1.2:1; }
-const _twStrip = stripHTML;
-stripHTML = function(st, job, opts){ let h=_twStrip(st, job, opts); const tags=[]; if(job.drop) tags.push('<span class="chip warn">Night drop</span>'); if(job.lowLevel) tags.push('<span class="chip warn">Stay under 1,000 ft: +25%</span>'); if(job.hot) tags.push('<span class="chip warn">Hot airport</span>'); if(tags.length) h=h.replace('<div class="chips">', '<div class="chips">'+tags.join('')); return h; };
 
 
 function launderOpts(st){ const d=st.story.done; const L=[]; L.push({id:'dez',n:'Dez, cash under the counter',fee:0.25,heat:3}); if(d.CR5) L.push({id:'trust',n:'The Hartwell Reef Trust',fee:0.15,heat:1}); if(d.CR15) L.push({id:'caribe',n:'Caribe Cargo invoices',fee:0.08,heat:0}); return L; }
@@ -6634,8 +6416,6 @@ mapView = function(){ const h=_uiMap(); try{ const st=S.st; const v=MAPV[S.mapZo
   const next=MC.find(m=>!st.story.done[m.id]); if(next && AP[next.to]){ const b=AP[next.to], a=AP[next.from]; g+=`<line x1="${X(a.lon)}" y1="${Y(a.lat)}" x2="${X(b.lon)}" y2="${Y(b.lat)}" stroke="#d23b2c" stroke-width="3"/><circle cx="${X(b.lon)}" cy="${Y(b.lat)}" r="9" fill="none" stroke="#d23b2c" stroke-width="3" class="map-pulse"/><text x="${X(b.lon)+12}" y="${Y(b.lat)-12}" class="map-next">Next: ${esc(next.title)}</text>`; }
   g+='</g>'; const i=h.indexOf('</svg>'); return i>0 ? h.slice(0,i)+g+h.slice(i) : h; }catch(_){ return h; } };
 
-/* ---- dirty cash, fleet, crew and rank rewards on the right pages ---- */
-(function(){ const _b=boardView; boardView=function(){ const h=_b(); try{ const l=launderHTML(S.st); return l ? h.replace('<div class="b2-head">', l+'<div class="b2-head">') : h; }catch(_){ return h; } }; })();
 (function(){ const _m=moneyView; moneyView=function(){ const h=_m(); try{ const l=launderHTML(S.st); return l ? h.replace(/(<main[^>]*>)/, '$1'+l) : h; }catch(_){ return h; } }; })();
 (function(){ const _sv=storyView; storyView=function(){ const h=_sv(); try{ const c=crime(S.st); if(!c.on) return h; const perks=RANK_PERKS.map(([v,n,p])=>`<li class="${c.power>=v?'on':''}"><b>${n}</b> <span class="mono small">${v}+</span><p>${esc(p)}</p></li>`).join('');
   const f=fleetCrewHTML(S.st); return h.replace('<section class="panel"><h3>The five acts</h3>', `<div class="sh-grid">${f||''}<section class="panel"><h3>Rank rewards <span class="small muted">Power ${c.power}</span></h3><ul class="perks">${perks}</ul></section></div><section class="panel"><h3>The five acts</h3>`); }catch(_){ return h; } }; })();
@@ -6647,8 +6427,6 @@ document.addEventListener('click', async e=>{ const b=e.target.closest('[data-ac
   if(!testSession()){ const json=JSON.stringify(S.st); try{ localStorage.setItem(TEST_KEY, json); }catch(_){ toast('Could not save a backup.'); return; } try{ if(window.twNative&&twNative.flightLog) await twNative.flightLog('real-career-backup.json', json); }catch(_){} S.st.ui=S.st.ui||{}; S.st.ui.testTools=true; save(); toast('Test session started. Your real career is backed up.'); }
   else { let json=null; try{ json=localStorage.getItem(TEST_KEY); }catch(_){} if(!json) return; S.st=JSON.parse(json); S.st.savedAt=Date.now(); try{ localStorage.removeItem(TEST_KEY); }catch(_){} save(); toast('Test session ended. Your real career is back.'); }
   S.keepScroll=true; render(); });
-(function(){ const _b=boardView; boardView=function(){ const h=_b(); const on=testSession(); const box=`<div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><button class="btn sm ${on?'action':''}" data-act="test-session">${on?'End test session · restore my real career':'Start a test session'}</button><span class="tiny muted">${on?'Anything you do now is thrown away when you end the session.':'Backs up your career first, so you can skip and experiment freely.'}</span></div>`;
-  return h.replace('<button class="btn sm" data-act="practice"', box+'<button class="btn sm" data-act="practice"'); }; })();
 
 /* ---- 20. leftovers from the old career: Academy, Butter Cup and old names ---- */
 TEXT_FIX.push([/Coral Wing's (pilots|crews|chief pilot)/g,'the island pilots'],[/Mari says,?/g,'Your instructor says'],[/the Coral Wing (team|family)/g,'the islands']);
@@ -6705,15 +6483,6 @@ document.addEventListener('keydown', e=>{ if(document.querySelector('.cut')) ret
   if(e.key==='/'){ e.preventDefault(); openCmd(); return; } const n=Number(e.key); if(n>=1 && n<=5 && S.st){ go(NAV5[n-1].v); return; } if(e.key.toLowerCase()==='f' && S.st && S.st.active){ go('flight'); } });
 
 /* ---- 6. job cards become one-line rows; click a row for the full card ---- */
-function jobRow(st, j){ const card=stripHTML(st, j); const acc=(card.match(/<button[^>]*data-act="accept"[^>]*>[\s\S]*?<\/button>/)||[''])[0] || (card.match(/<button[^>]*class="[^"]*jc-go[^"]*"[^>]*>[\s\S]*?<\/button>/)||[''])[0];
-  const to=j.local?j.from:j.to; const est=j.est||(()=>{ try{ return plan(j).est; }catch(_){ return 0; } })(); const kind=j.network?'net':j.special||j.vip?'vip':'legit'; const lbl=j.label||(j.network?'Network run':'Job');
-  const tag=j.drop?'Night drop':j.lowLevel?'Low level':j.hot?'Hot':j.bonus?'Bonus':'';
-  return `<div class="jrow k-${kind} ${S.openJob===j.id?'open':''}"><button class="jr-main" data-act="job-open" data-id="${j.id}" aria-expanded="${S.openJob===j.id}">
-      <span class="jr-k">${esc(lbl)}</span><span class="jr-rt"><b>${esc(j.from)}</b> → <b>${esc(to==='????'?'????':to)}</b></span><span class="jr-t">${esc(j.title)}${tag?` <em>${tag}</em>`:''}</span>
-      <span class="jr-m">${esc(AC[j.ac]?AC[j.ac].n:j.ac)} · ${est?durTxt(est):''} · ${j.dep<=st.clock?'now':hhmm(j.dep)}</span><span class="jr-p">${money(j.pay)}</span></button>
-    <span class="jr-go">${acc}</span>${S.openJob===j.id?`<div class="jr-card">${card}</div>`:''}</div>`; }
-(function(){ const _b=boardView; boardView=function(){ const h=_b(); if(!S.st) return h; try{ const t=tpl(h); const grid=t.content.querySelector('.b2-grid'); if(!grid) return h; const st=S.st; const ids=[...grid.querySelectorAll('[data-act="accept"][data-id]')].map(b=>b.dataset.id);
-  const jobs=ids.map(id=>(st.jobs||[]).find(j=>j.id===id)).filter(Boolean); if(!jobs.length) return h; const list=document.createElement('div'); list.className='jlist'; list.innerHTML=`<div class="jl-head"><span>Type</span><span>Route</span><span>Job</span><span>Aircraft · time · departs</span><span>Pay</span><span></span></div>`+jobs.map(j=>jobRow(st,j)).join(''); grid.replaceWith(list); return t.innerHTML; }catch(_){ return h; } }; })();
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="job-open"]'); if(!b) return; S.openJob = S.openJob===b.dataset.id ? null : b.dataset.id; S.keepScroll=true; render(); });
 
 
@@ -6820,8 +6589,6 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="walk-ag
 const CX_TIPS = { Power:`Power: how much of the network answers to you. Grows with chapters, hard choices and network runs. Unlocks rank rewards.`, Heat:`Heat: how close the law is. Network runs raise it; legit jobs, lying low and laundering through Caribe Cargo keep it down. Above 60 customs searches you; at 90 you're busted.`, Dirty:`Dirty cash: money from network runs. Launder it on the Jobs or Money page before you can spend it.` };
 
 /* ---- 8. jobs: see the route on the map ---- */
-const _m8Row = jobRow;
-jobRow = function(st, j){ const h=_m8Row(st, j); return S.openJob===j.id ? h.replace('<div class="jr-card">', `<div class="jr-card"><button class="btn sm ghost" data-act="job-map" data-id="${j.id}" style="margin:0 0 10px">Show route on the map</button>`) : h; };
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="job-map"]'); if(!b||!S.st) return; S.mapRoute=b.dataset.id; const j=(S.st.jobs||[]).find(x=>x.id===b.dataset.id); if(j) S.mapSel=j.local?j.from:j.to; go('map'); });
 const _m8Map = mapView;
 mapView = function(){ const h=_m8Map(); try{ const j=S.mapRoute&&(S.st.jobs||[]).find(x=>x.id===S.mapRoute); if(!j) return h; const v=MAPV[S.mapZoom||'east']; const W=1000; const X=lon=>(lon-v.lon[0])/(v.lon[1]-v.lon[0])*W; const H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05); const Y=lat=>H-(lat-v.lat[0])/(v.lat[1]-v.lat[0])*H;
@@ -6888,7 +6655,6 @@ function fixCost(st){ const c=crime(st); return Math.round((20000 + c.power*600)
 function fedsHTML(st){ if(!crime(st).on || !fedsWatching(st)) return ''; const cost=fixCost(st); return `<section class="panel feds"><p class="label">Heat ${crime(st).heat} · The feds are watching</p><h3>Lie low before the next chapter</h3><p class="small">Network runs and story chapters are on hold until your Heat is under 80. Legit jobs and new days cool it faster right now, or you can pay someone to make the problem go away.</p><div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn sm" data-act="nav" data-v="board">Fly legit jobs</button><button class="btn sm" data-act="rest">New day</button><button class="btn sm action" data-act="pay-fix" ${st.cash<cost?'disabled':''}>Make it go away · ${money(cost)}</button></div></section>`; }
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="pay-fix"]')||!S.st) return; const st=S.st, cost=fixCost(st); if(st.cash<cost) return; txn(st,-cost,'Payoffs','A favor from a judge'); crBump(crime(st),'heat',-30); save(); toast('A judge owes Castillo a favor. Heat −30.'); S.keepScroll=true; render(); });
 (function(){ const _sv=storyView; storyView=function(){ const h=_sv(); const f=fedsHTML(S.st); return f ? h.replace(/(<main[^>]*>(?:<div class="subtabs">[\s\S]*?<\/div>)?)/, '$1'+f) : h; }; })();
-(function(){ const _b=boardView; boardView=function(){ const h=_b(); const f=fedsHTML(S.st); return f ? h.replace('<div class="b2-head">', f+'<div class="b2-head">') : h; }; })();
 (function(){ const _rn=rightNow; rightNow=function(st){ if(st && !st.active && crime(st).on && fedsWatching(st)) return {t:`Heat ${crime(st).heat}: lie low`, b:'Legit jobs', act:'nav', v:'board'}; return _rn(st); }; })();
 
 (function(){ const _pa=playAction; playAction=function(st,m,availSet,n){ if(!st.active && crime(st).on && fedsWatching(st) && CRIME_IDS.has(m.id)) return {btn:`<button class="btn" data-act="nav" data-v="board">Lie low first</button>`, note:`Heat ${crime(st).heat}: the feds are watching. Get it under 80 to play.`}; return _pa(st,m,availSet,n); }; })();
@@ -7065,8 +6831,6 @@ function carrierFor(st, job){ const c=crime(st); if(job.network) return 'Unliste
 window.addEventListener('keydown', e=>{ if(document.querySelector('.title-screen,.cmd') && /^[1-5f/]$/i.test(e.key) && !/INPUT/.test(e.target.tagName)){ e.stopImmediatePropagation(); }
   if(e.key==='Escape'){ const np=document.querySelector('.notif-pane'); if(np){ np.remove(); return; } if(S.openJob && !document.querySelector('.cut,.cmd')){ S.openJob=null; S.keepScroll=true; render(); } } }, true);
 
-/* 7. network runs say plainly that the pay is dirty */
-(function(){ const _jr=jobRow; jobRow=function(st,j){ const h=_jr(st,j); return j.network ? h.replace(/(<span class="jr-p">[^<]*)(<\/span>)/, '$1<small class="dirty">dirty</small>$2') : h; }; })();
 
 /* 8. the story card shows roughly how long the flight is */
 (function(){ const _cc=campaignCard; campaignCard=function(st){ let h=_cc(st); try{ const next=mainChapters().find(m=>!st.story.done[m.id]); if(!next) return h; const ac=storyAircraft(st,next)[0]||next.ac[0]; const jj=storyJob(st,next,ac); const est=jj.est||plan(jj).est; h=h.replace(/(<div class="sc-meta"><b>[^<]*<\/b>)/, `$1<span>~${durTxt(est)}</span>`); }catch(_){} return h; }; })();
@@ -7079,13 +6843,9 @@ window.cutAuto = ()=>!!uiP().autoCut;
 /* 12. title screen: "Resume flight" when you were in the middle of one */
 (function(){ const _t=titleHTML; titleHTML=function(){ const h=_t(); const a=S.st&&S.st.active; return a ? h.replace('<b>Continue</b>', a.started?'<b>Resume flight</b>':'<b>Continue to your flight</b>').replace(/(data-ts="continue" class="on"><b>[^<]*<\/b><span>)[^<]*/, `$1${esc(a.job.from)} → ${esc(a.job.local?a.job.from:a.job.to)} · ${esc(a.job.title)}`) : h; }; })();
 
-/* 13. an empty job list offers a way forward */
-(function(){ const _b=boardView; boardView=function(){ return _b().replace(/<div class="empty"><h3>No jobs here right now<\/h3><p>[^<]*<\/p><\/div>/, `<div class="empty"><h3>No jobs here right now</h3><p>Start a new day for fresh work, or travel to a busier airport.</p><div class="row" style="gap:8px;justify-content:center;margin-top:10px"><button class="btn sm" data-act="rest">New day</button><button class="btn sm" data-act="cmd">Find an airport</button></div></div>`); }; })();
 
 
 
-/* 16. "New day" shows the full cost: rent plus fleet and crew */
-(function(){ const _b=boardView; boardView=function(){ const h=_b(); try{ const st=S.st; const H=HOUSING[fin(st).housing]||HOUSING.bunk; const ops=dailyCosts(st).reduce((s,x)=>s+x[1],0); const tot=(H.rent||0)+ops; return h.replace(/New day · rent \$[\d,]+/, `New day · ${money(tot)}`).replace('<button class="btn sm" data-act="rest"', `<button class="btn sm" data-act="rest" title="Rent ${money(H.rent||0)}${ops?` + fleet and crew ${money(ops)}`:''}"`); }catch(_){ return h; } }; })();
 
 /* 17. laundering: the cheapest option is highlighted */
 (function(){ const _l=launderHTML; launderHTML=function(st){ const h=_l(st); if(!h) return h; const L=launderOpts(st); const best=L.slice().sort((a,b)=>a.fee-b.fee)[0]; return best ? h.replace(`<button class="btn sm" data-act="launder" data-v="${best.id}">`, `<button class="btn sm primary" data-act="launder" data-v="${best.id}">`) : h; }; })();
@@ -7105,8 +6865,6 @@ setInterval(()=>{ try{ if(S.st && !(S.st.active&&S.st.active.started)) backupLab
 .fc-ac small.mono{color:#e0b24a}`; document.head.appendChild(s); })();
 /* ===================== 20 MORE FIXES ===================== */
 
-/* 1. BUG: Butter Cup, Academy and Profile were showing the job board (they route through boardView) */
-(function(){ const _b=boardView; boardView=function(){ if(S.view==='cup') return cupView(); if(S.view==='academy') return academyView(); if(S.view==='profile') return profileView(); return _b(); }; })();
 
 /* 2. Pilot tabs include Profile and Logbook, so they're easy to find */
 try{ const g=NAV5.find(x=>x.v==='pilot'); g.tabs=[['pilot','Licences'],['profile','Profile'],['log','Logbook'],['money','Money'],['cup','Butter Cup'],['academy','Academy']]; }catch(_){}
@@ -7128,8 +6886,6 @@ document.addEventListener('click', e=>{ const s=e.target.closest('.cut-skip'); i
 /* 10. safehouses you can't buy yet say what's needed */
 (function(){ const _o=operationHTML; operationHTML=function(st){ return _o(st).replace(/<span class="small muted">(\$[\d,]+)<\/span><\/div>/g, '<span class="small muted">$1 · buy the one above first</span></div>'); }; })();
 
-/* 11. network runs read like it */
-(function(){ const _jr=jobRow; jobRow=function(st,j){ const h=_jr(st,j); return j.network ? h.replace(/(<button[^>]*data-act="accept"[^>]*>)\s*Accept/, '$1Take the run') : h; }; })();
 
 /* 12. the sidebar says where your career is really saved */
 (function(){ const _st=syncText; syncText=function(){ if(window.twNative) return 'Saved to Documents\\Trade Winds'; return _st(); }; })();
@@ -7137,8 +6893,6 @@ document.addEventListener('click', e=>{ const s=e.target.closest('.cut-skip'); i
 /* 13. the map opens on the airport you searched for, highlighted */
 (function(){ const _mv=mapView; mapView=function(){ const h=_mv(); if(!S.mapSel||!AP[S.mapSel]) return h; try{ const v=MAPV[S.mapZoom||'east']; const a=AP[S.mapSel]; if(a.lon<v.lon[0]||a.lon>v.lon[1]||a.lat<v.lat[0]||a.lat>v.lat[1]){ const k=Object.keys(MAPV).find(z=>a.lon>=MAPV[z].lon[0]&&a.lon<=MAPV[z].lon[1]&&a.lat>=MAPV[z].lat[0]&&a.lat<=MAPV[z].lat[1]); if(k && k!==S.mapZoom){ S.mapZoom=k; return _mv(); } } }catch(_){} return h; }; })();
 
-/* 14. Jobs page: dirty cash is one compact line (the full panel lives on Money) */
-(function(){ const _b=boardView; boardView=function(){ const h=_b(); if(S.view!=='board') return h; return h.replace(/<section class="panel launder">[\s\S]*?<\/section>/, ()=>{ const c=crime(); return `<div class="b2-note launder-mini"><b>Dirty cash ${money(c.dirty||0)}</b><span class="small muted">Launder it before you can spend it.</span><button class="btn sm" data-act="nav" data-v="money">Launder</button></div>`; }); }; })();
 
 /* 15. achievements wait until a cutscene has finished before popping up */
 (function(){ const _ap=achPop; achPop=function(a){ if(document.querySelector('.cut')){ setTimeout(()=>achPop(a), 1500); return; } return _ap(a); }; })();
@@ -7251,9 +7005,6 @@ document.addEventListener('click', e=>{ const li=e.target.closest('.sh-time li')
 (function(){ const _fn=flightNo; flightNo=function(job){ return job && job.network ? 'Unlisted' : _fn(job); }; })();
 
 
-/* 9. "Checkride ready" leads with the licences the story needs; the rest fold away */
-(function(){ const _b=boardView; boardView=function(){ const h=_b(); return h.replace(/<div class="b2-note"><b>Checkride ready:<\/b> ([^<]*)(<button[^>]*>Book checkride<\/button><\/div>)/, (m,list,btn)=>{ const all=list.trim().split(', '); const key=['Jet Type Rating','Airline Transport Pilot','Private Pilot']; const main=all.filter(n=>key.some(k=>n.startsWith(k))); const rest=all.filter(n=>!main.includes(n)); const shown=main.length?main:all.slice(0,1); const more=all.length-shown.length;
-  return `<div class="b2-note"><b>Checkride ready:</b> ${shown.join(', ')}${more?` <span class="small muted" title="${rest.join(', ')}">+${more} optional</span>`:''} ${btn}`; }); }; })();
 
 
 /* 11. your role reads properly everywhere ("Castillo's crew", not just "Castillo") */
@@ -7310,8 +7061,6 @@ window.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cancel-ye
 /* 40. the result screen starts at the top after the scene */
 (function(){ const _pa=playAftermath; playAftermath=function(){ const r=_pa(); setTimeout(()=>{ try{ window.scrollTo(0,0); }catch(_){} }, 400); return r; }; })();
 
-/* 41 + 42 + 43. job rows: full title on hover, the aircraft column never wraps, network rows show the Heat */
-(function(){ const _jr=jobRow; jobRow=function(st,j){ let h=_jr(st,j); h=h.replace('<span class="jr-t">', `<span class="jr-t" title="${esc(j.title)}">`).replace('<span class="jr-m">', `<span class="jr-m" title="${esc((AC[j.ac]||{}).n||'')}">`); if(j.network) h=h.replace('<small class="dirty">dirty</small>', '<small class="dirty">dirty · Heat +5</small>'); return h; }; })();
 
 /* 44. at Heat 80+ (the feds are looking) the Heat chip pulses */
 /* (CSS below) */
@@ -8640,6 +8389,111 @@ function flightView(){
   const details = isCheck ? '' : `<details class="calm-more flight-more"><summary>Flight details: conditions, weights, route, aircraft and passengers</summary><div class="calm-more-in">${job.manifest?manifestHTML(job):''}${briefingGrid(st, job, p, false)}</div></details>`;
   return `<main class="wrap stack fade">${skipBar}${hero}${pass}${how}${tasks}${setup}${briefing}${guide}${details}</main>`;
 }
+/* ===================== JOBS PAGE =====================
+   boardView() is the Jobs page: where you are, the next story chapter, anything that needs your
+   attention, then the job list. A job is shown as a row (jobRow) that opens into a card (stripHTML). */
+
+/* Can this job be accepted right now? */
+function canAcceptJob(st, job){ return !st.active && !(dutyAfter(st, job) > DUTY_MAX); }
+
+/* A job as a card: route, pay, aircraft, weather and the Accept button.
+   opts.btn replaces the button, opts.extra adds HTML under the tags, opts.locked greys the card out. */
+function stripHTML(st, job, opts={}){
+  const extra = opts.extra||'';
+  const a=AC[job.ac]; const p=plan(job); const kd=jobKind(job);
+  const load = job.pax ? `${job.pax} pax${job.cargo?` · ${job.cargo} lb`:''}` : job.cargo ? `${job.cargo} lb cargo` : 'Ferry, empty';
+  const payTxt = job.kind==='check' ? 'Checkride' : job.company ? money(Math.round(job.pay*2.6 - a.op*job.est/60)) : money(job.pay);
+  const payLbl = job.kind==='check' ? '' : job.company ? 'est. profit' : 'pay';
+  const btn = opts.btn!==undefined ? opts.btn : (st.active ? `<button class="btn sm" disabled>Flight booked</button>` : !canAcceptJob(st, job) ? `<span class="chip warn">Over duty limit</span>` : `<button class="btn primary jc-go" data-act="accept" data-id="${job.id}">Accept ${ICO_PLANE}</button>`);
+  const from = AP[job.from], to = job.mystery ? null : AP[job.to];
+  const toCode = job.mystery ? '????' : job.local ? job.from : job.to;
+  const toName = job.mystery ? 'Sealed destination' : job.local ? 'Local flight' : to.isl.replace(/\s*\(.*\)/,'');
+  const dist = job.mystery ? '' : job.local ? `${p.dist} nm loop` : `${p.dist} nm`;
+  const w = job.wx;
+  const wxHTML = job.mystery
+    ? `<span class="jc-wx"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11V8a5 5 0 0 1 10 0v3M6 11h12v9H6z"/></svg>${job.celeb?'Rumor: someone famous':job.aiGen?'A very odd booking':'Sealed until you accept'}</span>`
+    : `<span class="jc-wx" title="${esc(w.n)}"><svg viewBox="0 0 24 24" aria-hidden="true">${WX_ICON[wxIconKey(w)]}</svg><span>${esc((x=>x.charAt(0).toUpperCase()+x.slice(1))(w.n.replace(/^(Classic|Passing) /,'')))}</span><span class="mono">${pad3(w.dir)}°/${w.spd}${w.gust?'G'+w.gust:''}</span></span>`;
+  const title = job.mystery ? (job.aiGen?esc(job.title):'Confidential charter') : esc(job.title);
+  const mark = job.event ? ['data-event="1" ','event '] : job.checkout ? ['data-checkout="1" ','checkout '] : ['',''];
+  const ld=S.simState==='live'?loadedAircraft():{};
+  const netTags = (job.drop?'<span class="chip warn">Night drop</span>':'') + (job.lowLevel?'<span class="chip warn">Stay under 1,000 ft: +25%</span>':'') + (job.hot?'<span class="chip warn">Hot airport</span>':'');
+  return `<article ${mark[0]}class="jcard ${mark[1]}k-${kd.k} ${opts.locked?'locked':''}" style="--k:${kd.c}">${job.network?'<span class="net-tag">Network · +Heat</span>':''}${ld.id && job.ac===ld.id?'<span class="loaded-tag">Loaded in MSFS</span>':''}<div class="jc-art">${islandArt(job.mystery?'????':job.local?job.from+'L':job.to, job.dep, 600, 120, job.ac)}</div>
+    <div class="jc-top"><span class="jc-type">${esc(kd.t)}</span><span class="jc-pay"><b>${payTxt}</b>${payLbl?`<small>${payLbl}</small>`:''}</span></div>
+    <div class="jc-route">
+      <div><b>${esc(job.from)}</b><span>${esc(from.isl.replace(/\s*\(.*\)/,''))}</span></div>
+      <div class="jc-line" aria-hidden="true"><i></i>${ICO_PLANE}<i></i></div>
+      <div class="r"><b>${esc(toCode)}</b><span>${esc(toName)}</span></div>
+    </div>
+    <h3 class="jc-title">${title}</h3>
+    <p class="jc-meta">${esc(a.n.replace(/^(Cessna|Beechcraft|Diamond|CubCrafters|Zlin|ICON|de Havilland Canada|Grumman|Pilatus|Daher|Douglas|Cirrus|Airbus|Boeing|Heart Aerospace)\s/,''))} · ${load}${dist?` · ${dist}`:''} · ~${durTxt(p.est)} · <span class="mono">${job.dep<=st.clock?'Ready now':`STD ${hhmm(job.dep)}`}</span></p>
+    <div class="chips">${netTags}${chipsFor(st,job)}</div>${extra}
+    <div class="jc-foot">${wxHTML}${btn}</div>
+  </article>`;
+}
+
+/* A job as one row of the list. Click it to open the full card underneath. */
+function jobRow(st, j){
+  const open=S.openJob===j.id;
+  const to=j.local?j.from:j.to; const est=j.est||(()=>{ try{ return plan(j).est; }catch(_){ return 0; } })(); const kind=j.network?'net':j.special||j.vip?'vip':'legit'; const lbl=j.label||(j.network?'Network run':'Job');
+  const tag=j.drop?'Night drop':j.lowLevel?'Low level':j.hot?'Hot':j.bonus?'Bonus':'';
+  const accept = canAcceptJob(st, j) ? `<button class="btn primary jc-go" data-act="accept" data-id="${j.id}">${j.network?'Take the run':'Accept'} ${ICO_PLANE}</button>` : '';
+  return `<div class="jrow k-${kind} ${open?'open':''}"><button class="jr-main" data-act="job-open" data-id="${j.id}" aria-expanded="${open}">
+      <span class="jr-k">${esc(lbl)}</span><span class="jr-rt"><b>${esc(j.from)}</b> → <b>${esc(to==='????'?'????':to)}</b></span><span class="jr-t" title="${esc(j.title)}">${esc(j.title)}${tag?` <em>${tag}</em>`:''}</span>
+      <span class="jr-m" title="${esc((AC[j.ac]||{}).n||'')}">${esc(AC[j.ac]?AC[j.ac].n:j.ac)} · ${est?durTxt(est):''} · ${j.dep<=st.clock?'now':hhmm(j.dep)}</span><span class="jr-p">${money(j.pay)}${j.network?'<small class="dirty">dirty · Heat +5</small>':''}</span></button>
+    <span class="jr-go">${accept}</span>${open?`<div class="jr-card"><button class="btn sm ghost" data-act="job-map" data-id="${j.id}" style="margin:0 0 10px">Show route on the map</button>${stripHTML(st, j)}</div>`:''}</div>`;
+}
+
+/* "Checkride ready": the licences the story needs first, the optional ones folded into "+N optional". */
+function checkrideReadyNote(st){
+  const all=RATING_ORDER.filter(r=>r!=='CO' && !st.ratings[r] && checkrideReady(st,r).ok).map(r=>esc(RATINGS[r].n)); if(!all.length) return '';
+  const storyNeeds=['Jet Type Rating','Airline Transport Pilot','Private Pilot']; const main=all.filter(n=>storyNeeds.some(k=>n.startsWith(k))); const rest=all.filter(n=>!main.includes(n)); const shown=main.length?main:all.slice(0,1); const more=all.length-shown.length;
+  return `<div class="b2-note"><b>Checkride ready:</b> ${shown.join(', ')}${more?` <span class="small muted" title="${rest.join(', ')}">+${more} optional</span>`:''} <button class="btn sm" data-act="nav" data-v="pilot">Book checkride</button></div>`;
+}
+
+function boardView(){
+  const st=S.st; ensureJobs(st); const here=AP[st.loc]; const c=crime(st); const live=S.simState==='live'; const L=live?loadedAircraft():{};
+  const MC=mainChapters(); const next=MC.find(m=>!st.story.done[m.id]); const availSet=new Set(storyAvailable(st).map(m=>m.id));
+  let w=null; try{ w=genLocWx(st); }catch(_){}
+  /* where you are, and the button that starts a new day (its price is rent plus fleet and crew) */
+  const H=(()=>{ try{ return HOUSING[fin(st).housing]||HOUSING.bunk; }catch(_){ return {rent:0}; } })();
+  const ops=dailyCosts(st).reduce((s,x)=>s+x[1],0);
+  const status=`<div class="b2-status">
+    <span class="b2-here"><b>${esc(st.loc)}</b> ${esc(here.isl||here.n)}</span>
+    <span>${hhmm(st.clock)} local</span>${w&&w.dir!=null?`<span>Wind ${pad3(w.dir)}°/${w.spd} kt</span>`:''}
+    <span class="b2-dot ${live?'ok':''}">${live?'MSFS connected':'MSFS not connected'}</span>${L.id?`<span>Loaded: ${esc(AC[L.id].n)}</span>`:''}
+    <span class="b2-sp"></span><button class="btn sm" data-act="rest" title="Rent ${money(H.rent||0)}${ops?` + fleet and crew ${money(ops)}`:''}" ${st.active?'disabled':''}>New day · ${money((H.rent||0)+ops)}</button></div>`;
+  /* the next story chapter */
+  let strip=''; if(next){ const n=MC.indexOf(next)+1; const act=CRIME_ACTS.find(a=>a.arc===next.arc)||CRIME_ACTS[0]; const pa=playAction(st,next,availSet,n);
+    strip=`<section class="b2-story" style="--arc:${act.col}"><div><p class="sc-k">Main story · Chapter ${n} of ${MC.length}</p><b>${esc(next.title)}</b><span class="small muted"> ${esc(next.hook||'')}</span></div><div class="b2-story-go">${pa.btn.replace('btn action big','btn action')}<button class="btn ghost sm" data-act="nav" data-v="story">Story</button></div></section>`; }
+  /* things that need your attention */
+  const booked = st.active?`<div class="b2-note"><b>Flight booked:</b> ${esc(st.active.job.title)} (${esc(st.active.job.from)} → ${esc(st.active.job.local?st.active.job.from:st.active.job.to)}) <button class="btn sm action" data-act="nav" data-v="flight">Open flight</button></div>`:'';
+  const dirty = !c.dirty ? '' : S.view!=='board' ? launderHTML(st) : `<div class="b2-note launder-mini"><b>Dirty cash ${money(c.dirty||0)}</b><span class="small muted">Launder it before you can spend it.</span><button class="btn sm" data-act="nav" data-v="money">Launder</button></div>`;
+  /* the job list */
+  const tab=S.jobTab||'all'; let jobs=(st.jobs||[]).slice(); try{ jobs=filterJobs(jobs); }catch(_){}
+  const count=k=>(st.jobs||[]).filter(j=>k==='all'||jobTabOf(j)===k).length;
+  if(tab!=='all') jobs=jobs.filter(j=>jobTabOf(j)===tab);
+  const sort=S.jobSort||'pay'; if(sort==='pay') jobs.sort((a,b)=>b.pay-a.pay); else if(sort==='short') jobs.sort((a,b)=>(a.est||plan(a).est)-(b.est||plan(b).est)); else jobs.sort((a,b)=>a.dep-b.dep);
+  const lim=S.allJobs?999:6; const shown=jobs.slice(0,lim);
+  const tabs=[['all','All'],['network','Network runs'],['legit','Legit'],['special','Charters']].filter(([k])=>k==='all'||count(k)).map(([k,n])=>`<button class="${tab===k?'on':''}" data-act="job-tab" data-v="${k}">${n} <small>${count(k)}</small></button>`).join('');
+  const rows=shown.filter(j=>canAcceptJob(st,j));
+  /* rows you can accept; with a flight already booked, the jobs are shown as cards to browse */
+  const list = rows.length ? `<div class="jlist"><div class="jl-head"><span>Type</span><span>Route</span><span>Job</span><span>Aircraft · time · departs</span><span>Pay</span><span></span></div>${rows.map(j=>jobRow(st,j)).join('')}</div>`
+    : `<div class="jgrid b2-grid">${shown.length ? shown.map(j=>stripHTML(st,j)).join('') : `<div class="empty"><h3>No jobs here right now</h3><p>Start a new day for fresh work, or travel to a busier airport.</p><div class="row" style="gap:8px;justify-content:center;margin-top:10px"><button class="btn sm" data-act="rest">New day</button><button class="btn sm" data-act="cmd">Find an airport</button></div></div>`}</div>`;
+  /* travel as a passenger */
+  const regions=allowedRegions(st); const dests=Object.keys(AP).filter(k=>k!==st.loc && !AP[k].water && regions.includes(AP[k].r)).sort((a,b)=>AP[a].isl.localeCompare(AP[b].isl)); const tv=S.travelTo&&dests.includes(S.travelTo)?S.travelTo:dests[0]; const dh=tv?deadheadCost(st,tv):null;
+  const testing=testSession();
+  return `<main class="wrap board2 fade">
+    ${status}${strip}${booked}${checkrideReadyNote(st)}
+    ${dirty}${fedsHTML(st)}<div class="b2-head"><h2>Jobs at ${esc(st.loc)}</h2><div class="b2-tabs">${tabs}</div>
+      <select data-act="job-sort" aria-label="Sort jobs"><option value="pay" ${sort==='pay'?'selected':''}>Best pay</option><option value="short" ${sort==='short'?'selected':''}>Shortest</option><option value="soon" ${sort==='soon'?'selected':''}>Soonest</option></select></div>
+    ${c.on?`<p class="small muted b2-hint">Network runs pay more and raise your Heat. Legit jobs cool it down.</p>`:''}
+    ${list}
+    ${jobs.length>lim?`<button class="btn ghost calm-showmore" data-act="all-jobs">Show all ${jobs.length} jobs</button>`:''}
+    <div class="b2-foot">
+      <details class="panel b2-more"><summary>Travel as a passenger</summary><div class="stack" style="margin-top:10px"><label class="field"><span class="sr">Destination</span><select id="travel-to">${dests.map(k=>`<option value="${k}" ${k===tv?'selected':''}>${esc(AP[k].isl)} · ${k}</option>`).join('')}</select></label>${dh?`<p class="small mono">${dh.d} nm · ${dh.cost?money(dh.cost):'free'} · ~${durTxt(dh.min)}</p>`:''}<button class="btn" data-act="deadhead" data-to="${tv||''}" ${st.active||!dh||st.cash<dh.cost?'disabled':''}>Book the seat</button></div></details>
+      <details class="panel b2-more"><summary>Practice and testing</summary><div class="stack" style="margin-top:10px"><div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><button class="btn sm ${testing?'action':''}" data-act="test-session">${testing?'End test session · restore my real career':'Start a test session'}</button><span class="tiny muted">${testing?'Anything you do now is thrown away when you end the session.':'Backs up your career first, so you can skip and experiment freely.'}</span></div><button class="btn sm" data-act="practice" ${st.active?'disabled':''}>Practice landing (no pay, just a grade)</button><label class="row"><input type="checkbox" data-act="calm-test" ${testMode()?'checked':''}> Calm test mode <span class="tiny muted">(no sealed orders or urgent jobs)</span></label></div></details>
+    </div></main>`;
+}
 /* ===================== RENDER =====================
    render() redraws the whole page from S (what's on screen) and S.st (the career).
    It runs in three parts, always in this order:
@@ -8712,7 +8566,7 @@ function drawPage(){
   const y = window.scrollY;
   if(!S.st){ app.innerHTML = setupView(); return; }
   const v = S.view;
-  const body = v==='cockpit'?cockpitView(): v==='money'?moneyView(): v==='map'?mapView(): v==='flight'?flightView(): v==='pilot'?pilotView(): v==='story'?storyView(): v==='log'?logView(): v==='company'?companyView(): v==='hangar'?hangarView(): boardView();
+  const body = v==='cockpit'?cockpitView(): v==='money'?moneyView(): v==='map'?mapView(): v==='flight'?flightView(): v==='pilot'?pilotView(): v==='story'?storyView(): v==='log'?logView(): v==='company'?companyView(): v==='hangar'?hangarView(): v==='cup'?cupView(): v==='academy'?academyView(): v==='profile'?profileView(): boardView();
   app.innerHTML = band() + body + tourHTML(S.st);
   if(S.keepScroll) window.scrollTo(0,y); S.keepScroll=false;
 }

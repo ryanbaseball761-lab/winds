@@ -167,8 +167,6 @@ function academyView(){
     <div class="ac-grid">${LESSONS.map((l,i)=>`<article class="ac-card ${A.done[l.id]?'done':''} ${A.cur===l.id?'cur':''}"><div class="ac-ic">${l.icon}</div><div style="min-width:0"><p class="label">Lesson ${i+1} · ${esc(l.lvl)}</p><h3>${esc(l.n)}</h3><p class="small muted">${esc(l.why.split('. ')[0])}.</p><div class="row" style="margin-top:8px">${A.done[l.id]?'<span class="chip good">✓ Complete</span>':''}<span class="chip">${l.min} min</span><button class="btn sm ${A.cur===l.id?'':'primary'}" data-act="ac-start" data-id="${l.id}">${A.cur===l.id?'In progress':A.done[l.id]?'Fly again':'Start'}</button></div></div></article>`).join('')}</div>
   </main>`;
 }
-const _acBoard = boardView;
-boardView = function(){ return S.view==='academy' ? academyView() : _acBoard(); };
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="ac-start"],[data-act="ac-next"],[data-act="ac-stop"]'); if(!b || !S.st) return; const A=acad(S.st);
   if(b.dataset.act==='ac-start'){ startLesson(b.dataset.id); return; }

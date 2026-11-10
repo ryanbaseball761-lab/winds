@@ -106,5 +106,6 @@ sim-live.js
 page-hangar.js
 page-result.js
 page-flight.js
+page-jobs.js
 ui-render.js
 zz-boot.js

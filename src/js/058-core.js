@@ -12,8 +12,6 @@ function connCard(st){ const live=S.simState==='live'; const s=S.sim||{}; const 
     <button class="btn sm" data-act="practice" ${st.active?'disabled':''}>Practice landing</button>
     <label class="row cc-t"><input type="checkbox" data-act="calm-test" ${testMode()?'checked':''}> Calm test mode <span class="tiny muted">(no sealed orders, cabin requests or urgent jobs)</span></label>
   </div></section>`; }
-const _tsBoard = boardView;
-boardView = function(){ const h=_tsBoard(); if(S.view!=='board'||!S.st) return h; return h.replace(/(<section[^>]*class="today[\s\S]*?<\/section>)/, m=>m+connCard(S.st)); };
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="calm-test"]'); if(!b||!S.st) return; S.st.ui=S.st.ui||{}; S.st.ui.calmTest=b.checked; if(b.checked) (S.st.jobs||[]).forEach(j=>{ j.scen=null; delete j.ask; }); save(); toast(b.checked?'Calm test mode on: plain A-to-B flights.':'Calm test mode off.'); S.keepScroll=true; render(); });
 
 /* ---- practice landing: no pay, no logbook, just the grade ---- */

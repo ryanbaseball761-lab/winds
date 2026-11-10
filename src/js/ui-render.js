@@ -70,7 +70,7 @@ function drawPage(){
   const y = window.scrollY;
   if(!S.st){ app.innerHTML = setupView(); return; }
   const v = S.view;
-  const body = v==='cockpit'?cockpitView(): v==='money'?moneyView(): v==='map'?mapView(): v==='flight'?flightView(): v==='pilot'?pilotView(): v==='story'?storyView(): v==='log'?logView(): v==='company'?companyView(): v==='hangar'?hangarView(): boardView();
+  const body = v==='cockpit'?cockpitView(): v==='money'?moneyView(): v==='map'?mapView(): v==='flight'?flightView(): v==='pilot'?pilotView(): v==='story'?storyView(): v==='log'?logView(): v==='company'?companyView(): v==='hangar'?hangarView(): v==='cup'?cupView(): v==='academy'?academyView(): v==='profile'?profileView(): boardView();
   app.innerHTML = band() + body + tourHTML(S.st);
   if(S.keepScroll) window.scrollTo(0,y); S.keepScroll=false;
 }

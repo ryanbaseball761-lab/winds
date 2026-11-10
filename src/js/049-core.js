@@ -80,10 +80,6 @@ const WEEKEND = [
 ].filter(e=>AP[e.ap]);
 function weekendEvent(st){ const d=dateOf(st.day); const wd=d.getUTCDay(); if(wd!==5 && wd!==6 && wd!==0) return null; const sat = wd===0 ? st.day-1 : wd===5 ? st.day+1 : st.day; const wk=Math.floor(sat/7); return WEEKEND[wk % WEEKEND.length]; }
 function weekendBanner(st){ const ev=weekendEvent(st); if(!ev) return ''; return `<section class="panel weekend"><div class="row between"><div><p class="label">This weekend · ${esc(AP[ev.ap].isl)}</p><h3>${esc(ev.n)}</h3></div><span class="chip good">+35% pay to ${esc(ev.ap)}</span></div><p class="small">${esc(ev.d)}</p></section>`; }
-const _weBoard = boardView;
-boardView = function(){ const h=_weBoard(); if(S.view!=='board' || !S.st) return h; const b=weekendBanner(S.st); return b ? h.replace(/(<section><div class="section-title"><h2>Jobs at)/, b+'$1') : h; };
-const _weStrip = stripHTML;
-stripHTML = function(st, job, opts){ const h=_weStrip(st, job, opts); return job.event ? h.replace('<article class="jcard', `<article data-event="1" class="jcard event`) : h; };
 
 /* ---- 6. new side story: Coast Watch ---- */
 CAST.ortiz = {n:`Lt. Daniela Ortiz`, col:'#c2410c', role:`US Coast Guard, Air Station Borinquen`, bio:`Flew Jayhawks with Mari a lifetime ago. Calm on the radio, terrifying in a debrief.`};

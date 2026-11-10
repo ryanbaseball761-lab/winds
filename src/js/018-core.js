@@ -27,8 +27,6 @@ function weeklyPanel(st){
     <div class="season" style="--c:${s.c}"><b>${esc(s.n)}</b><span class="tiny">${esc(s.d)}</span></div>
   </section>`;
 }
-const _wkBoard = boardView;
-boardView = function(){ const h=_wkBoard(); const i=h.indexOf('<aside class="stack">'); return i<0 ? h : h.slice(0,i)+'<aside class="stack">'+weeklyPanel(S.st)+h.slice(i+'<aside class="stack">'.length); };
 function recordsPanel(st){
   const R=st.records||{}; const row=(lbl,r,fmt)=>`<div class="rec"><span class="label">${lbl}</span><b class="mono">${r?fmt(r.v):'—'}</b><span class="tiny muted">${r&&r.at?esc(r.at)+' · day '+r.day:'Not set yet'}</span></div>`;
   return `<section><div class="section-title"><h2>Personal records</h2><span class="small muted">${st.weeksWon?`${st.weeksWon} weekly championship${st.weeksWon>1?'s':''}`:'Beat your best'}</span></div>

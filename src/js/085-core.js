@@ -33,44 +33,6 @@ campaignCard = function(st){ const c=crime(st); const MC=mainChapters(); const a
 
 /* ---- the Side jobs page ---- */
 function jobTabOf(j){ return j.network?'network':j.special||j.vip?'special':'legit'; }
-boardView = function(){ const st=S.st; ensureJobs(st); const here=AP[st.loc]; const c=crime(st); const live=S.simState==='live'; const L=live?loadedAircraft():{};
-  const MC=mainChapters(); const next=MC.find(m=>!st.story.done[m.id]); const availSet=new Set(storyAvailable(st).map(m=>m.id));
-  let w=null; try{ w=genLocWx(st); }catch(_){}
-  const H=(()=>{ try{ return HOUSING[fin(st).housing]||HOUSING.bunk; }catch(_){ return {rent:0}; } })();
-  /* status line */
-  const status=`<div class="b2-status">
-    <span class="b2-here"><b>${esc(st.loc)}</b> ${esc(here.isl||here.n)}</span>
-    <span>${hhmm(st.clock)} local</span>${w&&w.dir!=null?`<span>Wind ${pad3(w.dir)}°/${w.spd} kt</span>`:''}
-    <span class="b2-dot ${live?'ok':''}">${live?'MSFS connected':'MSFS not connected'}</span>${L.id?`<span>Loaded: ${esc(AC[L.id].n)}</span>`:''}
-    <span class="b2-sp"></span><button class="btn sm" data-act="rest" ${st.active?'disabled':''}>New day · rent ${money(H.rent||0)}</button></div>`;
-  /* story strip */
-  let strip=''; if(next){ const n=MC.indexOf(next)+1; const act=CRIME_ACTS.find(a=>a.arc===next.arc)||CRIME_ACTS[0]; const pa=playAction(st,next,availSet,n);
-    strip=`<section class="b2-story" style="--arc:${act.col}"><div><p class="sc-k">Main story · Chapter ${n} of ${MC.length}</p><b>${esc(next.title)}</b><span class="small muted"> ${esc(next.hook||'')}</span></div><div class="b2-story-go">${pa.btn.replace('btn action big','btn action')}<button class="btn ghost sm" data-act="nav" data-v="story">Story</button></div></section>`; }
-  /* notices */
-  const ready=RATING_ORDER.filter(r=>r!=='CO' && !st.ratings[r] && checkrideReady(st,r).ok);
-  const notes=[ st.active?`<div class="b2-note"><b>Flight booked:</b> ${esc(st.active.job.title)} (${esc(st.active.job.from)} → ${esc(st.active.job.local?st.active.job.from:st.active.job.to)}) <button class="btn sm action" data-act="nav" data-v="flight">Open flight</button></div>`:'',
-    ready.length?`<div class="b2-note"><b>Checkride ready:</b> ${ready.map(r=>esc(RATINGS[r].n)).join(', ')} <button class="btn sm" data-act="nav" data-v="pilot">Book checkride</button></div>`:'' ].join('');
-  /* jobs */
-  const tab=S.jobTab||'all'; let jobs=(st.jobs||[]).slice(); try{ jobs=filterJobs(jobs); }catch(_){}
-  const count=k=>(st.jobs||[]).filter(j=>k==='all'||jobTabOf(j)===k).length;
-  if(tab!=='all') jobs=jobs.filter(j=>jobTabOf(j)===tab);
-  const sort=S.jobSort||'pay'; if(sort==='pay') jobs.sort((a,b)=>b.pay-a.pay); else if(sort==='short') jobs.sort((a,b)=>(a.est||plan(a).est)-(b.est||plan(b).est)); else jobs.sort((a,b)=>a.dep-b.dep);
-  const lim=S.allJobs?999:6; const shown=jobs.slice(0,lim);
-  const tabs=[['all','All'],['network','Network runs'],['legit','Legit'],['special','Charters']].filter(([k])=>k==='all'||count(k)).map(([k,n])=>`<button class="${tab===k?'on':''}" data-act="job-tab" data-v="${k}">${n} <small>${count(k)}</small></button>`).join('');
-  const cards = shown.length ? shown.map(j=>stripHTML(st,j)).join('') : `<div class="empty"><h3>No jobs here right now</h3><p>Start a new day, or travel to a busier airport.</p></div>`;
-  /* travel */
-  const regions=allowedRegions(st); const dests=Object.keys(AP).filter(k=>k!==st.loc && !AP[k].water && regions.includes(AP[k].r)).sort((a,b)=>AP[a].isl.localeCompare(AP[b].isl)); const tv=S.travelTo&&dests.includes(S.travelTo)?S.travelTo:dests[0]; const dh=tv?deadheadCost(st,tv):null;
-  return `<main class="wrap board2 fade">
-    ${status}${strip}${notes}
-    <div class="b2-head"><h2>Jobs at ${esc(st.loc)}</h2><div class="b2-tabs">${tabs}</div>
-      <select data-act="job-sort" aria-label="Sort jobs"><option value="pay" ${sort==='pay'?'selected':''}>Best pay</option><option value="short" ${sort==='short'?'selected':''}>Shortest</option><option value="soon" ${sort==='soon'?'selected':''}>Soonest</option></select></div>
-    ${c.on?`<p class="small muted b2-hint">Network runs pay more and raise your Heat. Legit jobs cool it down.</p>`:''}
-    <div class="jgrid b2-grid">${cards}</div>
-    ${jobs.length>lim?`<button class="btn ghost calm-showmore" data-act="all-jobs">Show all ${jobs.length} jobs</button>`:''}
-    <div class="b2-foot">
-      <details class="panel b2-more"><summary>Travel as a passenger</summary><div class="stack" style="margin-top:10px"><label class="field"><span class="sr">Destination</span><select id="travel-to">${dests.map(k=>`<option value="${k}" ${k===tv?'selected':''}>${esc(AP[k].isl)} · ${k}</option>`).join('')}</select></label>${dh?`<p class="small mono">${dh.d} nm · ${dh.cost?money(dh.cost):'free'} · ~${durTxt(dh.min)}</p>`:''}<button class="btn" data-act="deadhead" data-to="${tv||''}" ${st.active||!dh||st.cash<dh.cost?'disabled':''}>Book the seat</button></div></details>
-      <details class="panel b2-more"><summary>Practice and testing</summary><div class="stack" style="margin-top:10px"><button class="btn sm" data-act="practice" ${st.active?'disabled':''}>Practice landing (no pay, just a grade)</button><label class="row"><input type="checkbox" data-act="calm-test" ${testMode()?'checked':''}> Calm test mode <span class="tiny muted">(no sealed orders or urgent jobs)</span></label></div></details>
-    </div></main>`; };
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="job-tab"]'); if(!b) return; S.jobTab=b.dataset.v; S.allJobs=false; S.keepScroll=true; render(); });
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="job-sort"]'); if(!b) return; S.jobSort=b.value; S.keepScroll=true; render(); });
 const _b2Story = storyView; storyView = function(){ return _b2Story().replace(/ &amp; start · \$0/g,' &amp; start (free)').replace(/ & start · \$0/g,' & start (free)').replace(/(<li class="[^"]*">[^<]*<\/li>)/g,'$1'); };

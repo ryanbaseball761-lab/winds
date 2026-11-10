@@ -14,5 +14,3 @@ const CHECKOUT_TXT = {
   stol:`This one gets into strips you'd never try in a Skyhawk. Fly slow, stay ahead of it, and use every bit of the short-field technique.`
 };
 /* checkout jobs show an instructor tag on the card */
-const _fmStrip = stripHTML;
-stripHTML = function(st, job, opts){ const h=_fmStrip(st, job, opts); return job.checkout ? h.replace('<article class="jcard', '<article data-checkout="1" class="jcard checkout') : h; };

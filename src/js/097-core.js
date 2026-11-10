@@ -14,8 +14,6 @@ function carrierFor(st, job){ const c=crime(st); if(job.network) return 'Unliste
 window.addEventListener('keydown', e=>{ if(document.querySelector('.title-screen,.cmd') && /^[1-5f/]$/i.test(e.key) && !/INPUT/.test(e.target.tagName)){ e.stopImmediatePropagation(); }
   if(e.key==='Escape'){ const np=document.querySelector('.notif-pane'); if(np){ np.remove(); return; } if(S.openJob && !document.querySelector('.cut,.cmd')){ S.openJob=null; S.keepScroll=true; render(); } } }, true);
 
-/* 7. network runs say plainly that the pay is dirty */
-(function(){ const _jr=jobRow; jobRow=function(st,j){ const h=_jr(st,j); return j.network ? h.replace(/(<span class="jr-p">[^<]*)(<\/span>)/, '$1<small class="dirty">dirty</small>$2') : h; }; })();
 
 /* 8. the story card shows roughly how long the flight is */
 (function(){ const _cc=campaignCard; campaignCard=function(st){ let h=_cc(st); try{ const next=mainChapters().find(m=>!st.story.done[m.id]); if(!next) return h; const ac=storyAircraft(st,next)[0]||next.ac[0]; const jj=storyJob(st,next,ac); const est=jj.est||plan(jj).est; h=h.replace(/(<div class="sc-meta"><b>[^<]*<\/b>)/, `$1<span>~${durTxt(est)}</span>`); }catch(_){} return h; }; })();
@@ -28,13 +26,9 @@ window.cutAuto = ()=>!!uiP().autoCut;
 /* 12. title screen: "Resume flight" when you were in the middle of one */
 (function(){ const _t=titleHTML; titleHTML=function(){ const h=_t(); const a=S.st&&S.st.active; return a ? h.replace('<b>Continue</b>', a.started?'<b>Resume flight</b>':'<b>Continue to your flight</b>').replace(/(data-ts="continue" class="on"><b>[^<]*<\/b><span>)[^<]*/, `$1${esc(a.job.from)} → ${esc(a.job.local?a.job.from:a.job.to)} · ${esc(a.job.title)}`) : h; }; })();
 
-/* 13. an empty job list offers a way forward */
-(function(){ const _b=boardView; boardView=function(){ return _b().replace(/<div class="empty"><h3>No jobs here right now<\/h3><p>[^<]*<\/p><\/div>/, `<div class="empty"><h3>No jobs here right now</h3><p>Start a new day for fresh work, or travel to a busier airport.</p><div class="row" style="gap:8px;justify-content:center;margin-top:10px"><button class="btn sm" data-act="rest">New day</button><button class="btn sm" data-act="cmd">Find an airport</button></div></div>`); }; })();
 
 
 
-/* 16. "New day" shows the full cost: rent plus fleet and crew */
-(function(){ const _b=boardView; boardView=function(){ const h=_b(); try{ const st=S.st; const H=HOUSING[fin(st).housing]||HOUSING.bunk; const ops=dailyCosts(st).reduce((s,x)=>s+x[1],0); const tot=(H.rent||0)+ops; return h.replace(/New day · rent \$[\d,]+/, `New day · ${money(tot)}`).replace('<button class="btn sm" data-act="rest"', `<button class="btn sm" data-act="rest" title="Rent ${money(H.rent||0)}${ops?` + fleet and crew ${money(ops)}`:''}"`); }catch(_){ return h; } }; })();
 
 /* 17. laundering: the cheapest option is highlighted */
 (function(){ const _l=launderHTML; launderHTML=function(st){ const h=_l(st); if(!h) return h; const L=launderOpts(st); const best=L.slice().sort((a,b)=>a.fee-b.fee)[0]; return best ? h.replace(`<button class="btn sm" data-act="launder" data-v="${best.id}">`, `<button class="btn sm primary" data-act="launder" data-v="${best.id}">`) : h; }; })();

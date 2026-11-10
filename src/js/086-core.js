@@ -27,8 +27,6 @@ Object.keys(MID).forEach(id=>{ if(BEATS[id]) BEATS[id].push(MID[id]); else BEATS
 const DROP_STRIPS = ['TAPH','TUPA','TNCE','TRPG','TFFS','TFFM','TQPF','TNCS','MBGT','MYAN'];
 const RANK_PERKS = [[12,'Courier','Network runs unlocked'],[28,'Runner','One more network run a day, night runs pay +15%'],[45,'Lieutenant','Network runs in jets, +20% pay'],[65,'Partner','Airliner network runs, +30% pay'],[85,'Boss','Heat cools by 2 every new day']];
 function rankMul(c){ return c.power>=65?1.3:c.power>=45?1.2:1; }
-const _twStrip = stripHTML;
-stripHTML = function(st, job, opts){ let h=_twStrip(st, job, opts); const tags=[]; if(job.drop) tags.push('<span class="chip warn">Night drop</span>'); if(job.lowLevel) tags.push('<span class="chip warn">Stay under 1,000 ft: +25%</span>'); if(job.hot) tags.push('<span class="chip warn">Hot airport</span>'); if(tags.length) h=h.replace('<div class="chips">', '<div class="chips">'+tags.join('')); return h; };
 
 
 function launderOpts(st){ const d=st.story.done; const L=[]; L.push({id:'dez',n:'Dez, cash under the counter',fee:0.25,heat:3}); if(d.CR5) L.push({id:'trust',n:'The Hartwell Reef Trust',fee:0.15,heat:1}); if(d.CR15) L.push({id:'caribe',n:'Caribe Cargo invoices',fee:0.08,heat:0}); return L; }

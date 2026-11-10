@@ -237,14 +237,6 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="cri
 
 
 /* ---- side jobs grow with the story: 2 at the start, up to 6 by Act 3 ---- */
-const _crBoard = boardView;
-boardView = function(){ const h=_crBoard(); if(S.view!=='board' || !S.st) return h; const t=tpl(h); const mainEl=t.content.querySelector('main'); if(!mainEl) return h;
-  const hq=mainEl.querySelector('.hq'); if(hq){ const anchor=mainEl.querySelector('.conn-card')||mainEl.querySelector('.grid-2'); if(anchor) anchor.before(hq); }
-  const MC=mainChapters(); const n=MC.filter(m=>S.st.story.done[m.id]).length;
-  if(!S.allJobs && n<MC.length){ const lim=Math.min(6, 2+Math.floor(n/2)); const grid=[...mainEl.querySelectorAll('.jgrid')].pop();
-    if(grid){ const cards=[...grid.children].filter(c=>c.tagName==='ARTICLE'||c.classList.contains('jcard'));
-      if(cards.length>lim){ cards.slice(lim).forEach(c=>c.remove()); if(!mainEl.querySelector('[data-act="all-jobs"]')){ const more=document.createElement('button'); more.className='btn ghost calm-showmore'; more.dataset.act='all-jobs'; more.textContent='Show more jobs'; grid.after(more); } } } }
-  return t.innerHTML; };
 
 /* ---- styles ---- */
 (function(){ const css=`

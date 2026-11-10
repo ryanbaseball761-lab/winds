@@ -38,8 +38,6 @@ function loadedBanner(st){
   const a=AC[L.id]; const ok=canFly(st,L.id);
   return `<div class="notice row between" style="gap:10px"><span><b>Loaded in MSFS: ${esc(a.n)}.</b> ${ok?`Jobs for it are at the top of the board.`:`You'll need ${a.req.filter(r=>!st.ratings[r]).map(r=>RATINGS[r].n).join(' + ')} to fly it for pay.`}</span>${ok?'<span class="chip sea">Your plane</span>':''}</div>`;
 }
-const _myBoard = boardView;
-boardView = function(){ const h=_myBoard(); return h.replace('<section><div class="section-title"><h2>Jobs at', loadedBanner(S.st)+'<section><div class="section-title"><h2>Jobs at'); };
 
 /* Hangar: bring your own aircraft */
 function byoSection(st){

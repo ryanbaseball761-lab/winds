@@ -17,11 +17,6 @@ loadIntoSim = async function(job){ if(!S.mcp){ toast('MSFS isn\'t connected.'); 
 
 /* ---- 5 + 6. no duty day, no "past midnight": the day rolls over by itself ---- */
 dutyAfter = function(){ return 0; };
-const _fbBoard = boardView;
-boardView = function(){ const h=_fbBoard(); if(S.view!=='board'||!S.st) return h; const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h;
-  main.querySelectorAll('section, .notice, aside > *').forEach(s=>{ if(!s.parentNode) return; const ht=headText(s); if((/Duty day/.test(ht) || /out of duty time/i.test(s.textContent)) && !/Travel as a passenger/.test(s.textContent)) s.remove(); });
-  const aside=main.querySelector('aside.stack'); if(aside){ const nd=document.createElement('section'); nd.className='panel stack'; nd.innerHTML=`<div class="row between"><h3>Want different work?</h3></div><p class="small muted">Start a new day for a fresh set of jobs.</p><button class="btn" data-act="rest">New day</button>`; aside.prepend(nd); }
-  return t.innerHTML; };
 
 /* ---- 7. Coral Wing pays your deadhead tickets until you run your own company ---- */
 const _fbDh = deadheadCost;

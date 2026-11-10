@@ -43,8 +43,6 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="walk-ag
 const CX_TIPS = { Power:`Power: how much of the network answers to you. Grows with chapters, hard choices and network runs. Unlocks rank rewards.`, Heat:`Heat: how close the law is. Network runs raise it; legit jobs, lying low and laundering through Caribe Cargo keep it down. Above 60 customs searches you; at 90 you're busted.`, Dirty:`Dirty cash: money from network runs. Launder it on the Jobs or Money page before you can spend it.` };
 
 /* ---- 8. jobs: see the route on the map ---- */
-const _m8Row = jobRow;
-jobRow = function(st, j){ const h=_m8Row(st, j); return S.openJob===j.id ? h.replace('<div class="jr-card">', `<div class="jr-card"><button class="btn sm ghost" data-act="job-map" data-id="${j.id}" style="margin:0 0 10px">Show route on the map</button>`) : h; };
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="job-map"]'); if(!b||!S.st) return; S.mapRoute=b.dataset.id; const j=(S.st.jobs||[]).find(x=>x.id===b.dataset.id); if(j) S.mapSel=j.local?j.from:j.to; go('map'); });
 const _m8Map = mapView;
 mapView = function(){ const h=_m8Map(); try{ const j=S.mapRoute&&(S.st.jobs||[]).find(x=>x.id===S.mapRoute); if(!j) return h; const v=MAPV[S.mapZoom||'east']; const W=1000; const X=lon=>(lon-v.lon[0])/(v.lon[1]-v.lon[0])*W; const H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05); const Y=lat=>H-(lat-v.lat[0])/(v.lat[1]-v.lat[0])*H;

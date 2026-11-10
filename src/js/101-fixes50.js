@@ -12,9 +12,6 @@
 (function(){ const _fn=flightNo; flightNo=function(job){ return job && job.network ? 'Unlisted' : _fn(job); }; })();
 
 
-/* 9. "Checkride ready" leads with the licences the story needs; the rest fold away */
-(function(){ const _b=boardView; boardView=function(){ const h=_b(); return h.replace(/<div class="b2-note"><b>Checkride ready:<\/b> ([^<]*)(<button[^>]*>Book checkride<\/button><\/div>)/, (m,list,btn)=>{ const all=list.trim().split(', '); const key=['Jet Type Rating','Airline Transport Pilot','Private Pilot']; const main=all.filter(n=>key.some(k=>n.startsWith(k))); const rest=all.filter(n=>!main.includes(n)); const shown=main.length?main:all.slice(0,1); const more=all.length-shown.length;
-  return `<div class="b2-note"><b>Checkride ready:</b> ${shown.join(', ')}${more?` <span class="small muted" title="${rest.join(', ')}">+${more} optional</span>`:''} ${btn}`; }); }; })();
 
 
 /* 11. your role reads properly everywhere ("Castillo's crew", not just "Castillo") */
@@ -71,8 +68,6 @@ window.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cancel-ye
 /* 40. the result screen starts at the top after the scene */
 (function(){ const _pa=playAftermath; playAftermath=function(){ const r=_pa(); setTimeout(()=>{ try{ window.scrollTo(0,0); }catch(_){} }, 400); return r; }; })();
 
-/* 41 + 42 + 43. job rows: full title on hover, the aircraft column never wraps, network rows show the Heat */
-(function(){ const _jr=jobRow; jobRow=function(st,j){ let h=_jr(st,j); h=h.replace('<span class="jr-t">', `<span class="jr-t" title="${esc(j.title)}">`).replace('<span class="jr-m">', `<span class="jr-m" title="${esc((AC[j.ac]||{}).n||'')}">`); if(j.network) h=h.replace('<small class="dirty">dirty</small>', '<small class="dirty">dirty · Heat +5</small>'); return h; }; })();
 
 /* 44. at Heat 80+ (the feds are looking) the Heat chip pulses */
 /* (CSS below) */

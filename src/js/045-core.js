@@ -48,11 +48,6 @@ function jobPerHour(j){ const est=j.est||plan(j).est; return j.pay / Math.max(0.
 function boardTools(st){ const p=boardPrefs(); const acs=[...new Set(st.jobs.map(j=>j.ac))];
   const sel=(k,opts)=>`<select data-act="bp" data-k="${k}" aria-label="${k}">${opts.map(([v,l])=>`<option value="${v}" ${ (p[k]||opts[0][0])===v?'selected':''}>${esc(l)}</option>`).join('')}</select>`;
   return `<div class="board-tools">${sel('sort',[['dep','Soonest'],['pay','Highest pay'],['rate','Best pay per hour'],['short','Shortest'],['long','Longest']])}${sel('kind',[['all','All jobs'],['pax','Passengers'],['cargo','Cargo'],['vip','VIP'],['urgent','Urgent'],['local','Local tours']])}${acs.length>1?sel('ac',[['all','Any aircraft'],...acs.map(k=>[k,AC[k].n])]):''}</div>`; }
-const _gpBoard = boardView;
-boardView = function(){ const st=S.st; if(!st || S.view!=='board') return _gpBoard(); try{ ensureJobs(st); }catch(_){} if(!st.jobs) return _gpBoard(); const all=st.jobs; const shown=filterJobs(all);
-  st.jobs=shown; let h; try{ h=_gpBoard(); } finally { st.jobs=all; }
-  const hidden=all.length-shown.length;
-  return h.replace(/(<h2>Jobs at [^<]*<\/h2>)/, `$1${boardTools(st)}${hidden?`<span class="tiny muted">${hidden} hidden by filters</span>`:''}`); };
 document.addEventListener('change', e=>{ const s=e.target.closest('[data-act="bp"]'); if(!s) return; const p=boardPrefs(); p[s.dataset.k]=s.value; setBoardPrefs(p); S.keepScroll=true; render(); });
 
 /* ---- difficulty with teeth ---- */

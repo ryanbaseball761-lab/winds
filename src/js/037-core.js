@@ -48,8 +48,6 @@ function cupView(){
       <button class="btn ${C.cur===c.id?'':'primary'} sm" data-act="cup-start" data-id="${c.id}" ${C.cur&&C.cur!==c.id?'disabled':''}>${C.cur===c.id?'In progress':b?'Try again':'Start attempt'}</button></div></article>`; }).join('')}</div>
   </main>`;
 }
-const _cupBoard = boardView;
-boardView = function(){ return S.view==='cup' ? cupView() : _cupBoard(); };
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="cup-start"],[data-act="cup-stop"],[data-act="cup-dismiss"]'); if(!b || !S.st) return; const C=cupState(S.st);
   if(b.dataset.act==='cup-start') startCup(b.dataset.id);

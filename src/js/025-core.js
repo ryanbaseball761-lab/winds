@@ -41,11 +41,5 @@ function silType(acId){ const a=AC[acId]; if(!a) return 'high';
 function acSvgInner(acId, color){ return `<g fill="${color||'currentColor'}" style="color:${color||'currentColor'}">${SIL[silType(acId)]}</g>`; }
 function acSvg(acId, cls){ return `<svg class="${cls||'sil'}" viewBox="0 0 120 40" aria-hidden="true">${acSvgInner(acId)}</svg>`; }
 /* job cards: a postcard of the destination with your aircraft */
-const _artStrip = stripHTML;
-stripHTML = function(st, job, opts={}){
-  const h=_artStrip(st, job, opts);
-  const art = `<div class="jc-art">${islandArt(job.mystery?'????':job.local?job.from+'L':job.to, job.dep, 600, 120, job.ac)}</div>`;
-  return h.replace(/(<article class="jcard[^>]*>)/, '$1'+art);
-};
 /* boarding pass: destination postcard header */
 /* hangar cards get a silhouette */

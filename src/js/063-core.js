@@ -4,8 +4,6 @@ const _p20Toast = toast;
 toast = function(msg){ const m=String(msg); if(/^New tab unlocked: (Logbook|Profile|Company|Cockpit)/.test(m)) return; const now=Date.now(); if(S._lt===m && now-(S._ltT||0)<20000) return; S._lt=m; S._ltT=now; return _p20Toast(msg); };
 
 /* 2. a past departure time reads "Ready now" */
-const _p20Strip = stripHTML;
-stripHTML = function(st, job, opts){ let h=_p20Strip(st, job, opts); if(job.dep<=st.clock) h=h.replace(`STD ${hhmm(job.dep)}`, 'Ready now'); return h; };
 
 /* 3 + 4. difficulty and theme move out of the top bar and sidebar into Hangar > Settings */
 
@@ -40,12 +38,8 @@ const _p20Appr = approachCard;
 approachCard = function(a){ const s=S.sim; if(a && a.job.local && s && s.motion && !(s.motion.vsFpm<-200 && (s.position.aglFt||0)<2500)) return ''; return _p20Appr(a); };
 
 /* 14. the New day button says what it costs */
-const _p20Board = boardView;
-boardView = function(){ const h=_p20Board(); try{ const F=fin(S.st); const H=HOUSING[F.housing]||HOUSING.bunk; return h.replace('<button class="btn" data-act="rest">New day</button>', `<button class="btn" data-act="rest">New day · rent ${money(H.rent)}</button>`); }catch(_){ return h; } };
 
 /* 15. story chapters and jobs prefer the aircraft you already have loaded in MSFS */
-const _p20Strip2 = stripHTML;
-stripHTML = function(st, job, opts){ const h=_p20Strip2(st, job, opts); const ld=S.simState==='live'?loadedAircraft():{}; return (ld.id && job.ac===ld.id) ? h.replace(/(<article[^>]*class="jcard[^"]*"[^>]*>)/, '$1<span class="loaded-tag">Loaded in MSFS</span>') : h; };
 
 /* 16. new pilots don't get sealed orders or cabin requests until they've settled in */
 
@@ -58,7 +52,5 @@ const _p20Pilot2 = pilotView;
 pilotView = function(){ return _p20Pilot2().replace(/<select([^>]*)aria-label="Checkride fee"/g, '<select$1aria-label="Checkride fee" title="Faster checkrides cost more"'); };
 
 /* 19. "Checkride ready" on the board is a button that takes you there */
-const _p20Board2 = boardView;
-boardView = function(){ return _p20Board2().replace(/<a[^>]*>Book it on the Pilot tab<\/a>/, '<button class="btn sm" data-act="nav" data-v="pilot">Book checkride</button>'); };
 
 /* 20. very long job titles are clamped to two lines (CSS) */

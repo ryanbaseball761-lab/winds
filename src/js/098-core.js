@@ -1,7 +1,5 @@
 /* ===================== 20 MORE FIXES ===================== */
 
-/* 1. BUG: Butter Cup, Academy and Profile were showing the job board (they route through boardView) */
-(function(){ const _b=boardView; boardView=function(){ if(S.view==='cup') return cupView(); if(S.view==='academy') return academyView(); if(S.view==='profile') return profileView(); return _b(); }; })();
 
 /* 2. Pilot tabs include Profile and Logbook, so they're easy to find */
 try{ const g=NAV5.find(x=>x.v==='pilot'); g.tabs=[['pilot','Licences'],['profile','Profile'],['log','Logbook'],['money','Money'],['cup','Butter Cup'],['academy','Academy']]; }catch(_){}
@@ -23,8 +21,6 @@ document.addEventListener('click', e=>{ const s=e.target.closest('.cut-skip'); i
 /* 10. safehouses you can't buy yet say what's needed */
 (function(){ const _o=operationHTML; operationHTML=function(st){ return _o(st).replace(/<span class="small muted">(\$[\d,]+)<\/span><\/div>/g, '<span class="small muted">$1 · buy the one above first</span></div>'); }; })();
 
-/* 11. network runs read like it */
-(function(){ const _jr=jobRow; jobRow=function(st,j){ const h=_jr(st,j); return j.network ? h.replace(/(<button[^>]*data-act="accept"[^>]*>)\s*Accept/, '$1Take the run') : h; }; })();
 
 /* 12. the sidebar says where your career is really saved */
 (function(){ const _st=syncText; syncText=function(){ if(window.twNative) return 'Saved to Documents\\Trade Winds'; return _st(); }; })();
@@ -32,8 +28,6 @@ document.addEventListener('click', e=>{ const s=e.target.closest('.cut-skip'); i
 /* 13. the map opens on the airport you searched for, highlighted */
 (function(){ const _mv=mapView; mapView=function(){ const h=_mv(); if(!S.mapSel||!AP[S.mapSel]) return h; try{ const v=MAPV[S.mapZoom||'east']; const a=AP[S.mapSel]; if(a.lon<v.lon[0]||a.lon>v.lon[1]||a.lat<v.lat[0]||a.lat>v.lat[1]){ const k=Object.keys(MAPV).find(z=>a.lon>=MAPV[z].lon[0]&&a.lon<=MAPV[z].lon[1]&&a.lat>=MAPV[z].lat[0]&&a.lat<=MAPV[z].lat[1]); if(k && k!==S.mapZoom){ S.mapZoom=k; return _mv(); } } }catch(_){} return h; }; })();
 
-/* 14. Jobs page: dirty cash is one compact line (the full panel lives on Money) */
-(function(){ const _b=boardView; boardView=function(){ const h=_b(); if(S.view!=='board') return h; return h.replace(/<section class="panel launder">[\s\S]*?<\/section>/, ()=>{ const c=crime(); return `<div class="b2-note launder-mini"><b>Dirty cash ${money(c.dirty||0)}</b><span class="small muted">Launder it before you can spend it.</span><button class="btn sm" data-act="nav" data-v="money">Launder</button></div>`; }); }; })();
 
 /* 15. achievements wait until a cutscene has finished before popping up */
 (function(){ const _ap=achPop; achPop=function(a){ if(document.querySelector('.cut')){ setTimeout(()=>achPop(a), 1500); return; } return _ap(a); }; })();

@@ -37,15 +37,6 @@ document.addEventListener('keydown', e=>{ if(document.querySelector('.cut')) ret
   if(e.key==='/'){ e.preventDefault(); openCmd(); return; } const n=Number(e.key); if(n>=1 && n<=5 && S.st){ go(NAV5[n-1].v); return; } if(e.key.toLowerCase()==='f' && S.st && S.st.active){ go('flight'); } });
 
 /* ---- 6. job cards become one-line rows; click a row for the full card ---- */
-function jobRow(st, j){ const card=stripHTML(st, j); const acc=(card.match(/<button[^>]*data-act="accept"[^>]*>[\s\S]*?<\/button>/)||[''])[0] || (card.match(/<button[^>]*class="[^"]*jc-go[^"]*"[^>]*>[\s\S]*?<\/button>/)||[''])[0];
-  const to=j.local?j.from:j.to; const est=j.est||(()=>{ try{ return plan(j).est; }catch(_){ return 0; } })(); const kind=j.network?'net':j.special||j.vip?'vip':'legit'; const lbl=j.label||(j.network?'Network run':'Job');
-  const tag=j.drop?'Night drop':j.lowLevel?'Low level':j.hot?'Hot':j.bonus?'Bonus':'';
-  return `<div class="jrow k-${kind} ${S.openJob===j.id?'open':''}"><button class="jr-main" data-act="job-open" data-id="${j.id}" aria-expanded="${S.openJob===j.id}">
-      <span class="jr-k">${esc(lbl)}</span><span class="jr-rt"><b>${esc(j.from)}</b> → <b>${esc(to==='????'?'????':to)}</b></span><span class="jr-t">${esc(j.title)}${tag?` <em>${tag}</em>`:''}</span>
-      <span class="jr-m">${esc(AC[j.ac]?AC[j.ac].n:j.ac)} · ${est?durTxt(est):''} · ${j.dep<=st.clock?'now':hhmm(j.dep)}</span><span class="jr-p">${money(j.pay)}</span></button>
-    <span class="jr-go">${acc}</span>${S.openJob===j.id?`<div class="jr-card">${card}</div>`:''}</div>`; }
-(function(){ const _b=boardView; boardView=function(){ const h=_b(); if(!S.st) return h; try{ const t=tpl(h); const grid=t.content.querySelector('.b2-grid'); if(!grid) return h; const st=S.st; const ids=[...grid.querySelectorAll('[data-act="accept"][data-id]')].map(b=>b.dataset.id);
-  const jobs=ids.map(id=>(st.jobs||[]).find(j=>j.id===id)).filter(Boolean); if(!jobs.length) return h; const list=document.createElement('div'); list.className='jlist'; list.innerHTML=`<div class="jl-head"><span>Type</span><span>Route</span><span>Job</span><span>Aircraft · time · departs</span><span>Pay</span><span></span></div>`+jobs.map(j=>jobRow(st,j)).join(''); grid.replaceWith(list); return t.innerHTML; }catch(_){ return h; } }; })();
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="job-open"]'); if(!b) return; S.openJob = S.openJob===b.dataset.id ? null : b.dataset.id; S.keepScroll=true; render(); });
 
 

@@ -28,9 +28,6 @@ storyView = function(){ const st=S.st; const c=crime(st); const MC=mainChapters(
 /* the story card uses the right cast, and the nerve line */
 
 /* nav: "Main story" first; the app opens on it */
-/* side-jobs board: the story banner first, above everything */
-(function(){ const _b=boardView; boardView=function(){ const h=_b(); if(S.view!=='board'||!S.st) return h; const t=tpl(h); const main=t.content.querySelector('main'); const hq=main&&main.querySelector('.hq'); if(!hq) return h; const head=main.querySelector(':scope > .page-head, :scope > header'); const top=main.firstElementChild; (head&&head.nextSibling)?head.after(hq):main.prepend(hq);
-  const posted=[...main.querySelectorAll('p,div')].find(x=>!x.children.length && /^Posted by Coral Wing dispatch/.test(x.textContent.trim())); if(posted) posted.textContent = crime(S.st).on ? 'Legit jobs cool your Heat down. Network runs pay more and heat you up.' : 'Posted by Coral Wing dispatch'; return t.innerHTML; }; })();
 
 /* ---- styles ---- */
 (function(){ const css=`
