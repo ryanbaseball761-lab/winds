@@ -54,5 +54,3 @@ boardingPass = function(st, job, p, a, started, mins, ai){
   return h.replace('<section class="pass">', `<section class="pass"><div class="pass-art">${islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 170, job.ac)}</div>`);
 };
 /* hangar cards get a silhouette */
-const _artHangar = hangarView;
-hangarView = function(){ return _artHangar().replace(/<label class="check"><input type="checkbox" data-hangar="([^"]+)"/g, (m,k)=>`<div class="hg-sil">${acSvg(k)}</div>`+m); };

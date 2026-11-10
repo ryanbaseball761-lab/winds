@@ -73,8 +73,6 @@ inflightView = function(){ let h=_tfInflight(); const a=S.st&&S.st.active; if(!a
 
 
 /* settings */
-const _tfHangar = hangarView;
-hangarView = function(){ const h=_tfHangar(); const P=proPrefs(); return h.replace(/(<section class="panel stack"><h3>Voices &amp; copilot<\/h3>)/, `<section class="panel stack"><h3>Flight setup</h3><label class="row"><input type="checkbox" data-act="pro-flag" data-k="fullChecklist" ${P.fullChecklist?'checked':''}> Detailed checklists (9 phases instead of 5)</label><label class="row"><input type="checkbox" data-act="pro-flag2" data-k="autoTime" ${P.autoTime!==false?'checked':''}> Set the MSFS clock to the flight's departure time automatically (app only)</label></section>$1`); };
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="pro-flag2"]'); if(!b||!S.st) return; proPrefs()[b.dataset.k]=b.checked; save(); });
 
 /* ---- the mainland: The Tour (jet era) + charters to the US and Mexico ---- */

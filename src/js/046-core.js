@@ -22,18 +22,6 @@ function applyA11y(){ const ui = S.st ? uiPrefs() : {}; const el=document.docume
   el.classList.toggle('rm', !!ui.reduceMotion); el.classList.toggle('hc', !!ui.contrast); }
 
 /* ---- settings live in one place (Hangar) ---- */
-function settingsHTML(){ const ui=uiPrefs(); const z=ui.zoom||1;
-  return `<section class="panel stack" id="settings"><div class="row between"><h3>Settings</h3><span class="small muted">Saved with your career</span></div>
-  <div class="set-grid">
-    <div><p class="label">Text size</p><div class="diff">${[[1,'Normal'],[1.12,'Large'],[1.25,'Larger']].map(([v,l])=>`<button class="${z===v?'on':''}" data-act="ui-zoom" data-v="${v}">${l}</button>`).join('')}</div></div>
-    <label class="row"><input type="checkbox" data-act="ui-flag" data-k="reduceMotion" ${ui.reduceMotion?'checked':''}> Reduce motion and animations</label>
-    <label class="row"><input type="checkbox" data-act="ui-flag" data-k="contrast" ${ui.contrast?'checked':''}> High contrast text and outlines</label>
-    <label class="row"><input type="checkbox" data-act="ui-flag" data-k="quiet" ${ui.quiet?'checked':''}> Quiet mode: no urgent-job pop-ups</label>
-    <label class="row"><input type="checkbox" data-act="ui-flag" data-k="allTabs" ${ui.allTabs?'checked':''}> Show every tab now (skip unlocking them)</label>
-  </div>
-  ${window.twNative&&twNative.openFolder?`<div class="row"><button class="btn sm" data-act="open-logs">Open flight logs folder</button><span class="tiny muted">Every flight with MSFS connected is recorded here. Send one along if something looks wrong.</span></div>`:''}</section>`; }
-const _dcHangar = hangarView;
-hangarView = function(){ const h=_dcHangar(); return h.replace('<main class="wrap stack fade">','<main class="wrap stack fade">'+settingsHTML()); };
 document.addEventListener('click', e=>{ const z=e.target.closest('[data-act="ui-zoom"]'); if(z && S.st){ uiPrefs().zoom=Number(z.dataset.v); save(); S.keepScroll=true; render(); return; }
   if(e.target.closest('[data-act="open-logs"]') && window.twNative && twNative.openFolder) twNative.openFolder('flight-logs'); });
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="ui-flag"]'); if(!b||!S.st) return; uiPrefs()[b.dataset.k]=b.checked; save(); S.keepScroll=true; render(); });

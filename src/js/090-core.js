@@ -48,10 +48,6 @@ storyView = function(){ let h=_m4Story(); try{ const st=S.st, c=crime(st); const
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="replay-ch"]'); if(!b) return; const m=CRIME.find(x=>x.id===b.dataset.id); if(m) playPrologue(m, ()=>{}); });
 
 /* ---- 6. settings: everything in one place, in sections ---- */
-const _m6Set = settingsHTML;
-settingsHTML = function(){ const h=_m6Set(); const ui=(S.st&&S.st.ui)||{}; return h.replace('<div class="set-grid">', `<div class="set-grid">
-  <div><p class="label">Story</p><label class="row"><input type="checkbox" data-act="ui-tog" data-k="noRecap" ${ui.noRecap?'':'checked'}> "Previously on" recap when the app opens</label><div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn sm" data-act="walk-again">Show the welcome walkthrough</button></div></div>
-  <div><p class="label">Keyboard</p><p class="small muted" style="line-height:1.7"><kbd>1</kbd>–<kbd>5</kbd> pages · <kbd>Ctrl K</kbd> or <kbd>/</kbd> search · <kbd>F</kbd> your flight · <kbd>Space</kbd> next in a cutscene · <kbd>Esc</kbd> skip</p></div>`); };
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="ui-tog"]'); if(!b||!S.st) return; S.st.ui=S.st.ui||{}; S.st.ui[b.dataset.k]=!b.checked; save(); });
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="walk-again"]')||!S.st) return; S.st.ui.walk3=0; save(); location.reload(); });
 

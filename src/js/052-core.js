@@ -61,12 +61,6 @@ inflightView = function(){ let h=_clInflight(); const a=S.st&&S.st.active; if(!a
 /* ---- each screen gets its own atmosphere ---- */
 
 /* ---- hangar in tabs instead of one very long page ---- */
-const HG_TABS = [['fleet','Your fleet'],['settings','Settings'],['msfs','MSFS connection'],['save','Saves & help']];
-function hgGroup(title, el){ const t=(title||'').toLowerCase(); if(/settings|flight setup|voices|match msfs|urgent/.test(t)) return 'settings'; if(/live msfs|inside the sim|setup check/.test(t) || (el.textContent||'').includes('Run the setup check again')) return 'msfs'; if(/save data|backups|report a problem/.test(t)) return 'save'; return 'fleet'; }
-const _clHangar = hangarView;
-hangarView = function(){ const h=_clHangar(); const t=document.createElement('template'); t.innerHTML=h; const main=t.content.querySelector('main'); if(!main) return h; const cur=S.hangarTab||'fleet';
-  [...main.children].forEach(el=>{ const g=hgGroup((el.querySelector('h2,h3')||{}).textContent, el); if(g!==cur) el.remove(); });
-  const bar=document.createElement('nav'); bar.className='hg-tabs'; bar.innerHTML=HG_TABS.map(([k,l])=>`<button class="${k===cur?'on':''}" data-act="hg-tab" data-v="${k}">${l}</button>`).join(''); main.prepend(bar); return t.innerHTML; };
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="hg-tab"]'); if(!b) return; S.hangarTab=b.dataset.v; S.keepScroll=true; render(); });
 
 /* the old 'Set up MSFS' list in the sidebar is now the Flight setup panel */

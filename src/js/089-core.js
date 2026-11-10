@@ -55,8 +55,6 @@ function jobRow(st, j){ const card=stripHTML(st, j); const acc=(card.match(/<but
   const jobs=ids.map(id=>(st.jobs||[]).find(j=>j.id===id)).filter(Boolean); if(!jobs.length) return h; const list=document.createElement('div'); list.className='jlist'; list.innerHTML=`<div class="jl-head"><span>Type</span><span>Route</span><span>Job</span><span>Aircraft · time · departs</span><span>Pay</span><span></span></div>`+jobs.map(j=>jobRow(st,j)).join(''); grid.replaceWith(list); return t.innerHTML; }catch(_){ return h; } }; })();
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="job-open"]'); if(!b) return; S.openJob = S.openJob===b.dataset.id ? null : b.dataset.id; S.keepScroll=true; render(); });
 
-/* ---- 7. pilot: licences first; hangar: what's loaded in MSFS first ---- */
-(function(){ const _hv=hangarView; hangarView=function(){ const h=_hv(); try{ if((S.hangarTab||'fleet')!=='fleet') return h; const live=S.simState==='live'; const L=live?loadedAircraft():{}; const card=`<section class="panel loaded-now"><p class="label">Loaded in MSFS</p>${live?(L.id?`<h3>${esc(AC[L.id].n)}</h3><p class="small muted">${esc(AC[L.id].cls)} · cruise ${AC[L.id].cruise} kt · range ${AC[L.id].range} nm${S.st.hangar&&S.st.hangar[L.id]?' · in your hangar list':' · <b>not ticked in your hangar list below</b>'}</p>`:`<h3>${esc(L.title||'Nothing loaded')}</h3><p class="small muted">This aircraft isn't one the game knows.</p>`):`<h3>MSFS isn't connected</h3><p class="small muted">Start MSFS and load an aircraft to see it here.</p>`}</section>`; return h.replace(/(<main[^>]*>)/, '$1'+card); }catch(_){ return h; } }; })();
 
 /* ---- 8. notifications: one stack at the bottom right, plus a history in the header ---- */
 S.notifs=S.notifs||[]; S.notifSeen=0;

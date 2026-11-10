@@ -111,10 +111,6 @@ STORY.push(
 );
 
 /* ---- settings: voices, copilot, in-sim panel ---- */
-const _proHangar = hangarView;
-hangarView = function(){ const h=_proHangar(); const P=proPrefs();
-  const sec = `<section class="panel stack"><h3>Voices &amp; copilot</h3><label class="row"><input type="checkbox" data-act="pro-flag" data-k="copilot" ${P.copilot!==false?'checked':''}> Copilot callouts: "Airspeed alive", "Rotate", "Positive rate", and 1000 / 500 / 100 / 50 / 30 / 10 on landing</label>${premiumVoiceHTML()}</section>${panelSetupHTML()}`;
-  return h.replace(/(<section class="panel stack" id="settings">[\s\S]*?<\/section>)/, '$1'+sec); };
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="pro-flag"]'); if(!b||!S.st) return; proPrefs()[b.dataset.k]=b.checked; save(); });
 const _proCockpit = cockpitView;
 cockpitView = function(){ const h=_proCockpit(); const p=panelSetupHTML(); return p ? h.replace(/<\/main>\s*$/, p+'</main>') : h; };

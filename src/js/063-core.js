@@ -8,12 +8,6 @@ const _p20Strip = stripHTML;
 stripHTML = function(st, job, opts){ let h=_p20Strip(st, job, opts); if(job.dep<=st.clock) h=h.replace(`STD ${hhmm(job.dep)}`, 'Ready now'); return h; };
 
 /* 3 + 4. difficulty and theme move out of the top bar and sidebar into Hangar > Settings */
-const _p20Set = settingsHTML;
-settingsHTML = function(){ let h=_p20Set(); const d=diff();
-  const extra=`<div><p class="label">Difficulty</p><div class="diff">${Object.keys(DIFF).map(k=>`<button class="${k===d?'on':''}" data-act="diff" data-v="${k}" title="${esc(DIFF[k].d)}">${DIFF[k].n}</button>`).join('')}</div><p class="tiny muted" style="margin-top:4px">${esc(DIFF[d].d)}</p></div>
-    <div><p class="label">Appearance</p><button class="btn sm" data-act="theme">${THEME_LBL[themePref()]}</button></div>`;
-  h=h.replace(/<label class="row"><input type="checkbox" data-act="ui-flag" data-k="allTabs"[\s\S]*?<\/label>/, '');
-  return h.replace('<div class="set-grid">', '<div class="set-grid">'+extra); };
 
 /* 5. the copilot never reads out an impossible landing number */
 
@@ -36,11 +30,6 @@ moneyView = function(){ const h=_p20Money(); const t=tpl(h); const main=t.conten
   return t.innerHTML; };
 
 /* 9. hangar: the long "which aircraft do you own" list folds into one drawer */
-const _p20Hangar = hangarView;
-hangarView = function(){ const h=_p20Hangar(); if((S.hangarTab||'fleet')!=='fleet') return h; const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h;
-  const classSecs=[...main.querySelectorAll('section')].filter(s=>!s.className && CLS && Object.values(CLS).some(c=>c.name===headText(s)));
-  if(classSecs.length){ const owned=Object.keys(S.st.hangar||{}).filter(k=>S.st.hangar[k] && AC[k]).length; const d=wrapDetails(classSecs.map(s=>{ s.remove(); return s; }), `Aircraft you own in MSFS <span class="tiny muted">${owned} selected</span>`); main.appendChild(d); }
-  return t.innerHTML; };
 
 /* 10. weekly challenges live on your Profile now */
 const _p20Prof = profileView;

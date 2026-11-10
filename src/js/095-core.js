@@ -51,12 +51,6 @@ function toMetric(t){ return t.replace(/(\d[\d,]*(?:\.\d+)?)\s?lb\b/g,(m,n)=>`${
   try{ c._fx.gain.value=volOf('fx'); c._mus.gain.value=volOf('music'); }catch(_){} return c; }; })();
 
 /* ---- settings page additions ---- */
-const _tsSet = settingsHTML;
-settingsHTML = function(){ const h=_tsSet(); const u=uiP(); const v=u.vol||{}; const sl=(k,n)=>`<label class="vol"><span>${n}</span><input type="range" min="0" max="100" step="5" value="${v[k]==null?80:v[k]}" data-act="vol" data-k="${k}"><b>${v[k]==null?80:v[k]}</b></label>`;
-  return h.replace('<div class="set-grid">', `<div class="set-grid">
-  <div><p class="label">Volume</p>${sl('voice','Voices')}${sl('music','Music')}${sl('fx','Effects')}</div>
-  <div><p class="label">Units</p><div class="diff"><button class="${u.metric?'':'on'}" data-act="units" data-v="imp">Imperial (lb, gal)</button><button class="${u.metric?'on':''}" data-act="units" data-v="met">Metric (kg, L)</button></div><p class="tiny muted" style="margin-top:4px">Altitudes stay in feet and distances in nautical miles, as in aviation.</p></div>
-  <div><p class="label">Cutscenes</p><label class="row"><input type="checkbox" data-act="ui-tog2" data-k="skipCuts" ${u.skipCuts?'checked':''}> Skip all cutscenes (choices still appear on the result screen)</label></div>`); };
 document.addEventListener('input', e=>{ const b=e.target.closest('[data-act="vol"]'); if(!b||!S.st) return; const u=uiP(); u.vol=u.vol||{}; u.vol[b.dataset.k]=Number(b.value); const out=b.parentElement.querySelector('b'); if(out) out.textContent=b.value; try{ actx(); }catch(_){} save(); });
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="ui-tog2"]'); if(!b||!S.st) return; uiP()[b.dataset.k]=b.checked; save(); });
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="units"]'); if(!b||!S.st) return; uiP().metric=b.dataset.v==='met'; save(); S.keepScroll=true; render(); });

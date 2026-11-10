@@ -57,10 +57,6 @@ function specGuess(sp){
   const fuelLb = sp.fuelGal * (T==='piston'?6:6.7); const range = Math.round(Math.min(tpl.range*2, Math.max(150, fuelLb/(tpl.burn||100) * (sp.cruiseKt||tpl.cruise) * 0.8)));
   return { cls, pax: isFinite(pax)?pax:tpl.pax, cruise: sp.cruiseKt||tpl.cruise, range, vapp: sp.vs0Kt ? Math.round(sp.vs0Kt*1.3) : null };
 }
-const _lvHangar = hangarView;
-hangarView = function(){ const h=_lvHangar(); setTimeout(()=>{ const L=loadedAircraft(); const g=specGuess(S.sim&&S.sim.spec); if(!g || !L.title || L.id) return; const set=(id,v)=>{ const el=document.getElementById(id); if(el && !el.value && v) el.value=v; };
-  const c=document.getElementById('byo-cls'); if(c && !c.dataset.touched){ c.value=g.cls; } set('byo-pax',g.pax); set('byo-cruise',g.cruise); set('byo-range',g.range); set('byo-vapp',g.vapp);
-  const n=document.querySelector('.byo .small.muted'); if(n && !n.dataset.spec){ n.dataset.spec='1'; n.insertAdjacentHTML('afterend', `<p class="notice small">Filled in from MSFS: ${esc(L.title)}. Check the numbers, then add it.</p>`); } },0); return h; };
 
 /* ---------- problem reports ---------- */
 function errLog(){ try{ return JSON.parse(localStorage.getItem('tw.errors')||'[]'); }catch(e){ return []; } }
@@ -71,8 +67,6 @@ function buildReport(note){ const st=S.st||{}; return JSON.stringify({ app:'Trad
   sim:{state:S.simState, bridge:S.sim&&S.sim.version, connected:S.sim&&S.sim.connected, aircraft:S.sim&&S.sim.aircraft&&S.sim.aircraft.title},
   career:{day:st.day, loc:st.loc, flights:st.flights, minutes:st.minutes, difficulty:st.difficulty, active:st.active?{title:st.active.job.title, ac:st.active.job.ac, from:st.active.job.from, to:st.active.job.to}:null},
   errors:errLog(), screen:`${innerWidth}x${innerHeight}`, ua:navigator.userAgent }, null, 2); }
-const _lvHangar2 = hangarView;
-hangarView = function(){ return _lvHangar2().replace(/<\/main>\s*$/, `<section class="panel stack" style="max-width:760px"><h3>Report a problem</h3><p class="small muted">Something broke or felt wrong? Describe it and save a report. It includes the version, recent errors (${errLog().length}) and your sim status, but not your whole save.</p><textarea id="bug-note" placeholder="What happened? What did you expect?" style="min-height:90px"></textarea><div class="row"><button class="btn sm primary" data-act="bug-save">Save report</button><button class="btn sm" data-act="bug-copy">Copy report</button><span class="tiny muted">Version ${TW_VERSION}</span></div></section>${voiceSettingsHTML()}</main>`); };
 document.addEventListener('click', async e=>{
   const b=e.target.closest('[data-act="bug-save"],[data-act="bug-copy"]'); if(!b) return; const note=(document.getElementById('bug-note')||{}).value||''; const rep=buildReport(note);
   if(b.dataset.act==='bug-copy'){ try{ await navigator.clipboard.writeText(rep); toast('Report copied.'); }catch(_){ toast('Copy not allowed here. Use Save.'); } return; }

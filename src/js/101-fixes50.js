@@ -20,8 +20,6 @@
 /* 11. your role reads properly everywhere ("Castillo's crew", not just "Castillo") */
 (function(){ const _sr=storyRole; storyRole=function(st){ const r=_sr(st); return r==='Castillo' ? "Castillo's crew" : r; }; })();
 
-/* 12. Settings: the cutscene text size is labelled as such */
-(function(){ const _s=settingsHTML; settingsHTML=function(){ return _s().replace('data-v="s">Small text','data-v="s">Small').replace('data-v="l">Large text','data-v="l">Large').replace('<div><p class="label">Cutscenes</p><div class="diff"', '<div><p class="label">Cutscenes</p><p class="tiny muted" style="margin:0 0 4px">Cutscene text size</p><div class="diff"'); }; })();
 
 /* 16. Butter Cup cards get the same noir treatment as everything else */
 /* (CSS below) */
@@ -90,8 +88,6 @@ document.addEventListener('click', e=>{ if(e.target.closest('.cut-who')) e.stopP
 /* 47. airport search results say what you'd land on */
 (function(){ const _ci=cmdItems; cmdItems=function(){ return _ci().map(it=>{ if(/^Airport/.test(it.k)){ const code=it.n.split(' · ')[0]; const a=AP[code]; if(a) it.k=`Airport · ${a.isl} · ${longestRwy(a).toLocaleString()} ft`; } return it; }); }; })();
 
-/* 48. Settings: the keyboard help mentions ? and ← */
-(function(){ const _s=settingsHTML; settingsHTML=function(){ return _s().replace('<kbd>M</kbd> menu in flight mode</p>', '<kbd>M</kbd> menu in flight mode · <kbd>←</kbd> back a line · <kbd>?</kbd> all shortcuts</p>'); }; })();
 
 /* 49. "What's new" lists this sweep */
 WHATS_NEW.unshift(['0.43','50 fixes: the new-career screen fits the story, Heat in the header, one-click "I own this aircraft", clearer checkride and job lists, phone-width fixes, and more.']);

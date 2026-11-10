@@ -41,7 +41,6 @@ mapView = function(){ const h=_uiMap(); try{ const st=S.st; const v=MAPV[S.mapZo
 /* ---- dirty cash, fleet, crew and rank rewards on the right pages ---- */
 (function(){ const _b=boardView; boardView=function(){ const h=_b(); try{ const l=launderHTML(S.st); return l ? h.replace('<div class="b2-head">', l+'<div class="b2-head">') : h; }catch(_){ return h; } }; })();
 (function(){ const _m=moneyView; moneyView=function(){ const h=_m(); try{ const l=launderHTML(S.st); return l ? h.replace(/(<main[^>]*>)/, '$1'+l) : h; }catch(_){ return h; } }; })();
-(function(){ const _hv=hangarView; hangarView=function(){ const h=_hv(); try{ if((S.hangarTab||'fleet')!=='fleet') return h; const f=fleetCrewHTML(S.st); return f ? h.replace(/(<main[^>]*>(?:\s*<div class="row[^"]*calm-subnav[\s\S]*?<\/div>)?)/, '$1'+f) : h; }catch(_){ return h; } }; })();
 (function(){ const _sv=storyView; storyView=function(){ const h=_sv(); try{ const c=crime(S.st); if(!c.on) return h; const perks=RANK_PERKS.map(([v,n,p])=>`<li class="${c.power>=v?'on':''}"><b>${n}</b> <span class="mono small">${v}+</span><p>${esc(p)}</p></li>`).join('');
   const f=fleetCrewHTML(S.st); return h.replace('<section class="panel"><h3>The five acts</h3>', `<div class="sh-grid">${f||''}<section class="panel"><h3>Rank rewards <span class="small muted">Power ${c.power}</span></h3><ul class="perks">${perks}</ul></section></div><section class="panel"><h3>The five acts</h3>`); }catch(_){ return h; } }; })();
 

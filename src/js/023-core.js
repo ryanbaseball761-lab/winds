@@ -40,6 +40,4 @@ setInterval(()=>{
   if(st.urgent && st.urgent.expires < Date.now()){ st.urgent=null; save(); render(); }
 }, 1000);
 setInterval(()=>{ const st=S.st; if(!st || st.active || st.urgent || document.hidden && !window.TW_STANDALONE) return; if(Math.random() < 1/18) spawnUrgent(false); }, 60000); // about one every 18 idle minutes
-const _urHangar = hangarView;
-hangarView = function(){ return _urHangar().replace('<main class="wrap stack fade">', `<main class="wrap stack fade"><section class="panel row between"><div><h3>Urgent dispatch calls</h3><p class="small muted">Real-time 2× pay jobs pop up while the game is open. You get ${URG_ACCEPT_MIN} minutes to accept and ${URG_TAKEOFF_MIN} to get wheels up.</p></div><div class="row"><button class="btn sm" data-act="urg-toggle">${urgentOn()?'Turn off':'Turn on'}</button><button class="btn sm ghost" data-act="urg-test">Send one now</button></div></section>`); };
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="urg-test"]')){ if(S.st && S.st.active){ toast('Finish your current flight first.'); return; } if(!spawnUrgent(true)) toast('No urgent work available from here right now.'); } });

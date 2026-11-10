@@ -348,22 +348,6 @@ function logView(){
 
 
 /* ---------- hangar ---------- */
-function hangarView(){
-  const st=S.st; const groups = {};
-  Object.keys(AC).forEach(k=>{ const c=AC[k].cls; (groups[c]=groups[c]||[]).push(k); });
-  return `<main class="wrap stack fade">
-    <section class="panel stack"><h2>Hangar</h2><p class="small muted">Untick any aircraft you don't have in your copy of MSFS (2020 or 2024) so the career never assigns it. Numbers are approximate planning figures; check each aircraft's own EFB for real limits.</p></section>
-    ${Object.keys(groups).map(g=>`<section><div class="section-title"><h3>${esc(CLS[g].name)}</h3></div><div class="cards">${groups[g].map(k=>{ const a=AC[k]; return `<div class="cell stack" style="gap:6px"><label class="check"><input type="checkbox" data-hangar="${k}" ${st.hangar[k]?'checked':''}> <b>${esc(a.n)}</b></label>
-      <div class="row" style="gap:4px">${a.req.map(r=>`<span class="chip ${st.ratings[r]?'good':''}">${RATINGS[r].code}</span>`).join('')}${st.types[k]?`<span class="chip sea">${st.types[k]} flown</span>`:''}</div>
-      <p class="small">${esc(a.note)}</p><p class="tiny mono muted">${esc(a.v)}</p><p class="tiny muted">${a.pax} pax · ${a.useful.toLocaleString()} lb useful · ${a.cruise} kt · ${a.range.toLocaleString()} nm · ${a.rwy.toLocaleString()} ft runway · ${a.xw} kt crosswind</p></div>`; }).join('')}</div></section>`).join('')}
-    <section class="panel stack" style="max-width:760px" id="sim-hangar">${simHangarHTML()}</section>
-    <section class="panel stack" style="max-width:760px"><h3>Save data</h3>
-      <p class="small muted">${esc(syncText())}. Copy the text below to back up your career, or paste a backup to restore it.</p>
-      <textarea id="save-text" aria-label="Career save data" spellcheck="false">${esc(JSON.stringify(st))}</textarea>
-      <div class="row"><button class="btn sm" data-act="copy-save">Copy</button><button class="btn sm" data-act="import-save">Restore from the text above</button>
-      ${S.confirm==='reset' ? `<span class="small">Erase this career and start over?</span><button class="btn sm danger" data-act="reset-yes">Erase it</button><button class="btn sm" data-act="confirm-no">Cancel</button>` : `<button class="btn sm danger" data-act="reset">Start a new career</button>`}</div>
-    </section></main>`;
-}
 
 /* ---------- render ---------- */
 function go(v){ if(v==='flight' && S.mcp && S.simState!=='nobridge') setTimeout(()=>simPoll(true),0); S.view=v; S.confirm=null; if(v!=='flight'){ S.debrief=false; } if(location.hash!=='#'+v){ try{ history.replaceState(null,'','#'+v); }catch(e){ location.hash=v; } } render(); window.scrollTo(0,0); }

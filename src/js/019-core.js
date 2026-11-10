@@ -23,8 +23,6 @@ async function importCareer(){
   const inp=document.createElement('input'); inp.type='file'; inp.accept='.json,application/json';
   inp.onchange=()=>{ const f=inp.files&&inp.files[0]; if(!f) return; f.text().then(t=>loadCareerText(t)); }; inp.click();
 }
-const _thHangar = hangarView;
-hangarView = function(){ return _thHangar().replace('<button class="btn sm" data-act="copy-save">Copy</button>', '<button class="btn sm primary" data-act="export-file">Export career file</button><button class="btn sm" data-act="import-file">Import career file</button><button class="btn sm" data-act="copy-save">Copy</button>'); };
 const _thSetup = setupView;
 setupView = function(){ return _thSetup().replace('</form>', '</form><div class="import-row"><span class="small muted">Already flying Trade Winds somewhere else?</span><button class="btn sm" type="button" data-act="import-file">Import career file</button></div>'); };
 /* the desktop app picks up TradeWinds-save.json from Downloads automatically on first launch */

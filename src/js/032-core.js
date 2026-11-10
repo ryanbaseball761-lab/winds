@@ -32,5 +32,3 @@ document.addEventListener('click', e=>{
   else if(act==='wiz-open'){ S.wizOpen=true; S.wiz=2; render(); }
 });
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="tour-skip"]') && S.st){ S.st.tourDone=true; S.wizOpen=false; save(); render(); } });
-const _wzHangar = hangarView;
-hangarView = function(){ return _wzHangar().replace('<main class="wrap stack fade">', '<main class="wrap stack fade"><div class="row" style="justify-content:flex-end"><button class="btn sm" data-act="wiz-open">Run the setup check again</button></div>'); };

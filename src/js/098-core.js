@@ -48,8 +48,6 @@ document.addEventListener('keydown', e=>{ if(e.key.toLowerCase()!=='m' || /INPUT
 /* 19. the result screen's Next button for a story chapter says which chapter */
 (function(){ const _r=resultView; resultView=function(){ const h=_r(); try{ const MC=mainChapters(); const nx=MC.find(m=>!S.st.story.done[m.id]); if(!nx) return h; const n=MC.indexOf(nx)+1; return h.replace(/(<div class="row next-bar">[\s\S]*?)Next: ([^<(]+)/, `$1Chapter ${n}: $2`); }catch(_){ return h; } }; })();
 
-/* 20. the welcome walkthrough and settings mention the new shortcuts */
-(function(){ const _s=settingsHTML; settingsHTML=function(){ return _s().replace('<kbd>Esc</kbd> skip</p>', '<kbd>Esc</kbd> skip · <kbd>M</kbd> menu in flight mode</p>'); }; })();
 
 (function(){ const s=document.createElement('style'); s.textContent=`.launder-mini{gap:12px}.launder-mini .btn{margin-left:auto}`; document.head.appendChild(s); })();
 

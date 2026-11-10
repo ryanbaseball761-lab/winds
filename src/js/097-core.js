@@ -26,7 +26,6 @@ window.addEventListener('keydown', e=>{ if(document.querySelector('.title-screen
 /* 10 + 11. cutscenes: optional auto-play, and a progress line */
 window.cutAuto = ()=>!!uiP().autoCut;
 (function(){ const _sh=cutHook.shot; cutHook.shot=function(s,el,i,opt){ _sh.call(this,s,el,i,opt); try{ let p=el.querySelector('.cut-prog'); if(!p){ p=document.createElement('div'); p.className='cut-prog'; el.appendChild(p); } const n=opt.shots.length; p.innerHTML=Array.from({length:Math.min(n,24)},(_,k)=>`<i class="${k<=i?'on':''}"></i>`).join(''); }catch(_){} }; })();
-(function(){ const _s=settingsHTML; settingsHTML=function(){ return _s().replace('Skip all cutscenes (choices still appear on the result screen)</label>', `Skip all cutscenes (choices still appear on the result screen)</label><label class="row"><input type="checkbox" data-act="ui-tog2" data-k="autoCut" ${uiP().autoCut?'checked':''}> Play cutscenes automatically (no clicking between lines)</label>`); }; })();
 
 /* 12. title screen: "Resume flight" when you were in the middle of one */
 (function(){ const _t=titleHTML; titleHTML=function(){ const h=_t(); const a=S.st&&S.st.active; return a ? h.replace('<b>Continue</b>', a.started?'<b>Resume flight</b>':'<b>Continue to your flight</b>').replace(/(data-ts="continue" class="on"><b>[^<]*<\/b><span>)[^<]*/, `$1${esc(a.job.from)} → ${esc(a.job.local?a.job.from:a.job.to)} · ${esc(a.job.title)}`) : h; }; })();

@@ -23,10 +23,6 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="pf-
   else { const m=simMinutes(); if(m==null) return; if(isNight(m) && !hasRating(S.st,'COMM')){ toast('Trainee pilots fly in daylight only. Set MSFS to daytime.'); return; } job.dep=Math.round(m/5)*5; if(job.dep>S.st.clock || S.st.clock-job.dep<720) S.st.clock=Math.max(S.st.clock, job.dep-5); toast(`Flight moved to ${hhmm(job.dep)} to match MSFS.`); }
   save(); render(); });
 /* hangar toggles */
-const _syncHangar = hangarView;
-hangarView = function(){ const h=_syncHangar(); const p=syncPrefs();
-  const sec=`<section class="panel stack"><h3>Match MSFS</h3><label class="row"><input type="checkbox" data-act="sync-wx" ${p.wx?'checked':''}> Use live MSFS weather in briefings when you're at the departure airport</label><label class="row"><input type="checkbox" data-act="sync-time" ${p.time?'checked':''}> Check that the MSFS clock matches the flight</label></section>`;
-  return h.replace('<main class="wrap stack fade">','<main class="wrap stack fade">'+sec); };
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="sync-wx"],[data-act="sync-time"]'); if(!b||!S.st) return; const p=syncPrefs(); p[b.dataset.act==='sync-wx'?'wx':'time']=b.checked; save(); });
 const _syncChecks2 = preflightChecks;
 preflightChecks = function(job){ const out=_syncChecks2(job); return syncPrefs().time ? out : out.filter(c=>c.k!=='time'); };

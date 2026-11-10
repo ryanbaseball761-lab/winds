@@ -2497,22 +2497,6 @@ function logView(){
 
 
 /* ---------- hangar ---------- */
-function hangarView(){
-  const st=S.st; const groups = {};
-  Object.keys(AC).forEach(k=>{ const c=AC[k].cls; (groups[c]=groups[c]||[]).push(k); });
-  return `<main class="wrap stack fade">
-    <section class="panel stack"><h2>Hangar</h2><p class="small muted">Untick any aircraft you don't have in your copy of MSFS (2020 or 2024) so the career never assigns it. Numbers are approximate planning figures; check each aircraft's own EFB for real limits.</p></section>
-    ${Object.keys(groups).map(g=>`<section><div class="section-title"><h3>${esc(CLS[g].name)}</h3></div><div class="cards">${groups[g].map(k=>{ const a=AC[k]; return `<div class="cell stack" style="gap:6px"><label class="check"><input type="checkbox" data-hangar="${k}" ${st.hangar[k]?'checked':''}> <b>${esc(a.n)}</b></label>
-      <div class="row" style="gap:4px">${a.req.map(r=>`<span class="chip ${st.ratings[r]?'good':''}">${RATINGS[r].code}</span>`).join('')}${st.types[k]?`<span class="chip sea">${st.types[k]} flown</span>`:''}</div>
-      <p class="small">${esc(a.note)}</p><p class="tiny mono muted">${esc(a.v)}</p><p class="tiny muted">${a.pax} pax · ${a.useful.toLocaleString()} lb useful · ${a.cruise} kt · ${a.range.toLocaleString()} nm · ${a.rwy.toLocaleString()} ft runway · ${a.xw} kt crosswind</p></div>`; }).join('')}</div></section>`).join('')}
-    <section class="panel stack" style="max-width:760px" id="sim-hangar">${simHangarHTML()}</section>
-    <section class="panel stack" style="max-width:760px"><h3>Save data</h3>
-      <p class="small muted">${esc(syncText())}. Copy the text below to back up your career, or paste a backup to restore it.</p>
-      <textarea id="save-text" aria-label="Career save data" spellcheck="false">${esc(JSON.stringify(st))}</textarea>
-      <div class="row"><button class="btn sm" data-act="copy-save">Copy</button><button class="btn sm" data-act="import-save">Restore from the text above</button>
-      ${S.confirm==='reset' ? `<span class="small">Erase this career and start over?</span><button class="btn sm danger" data-act="reset-yes">Erase it</button><button class="btn sm" data-act="confirm-no">Cancel</button>` : `<button class="btn sm danger" data-act="reset">Start a new career</button>`}</div>
-    </section></main>`;
-}
 
 /* ---------- render ---------- */
 function go(v){ if(v==='flight' && S.mcp && S.simState!=='nobridge') setTimeout(()=>simPoll(true),0); S.view=v; S.confirm=null; if(v!=='flight'){ S.debrief=false; } if(location.hash!=='#'+v){ try{ history.replaceState(null,'','#'+v); }catch(e){ location.hash=v; } } render(); window.scrollTo(0,0); }
@@ -3577,8 +3561,6 @@ function byoSection(st){
     ${list.length?`<div class="cards">${list.map(k=>{ const a=st.customAc[k]; return `<div class="cell stack" style="gap:6px"><b>${esc(a.n)}</b><span class="small muted">${esc(CLS[a.cls]?CLS[a.cls].name:a.cls)} · ${a.pax} seats · ${a.cruise} kt · ${a.range} nm · ${a.rwy.toLocaleString()} ft</span><div class="row" style="gap:4px">${a.req.map(r=>`<span class="chip ${st.ratings[r]?'good':''}">${RATINGS[r].code}</span>`).join('')}${st.types[k]?`<span class="chip sea">${st.types[k]} flown</span>`:''}<button class="btn sm ghost" data-act="byo-del" data-id="${k}" style="margin-left:auto">Remove</button></div></div>`; }).join('')}</div>`:''}
   </section>`;
 }
-const _myHangar = hangarView;
-hangarView = function(){ const h=_myHangar(); return h.replace('<main class="wrap stack fade">', '<main class="wrap stack fade">'+byoSection(S.st)); };
 document.addEventListener('submit', e=>{
   if(e.target.id!=='byo-form' || !S.st) return; e.preventDefault(); e.stopImmediatePropagation();
   const st=S.st; const v=id=>document.getElementById(id).value.trim(); const num=(id,d)=>{ const x=Number(v(id)); return x>0?x:d; };
@@ -3724,8 +3706,6 @@ async function importCareer(){
   const inp=document.createElement('input'); inp.type='file'; inp.accept='.json,application/json';
   inp.onchange=()=>{ const f=inp.files&&inp.files[0]; if(!f) return; f.text().then(t=>loadCareerText(t)); }; inp.click();
 }
-const _thHangar = hangarView;
-hangarView = function(){ return _thHangar().replace('<button class="btn sm" data-act="copy-save">Copy</button>', '<button class="btn sm primary" data-act="export-file">Export career file</button><button class="btn sm" data-act="import-file">Import career file</button><button class="btn sm" data-act="copy-save">Copy</button>'); };
 const _thSetup = setupView;
 setupView = function(){ return _thSetup().replace('</form>', '</form><div class="import-row"><span class="small muted">Already flying Trade Winds somewhere else?</span><button class="btn sm" type="button" data-act="import-file">Import career file</button></div>'); };
 /* the desktop app picks up TradeWinds-save.json from Downloads automatically on first launch */
@@ -3959,8 +3939,6 @@ setInterval(()=>{
   if(st.urgent && st.urgent.expires < Date.now()){ st.urgent=null; save(); render(); }
 }, 1000);
 setInterval(()=>{ const st=S.st; if(!st || st.active || st.urgent || document.hidden && !window.TW_STANDALONE) return; if(Math.random() < 1/18) spawnUrgent(false); }, 60000); // about one every 18 idle minutes
-const _urHangar = hangarView;
-hangarView = function(){ return _urHangar().replace('<main class="wrap stack fade">', `<main class="wrap stack fade"><section class="panel row between"><div><h3>Urgent dispatch calls</h3><p class="small muted">Real-time 2× pay jobs pop up while the game is open. You get ${URG_ACCEPT_MIN} minutes to accept and ${URG_TAKEOFF_MIN} to get wheels up.</p></div><div class="row"><button class="btn sm" data-act="urg-toggle">${urgentOn()?'Turn off':'Turn on'}</button><button class="btn sm ghost" data-act="urg-test">Send one now</button></div></section>`); };
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="urg-test"]')){ if(S.st && S.st.active){ toast('Finish your current flight first.'); return; } if(!spawnUrgent(true)) toast('No urgent work available from here right now.'); } });
 /* ===================== FLIGHT ACADEMY ===================== */
 const SETUP_172 = `Free flight in MSFS: Cessna 172 Skyhawk G1000 at TNCM (Princess Juliana), runway 10, clear skies, light wind.`;
@@ -4195,8 +4173,6 @@ boardingPass = function(st, job, p, a, started, mins, ai){
   return h.replace('<section class="pass">', `<section class="pass"><div class="pass-art">${islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 170, job.ac)}</div>`);
 };
 /* hangar cards get a silhouette */
-const _artHangar = hangarView;
-hangarView = function(){ return _artHangar().replace(/<label class="check"><input type="checkbox" data-hangar="([^"]+)"/g, (m,k)=>`<div class="hg-sil">${acSvg(k)}</div>`+m); };
 /* ===================== STORY: THE BUYOUT (main story, early career) ===================== */
 CAST.preston = {n:`Preston Vale`,role:`CEO, Azure Caribbean Air`,col:'#2d4f9e',bio:`Former investment banker with a fleet of brand-new turboprops and a smile that never reaches his eyes. Wants to own every small airline in the islands.`};
 ARC_META['The Buyout'] = {main:true, n:1.5, tag:`Someone wants Coral Wing, and they don't take no for an answer.`, col:'#2d4f9e'};
@@ -4290,10 +4266,6 @@ function specGuess(sp){
   const fuelLb = sp.fuelGal * (T==='piston'?6:6.7); const range = Math.round(Math.min(tpl.range*2, Math.max(150, fuelLb/(tpl.burn||100) * (sp.cruiseKt||tpl.cruise) * 0.8)));
   return { cls, pax: isFinite(pax)?pax:tpl.pax, cruise: sp.cruiseKt||tpl.cruise, range, vapp: sp.vs0Kt ? Math.round(sp.vs0Kt*1.3) : null };
 }
-const _lvHangar = hangarView;
-hangarView = function(){ const h=_lvHangar(); setTimeout(()=>{ const L=loadedAircraft(); const g=specGuess(S.sim&&S.sim.spec); if(!g || !L.title || L.id) return; const set=(id,v)=>{ const el=document.getElementById(id); if(el && !el.value && v) el.value=v; };
-  const c=document.getElementById('byo-cls'); if(c && !c.dataset.touched){ c.value=g.cls; } set('byo-pax',g.pax); set('byo-cruise',g.cruise); set('byo-range',g.range); set('byo-vapp',g.vapp);
-  const n=document.querySelector('.byo .small.muted'); if(n && !n.dataset.spec){ n.dataset.spec='1'; n.insertAdjacentHTML('afterend', `<p class="notice small">Filled in from MSFS: ${esc(L.title)}. Check the numbers, then add it.</p>`); } },0); return h; };
 
 /* ---------- problem reports ---------- */
 function errLog(){ try{ return JSON.parse(localStorage.getItem('tw.errors')||'[]'); }catch(e){ return []; } }
@@ -4304,8 +4276,6 @@ function buildReport(note){ const st=S.st||{}; return JSON.stringify({ app:'Trad
   sim:{state:S.simState, bridge:S.sim&&S.sim.version, connected:S.sim&&S.sim.connected, aircraft:S.sim&&S.sim.aircraft&&S.sim.aircraft.title},
   career:{day:st.day, loc:st.loc, flights:st.flights, minutes:st.minutes, difficulty:st.difficulty, active:st.active?{title:st.active.job.title, ac:st.active.job.ac, from:st.active.job.from, to:st.active.job.to}:null},
   errors:errLog(), screen:`${innerWidth}x${innerHeight}`, ua:navigator.userAgent }, null, 2); }
-const _lvHangar2 = hangarView;
-hangarView = function(){ return _lvHangar2().replace(/<\/main>\s*$/, `<section class="panel stack" style="max-width:760px"><h3>Report a problem</h3><p class="small muted">Something broke or felt wrong? Describe it and save a report. It includes the version, recent errors (${errLog().length}) and your sim status, but not your whole save.</p><textarea id="bug-note" placeholder="What happened? What did you expect?" style="min-height:90px"></textarea><div class="row"><button class="btn sm primary" data-act="bug-save">Save report</button><button class="btn sm" data-act="bug-copy">Copy report</button><span class="tiny muted">Version ${TW_VERSION}</span></div></section>${voiceSettingsHTML()}</main>`); };
 document.addEventListener('click', async e=>{
   const b=e.target.closest('[data-act="bug-save"],[data-act="bug-copy"]'); if(!b) return; const note=(document.getElementById('bug-note')||{}).value||''; const rep=buildReport(note);
   if(b.dataset.act==='bug-copy'){ try{ await navigator.clipboard.writeText(rep); toast('Report copied.'); }catch(_){ toast('Copy not allowed here. Use Save.'); } return; }
@@ -4561,13 +4531,6 @@ document.addEventListener('click', e=>{
     if(Math.random() < (60-A.h)/150){ const cls=AC[a.job.ac].cls; const pickS=['rough_engine','electrical','bird_strike'].filter(k=>SCEN[k] && (SCEN[k].cls==='*' || SCEN[k].cls.includes(cls))); if(pickS.length){ a.job.scen=pick(pickS); a.job.tiredAirframe=true; save(); render(); toast(`Heads up: this ${AC[a.job.ac].n} is at ${A.h}% health. Expect sealed orders.`); } } },50);
 });
 function healthBar(h){ return `<div class="meter ${h<50?'bad':h<75?'warn':''}" title="Airframe health ${h}%"><i style="width:${h}%"></i></div>`; }
-const _wHangar = hangarView;
-hangarView = function(){
-  const st=S.st; let h=_wHangar(); const list=Object.keys(st.airframes||{}).filter(k=>AC[k]);
-  const sec = list.length ? `<section class="panel stack"><div class="row between"><h3>Airframe health</h3><span class="small muted">Gentle flying keeps them healthy. Dez repairs a little every night.</span></div>
-    <div class="cards">${list.map(k=>{ const A=st.airframes[k]; const g=isGrounded(st,k); const cost=Math.round((100-A.h)*22/10)*10; return `<div class="cell stack" style="gap:6px"><div class="row between"><b>${esc(AC[k].n)}</b><span class="mono">${A.h}%</span></div>${healthBar(A.h)}<span class="tiny muted">${g?`Grounded until day ${A.grounded}`:A.log[0]?`Last flight: ${esc(A.log[0].why)}`:''}</span>${A.h<100?`<button class="btn sm" data-act="rush-repair" data-id="${k}" ${st.cash<cost?'disabled':''}>Rush repair · ${money(cost)}</button>`:''}</div>`; }).join('')}</div></section>` : '';
-  return h.replace('<main class="wrap stack fade">', '<main class="wrap stack fade">'+sec);
-};
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="rush-repair"]'); if(!b || !S.st) return; const A=airframe(S.st,b.dataset.id); const cost=Math.round((100-A.h)*22/10)*10; if(S.st.cash<cost) return; txn(S.st,-cost,'Maintenance',`Rush repair: ${AC[b.dataset.id].n}`); A.h=100; A.grounded=0; save(); toast(`${AC[b.dataset.id].n} repaired. Dez stayed late.`); S.keepScroll=true; render(); });
 /* ===================== FIRST-LAUNCH SETUP WIZARD ===================== */
 const WIZ = ['welcome','difficulty','sim','sound','skill','first'];
@@ -4603,8 +4566,6 @@ document.addEventListener('click', e=>{
   else if(act==='wiz-open'){ S.wizOpen=true; S.wiz=2; render(); }
 });
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="tour-skip"]') && S.st){ S.st.tourDone=true; S.wizOpen=false; save(); render(); } });
-const _wzHangar = hangarView;
-hangarView = function(){ return _wzHangar().replace('<main class="wrap stack fade">', '<main class="wrap stack fade"><div class="row" style="justify-content:flex-end"><button class="btn sm" data-act="wiz-open">Run the setup check again</button></div>'); };
 /* ===================== RADIO ATMOSPHERE: squelch, cabin chimes, background ATC ===================== */
 function sfxOn(){ try{ return localStorage.getItem('tw.sfx')!=='off'; }catch(e){ return true; } }
 let AC_CTX=null;
@@ -4718,9 +4679,6 @@ document.addEventListener('click', e=>{
 /* a rolling backup each in-game day (3 kept) */
 function latestBackup(){ try{ const a=JSON.parse(localStorage.getItem('tw.backups')||'[]'); return a.length?a[a.length-1].st:null; }catch(e){ return null; } }
 function backupNow(st){ try{ const a=JSON.parse(localStorage.getItem('tw.backups')||'[]'); a.push({at:Date.now(), day:st.day, st:JSON.parse(JSON.stringify(st))}); while(a.length>7) a.shift(); localStorage.setItem('tw.backups', JSON.stringify(a)); }catch(e){ /* storage full: skip */ } }
-const _stHangar = hangarView;
-hangarView = function(){ let backs=[]; try{ backs=JSON.parse(localStorage.getItem('tw.backups')||'[]'); }catch(_){}
-  return _stHangar().replace(/<\/main>\s*$/, `<section class="panel stack" style="max-width:760px"><h3>Backups</h3><p class="small muted">Trade Winds keeps your last ${backs.length||3} days automatically${window.TW_STANDALONE?', plus a career file in Documents\\Trade Winds':''}.</p>${backs.length?`<div class="row">${backs.map((b,i)=>`<button class="btn sm" data-act="st-restore-i" data-i="${i}">Day ${b.day} · ${new Date(b.at).toLocaleString()}</button>`).join('')}</div>`:'<p class="small">The first backup is made when you rest.</p>'}</section></main>`); };
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="st-restore-i"]'); if(!b) return; try{ const a=JSON.parse(localStorage.getItem('tw.backups')||'[]'); const x=a[Number(b.dataset.i)]; if(x){ backupNow(S.st); S.st=migrate(x.st); save(); render(); toast(`Restored day ${x.day}. Your previous state was backed up too.`); } }catch(_){} });
 /* ===================== THE BUTTER CUP: landing challenges at famous approaches ===================== */
 const CUP = [
@@ -5032,10 +4990,6 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="pf-
   else { const m=simMinutes(); if(m==null) return; if(isNight(m) && !hasRating(S.st,'COMM')){ toast('Trainee pilots fly in daylight only. Set MSFS to daytime.'); return; } job.dep=Math.round(m/5)*5; if(job.dep>S.st.clock || S.st.clock-job.dep<720) S.st.clock=Math.max(S.st.clock, job.dep-5); toast(`Flight moved to ${hhmm(job.dep)} to match MSFS.`); }
   save(); render(); });
 /* hangar toggles */
-const _syncHangar = hangarView;
-hangarView = function(){ const h=_syncHangar(); const p=syncPrefs();
-  const sec=`<section class="panel stack"><h3>Match MSFS</h3><label class="row"><input type="checkbox" data-act="sync-wx" ${p.wx?'checked':''}> Use live MSFS weather in briefings when you're at the departure airport</label><label class="row"><input type="checkbox" data-act="sync-time" ${p.time?'checked':''}> Check that the MSFS clock matches the flight</label></section>`;
-  return h.replace('<main class="wrap stack fade">','<main class="wrap stack fade">'+sec); };
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="sync-wx"],[data-act="sync-time"]'); if(!b||!S.st) return; const p=syncPrefs(); p[b.dataset.act==='sync-wx'?'wx':'time']=b.checked; save(); });
 const _syncChecks2 = preflightChecks;
 preflightChecks = function(job){ const out=_syncChecks2(job); return syncPrefs().time ? out : out.filter(c=>c.k!=='time'); };
@@ -5156,18 +5110,6 @@ function applyA11y(){ const ui = S.st ? uiPrefs() : {}; const el=document.docume
   el.classList.toggle('rm', !!ui.reduceMotion); el.classList.toggle('hc', !!ui.contrast); }
 
 /* ---- settings live in one place (Hangar) ---- */
-function settingsHTML(){ const ui=uiPrefs(); const z=ui.zoom||1;
-  return `<section class="panel stack" id="settings"><div class="row between"><h3>Settings</h3><span class="small muted">Saved with your career</span></div>
-  <div class="set-grid">
-    <div><p class="label">Text size</p><div class="diff">${[[1,'Normal'],[1.12,'Large'],[1.25,'Larger']].map(([v,l])=>`<button class="${z===v?'on':''}" data-act="ui-zoom" data-v="${v}">${l}</button>`).join('')}</div></div>
-    <label class="row"><input type="checkbox" data-act="ui-flag" data-k="reduceMotion" ${ui.reduceMotion?'checked':''}> Reduce motion and animations</label>
-    <label class="row"><input type="checkbox" data-act="ui-flag" data-k="contrast" ${ui.contrast?'checked':''}> High contrast text and outlines</label>
-    <label class="row"><input type="checkbox" data-act="ui-flag" data-k="quiet" ${ui.quiet?'checked':''}> Quiet mode: no urgent-job pop-ups</label>
-    <label class="row"><input type="checkbox" data-act="ui-flag" data-k="allTabs" ${ui.allTabs?'checked':''}> Show every tab now (skip unlocking them)</label>
-  </div>
-  ${window.twNative&&twNative.openFolder?`<div class="row"><button class="btn sm" data-act="open-logs">Open flight logs folder</button><span class="tiny muted">Every flight with MSFS connected is recorded here. Send one along if something looks wrong.</span></div>`:''}</section>`; }
-const _dcHangar = hangarView;
-hangarView = function(){ const h=_dcHangar(); return h.replace('<main class="wrap stack fade">','<main class="wrap stack fade">'+settingsHTML()); };
 document.addEventListener('click', e=>{ const z=e.target.closest('[data-act="ui-zoom"]'); if(z && S.st){ uiPrefs().zoom=Number(z.dataset.v); save(); S.keepScroll=true; render(); return; }
   if(e.target.closest('[data-act="open-logs"]') && window.twNative && twNative.openFolder) twNative.openFolder('flight-logs'); });
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="ui-flag"]'); if(!b||!S.st) return; uiPrefs()[b.dataset.k]=b.checked; save(); S.keepScroll=true; render(); });
@@ -5437,10 +5379,6 @@ STORY.push(
 );
 
 /* ---- settings: voices, copilot, in-sim panel ---- */
-const _proHangar = hangarView;
-hangarView = function(){ const h=_proHangar(); const P=proPrefs();
-  const sec = `<section class="panel stack"><h3>Voices &amp; copilot</h3><label class="row"><input type="checkbox" data-act="pro-flag" data-k="copilot" ${P.copilot!==false?'checked':''}> Copilot callouts: "Airspeed alive", "Rotate", "Positive rate", and 1000 / 500 / 100 / 50 / 30 / 10 on landing</label>${premiumVoiceHTML()}</section>${panelSetupHTML()}`;
-  return h.replace(/(<section class="panel stack" id="settings">[\s\S]*?<\/section>)/, '$1'+sec); };
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="pro-flag"]'); if(!b||!S.st) return; proPrefs()[b.dataset.k]=b.checked; save(); });
 const _proCockpit = cockpitView;
 cockpitView = function(){ const h=_proCockpit(); const p=panelSetupHTML(); return p ? h.replace(/<\/main>\s*$/, p+'</main>') : h; };
@@ -5544,8 +5482,6 @@ inflightView = function(){ let h=_tfInflight(); const a=S.st&&S.st.active; if(!a
 
 
 /* settings */
-const _tfHangar = hangarView;
-hangarView = function(){ const h=_tfHangar(); const P=proPrefs(); return h.replace(/(<section class="panel stack"><h3>Voices &amp; copilot<\/h3>)/, `<section class="panel stack"><h3>Flight setup</h3><label class="row"><input type="checkbox" data-act="pro-flag" data-k="fullChecklist" ${P.fullChecklist?'checked':''}> Detailed checklists (9 phases instead of 5)</label><label class="row"><input type="checkbox" data-act="pro-flag2" data-k="autoTime" ${P.autoTime!==false?'checked':''}> Set the MSFS clock to the flight's departure time automatically (app only)</label></section>$1`); };
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="pro-flag2"]'); if(!b||!S.st) return; proPrefs()[b.dataset.k]=b.checked; save(); });
 
 /* ---- the mainland: The Tour (jet era) + charters to the US and Mexico ---- */
@@ -5653,12 +5589,6 @@ inflightView = function(){ let h=_clInflight(); const a=S.st&&S.st.active; if(!a
 /* ---- each screen gets its own atmosphere ---- */
 
 /* ---- hangar in tabs instead of one very long page ---- */
-const HG_TABS = [['fleet','Your fleet'],['settings','Settings'],['msfs','MSFS connection'],['save','Saves & help']];
-function hgGroup(title, el){ const t=(title||'').toLowerCase(); if(/settings|flight setup|voices|match msfs|urgent/.test(t)) return 'settings'; if(/live msfs|inside the sim|setup check/.test(t) || (el.textContent||'').includes('Run the setup check again')) return 'msfs'; if(/save data|backups|report a problem/.test(t)) return 'save'; return 'fleet'; }
-const _clHangar = hangarView;
-hangarView = function(){ const h=_clHangar(); const t=document.createElement('template'); t.innerHTML=h; const main=t.content.querySelector('main'); if(!main) return h; const cur=S.hangarTab||'fleet';
-  [...main.children].forEach(el=>{ const g=hgGroup((el.querySelector('h2,h3')||{}).textContent, el); if(g!==cur) el.remove(); });
-  const bar=document.createElement('nav'); bar.className='hg-tabs'; bar.innerHTML=HG_TABS.map(([k,l])=>`<button class="${k===cur?'on':''}" data-act="hg-tab" data-v="${k}">${l}</button>`).join(''); main.prepend(bar); return t.innerHTML; };
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="hg-tab"]'); if(!b) return; S.hangarTab=b.dataset.v; S.keepScroll=true; render(); });
 
 /* the old 'Set up MSFS' list in the sidebar is now the Flight setup panel */
@@ -6034,12 +5964,6 @@ const _p20Strip = stripHTML;
 stripHTML = function(st, job, opts){ let h=_p20Strip(st, job, opts); if(job.dep<=st.clock) h=h.replace(`STD ${hhmm(job.dep)}`, 'Ready now'); return h; };
 
 /* 3 + 4. difficulty and theme move out of the top bar and sidebar into Hangar > Settings */
-const _p20Set = settingsHTML;
-settingsHTML = function(){ let h=_p20Set(); const d=diff();
-  const extra=`<div><p class="label">Difficulty</p><div class="diff">${Object.keys(DIFF).map(k=>`<button class="${k===d?'on':''}" data-act="diff" data-v="${k}" title="${esc(DIFF[k].d)}">${DIFF[k].n}</button>`).join('')}</div><p class="tiny muted" style="margin-top:4px">${esc(DIFF[d].d)}</p></div>
-    <div><p class="label">Appearance</p><button class="btn sm" data-act="theme">${THEME_LBL[themePref()]}</button></div>`;
-  h=h.replace(/<label class="row"><input type="checkbox" data-act="ui-flag" data-k="allTabs"[\s\S]*?<\/label>/, '');
-  return h.replace('<div class="set-grid">', '<div class="set-grid">'+extra); };
 
 /* 5. the copilot never reads out an impossible landing number */
 
@@ -6062,11 +5986,6 @@ moneyView = function(){ const h=_p20Money(); const t=tpl(h); const main=t.conten
   return t.innerHTML; };
 
 /* 9. hangar: the long "which aircraft do you own" list folds into one drawer */
-const _p20Hangar = hangarView;
-hangarView = function(){ const h=_p20Hangar(); if((S.hangarTab||'fleet')!=='fleet') return h; const t=tpl(h); const main=t.content.querySelector('main'); if(!main) return h;
-  const classSecs=[...main.querySelectorAll('section')].filter(s=>!s.className && CLS && Object.values(CLS).some(c=>c.name===headText(s)));
-  if(classSecs.length){ const owned=Object.keys(S.st.hangar||{}).filter(k=>S.st.hangar[k] && AC[k]).length; const d=wrapDetails(classSecs.map(s=>{ s.remove(); return s; }), `Aircraft you own in MSFS <span class="tiny muted">${owned} selected</span>`); main.appendChild(d); }
-  return t.innerHTML; };
 
 /* 10. weekly challenges live on your Profile now */
 const _p20Prof = profileView;
@@ -7112,7 +7031,6 @@ mapView = function(){ const h=_uiMap(); try{ const st=S.st; const v=MAPV[S.mapZo
 /* ---- dirty cash, fleet, crew and rank rewards on the right pages ---- */
 (function(){ const _b=boardView; boardView=function(){ const h=_b(); try{ const l=launderHTML(S.st); return l ? h.replace('<div class="b2-head">', l+'<div class="b2-head">') : h; }catch(_){ return h; } }; })();
 (function(){ const _m=moneyView; moneyView=function(){ const h=_m(); try{ const l=launderHTML(S.st); return l ? h.replace(/(<main[^>]*>)/, '$1'+l) : h; }catch(_){ return h; } }; })();
-(function(){ const _hv=hangarView; hangarView=function(){ const h=_hv(); try{ if((S.hangarTab||'fleet')!=='fleet') return h; const f=fleetCrewHTML(S.st); return f ? h.replace(/(<main[^>]*>(?:\s*<div class="row[^"]*calm-subnav[\s\S]*?<\/div>)?)/, '$1'+f) : h; }catch(_){ return h; } }; })();
 (function(){ const _sv=storyView; storyView=function(){ const h=_sv(); try{ const c=crime(S.st); if(!c.on) return h; const perks=RANK_PERKS.map(([v,n,p])=>`<li class="${c.power>=v?'on':''}"><b>${n}</b> <span class="mono small">${v}+</span><p>${esc(p)}</p></li>`).join('');
   const f=fleetCrewHTML(S.st); return h.replace('<section class="panel"><h3>The five acts</h3>', `<div class="sh-grid">${f||''}<section class="panel"><h3>Rank rewards <span class="small muted">Power ${c.power}</span></h3><ul class="perks">${perks}</ul></section></div><section class="panel"><h3>The five acts</h3>`); }catch(_){ return h; } }; })();
 
@@ -7199,8 +7117,6 @@ function jobRow(st, j){ const card=stripHTML(st, j); const acc=(card.match(/<but
   const jobs=ids.map(id=>(st.jobs||[]).find(j=>j.id===id)).filter(Boolean); if(!jobs.length) return h; const list=document.createElement('div'); list.className='jlist'; list.innerHTML=`<div class="jl-head"><span>Type</span><span>Route</span><span>Job</span><span>Aircraft · time · departs</span><span>Pay</span><span></span></div>`+jobs.map(j=>jobRow(st,j)).join(''); grid.replaceWith(list); return t.innerHTML; }catch(_){ return h; } }; })();
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="job-open"]'); if(!b) return; S.openJob = S.openJob===b.dataset.id ? null : b.dataset.id; S.keepScroll=true; render(); });
 
-/* ---- 7. pilot: licences first; hangar: what's loaded in MSFS first ---- */
-(function(){ const _hv=hangarView; hangarView=function(){ const h=_hv(); try{ if((S.hangarTab||'fleet')!=='fleet') return h; const live=S.simState==='live'; const L=live?loadedAircraft():{}; const card=`<section class="panel loaded-now"><p class="label">Loaded in MSFS</p>${live?(L.id?`<h3>${esc(AC[L.id].n)}</h3><p class="small muted">${esc(AC[L.id].cls)} · cruise ${AC[L.id].cruise} kt · range ${AC[L.id].range} nm${S.st.hangar&&S.st.hangar[L.id]?' · in your hangar list':' · <b>not ticked in your hangar list below</b>'}</p>`:`<h3>${esc(L.title||'Nothing loaded')}</h3><p class="small muted">This aircraft isn't one the game knows.</p>`):`<h3>MSFS isn't connected</h3><p class="small muted">Start MSFS and load an aircraft to see it here.</p>`}</section>`; return h.replace(/(<main[^>]*>)/, '$1'+card); }catch(_){ return h; } }; })();
 
 /* ---- 8. notifications: one stack at the bottom right, plus a history in the header ---- */
 S.notifs=S.notifs||[]; S.notifSeen=0;
@@ -7310,10 +7226,6 @@ storyView = function(){ let h=_m4Story(); try{ const st=S.st, c=crime(st); const
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="replay-ch"]'); if(!b) return; const m=CRIME.find(x=>x.id===b.dataset.id); if(m) playPrologue(m, ()=>{}); });
 
 /* ---- 6. settings: everything in one place, in sections ---- */
-const _m6Set = settingsHTML;
-settingsHTML = function(){ const h=_m6Set(); const ui=(S.st&&S.st.ui)||{}; return h.replace('<div class="set-grid">', `<div class="set-grid">
-  <div><p class="label">Story</p><label class="row"><input type="checkbox" data-act="ui-tog" data-k="noRecap" ${ui.noRecap?'':'checked'}> "Previously on" recap when the app opens</label><div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn sm" data-act="walk-again">Show the welcome walkthrough</button></div></div>
-  <div><p class="label">Keyboard</p><p class="small muted" style="line-height:1.7"><kbd>1</kbd>–<kbd>5</kbd> pages · <kbd>Ctrl K</kbd> or <kbd>/</kbd> search · <kbd>F</kbd> your flight · <kbd>Space</kbd> next in a cutscene · <kbd>Esc</kbd> skip</p></div>`); };
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="ui-tog"]'); if(!b||!S.st) return; S.st.ui=S.st.ui||{}; S.st.ui[b.dataset.k]=!b.checked; save(); });
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="walk-again"]')||!S.st) return; S.st.ui.walk3=0; save(); location.reload(); });
 
@@ -7361,7 +7273,6 @@ function backupsHTML(){ let a=[]; try{ a=JSON.parse(localStorage.getItem('tw.bac
     ${a.length?`<ul>${a.map((b,i)=>({b,i})).reverse().map(({b,i})=>`<li><div><b>${esc(b.label||`Day ${b.day}`)}</b><span>${new Date(b.at).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})} · ${money(b.st&&b.st.cash||0)} · ${b.st&&b.st.story?Object.keys(b.st.story.done||{}).filter(k=>CRIME_IDS.has(k)).length:0} chapters</span></div><button class="btn sm" data-act="bk-restore" data-i="${i}">Restore</button></li>`).join('')}</ul>`:'<p class="small">No backups yet.</p>'}</section>`; }
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="bk-restore"]'); if(!b) return; if(!b.dataset.ok){ b.dataset.ok=1; b.textContent='Click again to restore'; b.classList.add('action'); return; }
   try{ const a=JSON.parse(localStorage.getItem('tw.backups')||'[]'); const x=a[Number(b.dataset.i)]; if(!x) return; backupLabeled(S.st,'Before restoring a backup'); S.st=migrate(x.st); S.st.savedAt=Date.now(); save(); S.view='story'; S.showResult=false; render(); toast(`Restored: ${x.label||'backup'}.`); }catch(_){ toast('That backup could not be restored.'); } });
-(function(){ const _hv=hangarView; hangarView=function(){ let h=_hv(); h=h.replace(/<section class="panel stack" style="max-width:760px"><h3>Backups<\/h3>[\s\S]*?<\/section>/, ''); return S.hangarTab==='save' ? h.replace(/<\/main>\s*$/, backupsHTML()+'</main>') : h; }; })();
 /* errors also go into a report file you can send me */
 (function(){ const _le=logErr; logErr=function(msg){ _le(msg); try{ if(window.twNative&&twNative.flightLog){ const now=Date.now(); if(now-(S._errT||0)>60000){ S._errT=now; twNative.flightLog(`error-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.json`, buildReport(String(msg))); } } }catch(_){} }; })();
 
@@ -7462,12 +7373,6 @@ function toMetric(t){ return t.replace(/(\d[\d,]*(?:\.\d+)?)\s?lb\b/g,(m,n)=>`${
   try{ c._fx.gain.value=volOf('fx'); c._mus.gain.value=volOf('music'); }catch(_){} return c; }; })();
 
 /* ---- settings page additions ---- */
-const _tsSet = settingsHTML;
-settingsHTML = function(){ const h=_tsSet(); const u=uiP(); const v=u.vol||{}; const sl=(k,n)=>`<label class="vol"><span>${n}</span><input type="range" min="0" max="100" step="5" value="${v[k]==null?80:v[k]}" data-act="vol" data-k="${k}"><b>${v[k]==null?80:v[k]}</b></label>`;
-  return h.replace('<div class="set-grid">', `<div class="set-grid">
-  <div><p class="label">Volume</p>${sl('voice','Voices')}${sl('music','Music')}${sl('fx','Effects')}</div>
-  <div><p class="label">Units</p><div class="diff"><button class="${u.metric?'':'on'}" data-act="units" data-v="imp">Imperial (lb, gal)</button><button class="${u.metric?'on':''}" data-act="units" data-v="met">Metric (kg, L)</button></div><p class="tiny muted" style="margin-top:4px">Altitudes stay in feet and distances in nautical miles, as in aviation.</p></div>
-  <div><p class="label">Cutscenes</p><label class="row"><input type="checkbox" data-act="ui-tog2" data-k="skipCuts" ${u.skipCuts?'checked':''}> Skip all cutscenes (choices still appear on the result screen)</label></div>`); };
 document.addEventListener('input', e=>{ const b=e.target.closest('[data-act="vol"]'); if(!b||!S.st) return; const u=uiP(); u.vol=u.vol||{}; u.vol[b.dataset.k]=Number(b.value); const out=b.parentElement.querySelector('b'); if(out) out.textContent=b.value; try{ actx(); }catch(_){} save(); });
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="ui-tog2"]'); if(!b||!S.st) return; uiP()[b.dataset.k]=b.checked; save(); });
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="units"]'); if(!b||!S.st) return; uiP().metric=b.dataset.v==='met'; save(); S.keepScroll=true; render(); });
@@ -7585,7 +7490,6 @@ window.addEventListener('keydown', e=>{ if(document.querySelector('.title-screen
 /* 10 + 11. cutscenes: optional auto-play, and a progress line */
 window.cutAuto = ()=>!!uiP().autoCut;
 (function(){ const _sh=cutHook.shot; cutHook.shot=function(s,el,i,opt){ _sh.call(this,s,el,i,opt); try{ let p=el.querySelector('.cut-prog'); if(!p){ p=document.createElement('div'); p.className='cut-prog'; el.appendChild(p); } const n=opt.shots.length; p.innerHTML=Array.from({length:Math.min(n,24)},(_,k)=>`<i class="${k<=i?'on':''}"></i>`).join(''); }catch(_){} }; })();
-(function(){ const _s=settingsHTML; settingsHTML=function(){ return _s().replace('Skip all cutscenes (choices still appear on the result screen)</label>', `Skip all cutscenes (choices still appear on the result screen)</label><label class="row"><input type="checkbox" data-act="ui-tog2" data-k="autoCut" ${uiP().autoCut?'checked':''}> Play cutscenes automatically (no clicking between lines)</label>`); }; })();
 
 /* 12. title screen: "Resume flight" when you were in the middle of one */
 (function(){ const _t=titleHTML; titleHTML=function(){ const h=_t(); const a=S.st&&S.st.active; return a ? h.replace('<b>Continue</b>', a.started?'<b>Resume flight</b>':'<b>Continue to your flight</b>').replace(/(data-ts="continue" class="on"><b>[^<]*<\/b><span>)[^<]*/, `$1${esc(a.job.from)} → ${esc(a.job.local?a.job.from:a.job.to)} · ${esc(a.job.title)}`) : h; }; })();
@@ -7666,8 +7570,6 @@ document.addEventListener('keydown', e=>{ if(e.key.toLowerCase()!=='m' || /INPUT
 /* 19. the result screen's Next button for a story chapter says which chapter */
 (function(){ const _r=resultView; resultView=function(){ const h=_r(); try{ const MC=mainChapters(); const nx=MC.find(m=>!S.st.story.done[m.id]); if(!nx) return h; const n=MC.indexOf(nx)+1; return h.replace(/(<div class="row next-bar">[\s\S]*?)Next: ([^<(]+)/, `$1Chapter ${n}: $2`); }catch(_){ return h; } }; })();
 
-/* 20. the welcome walkthrough and settings mention the new shortcuts */
-(function(){ const _s=settingsHTML; settingsHTML=function(){ return _s().replace('<kbd>Esc</kbd> skip</p>', '<kbd>Esc</kbd> skip · <kbd>M</kbd> menu in flight mode</p>'); }; })();
 
 (function(){ const s=document.createElement('style'); s.textContent=`.launder-mini{gap:12px}.launder-mini .btn{margin-left:auto}`; document.head.appendChild(s); })();
 
@@ -7700,8 +7602,6 @@ document.addEventListener('click', e=>{ const p=e.target.closest('.sh-p, .sc-who
   L.forEach(it=>{ const run=it.run; it.run=()=>{ try{ const r=[it.n].concat(rec.filter(x=>x!==it.n)).slice(0,5); localStorage.setItem('tw.cmdRecent', JSON.stringify(r)); }catch(_){} run(); }; const k=rec.indexOf(it.n); if(k>=0){ it.k='Recent · '+it.k; it._rec=5-k; } }); return L; }; })();
 document.addEventListener('input', e=>{ if(!e.target.closest('.cmd-box input')) return; }, true);
 
-/* 7. Settings: replay the cold open */
-(function(){ const _s=settingsHTML; settingsHTML=function(){ return _s().replace('<button class="btn sm" data-act="walk-again">', '<button class="btn sm" data-act="cold-again">Replay the opening scene</button><button class="btn sm" data-act="walk-again">'); }; })();
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cold-again"]')) return; const st=S.st; const f=st.flights, d=st.story.done.CW1; st.flights=0; delete st.story.done.CW1; const shots=coldOpenShots(); st.flights=f; if(d) st.story.done.CW1=d; cutscene({shots, col:'#c8962a', art:SCENES.ramp(), onEnd:()=>{}}); });
 
 /* 8 + 9. flight display: time in the air, and how far along the route you are */
@@ -7721,8 +7621,6 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="bel
 document.addEventListener('keydown', e=>{ if(e.key!=='?' || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || document.querySelector('.cut,.title-screen')) return; if(document.querySelector('.keys-wrap')){ document.querySelector('.keys-wrap').remove(); return; }
   const d=document.createElement('div'); d.className='pc-wrap keys-wrap'; d.innerHTML=`<div class="pc keys"><div class="pc-in"><p class="label">Keyboard</p><h2>Shortcuts</h2><dl>${[['1 – 5','Story, Jobs, Flight, Pilot, Hangar'],['Ctrl K or /','Search anything'],['F','Your current flight'],['M','Menu in flight mode'],['Space / →','Next line in a cutscene'],['←','Previous line in a cutscene'],['Esc','Skip a cutscene, close a popup'],['?','This list']].map(([k,v])=>`<dt><kbd>${k}</kbd></dt><dd>${v}</dd>`).join('')}</dl><button class="btn sm" data-act="pc-close">Close</button></div></div>`; document.body.appendChild(d); d.addEventListener('click', ev=>{ if(ev.target===d||ev.target.closest('[data-act="pc-close"]')) d.remove(); }); });
 
-/* 13. cutscene text size: small, normal or large */
-(function(){ const _s=settingsHTML; settingsHTML=function(){ const z=uiP().cutSize||'m'; return _s().replace('<div><p class="label">Cutscenes</p>', `<div><p class="label">Cutscenes</p><div class="diff" style="margin-bottom:8px">${[['s','Small text'],['m','Normal'],['l','Large text']].map(([k,n])=>`<button class="${z===k?'on':''}" data-act="cut-size" data-v="${k}">${n}</button>`).join('')}</div>`); }; })();
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="cut-size"]'); if(!b||!S.st) return; uiP().cutSize=b.dataset.v; save(); S.keepScroll=true; render(); });
 (function(){ const _st=cutHook.start; cutHook.start=function(el,opt){ _st.call(this,el,opt); try{ el.dataset.size=uiP().cutSize||'m'; }catch(_){} }; })();
 
@@ -7786,8 +7684,6 @@ document.addEventListener('click', e=>{ const li=e.target.closest('.sh-time li')
 /* 11. your role reads properly everywhere ("Castillo's crew", not just "Castillo") */
 (function(){ const _sr=storyRole; storyRole=function(st){ const r=_sr(st); return r==='Castillo' ? "Castillo's crew" : r; }; })();
 
-/* 12. Settings: the cutscene text size is labelled as such */
-(function(){ const _s=settingsHTML; settingsHTML=function(){ return _s().replace('data-v="s">Small text','data-v="s">Small').replace('data-v="l">Large text','data-v="l">Large').replace('<div><p class="label">Cutscenes</p><div class="diff"', '<div><p class="label">Cutscenes</p><p class="tiny muted" style="margin:0 0 4px">Cutscene text size</p><div class="diff"'); }; })();
 
 /* 16. Butter Cup cards get the same noir treatment as everything else */
 /* (CSS below) */
@@ -7856,8 +7752,6 @@ document.addEventListener('click', e=>{ if(e.target.closest('.cut-who')) e.stopP
 /* 47. airport search results say what you'd land on */
 (function(){ const _ci=cmdItems; cmdItems=function(){ return _ci().map(it=>{ if(/^Airport/.test(it.k)){ const code=it.n.split(' · ')[0]; const a=AP[code]; if(a) it.k=`Airport · ${a.isl} · ${longestRwy(a).toLocaleString()} ft`; } return it; }); }; })();
 
-/* 48. Settings: the keyboard help mentions ? and ← */
-(function(){ const _s=settingsHTML; settingsHTML=function(){ return _s().replace('<kbd>M</kbd> menu in flight mode</p>', '<kbd>M</kbd> menu in flight mode · <kbd>←</kbd> back a line · <kbd>?</kbd> all shortcuts</p>'); }; })();
 
 /* 49. "What's new" lists this sweep */
 WHATS_NEW.unshift(['0.43','50 fixes: the new-career screen fits the story, Heat in the header, one-click "I own this aircraft", clearer checkride and job lists, phone-width fixes, and more.']);
@@ -8729,6 +8623,109 @@ function openOrders(a, how){
   S.keepScroll=true; render();
   try{ if(a.scenPlan){ const sc=SCEN[a.job.scen]||{}; const wx=/squall|shower|storm|wave|weather|rain/i.test((a.job.scen||'')+' '+(sc.n||'')+' '+a.scenPlan.title);
     takeover({kind:wx?'weather':'orders', kicker:'Sealed orders', title:a.scenPlan.title, text:a.scenPlan.text, sub:a.scenPlan.sim, ms:11000}); } }catch(_){}
+}
+/* ===================== HANGAR PAGE =====================
+   Four tabs: Your fleet, Settings, MSFS connection, Saves & help.
+   hangarView() draws the tab bar and the sections of the current tab. */
+
+const HG_TABS = [['fleet','Your fleet'],['settings','Settings'],['msfs','MSFS connection'],['save','Saves & help']];
+
+/* ---------- Settings tab ---------- */
+
+function settingsHTML(){
+  const ui=uiPrefs(); const z=ui.zoom||1; const d=diff(); const u=uiP(); const v=u.vol||{}; const story=(S.st&&S.st.ui)||{}; const cutSize=u.cutSize||'m';
+  const slider=(k,n)=>`<label class="vol"><span>${n}</span><input type="range" min="0" max="100" step="5" value="${v[k]==null?80:v[k]}" data-act="vol" data-k="${k}"><b>${v[k]==null?80:v[k]}</b></label>`;
+  return `<section class="panel stack" id="settings"><div class="row between"><h3>Settings</h3><span class="small muted">Saved with your career</span></div>
+  <div class="set-grid">
+    <div><p class="label">Volume</p>${slider('voice','Voices')}${slider('music','Music')}${slider('fx','Effects')}</div>
+    <div><p class="label">Units</p><div class="diff"><button class="${u.metric?'':'on'}" data-act="units" data-v="imp">Imperial (lb, gal)</button><button class="${u.metric?'on':''}" data-act="units" data-v="met">Metric (kg, L)</button></div><p class="tiny muted" style="margin-top:4px">Altitudes stay in feet and distances in nautical miles, as in aviation.</p></div>
+    <div><p class="label">Cutscenes</p><p class="tiny muted" style="margin:0 0 4px">Cutscene text size</p><div class="diff" style="margin-bottom:8px">${[['s','Small'],['m','Normal'],['l','Large']].map(([k,n])=>`<button class="${cutSize===k?'on':''}" data-act="cut-size" data-v="${k}">${n}</button>`).join('')}</div>
+      <label class="row"><input type="checkbox" data-act="ui-tog2" data-k="skipCuts" ${u.skipCuts?'checked':''}> Skip all cutscenes (choices still appear on the result screen)</label>
+      <label class="row"><input type="checkbox" data-act="ui-tog2" data-k="autoCut" ${u.autoCut?'checked':''}> Play cutscenes automatically (no clicking between lines)</label></div>
+    <div><p class="label">Story</p><label class="row"><input type="checkbox" data-act="ui-tog" data-k="noRecap" ${story.noRecap?'':'checked'}> "Previously on" recap when the app opens</label>
+      <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn sm" data-act="cold-again">Replay the opening scene</button><button class="btn sm" data-act="walk-again">Show the welcome walkthrough</button></div></div>
+    <div><p class="label">Keyboard</p><p class="small muted" style="line-height:1.7"><kbd>1</kbd>–<kbd>5</kbd> pages · <kbd>Ctrl K</kbd> or <kbd>/</kbd> search · <kbd>F</kbd> your flight · <kbd>Space</kbd> next in a cutscene · <kbd>Esc</kbd> skip · <kbd>M</kbd> menu in flight mode · <kbd>←</kbd> back a line · <kbd>?</kbd> all shortcuts</p></div>
+    <div><p class="label">Difficulty</p><div class="diff">${Object.keys(DIFF).map(k=>`<button class="${k===d?'on':''}" data-act="diff" data-v="${k}" title="${esc(DIFF[k].d)}">${DIFF[k].n}</button>`).join('')}</div><p class="tiny muted" style="margin-top:4px">${esc(DIFF[d].d)}</p></div>
+    <div><p class="label">Appearance</p><button class="btn sm" data-act="theme">${THEME_LBL[themePref()]}</button></div>
+    <div><p class="label">Text size</p><div class="diff">${[[1,'Normal'],[1.12,'Large'],[1.25,'Larger']].map(([v,l])=>`<button class="${z===v?'on':''}" data-act="ui-zoom" data-v="${v}">${l}</button>`).join('')}</div></div>
+    <label class="row"><input type="checkbox" data-act="ui-flag" data-k="reduceMotion" ${ui.reduceMotion?'checked':''}> Reduce motion and animations</label>
+    <label class="row"><input type="checkbox" data-act="ui-flag" data-k="contrast" ${ui.contrast?'checked':''}> High contrast text and outlines</label>
+    <label class="row"><input type="checkbox" data-act="ui-flag" data-k="quiet" ${ui.quiet?'checked':''}> Quiet mode: no urgent-job pop-ups</label>
+  </div>
+  ${window.twNative&&twNative.openFolder?`<div class="row"><button class="btn sm" data-act="open-logs">Open flight logs folder</button><span class="tiny muted">Every flight with MSFS connected is recorded here. Send one along if something looks wrong.</span></div>`:''}</section>`;
+}
+
+function hangarSettingsTab(st){
+  const p=syncPrefs(); const P=proPrefs();
+  return `${settingsHTML()}
+    <section class="panel stack"><h3>Flight setup</h3><label class="row"><input type="checkbox" data-act="pro-flag" data-k="fullChecklist" ${P.fullChecklist?'checked':''}> Detailed checklists (9 phases instead of 5)</label><label class="row"><input type="checkbox" data-act="pro-flag2" data-k="autoTime" ${P.autoTime!==false?'checked':''}> Set the MSFS clock to the flight's departure time automatically (app only)</label></section>
+    <section class="panel stack"><h3>Voices &amp; copilot</h3><label class="row"><input type="checkbox" data-act="pro-flag" data-k="copilot" ${P.copilot!==false?'checked':''}> Copilot callouts: "Airspeed alive", "Rotate", "Positive rate", and 1000 / 500 / 100 / 50 / 30 / 10 on landing</label>${premiumVoiceHTML()}</section>
+    <section class="panel stack"><h3>Match MSFS</h3><label class="row"><input type="checkbox" data-act="sync-wx" ${p.wx?'checked':''}> Use live MSFS weather in briefings when you're at the departure airport</label><label class="row"><input type="checkbox" data-act="sync-time" ${p.time?'checked':''}> Check that the MSFS clock matches the flight</label></section>
+    <section class="panel row between"><div><h3>Urgent dispatch calls</h3><p class="small muted">Real-time 2× pay jobs pop up while the game is open. You get ${URG_ACCEPT_MIN} minutes to accept and ${URG_TAKEOFF_MIN} to get wheels up.</p></div><div class="row"><button class="btn sm" data-act="urg-toggle">${urgentOn()?'Turn off':'Turn on'}</button><button class="btn sm ghost" data-act="urg-test">Send one now</button></div></section>
+    ${voiceSettingsHTML()}`;
+}
+
+/* ---------- MSFS connection tab ---------- */
+
+function hangarMsfsTab(){
+  return `${panelSetupHTML()}
+    <div class="row" style="justify-content:flex-end"><button class="btn sm" data-act="wiz-open">Run the setup check again</button></div>
+    <section class="panel stack" style="max-width:760px" id="sim-hangar">${simHangarHTML()}</section>`;
+}
+
+/* ---------- Saves & help tab ---------- */
+
+function hangarSaveTab(st){
+  return `<section class="panel stack" style="max-width:760px"><h3>Save data</h3>
+      <p class="small muted">${esc(syncText())}. Copy the text below to back up your career, or paste a backup to restore it.</p>
+      <textarea id="save-text" aria-label="Career save data" spellcheck="false">${esc(JSON.stringify(st))}</textarea>
+      <div class="row"><button class="btn sm primary" data-act="export-file">Export career file</button><button class="btn sm" data-act="import-file">Import career file</button><button class="btn sm" data-act="copy-save">Copy</button><button class="btn sm" data-act="import-save">Restore from the text above</button>
+      ${S.confirm==='reset' ? `<span class="small">Erase this career and start over?</span><button class="btn sm danger" data-act="reset-yes">Erase it</button><button class="btn sm" data-act="confirm-no">Cancel</button>` : `<button class="btn sm danger" data-act="reset">Start a new career</button>`}</div>
+    </section>
+    <section class="panel stack" style="max-width:760px"><h3>Report a problem</h3><p class="small muted">Something broke or felt wrong? Describe it and save a report. It includes the version, recent errors (${errLog().length}) and your sim status, but not your whole save.</p><textarea id="bug-note" placeholder="What happened? What did you expect?" style="min-height:90px"></textarea><div class="row"><button class="btn sm primary" data-act="bug-save">Save report</button><button class="btn sm" data-act="bug-copy">Copy report</button><span class="tiny muted">Version ${TW_VERSION}</span></div></section>
+    ${backupsHTML()}`;
+}
+
+/* ---------- Your fleet tab ---------- */
+
+/* What's loaded in MSFS right now. */
+function loadedNowCard(st){
+  const live=S.simState==='live'; const L=live?loadedAircraft():{};
+  return `<section class="panel loaded-now"><p class="label">Loaded in MSFS</p>${live?(L.id?`<h3>${esc(AC[L.id].n)}</h3><p class="small muted">${esc(AC[L.id].cls)} · cruise ${AC[L.id].cruise} kt · range ${AC[L.id].range} nm${st.hangar&&st.hangar[L.id]?' · in your hangar list':' · <b>not ticked in your hangar list below</b>'}</p>`:`<h3>${esc(L.title||'Nothing loaded')}</h3><p class="small muted">This aircraft isn't one the game knows.</p>`):`<h3>MSFS isn't connected</h3><p class="small muted">Start MSFS and load an aircraft to see it here.</p>`}</section>`;
+}
+/* Health of the aircraft you've flown, with a paid rush repair. */
+function airframeHealthSection(st){
+  const list=Object.keys(st.airframes||{}).filter(k=>AC[k]); if(!list.length) return '';
+  return `<section class="panel stack"><div class="row between"><h3>Airframe health</h3><span class="small muted">Gentle flying keeps them healthy. Dez repairs a little every night.</span></div>
+    <div class="cards">${list.map(k=>{ const A=st.airframes[k]; const g=isGrounded(st,k); const cost=Math.round((100-A.h)*22/10)*10; return `<div class="cell stack" style="gap:6px"><div class="row between"><b>${esc(AC[k].n)}</b><span class="mono">${A.h}%</span></div>${healthBar(A.h)}<span class="tiny muted">${g?`Grounded until day ${A.grounded}`:A.log[0]?`Last flight: ${esc(A.log[0].why)}`:''}</span>${A.h<100?`<button class="btn sm" data-act="rush-repair" data-id="${k}" ${st.cash<cost?'disabled':''}>Rush repair · ${money(cost)}</button>`:''}</div>`; }).join('')}</div></section>`;
+}
+/* The tick list of every aircraft, by class, folded away under one heading. */
+function ownedAircraftList(st){
+  const groups = {}; Object.keys(AC).forEach(k=>{ const c=AC[k].cls; (groups[c]=groups[c]||[]).push(k); });
+  const owned=Object.keys(st.hangar||{}).filter(k=>st.hangar[k] && AC[k]).length;
+  const card = k => { const a=AC[k]; return `<div class="cell stack" style="gap:6px"><div class="hg-sil">${acSvg(k)}</div><label class="check"><input type="checkbox" data-hangar="${k}" ${st.hangar[k]?'checked':''}> <b>${esc(a.n)}</b></label>
+      <div class="row" style="gap:4px">${a.req.map(r=>`<span class="chip ${st.ratings[r]?'good':''}">${RATINGS[r].code}</span>`).join('')}${st.types[k]?`<span class="chip sea">${st.types[k]} flown</span>`:''}</div>
+      <p class="small">${esc(a.note)}</p><p class="tiny mono muted">${esc(a.v)}</p><p class="tiny muted">${a.pax} pax · ${a.useful.toLocaleString()} lb useful · ${a.cruise} kt · ${a.range.toLocaleString()} nm · ${a.rwy.toLocaleString()} ft runway · ${a.xw} kt crosswind</p></div>`; };
+  return `<details class="calm-more"><summary>Aircraft you own in MSFS <span class="tiny muted">${owned} selected</span></summary><div class="calm-more-in">
+    ${Object.keys(groups).map(g=>`<section><div class="section-title"><h3>${esc(CLS[g].name)}</h3></div><div class="cards">${groups[g].map(card).join('')}</div></section>`).join('')}</div></details>`;
+}
+/* When MSFS has an aircraft loaded that the game doesn't know, its numbers are filled into the "bring your own" form. */
+function prefillOwnAircraftForm(){
+  const L=loadedAircraft(); const g=specGuess(S.sim&&S.sim.spec); if(!g || !L.title || L.id) return; const set=(id,v)=>{ const el=document.getElementById(id); if(el && !el.value && v) el.value=v; };
+  const c=document.getElementById('byo-cls'); if(c && !c.dataset.touched){ c.value=g.cls; } set('byo-pax',g.pax); set('byo-cruise',g.cruise); set('byo-range',g.range); set('byo-vapp',g.vapp);
+  const n=document.querySelector('.byo .small.muted'); if(n && !n.dataset.spec){ n.dataset.spec='1'; n.insertAdjacentHTML('afterend', `<p class="notice small">Filled in from MSFS: ${esc(L.title)}. Check the numbers, then add it.</p>`); }
+}
+
+function hangarView(){
+  const st=S.st; const cur=S.hangarTab||'fleet';
+  setTimeout(prefillOwnAircraftForm, 0);
+  const tabs=`<nav class="hg-tabs">${HG_TABS.map(([k,l])=>`<button class="${k===cur?'on':''}" data-act="hg-tab" data-v="${k}">${l}</button>`).join('')}</nav>`;
+  if(cur==='fleet') return `<main class="wrap stack fade">${loadedNowCard(st)}${fleetCrewHTML(st)}${tabs}
+    ${airframeHealthSection(st)}${byoSection(st)}
+    <section class="panel stack"><h2>Hangar</h2><p class="small muted">Untick any aircraft you don't have in your copy of MSFS (2020 or 2024) so the career never assigns it. Numbers are approximate planning figures; check each aircraft's own EFB for real limits.</p></section>
+    ${ownedAircraftList(st)}</main>`;
+  const body = cur==='settings' ? hangarSettingsTab(st) : cur==='msfs' ? hangarMsfsTab() : cur==='save' ? hangarSaveTab(st) : '';
+  return `<main class="wrap stack fade">${tabs}${body}</main>`;
 }
 /* ===================== RENDER =====================
    render() redraws the whole page from S (what's on screen) and S.st (the career).

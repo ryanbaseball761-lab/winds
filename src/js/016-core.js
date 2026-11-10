@@ -61,8 +61,6 @@ function byoSection(st){
     ${list.length?`<div class="cards">${list.map(k=>{ const a=st.customAc[k]; return `<div class="cell stack" style="gap:6px"><b>${esc(a.n)}</b><span class="small muted">${esc(CLS[a.cls]?CLS[a.cls].name:a.cls)} · ${a.pax} seats · ${a.cruise} kt · ${a.range} nm · ${a.rwy.toLocaleString()} ft</span><div class="row" style="gap:4px">${a.req.map(r=>`<span class="chip ${st.ratings[r]?'good':''}">${RATINGS[r].code}</span>`).join('')}${st.types[k]?`<span class="chip sea">${st.types[k]} flown</span>`:''}<button class="btn sm ghost" data-act="byo-del" data-id="${k}" style="margin-left:auto">Remove</button></div></div>`; }).join('')}</div>`:''}
   </section>`;
 }
-const _myHangar = hangarView;
-hangarView = function(){ const h=_myHangar(); return h.replace('<main class="wrap stack fade">', '<main class="wrap stack fade">'+byoSection(S.st)); };
 document.addEventListener('submit', e=>{
   if(e.target.id!=='byo-form' || !S.st) return; e.preventDefault(); e.stopImmediatePropagation();
   const st=S.st; const v=id=>document.getElementById(id).value.trim(); const num=(id,d)=>{ const x=Number(v(id)); return x>0?x:d; };
