@@ -979,5 +979,17 @@ main.wrap{gap:22px}
 .set-grid .diff{display:inline-flex}
 /* the cabin panel header (title, Sounds, Voices, Live) wraps instead of pushing the page wider */
 .cabin-host .row.between{flex-wrap:wrap;gap:6px}
+/* start screen: the same noir ramp as the title screen */
+.setup-hero.noir{background:#07080a}
+.setup-hero.noir .sh-art{position:absolute;inset:0;opacity:.85}.setup-hero.noir .sh-art svg{width:100%;height:100%;display:block}
+.setup-hero.noir .sh-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,8,10,.92) 0%,rgba(7,8,10,.65) 45%,rgba(7,8,10,.25) 100%),linear-gradient(0deg,rgba(7,8,10,.95) 0%,transparent 40%)}
+.setup-hero.noir .setup-copy{position:relative}.setup-hero.noir .eyebrow{color:#e0b24a;letter-spacing:.14em;text-transform:uppercase;font-size:12px}
+.setup-hero.noir h1{font-family:var(--f-display,inherit);letter-spacing:.02em;text-transform:uppercase}
+.setup-wrap .feat b{color:var(--ink)}.setup-wrap .feat p{color:var(--muted);font-size:14px;margin-top:4px}
+/* the one-screen setup before the first flight */
+.wiz-one{max-width:560px}.wiz-one h2{margin:4px 0 14px}
+.wiz-sec{padding:12px 0;border-top:1px solid var(--line)}.wiz-sec>b{display:block;margin-bottom:8px}
+.wiz-sec .wiz-status{display:flex;align-items:center;gap:8px}.wiz-sec .wiz-status .btn{margin-left:auto}
+.wiz-go{padding-top:14px;border-top:1px solid var(--line);gap:10px;flex-wrap:wrap}
 </style>
 <div id="app"></div>

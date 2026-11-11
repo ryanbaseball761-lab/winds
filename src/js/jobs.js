@@ -210,6 +210,7 @@ function checkrideJob(st, rid, acId){
 function migrate(st){
   registerCustomAc(st);
   st.celebs=st.celebs||{}; st.souvenirs=st.souvenirs||{}; st.gifts=st.gifts||{}; st.followups=st.followups||[]; st.ach=st.ach||{}; st.reviews=st.reviews||[]; if(!st.landedAt){ st.landedAt={}; (st.log||[]).forEach(l=>{ if(l.landing!=='crash') st.landedAt[l.to]=(st.landedAt[l.to]||0)+1; }); } if(!st.stats) st.stats={butter:0,smooth:0,firm:0,hard:0,crash:0,nm:0,diverts:0,scen:0}; if(!st.cooldown) st.cooldown={}; if(!st.visited) st.visited={}; Object.keys(AC).forEach(k=>{ if(st.hangar[k]===undefined) st.hangar[k]=true; }); Object.keys(CAST).forEach(k=>{ if(st.rep[k]===undefined) st.rep[k]=10; });
+  st.ui=st.ui||{}; if(st.ui.testSkip===undefined && (st.flights||0)>0) st.ui.testSkip=true;   // careers that already used the testing shortcut keep it
   /* careers that finished chapter 4 before Castillo paid for the jet rating get the money once */
   if(st.story && st.story.done && st.story.done.CR4 && !st.jetPaid){ const amt=TRAINING_FEES.JET; st.jetPaid=amt; try{ txn(st, amt, 'Gifts & windfalls', 'Castillo: your jet rating (back pay)'); setTimeout(()=>toast(`Castillo paid you back for your jet rating: +${money(amt)}.`), 2500); }catch(_){ st.cash+=amt; } }
   const r=finMigrate(st);

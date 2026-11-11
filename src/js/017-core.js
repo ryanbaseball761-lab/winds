@@ -4,7 +4,7 @@
 function liveWxLine(){ const x=S.sim&&S.sim.ext; if(!x || S.simState!=='live') return ''; const w=x.weather;
   return `<div class="livewx"><span class="label">Live MSFS weather</span><span class="mono">${String(w.windDir).padStart(3,'0')}°/${w.windKt} kt · ${w.visSm>=10?'10+':w.visSm} sm · ${w.oatC} °C · ${w.qnhHpa} hPa${w.inCloud?' · in cloud':''}</span></div>`; }
 const _evCabin = cabinInner;
-cabinInner = function(){ const h=_evCabin(); return h ? h.replace(/(<p class="tiny muted">[^<]*riding along today\.<\/p>)/, '$1'+liveWxLine()) : h; };
+cabinInner = function(){ const h=_evCabin(); return h ? h.replace(/(<p class="tiny muted">[^<]*riding along today\.<\/p>)/, m=>m+liveWxLine()) : h; };
 
 /* ---- (b) your phone rings: characters call with time-limited work ---- */
 

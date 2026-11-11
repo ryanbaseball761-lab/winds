@@ -50,13 +50,11 @@ let renderViewChanged = false; // did this draw switch pages?
 
 /* the job list remembers your tab and sort (read them back once) */
 function restoreJobListPrefs(){ if(!RENDER_ONCE.jobPrefs && S.st){ RENDER_ONCE.jobPrefs=true; const u=S.st.ui||{}; if(u.jobTab) S.jobTab=u.jobTab; if(u.jobSort) S.jobSort=u.jobSort; } }
-/* first-run walkthrough: the cold open, then three cards */
+/* first run: the cold open, then one card that jumps back to the start of the story */
 function maybeStartWalkthrough(){ if(RENDER_ONCE.walkthrough || !S.st || S._title) return; RENDER_ONCE.walkthrough=true; const st=S.st; st.ui=st.ui||{};
   if(!st.ui.walk3 && !(st.active&&st.active.started)){ S._walk=true; st.ui.walk3=1; save();
     setTimeout(()=>cutscene({col:'#c8962a', art:(typeof SCENES!=='undefined'?SCENES.ramp():''), shots:[...(typeof coldOpenShots==='function'?coldOpenShots():[]),
-      {card:true,kicker:'Welcome to Trade Winds · 1 of 3',title:'The story',sub:`<p>You're a pilot in the Caribbean. One main story in five acts takes you from a Cessna to a 747, and from a clean licence to running the islands' smuggling network.</p><p>Everything starts on the <b>Story</b> page.</p>`},
-      {card:true,kicker:'2 of 3',title:'How to fly a chapter',sub:`<p><b>1.</b> Press <b>Play</b>. A short cutscene sets it up.</p><p><b>2.</b> In MSFS, load the aircraft at the departure airport. The flight screen tells you where to park, how much fuel to load and which runway to use.</p><p><b>3.</b> Fly and land. The app follows you and grades the landing by itself.</p>`},
-      {card:true,kicker:'3 of 3',title:'Power, Heat and dirty cash',sub:`<p><b>Power</b> grows with every chapter and hard choice, and unlocks rewards.</p><p><b>Heat</b> is how close the law is. Network runs raise it, legit jobs cool it. Above 60, customs starts searching. Your Heat is always shown at the top of the screen.</p><p><b>Dirty cash</b> from network runs has to be laundered before you can spend it.</p><p class="small">Tip: press <b>Ctrl + K</b> anywhere to jump to any page, airport or action.</p>`}], onEnd:()=>{ S._walk=false; }}), 700); } }
+      {card:true,kicker:'How it works',title:'You fly every chapter',sub:`<p>Each chapter is a real flight in MSFS, with a scene before it and a choice after it. The game follows your flight and grades the landing by itself.</p>`}], onEnd:()=>{ S._walk=false; }}), 700); } }
 /* aircraft specs you measured in MSFS replace the built-in ones (once per app start) */
 function applyMeasuredAircraft(){ try{ if(!S._acReal && S.st){ S._acReal=true; for(const k in (S.st.acReal||{})) if(AC[k]) Object.assign(AC[k], S.st.acReal[k]); } }catch(_){} }
 /* an old save with no record of which tabs it has seen: mark the ones already unlocked */

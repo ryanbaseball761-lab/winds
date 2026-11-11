@@ -9,7 +9,7 @@
 
 
 /* ---- after a chapter: what happened, your decision, and what it led to, all as one scene ---- */
-function fxSub(o){ const b=[]; if(o.power) b.push(`Power ${o.power>0?'+':''}${o.power>=100?'max':o.power}`); if(o.heat) b.push(`Heat ${o.heat>0?'+':''}${o.heat<=-100?'cleared':o.heat}`); if(o.cash) b.push(`${o.cash>0?'+':'−'}${money(Math.abs(o.cash))}`); return b.join(' · '); }
+function fxSub(o){ if(o.ending) return `Ending: ${({kingpin:'Kingpin',witness:'Witness',ghost:'Ghost'})[o.ending]||o.ending}`; const b=[]; if(o.power) b.push(`Power ${o.power>0?'+':''}${o.power>=100?'max':o.power}`); if(o.heat) b.push(`Heat ${o.heat>0?'+':''}${o.heat<=-100?'cleared':o.heat}`); if(o.cash) b.push(`${o.cash>0?'+':'−'}${money(Math.abs(o.cash))}`); return b.join(' · '); }
 function splitOut(text){ return String(text||'').split(/(?<=[.!?”"])\s+(?=[A-Z"“])/).reduce((acc,s)=>{ const last=acc[acc.length-1]; if(last && (last+' '+s).length<170) acc[acc.length-1]=last+' '+s; else acc.push(s); return acc; }, []); }
 /* the result screen gets a button to watch it again */
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="after-replay"]')) playAftermath(); });

@@ -8,6 +8,14 @@
 - The Witness ending also opens if you kept Arnaud's drive or quietly wrote everything down.
 - Prologues no longer repeat themselves, and two chapters no longer give away their twist before takeoff (Reyes now meets you on the St. Croix ramp).
 
+## First ten minutes
+- New noir start screen, and the name box is empty instead of pre-filled.
+- From "Start the story" to flying in three steps: the Miami cold open, one setup screen (difficulty, MSFS, voices), then chapter 1's opening scene.
+- Power, Heat and dirty cash are explained right after you say yes to Castillo, when they start to matter.
+- After a flight the main button is always the next story step: the next chapter, the checkride it needs, or a seat to where it starts.
+- Story checkrides can be booked straight from "Your path through the story" on the Pilot page.
+- The "Skip flight (test)" button is now a setting (Hangar → Settings → Story), off for new careers.
+
 ## Clearer story
 - "Previously" now tells you what you chose last chapter, not just where you flew.
 - Scenes no longer give away what happens in flight: Castillo makes his offer after you land in Antigua, and Hartwell hands over the ledgers in the air.
@@ -27,6 +35,9 @@
 - Checkrides show the full flight details again (weather, weights, route), without repeating the task list.
 
 ## Interface
+- Dollar amounts starting with $1 (like $1,800 upkeep) no longer lose their first digits on the Money page and the Pilot page.
+- The Power and Heat bars after a chapter include what your choice changed, and are shown once.
+- The flight page opens at the top after a chapter's opening scene.
 - A fast double click on New day, Accept, a choice or a purchase only counts once.
 - The Hangar tabs are at the top on every tab.
 - The chapter label on the ticket no longer reads "Ch 0" for chapters changed by earlier choices.

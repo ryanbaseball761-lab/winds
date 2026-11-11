@@ -27,9 +27,12 @@ function resultNextBar(st){
   const upNext=MC.find(m=>!st.story.done[m.id]); const n=MC.indexOf(upNext)+1;
   let btn='';
   if(next){ const lead = upNext ? `Chapter ${n}: ` : 'Next: ';
-    btn=chapterAction(st,next,availSet,false).replace('Fly this chapter',`${lead}${esc(next.title)}`).replace(/Fly in to (\w+) &amp; start · \$0/, (m,ap)=>`${lead}${esc(next.title)} (free flight to ${ap})`);
+    btn=chapterAction(st,next,availSet,false).replace('Fly this chapter',`${lead}${esc(next.title)}`).replace(/Fly in to (\w+) &amp; start · \$0/, (m,ap)=>`${lead}${esc(next.title)} (free flight to ${ap})`).replace(/Fly in to (\w+) &amp; start · (\$[\d,]+)/, (m,ap,cost)=>`${lead}${esc(next.title)} (seat to ${ap}, ${cost})`);
     if(upNext) btn=btn.replace('>Add an aircraft in the Hangar<', `>Chapter ${n} needs the ${esc(AC[upNext.ac[0]]?AC[upNext.ac[0]].n:upNext.ac[0])}: open Hangar<`); }
-  return `<div class="row next-bar"><button class="btn primary" data-act="nav" data-v="board">Side jobs</button>${btn}</div>`;
+  /* the next chapter is waiting on a licence: offer the checkride */
+  if(!btn && upNext){ const pa=playAction(st,upNext,availSet,n); btn=pa.btn.replace('btn action big','btn action'); }
+  if(!btn && crime(st).ending) btn=`<button class="btn action" data-act="nav" data-v="story">Your ending, and New Game+</button>`;
+  return `<div class="row next-bar">${btn}<button class="btn ${btn?'ghost':'primary'}" data-act="nav" data-v="board">Side jobs</button></div>`;
 }
 
 function resultView(){
@@ -38,7 +41,8 @@ function resultView(){
   const isChapter = CRIME_IDS.has(job.story);
   setTimeout(paintCard,0);
   const passFail = job.kind==='check' ? (out.pass?`<span class="chip good">Passed</span>`:`<span class="chip bad">Not passed</span>`) : '';
-  const crimeChips = (c.on && (job.network||job.kind==='story') ? `<span class="chip">Power ${c.power}</span><span class="chip ${c.heat>=60?'warn':''}">Heat ${c.heat}</span>` : '') + (c.dirty ? `<span class="chip warn">Dirty cash ${money(c.dirty)}</span>` : '');
+  const showsBars = !!(L.delta && c.on && (L.delta.power || L.delta.heat));
+  const crimeChips = (c.on && !showsBars && (job.network||job.kind==='story') ? `<span class="chip">Power ${c.power}</span><span class="chip ${c.heat>=60?'warn':''}">Heat ${c.heat}</span>` : '') + (c.dirty ? `<span class="chip warn">Dirty cash ${money(c.dirty)}</span>` : '');
   const choice = choiceHTML(st) || '';
   const manifest = out.manifest ? `<section class="panel stack"><p class="label">Your passengers</p><div class="mf-list">${out.manifest.map(x=>`<div class="mf"><span class="mf-ic">${TRAITS[x.p.trait].i}</span><div><b>${esc(x.p.name)}</b> <span class="stars small">${'★'.repeat(x.s)}${'☆'.repeat(5-x.s)}</span><span class="small">${esc(x.line)}</span></div></div>`).join('')}</div></section>` : '';
   const failedCheckride = job.kind==='check' && !out.pass && !st.ratings[job.rating];

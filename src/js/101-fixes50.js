@@ -62,7 +62,6 @@ WHATS_NEW.unshift(['0.43','50 fixes: the new-career screen fits the story, Heat 
 
 
 (function(){ const s=document.createElement('style'); s.textContent=`
-.setup-wrap .hero, .setup-wrap header, .setup-wrap .setup-hero{filter:saturate(.55) brightness(.6) contrast(1.08)}
 #toasts{transform:none!important;align-items:flex-end!important;width:auto!important}
 .cup-grid .card > :first-child, .cup-card > :first-child, main .cup svg, .cup-art{filter:saturate(.5) brightness(.72) contrast(1.08)}
 .subtabs{overflow-x:auto;scrollbar-width:none;white-space:nowrap}.subtabs::-webkit-scrollbar{display:none}.subtabs button{flex:none}
@@ -79,3 +78,4 @@ WHATS_NEW.unshift(['0.43','50 fixes: the new-career screen fits the story, Heat 
 .jr-m{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}`; document.head.appendChild(s); })();
 WHATS_NEW.unshift(['0.50','Every story choice now comes back later, a fuller epilogue, Caribe Cargo becomes your own airline (Pilot → Airline), smuggling pays more and draws more Heat, and many fixes.']);
 WHATS_NEW.unshift(['0.51','Clearer story: "Previously" remembers your choices, no spoilers before takeoff, consistent chapter numbers. Castillo pays for your jet rating, and the MSFS clock is set correctly.']);
+WHATS_NEW.unshift(['0.52','A faster start: a new start screen, one setup screen, then chapter 1. The next story step is always the main button, checkrides can be booked from your story path, and many fixes.']);

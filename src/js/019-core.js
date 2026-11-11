@@ -23,7 +23,5 @@ async function importCareer(){
   const inp=document.createElement('input'); inp.type='file'; inp.accept='.json,application/json';
   inp.onchange=()=>{ const f=inp.files&&inp.files[0]; if(!f) return; f.text().then(t=>loadCareerText(t)); }; inp.click();
 }
-const _thSetup = setupView;
-setupView = function(){ return _thSetup().replace('</form>', '</form><div class="import-row"><span class="small muted">Already flying Trade Winds somewhere else?</span><button class="btn sm" type="button" data-act="import-file">Import career file</button></div>'); };
 /* the desktop app picks up TradeWinds-save.json from Downloads automatically on first launch */
 (async function(){ if(!window.twNative || !twNative.autoSave) return; try{ if(S.st && S.st.flights>0) return; const t = await twNative.autoSave(); if(!t) return; let o=null; try{ o=JSON.parse(t); }catch(_){ return; } if(!S.st || (S.st.flights===0 && o.flights>0)) loadCareerText(t, 'from your Downloads folder'); }catch(_){} })();

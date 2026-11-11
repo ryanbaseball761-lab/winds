@@ -7,13 +7,15 @@ function skyClass(min){ const t=timeLabel(min); return t==='Night'?'night':t==='
 
 /* ---------- start screen ---------- */
 function setupView(){
+  const feats=[['A story you fly','Twenty chapters in five acts. Every chapter is a real flight in MSFS, with scenes before and after, phone calls in the air, and a choice at the end that the story remembers.'],
+    ['Power and Heat','Every run makes you stronger and more wanted. Push too hard and customs starts searching your plane.'],
+    ['Cessna to 747','Earn your licences with real checkrides as the story moves you from a borrowed Cessna to the Vision Jet, the CJ4, the 737 and the 747.'],
+    ['Graded by the sim','Trade Winds follows your flight live and grades the touchdown, the centerline, the fuel and the airmanship by itself.']];
   return `<main class="setup-wrap">
-    <section class="setup-hero sky-day">
-      <div class="sun" aria-hidden="true"></div>
-      <svg class="plane-fly" viewBox="0 0 120 40" aria-hidden="true"><path d="M8 22h70l18-14h8l-8 14h14l6-6h4l-3 8 3 8h-4l-6-6H96l8 14h-8L78 26H8c-4 0-4-4 0-4z" fill="currentColor"/></svg>
-      ${islandsSVG('isles big')}
+    <section class="setup-hero noir">
+      <div class="sh-art" aria-hidden="true">${typeof SCENES!=='undefined'?SCENES.ramp():''}</div><div class="sh-shade" aria-hidden="true"></div>
       <div class="wrap setup-copy">
-        <p class="eyebrow">A Caribbean career for Microsoft Flight Simulator 2024</p>
+        <p class="eyebrow">A crime story for Microsoft Flight Simulator</p>
         <h1>Trade Winds</h1>
         <p class="lede">A fresh licence and a cheap job flying a Cessna in St. Martin. Then the mechanic asks you for a small favor. Five acts later you're flying a 747 full of contraband, and either running the Caribbean or running from it.</p>
       </div>
@@ -21,15 +23,13 @@ function setupView(){
     <div class="wrap">
       <div class="setup-grid">
         <form id="setup-form" class="panel stack setup-card">
-          <h2>Create your pilot</h2>
-          <label class="field"><span>Your name</span><input id="pname" type="text" value="Ryan" maxlength="40" required></label>
+          <h2>Who's flying?</h2>
+          <label class="field"><span>Your name</span><input id="pname" type="text" placeholder="Your name" maxlength="40" required autofocus></label>
           <label class="field"><span>Callsign or nickname <small>(optional)</small></span><input id="pcall" type="text" placeholder="e.g. Maverick" maxlength="30"></label>
-          <button class="btn action big" type="submit">Start my career</button>
+          <button class="btn action big" type="submit">Start the story</button>
           <p class="tiny muted">Your career saves automatically.</p>
-        </form>
-        <div class="features">
-          ${[['Fly real jobs','Every job is a real flight you fly in MSFS 2020 or 2024: route, aircraft, weather and load, all planned for you.'],['Live a story','Recurring characters, secret celebrity passengers, sealed orders that go wrong mid-flight, and plot twists after you land.'],['Earn your wings','Checkrides from Commercial to Airline Transport Pilot, plus sign-offs for the world\'s scariest runways.'],['Build an airline','Buy used aircraft, finance them, set fares on your own routes, and watch your net worth grow (or not).']].map(([t,d])=>`<div class="feature"><h3>${t}</h3><p class="small muted">${d}</p></div>`).join('')}
-        </div>
+        </form><div class="import-row"><span class="small muted">Already flying Trade Winds somewhere else?</span><button class="btn sm" type="button" data-act="import-file">Import career file</button></div>
+        <div class="features">${feats.map(([t,d])=>`<div class="feat"><b>${t}</b><p>${d}</p></div>`).join('')}</div>
       </div>
     </div></main>`;
 }

@@ -9,6 +9,9 @@
 
 /* ---------- pieces ---------- */
 
+/* "Skip flight (test)": only when Settings → Story → Testing shortcut is on */
+function testSkipBar(){ return uiP().testSkip ? `<div class="test-skip-bar">${SKIP_BTN}<span class="tiny muted">Testing shortcut</span></div>` : ''; }
+
 /* The flight display at the top of flight mode: route, progress, live numbers, and the goal. */
 function hudHTML(a){
   const s=S.sim||{}; const live=S.simState==='live'&&s.position; const job=a.job; const to=job.local?job.from:job.to; const dest=AP[to];
@@ -126,7 +129,7 @@ function inflightView(){
   const rec=S.sim&&S.sim.recorder; const airborne = S.simState==='live' && ((S.sim.motion&&!S.sim.motion.onGround) || (rec && rec.takeoff && simRecFor(a)));
   let runways=''; try{ const R=runwayPlan(job); if(R.dep) runways=`<p class="if-rw">Take off <b class="mono">${esc(R.dep.water?'into wind':R.dep.rw)}</b>${R.arr?` · Land <b class="mono">${esc(R.arr.water?'into wind':R.arr.rw)}</b>`:''} · wind ${pad3(job.wx.dir)}°/${job.wx.spd} kt</p>`; }catch(_){}
   const orders = job.scen && a.opened && a.scenPlan ? ordersHTML(a,!!S.ordersPop) : job.scen ? `<div class="notice small">📩 Sealed orders aboard. They open automatically ${TRIG_LABEL[SCEN_TRIGGER[job.scen]||'mid']}.</div>` : '';
-  return `<main class="wrap stack fade inflight"><div class="test-skip-bar">${SKIP_BTN}<span class="tiny muted">Testing shortcut</span></div><div class="fm-bar"><span class="fm-dot"></span> Flight mode <button class="btn sm ghost" data-act="fm-menu">${S.fmMenu?'Hide menu':'Show menu'}</button></div>${hudHTML(a)}${guideActive()?guideHTML(a):''}
+  return `<main class="wrap stack fade inflight">${testSkipBar()}<div class="fm-bar"><span class="fm-dot"></span> Flight mode <button class="btn sm ghost" data-act="fm-menu">${S.fmMenu?'Hide menu':'Show menu'}</button></div>${hudHTML(a)}${guideActive()?guideHTML(a):''}
     <section class="if-head">
       <div style="min-width:0"><p class="label">In flight · ${esc(flightNo(job))} · ${esc(ac.n)}</p>${runways}<h1>${esc(job.title)}</h1></div>
       ${NOTE_BTN}<div class="row"><span class="if-timer mono" id="if-timer" data-start="${a.started}">${durTxt(mins)}</span>
@@ -242,7 +245,7 @@ function flightView(){
   if(started && !S.debrief && !S.showResult && !S.ifBrief && !S.confirm) return inflightView();
   if(S.debrief) return debriefView(job, p);
   const mins = started ? Math.round((Date.now()-started)/60000) : 0;
-  const skipBar = `<div class="test-skip-bar">${SKIP_BTN}<span class="tiny muted">Testing shortcut</span></div>`;
+  const skipBar = `${testSkipBar()}`;
   const pass = boardingPass(st, job, p, a, started, mins, job.ai);
   const guide = guideActive() ? guideHTML(act) : '';
 

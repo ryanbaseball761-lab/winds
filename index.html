@@ -992,6 +992,18 @@ main.wrap{gap:22px}
 .set-grid .diff{display:inline-flex}
 /* the cabin panel header (title, Sounds, Voices, Live) wraps instead of pushing the page wider */
 .cabin-host .row.between{flex-wrap:wrap;gap:6px}
+/* start screen: the same noir ramp as the title screen */
+.setup-hero.noir{background:#07080a}
+.setup-hero.noir .sh-art{position:absolute;inset:0;opacity:.85}.setup-hero.noir .sh-art svg{width:100%;height:100%;display:block}
+.setup-hero.noir .sh-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,8,10,.92) 0%,rgba(7,8,10,.65) 45%,rgba(7,8,10,.25) 100%),linear-gradient(0deg,rgba(7,8,10,.95) 0%,transparent 40%)}
+.setup-hero.noir .setup-copy{position:relative}.setup-hero.noir .eyebrow{color:#e0b24a;letter-spacing:.14em;text-transform:uppercase;font-size:12px}
+.setup-hero.noir h1{font-family:var(--f-display,inherit);letter-spacing:.02em;text-transform:uppercase}
+.setup-wrap .feat b{color:var(--ink)}.setup-wrap .feat p{color:var(--muted);font-size:14px;margin-top:4px}
+/* the one-screen setup before the first flight */
+.wiz-one{max-width:560px}.wiz-one h2{margin:4px 0 14px}
+.wiz-sec{padding:12px 0;border-top:1px solid var(--line)}.wiz-sec>b{display:block;margin-bottom:8px}
+.wiz-sec .wiz-status{display:flex;align-items:center;gap:8px}.wiz-sec .wiz-status .btn{margin-left:auto}
+.wiz-go{padding-top:14px;border-top:1px solid var(--line);gap:10px;flex-wrap:wrap}
 </style>
 <div id="app"></div>
 <script>
@@ -2784,13 +2796,15 @@ function skyClass(min){ const t=timeLabel(min); return t==='Night'?'night':t==='
 
 /* ---------- start screen ---------- */
 function setupView(){
+  const feats=[['A story you fly','Twenty chapters in five acts. Every chapter is a real flight in MSFS, with scenes before and after, phone calls in the air, and a choice at the end that the story remembers.'],
+    ['Power and Heat','Every run makes you stronger and more wanted. Push too hard and customs starts searching your plane.'],
+    ['Cessna to 747','Earn your licences with real checkrides as the story moves you from a borrowed Cessna to the Vision Jet, the CJ4, the 737 and the 747.'],
+    ['Graded by the sim','Trade Winds follows your flight live and grades the touchdown, the centerline, the fuel and the airmanship by itself.']];
   return `<main class="setup-wrap">
-    <section class="setup-hero sky-day">
-      <div class="sun" aria-hidden="true"></div>
-      <svg class="plane-fly" viewBox="0 0 120 40" aria-hidden="true"><path d="M8 22h70l18-14h8l-8 14h14l6-6h4l-3 8 3 8h-4l-6-6H96l8 14h-8L78 26H8c-4 0-4-4 0-4z" fill="currentColor"/></svg>
-      ${islandsSVG('isles big')}
+    <section class="setup-hero noir">
+      <div class="sh-art" aria-hidden="true">${typeof SCENES!=='undefined'?SCENES.ramp():''}</div><div class="sh-shade" aria-hidden="true"></div>
       <div class="wrap setup-copy">
-        <p class="eyebrow">A Caribbean career for Microsoft Flight Simulator 2024</p>
+        <p class="eyebrow">A crime story for Microsoft Flight Simulator</p>
         <h1>Trade Winds</h1>
         <p class="lede">A fresh licence and a cheap job flying a Cessna in St. Martin. Then the mechanic asks you for a small favor. Five acts later you're flying a 747 full of contraband, and either running the Caribbean or running from it.</p>
       </div>
@@ -2798,15 +2812,13 @@ function setupView(){
     <div class="wrap">
       <div class="setup-grid">
         <form id="setup-form" class="panel stack setup-card">
-          <h2>Create your pilot</h2>
-          <label class="field"><span>Your name</span><input id="pname" type="text" value="Ryan" maxlength="40" required></label>
+          <h2>Who's flying?</h2>
+          <label class="field"><span>Your name</span><input id="pname" type="text" placeholder="Your name" maxlength="40" required autofocus></label>
           <label class="field"><span>Callsign or nickname <small>(optional)</small></span><input id="pcall" type="text" placeholder="e.g. Maverick" maxlength="30"></label>
-          <button class="btn action big" type="submit">Start my career</button>
+          <button class="btn action big" type="submit">Start the story</button>
           <p class="tiny muted">Your career saves automatically.</p>
-        </form>
-        <div class="features">
-          ${[['Fly real jobs','Every job is a real flight you fly in MSFS 2020 or 2024: route, aircraft, weather and load, all planned for you.'],['Live a story','Recurring characters, secret celebrity passengers, sealed orders that go wrong mid-flight, and plot twists after you land.'],['Earn your wings','Checkrides from Commercial to Airline Transport Pilot, plus sign-offs for the world\'s scariest runways.'],['Build an airline','Buy used aircraft, finance them, set fares on your own routes, and watch your net worth grow (or not).']].map(([t,d])=>`<div class="feature"><h3>${t}</h3><p class="small muted">${d}</p></div>`).join('')}
-        </div>
+        </form><div class="import-row"><span class="small muted">Already flying Trade Winds somewhere else?</span><button class="btn sm" type="button" data-act="import-file">Import career file</button></div>
+        <div class="features">${feats.map(([t,d])=>`<div class="feat"><b>${t}</b><p>${d}</p></div>`).join('')}</div>
       </div>
     </div></main>`;
 }
@@ -3319,7 +3331,7 @@ document.addEventListener('click', e=>{
 function liveWxLine(){ const x=S.sim&&S.sim.ext; if(!x || S.simState!=='live') return ''; const w=x.weather;
   return `<div class="livewx"><span class="label">Live MSFS weather</span><span class="mono">${String(w.windDir).padStart(3,'0')}°/${w.windKt} kt · ${w.visSm>=10?'10+':w.visSm} sm · ${w.oatC} °C · ${w.qnhHpa} hPa${w.inCloud?' · in cloud':''}</span></div>`; }
 const _evCabin = cabinInner;
-cabinInner = function(){ const h=_evCabin(); return h ? h.replace(/(<p class="tiny muted">[^<]*riding along today\.<\/p>)/, '$1'+liveWxLine()) : h; };
+cabinInner = function(){ const h=_evCabin(); return h ? h.replace(/(<p class="tiny muted">[^<]*riding along today\.<\/p>)/, m=>m+liveWxLine()) : h; };
 
 /* ---- (b) your phone rings: characters call with time-limited work ---- */
 
@@ -3436,8 +3448,6 @@ async function importCareer(){
   const inp=document.createElement('input'); inp.type='file'; inp.accept='.json,application/json';
   inp.onchange=()=>{ const f=inp.files&&inp.files[0]; if(!f) return; f.text().then(t=>loadCareerText(t)); }; inp.click();
 }
-const _thSetup = setupView;
-setupView = function(){ return _thSetup().replace('</form>', '</form><div class="import-row"><span class="small muted">Already flying Trade Winds somewhere else?</span><button class="btn sm" type="button" data-act="import-file">Import career file</button></div>'); };
 /* the desktop app picks up TradeWinds-save.json from Downloads automatically on first launch */
 (async function(){ if(!window.twNative || !twNative.autoSave) return; try{ if(S.st && S.st.flights>0) return; const t = await twNative.autoSave(); if(!t) return; let o=null; try{ o=JSON.parse(t); }catch(_){ return; } if(!S.st || (S.st.flights===0 && o.flights>0)) loadCareerText(t, 'from your Downloads folder'); }catch(_){} })();
 /* ===================== FRESH RECORDING PER FLIGHT + SPOKEN COCKPIT ===================== */
@@ -4199,25 +4209,16 @@ document.addEventListener('click', e=>{
 function healthBar(h){ return `<div class="meter ${h<50?'bad':h<75?'warn':''}" title="Airframe health ${h}%"><i style="width:${h}%"></i></div>`; }
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="rush-repair"]'); if(!b || !S.st) return; const A=airframe(S.st,b.dataset.id); const cost=Math.round((100-A.h)*22/10)*10; if(S.st.cash<cost) return; txn(S.st,-cost,'Maintenance',`Rush repair: ${AC[b.dataset.id].n}`); A.h=100; A.grounded=0; save(); toast(`${AC[b.dataset.id].n} repaired. Dez stayed late.`); S.keepScroll=true; render(); });
 /* ===================== FIRST-LAUNCH SETUP WIZARD ===================== */
-const WIZ = ['welcome','difficulty','sim','sound','skill','first'];
-function wizardHTML(st){
-  const i=Math.min(S.wiz||0, WIZ.length-1), k=WIZ[i]; const live=S.simState==='live';
-  const dots=`<div class="tour-dots">${WIZ.map((_,j)=>`<span class="${j===i?'on':''}"></span>`).join('')}</div>`;
-  let body='';
-  if(k==='welcome') body=`<p class="label">Welcome aboard</p><h2>Let's get you flying in about five minutes</h2><p>Trade Winds turns Microsoft Flight Simulator into a Caribbean flying career: real jobs, a story, characters who talk to you while you fly, and your landings graded straight from the sim.</p><div class="wiz-art">${islandArt('TNCM', 1050, 600, 150, 'C172')}</div>`;
-  if(k==='difficulty') body=`<p class="label">Step 1 of 4</p><h2>How do you want to play?</h2><div class="wiz-choices">${Object.keys(DIFF).map(d=>`<button class="wiz-choice ${diff()===d?'on':''}" data-act="diff" data-v="${d}"><b>${DIFF[d].n}</b><span>${esc(DIFF[d].d)}</span></button>`).join('')}</div><p class="tiny muted">You can change this any time from the top bar.</p>`;
-  if(k==='sim') body=`<p class="label">Step 2 of 4</p><h2>Connect Microsoft Flight Simulator</h2>
-    <div class="wiz-status ${live?'ok':''}"><span class="simdot ${live?'on':''}"></span><b>${live?`Connected${S.sim&&S.sim.aircraft&&S.sim.aircraft.title?`: ${esc(S.sim.aircraft.title)}`:''}`:S.simState==='nosim'||S.simState==='waiting'?'Bridge ready. Waiting for MSFS…':'Not connected yet'}</b></div>
-    <p class="small">${window.TW_STANDALONE?'Start MSFS 2020 or 2024 and load into any flight. Trade Winds connects on its own; nothing to install.':'Start MSFS and load into any flight. In the browser version, the MSFS Bridge also needs to be running (Hangar tab has the setup).'}</p>
-    <p class="tiny muted">No sim right now? You can skip this and log flights by hand.</p><button class="btn sm" data-act="wiz-recheck">Check again</button>`;
-  if(k==='sound') body=`<p class="label">Step 3 of 4</p><h2>Hear your crew</h2><p>Your instructor talks you through each flight, passengers react, and ATC calls you on the radio.</p>
-    <div class="row"><button class="btn primary" data-act="voice-test">▶ Test voices</button><button class="btn" data-act="voice">${typeof voiceOn==='function'&&voiceOn()?'🔊 Voices on':'🔇 Voices off'}</button><button class="btn" data-act="sfx-toggle">${sfxOn()?'🎧 Radio sounds on':'Radio sounds off'}</button></div><p class="tiny muted">More voice options live on the Hangar tab.</p>`;
-  if(k==='skill') body=`<p class="label">Step 4 of 4</p><h2>How well do you know MSFS?</h2><div class="wiz-choices"><button class="wiz-choice" data-act="wiz-academy"><b>I'm new to flight sims</b><span>Start the Flight Academy: controls, takeoff, landing, step by step with live coaching.</span></button><button class="wiz-choice" data-act="wiz-next"><b>I know my way around</b><span>Straight to my first job in St. Martin.</span></button></div>`;
-  if(k==='first'){ const m=STORY.find(x=>x.id==='CW1'); body=`<p class="label">You're ready</p><h2>Your first job: ${esc(m.title)}</h2><p>A 10-mile hop from Sint Maarten (TNCM) to Anguilla (TQPF) in a Cessna 172, with Dez in the right seat. Set it up in MSFS at TNCM, runway 10, then press Start.</p><div class="wiz-art">${islandArt('TQPF', m.dep, 600, 140, 'C172')}</div>`; }
-  const nav = k==='first'
-    ? `<div class="row between"><button class="btn ghost" data-act="tour-skip">Go to the job board</button>${st.story.done.CW1?'':`<button class="btn action" data-act="wiz-fly">Fly it now ✈</button>`}</div>`
-    : `<div class="row between"><button class="btn ghost" data-act="${i?'wiz-back':'tour-skip'}">${i?'Back':'Skip setup'}</button>${k==='skill'?'':`<button class="btn primary" data-act="wiz-next">${i?'Next':'Let\'s go'}</button>`}</div>`;
-  return `<div class="overlay" role="dialog" aria-modal="true" aria-label="Setup"><div class="tour panel wiz">${dots}${body}${nav}</div></div>`;
+/* One screen before the first flight: difficulty, MSFS connection, voices, then Play. */
+function wizardHTML(st){ const live=S.simState==='live';
+  const conn = live ? `Connected${S.sim&&S.sim.aircraft&&S.sim.aircraft.title?`: ${esc(S.sim.aircraft.title)}`:''}` : S.simState==='nosim'||S.simState==='waiting' ? 'Waiting for MSFS…' : 'Not connected yet';
+  return `<div class="overlay" role="dialog" aria-modal="true" aria-label="Before your first flight"><div class="tour panel wiz wiz-one">
+    <p class="label">Before your first flight</p><h2>Three quick choices</h2>
+    <div class="wiz-sec"><b>Difficulty</b><div class="diff">${Object.keys(DIFF).map(d=>`<button class="${diff()===d?'on':''}" data-act="diff" data-v="${d}" title="${esc(DIFF[d].d)}">${DIFF[d].n}</button>`).join('')}</div><p class="tiny muted">${esc(DIFF[diff()].d)}</p></div>
+    <div class="wiz-sec"><b>Microsoft Flight Simulator</b><div class="wiz-status ${live?'ok':''}"><span class="simdot ${live?'on':''}"></span><span>${conn}</span><button class="btn sm ghost" data-act="wiz-recheck">Check again</button></div><p class="tiny muted">Start MSFS and load into any flight; Trade Winds connects by itself. No sim right now? You can still look around.</p></div>
+    <div class="wiz-sec"><b>Voices</b><div class="row"><button class="btn sm" data-act="voice">${typeof voiceOn==='function'&&voiceOn()?'🔊 Voices on':'🔇 Voices off'}</button><button class="btn sm ghost" data-act="voice-test">▶ Test</button></div></div>
+    <div class="row between wiz-go"><button class="btn ghost" data-act="wiz-academy">New to flight sims? Learn the basics first</button>${st.story.done.CW1?`<button class="btn primary" data-act="tour-skip">Done</button>`:`<button class="btn action" data-act="wiz-fly">▶ Play chapter 1</button>`}</div>
+  </div></div>`;
 }
 const _wzTour = tourHTML;
 tourHTML = function(st){ if(st && !st.tourDone && (st.flights||0)===0) return wizardHTML(st); if(st && S.wizOpen) return wizardHTML(st); return _wzTour(st); };
@@ -4229,7 +4230,7 @@ document.addEventListener('click', e=>{
   else if(act==='wiz-recheck'){ simPoll(true); setTimeout(render,1200); }
   else if(act==='wiz-academy'){ S.st.tourDone=true; S.wizOpen=false; S.wiz=0; save(); go('academy'); }
   else if(act==='wiz-fly'){ S.st.tourDone=true; S.wizOpen=false; S.wiz=0; save(); render(); if(!S.st.active){ const bt=document.createElement('button'); bt.dataset.act='accept-story'; bt.dataset.id='CW1'; bt.style.display='none'; document.body.appendChild(bt); bt.click(); bt.remove(); } else go('flight'); }
-  else if(act==='wiz-open'){ S.wizOpen=true; S.wiz=2; render(); }
+  else if(act==='wiz-open'){ S.wizOpen=true; render(); }
 });
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="tour-skip"]') && S.st){ S.st.tourDone=true; S.wizOpen=false; save(); render(); } });
 /* ===================== RADIO ATMOSPHERE: squelch, cabin chimes, background ATC ===================== */
@@ -5725,9 +5726,9 @@ const CRIME = [
   teach:[`Miami is huge and busy. Fly the full STAR and ILS, keep your speed exactly where approach wants it, and land in the touchdown zone.`],
   out:{good:`Wheels down at Miami, smooth as glass.`,ok:`Wheels down at Miami.`,bad:`A hard landing at Miami jolts Castillo awake.`},rep:{},
   choice:{q:`Engines off on the Miami cargo ramp. Castillo is unbuckling in the jump seat. Three things can happen next, and only you decide.`,opts:[
-    {t:`Take his place`,out:`You make one phone call. When the cargo door opens, it isn't Castillo's people on the ramp. It's yours. By morning, every route, every airline and every pilot in the Caribbean answers to you. ENDING: KINGPIN.`,power:100,ending:'kingpin'},
-    {t:`Hand him to Reyes`,out:`Agents swarm the 747. Castillo looks at you once and smiles, as if he always knew. You testify, lose your licences and your name, and start over on an island nobody has heard of. ENDING: WITNESS.`,heat:-100,ending:'witness'},
-    {t:`Take the money and vanish`,out:`While they argue on the ramp, you walk to a Citation you parked there yesterday, fueled and paid in cash. By sunrise you're over South America with ten million dollars in the back. Nobody ever sees you again. ENDING: GHOST.`,cash:250000,ending:'ghost'}]}}
+    {t:`Take his place`,out:`You make one phone call. When the cargo door opens, it isn't Castillo's people on the ramp. It's yours. By morning, every route, every airline and every pilot in the Caribbean answers to you.`,power:100,ending:'kingpin'},
+    {t:`Hand him to Reyes`,out:`Agents swarm the 747. Castillo looks at you once and smiles, as if he always knew. You testify, lose your licences and your name, and start over on an island nobody has heard of.`,heat:-100,ending:'witness'},
+    {t:`Take the money and vanish`,out:`While they argue on the ramp, you walk to a Citation you parked there yesterday, fueled and paid in cash. By sunrise you're over South America with ten million dollars in the back. Nobody ever sees you again.`,cash:250000,ending:'ghost'}]}}
 
 ];
 const CRIME_IDS = new Set(CRIME.map(m=>m.id));
@@ -5759,9 +5760,10 @@ function fxLine(o){ const b=[]; if(o.power) b.push(`Power ${o.power>0?'+':''}${o
 const _crChoice = choiceHTML;
 choiceHTML = function(st){ const h=crimeChoiceHTML(st); return h!=null ? h : _crChoice(st); };
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="crime-choose"]'); if(!b || !S.st || !S.st.last) return; const st=S.st; const id=st.last.job.story; const m=CRIME.find(x=>x.id===id); const c=crime(st); if(!m || !m.choice || c.choice[id]!=null) return;
-  const i=Number(b.dataset.i); const o=m.choice.opts[i]; c.choice[id]=i;
+  const i=Number(b.dataset.i); const o=m.choice.opts[i]; c.choice[id]=i; const p0=c.power, h0=c.heat;
   if(o.power) crBump(c,'power',o.power); if(o.heat) crBump(c,'heat',o.heat); if(o.con) crBump(c,'con',o.con); if(o.flag) c.flags[o.flag]=1; if(o.ending) c.ending=o.ending;
   if(o.cash) txn(st, o.cash, o.cash>0?'Story':'Story', m.title);
+  if(st.last.delta){ st.last.delta.power+=c.power-p0; st.last.delta.heat+=c.heat-h0; }
   if(o.rep) for(const k in o.rep){ st.rep[k]=clamp((st.rep[k]||10)+o.rep[k],0,100); }
   addJournal(st, `${m.title}: ${o.t}`, o.out, m.chars, o.ending?'milestone':'story'); save();
   if(o.ending) setTimeout(()=>{ try{ confetti && confetti(); }catch(_){} }, 300);
@@ -5965,9 +5967,6 @@ function showBeat(a, b, idx){ const w=WHO[b.who]||WHO.self; document.querySelect
 const TEXT_FIX = [[/Coral Wing ops board/g,'Island ops board'],[/Ana Reyes \(Winair\)/g,'Ana Ruiz (Winair)'],[/(Tip: )?Coral Wing's story has a chapter called[^.]*\./g,'Your own airline, Caribe Cargo, comes later in the main story.']];
 function fixText(root){ if(!root||!S.st) return; const role=storyRole(S.st); const w=document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes=[]; while(w.nextNode()) nodes.push(w.currentNode);
   nodes.forEach(n=>{ let t=n.nodeValue, o=t; if(t.indexOf('Coral Wing Air')>=0 && role!=='Coral Wing Air' && !(n.parentElement&&n.parentElement.closest('.story-body,.brief,.choice,.hq-prev,.sh-time'))) t=t.replace(/Coral Wing Air/g, role); TEXT_FIX.forEach(([re,r])=>{ t=t.replace(re,r); }); if(t!==o) n.nodeValue=t; }); }
-const _s3Setup = setupView;
-setupView = function(){ return _s3Setup().replace(/You arrive in St\. Martin with a fresh private license and 62 hours\.[^<]*/, `You arrive in St. Martin with a fresh licence and a cheap job flying a Cessna for Coral Wing Air. Then the mechanic, Dez, asks you for a small favor. Five acts later you're flying a 747 full of contraband, and either running the Caribbean or running from it.`); };
-
 /* ================= 6. the story is the home screen ================= */
 const PEOPLE = ['dez','mari','castillo','hartwell','tico','reyes','medina'];
 function personStatus(st, k){ const f=flagsOf(st), c=crime(st), d=st.story.done;
@@ -6093,7 +6092,7 @@ var playPrologue; /* defined in full below (081-core.js) */
 window.addEventListener('click', e=>{ const b=e.target.closest('[data-act="accept-story"],[data-act="story-go"]'); if(!b || b.disabled || !S.st) return; if(typeof fedsWatching==='function' && crime().on && fedsWatching(S.st)) return; const id=b.dataset.id; if(!CRIME_IDS.has(id)) return; const c=crime(); c.proSeen=c.proSeen||{};
   if(S._proPass){ S._proPass=false; return; } if(c.proSeen[id]) return; const m=CRIME.find(x=>x.id===id); if(!m || !proFor(id)) return;
   e.stopImmediatePropagation(); e.preventDefault(); c.proSeen[id]=1; save();
-  playPrologue(m, ()=>{ S._proPass=true; const again=document.querySelector(`[data-act="${b.dataset.act}"][data-id="${id}"]`)||b; again.click(); S._proPass=false; }); }, true);
+  playPrologue(m, ()=>{ S._proPass=true; const again=document.querySelector(`[data-act="${b.dataset.act}"][data-id="${id}"]`)||b; again.click(); S._proPass=false; S.keepScroll=false; try{ window.scrollTo(0,0); }catch(_){} }); }, true);
 /* replay from the flight screen */
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="pro-replay"]')||!S.st||!S.st.active) return; const m=CRIME.find(x=>x.id===S.st.active.job.story); if(m) playPrologue(m, ()=>{}); });
 
@@ -6137,7 +6136,7 @@ const SKIP_BTN = `<button class="btn sm test-skip" data-act="test-skip" title="T
 
 
 /* ---- after a chapter: what happened, your decision, and what it led to, all as one scene ---- */
-function fxSub(o){ const b=[]; if(o.power) b.push(`Power ${o.power>0?'+':''}${o.power>=100?'max':o.power}`); if(o.heat) b.push(`Heat ${o.heat>0?'+':''}${o.heat<=-100?'cleared':o.heat}`); if(o.cash) b.push(`${o.cash>0?'+':'−'}${money(Math.abs(o.cash))}`); return b.join(' · '); }
+function fxSub(o){ if(o.ending) return `Ending: ${({kingpin:'Kingpin',witness:'Witness',ghost:'Ghost'})[o.ending]||o.ending}`; const b=[]; if(o.power) b.push(`Power ${o.power>0?'+':''}${o.power>=100?'max':o.power}`); if(o.heat) b.push(`Heat ${o.heat>0?'+':''}${o.heat<=-100?'cleared':o.heat}`); if(o.cash) b.push(`${o.cash>0?'+':'−'}${money(Math.abs(o.cash))}`); return b.join(' · '); }
 function splitOut(text){ return String(text||'').split(/(?<=[.!?”"])\s+(?=[A-Z"“])/).reduce((acc,s)=>{ const last=acc[acc.length-1]; if(last && (last+' '+s).length<170) acc[acc.length-1]=last+' '+s; else acc.push(s); return acc; }, []); }
 /* the result screen gets a button to watch it again */
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="after-replay"]')) playAftermath(); });
@@ -6319,8 +6318,8 @@ function rightNow(st){ if(!st) return null; const a=st.active; if(a) return {t:a
 /* ---- 16. pilot page: the licence ladder says what each licence unlocks in the story ---- */
 const LADDER = [['PPL','Act 1 · the Cessna'],['JET','Act 2 · the Vision Jet and the CJ4'],['ATP','Act 4 · airliners and the 747']];
 const _uiPilot = pilotView;
-pilotView = function(){ const h=_uiPilot(); const st=S.st; const steps=LADDER.map(([r,u])=>{ const has=st.ratings[r]; const ready=!has && checkrideReady(st,r).ok; return `<div class="lad ${has?'has':ready?'ready':''}"><span class="lad-dot">${has?'✓':ready?'!':''}</span><b>${esc(RATINGS[r].n)}</b><small>${esc(u)}</small>${ready?`<a href="#" class="small" data-act="lad-go" data-r="${r}">Checkride ready, book below</a>`:''}</div>`; }).join('<i class="lad-line"></i>');
-  return h.replace(/(<main[^>]*>)/, `$1<section class="panel ladder"><p class="label">Your path through the story</p><div class="lad-row">${steps}</div><p class="small muted" style="margin-top:8px">Other ratings (Commercial, Instrument, Multi-Engine…) open more side jobs but aren't needed for the story.</p></section>`); };
+pilotView = function(){ const h=_uiPilot(); const st=S.st; const steps=LADDER.map(([r,u])=>{ const has=st.ratings[r]; const ready=!has && checkrideReady(st,r).ok; return `<div class="lad ${has?'has':ready?'ready':''}"><span class="lad-dot">${has?'✓':ready?'!':''}</span><b>${esc(RATINGS[r].n)}</b><small>${esc(u)}</small>${ready?(checkrideAircraft(st,r).length?`<button class="btn sm action" data-act="book-check" data-r="${r}">Book checkride · ${money(feeFor(st,r))}</button>`:`<a href="#" class="small" data-act="nav" data-v="hangar">Tick an aircraft for it in the Hangar</a>`):''}</div>`; }).join('<i class="lad-line"></i>');
+  return h.replace(/(<main[^>]*>)/, m=>m+`<section class="panel ladder"><p class="label">Your path through the story</p><div class="lad-row">${steps}</div><p class="small muted" style="margin-top:8px">Other ratings (Commercial, Instrument, Multi-Engine…) open more side jobs but aren't needed for the story.</p></section>`); };
 document.addEventListener('click', e=>{ const a=e.target.closest('[data-act="lad-go"]'); if(!a) return; e.preventDefault(); const el=document.querySelector(`[data-act="book-check"][data-r="${a.dataset.r}"]`); if(el) el.scrollIntoView({behavior:'smooth',block:'center'}); });
 
 /* ---- 17. the map shows the story: past chapters, and the next destination pulsing ---- */
@@ -6330,7 +6329,7 @@ mapView = function(){ const h=_uiMap(); try{ const st=S.st; const v=MAPV[S.mapZo
   const next=MC.find(m=>!st.story.done[m.id]); if(next && AP[next.to]){ const b=AP[next.to], a=AP[next.from]; g+=`<line x1="${X(a.lon)}" y1="${Y(a.lat)}" x2="${X(b.lon)}" y2="${Y(b.lat)}" stroke="#d23b2c" stroke-width="3"/><circle cx="${X(b.lon)}" cy="${Y(b.lat)}" r="9" fill="none" stroke="#d23b2c" stroke-width="3" class="map-pulse"/><text x="${X(b.lon)+12}" y="${Y(b.lat)-12}" class="map-next">Next: ${esc(next.title)}</text>`; }
   g+='</g>'; const i=h.indexOf('</svg>'); return i>0 ? h.slice(0,i)+g+h.slice(i) : h; }catch(_){ return h; } };
 
-(function(){ const _m=moneyView; moneyView=function(){ const h=_m(); try{ const l=launderHTML(S.st); return l ? h.replace(/(<main[^>]*>)/, '$1'+l) : h; }catch(_){ return h; } }; })();
+(function(){ const _m=moneyView; moneyView=function(){ const h=_m(); try{ const l=launderHTML(S.st); return l ? h.replace(/(<main[^>]*>)/, m=>m+l) : h; }catch(_){ return h; } }; })();
 
 /* ---- 19. test sessions: try things out, then put your real career back ---- */
 const TEST_KEY='tw.realCareer.backup';
@@ -6486,7 +6485,7 @@ const _m8Map = mapView;
 mapView = function(){ const h=_m8Map(); try{ const j=S.mapRoute&&(S.st.jobs||[]).find(x=>x.id===S.mapRoute); if(!j) return h; const v=MAPV[S.mapZoom||'east']; const W=1000; const X=lon=>(lon-v.lon[0])/(v.lon[1]-v.lon[0])*W; const H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05); const Y=lat=>H-(lat-v.lat[0])/(v.lat[1]-v.lat[0])*H;
   const a=AP[j.from], b=AP[j.local?j.from:j.to]; const g=`<g><line x1="${X(a.lon)}" y1="${Y(a.lat)}" x2="${X(b.lon)}" y2="${Y(b.lat)}" stroke="#c8962a" stroke-width="3"/><circle cx="${X(b.lon)}" cy="${Y(b.lat)}" r="7" fill="#c8962a"/><text x="${X(b.lon)+10}" y="${Y(b.lat)+18}" class="map-next">${esc(j.title)} · ${money(j.pay)}</text></g>`; const i=h.indexOf('</svg>');
   const back=`<div class="row" style="gap:8px;margin-bottom:10px"><button class="btn sm" data-act="map-back">← Back to jobs</button><button class="btn sm primary" data-act="accept" data-id="${j.id}">Accept · ${money(j.pay)}</button></div>`;
-  return (i>0?h.slice(0,i)+g+h.slice(i):h).replace(/(<main[^>]*>)/, '$1'+back); }catch(_){ return h; } };
+  return (i>0?h.slice(0,i)+g+h.slice(i):h).replace(/(<main[^>]*>)/, m=>m+back); }catch(_){ return h; } };
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="map-back"]')){ S.mapRoute=null; go('board'); } else if(e.target.closest('[data-act="nav"]')) S.mapRoute=null; }, true);
 
 
@@ -6531,7 +6530,7 @@ const SAFEHOUSES = [ {id:'flat',n:'Apartment in Philipsburg',cost:25000,perk:'He
 function safeLevel(st){ const c=crime(st); return SAFEHOUSES.findIndex(s=>s.id===c.safe); }
 function dailyCosts(st){ const d=st.story.done; const L=[]; FLEET.forEach(f=>{ if(d[f[0]] && UPKEEP[f[1]]) L.push([`${f[2]} (${f[3]}) upkeep`, UPKEEP[f[1]]]); }); const c=crime(st); if(c.crew){ for(const k in WAGES) if(crewHas(st,k)) L.push([`${CREW.find(x=>x.id===k).n} wages`, WAGES[k]]); } return L; }
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="buy-safe"]'); if(!b||!S.st) return; const s=SAFEHOUSES.find(x=>x.id===b.dataset.v); if(!s||S.st.cash<s.cost) return; txn(S.st,-s.cost,'Safehouse',s.n); crime().safe=s.id; save(); toast(`Bought: ${s.n}.`); S.keepScroll=true; render(); });
-(function(){ const _m=moneyView; moneyView=function(){ const h=_m(); try{ const o=operationHTML(S.st); return o ? h.replace(/(<main[^>]*>(?:<div class="subtabs">[\s\S]*?<\/div>)?)/, '$1'+o) : h; }catch(_){ return h; } }; })();
+(function(){ const _m=moneyView; moneyView=function(){ const h=_m(); try{ const o=operationHTML(S.st); return o ? h.replace(/(<main[^>]*>(?:<div class="subtabs">[\s\S]*?<\/div>)?)/, m=>m+o) : h; }catch(_){ return h; } }; })();
 
 /* ===================== B2. HEAT WITH TEETH: the feds are watching, airport bans ===================== */
 function fedsWatching(st){ return crime(st).heat>=80; }
@@ -6706,7 +6705,7 @@ window.addEventListener('keydown', e=>{ if(document.querySelector('.title-screen
 
 
 /* 12. title screen: "Resume flight" when you were in the middle of one */
-(function(){ const _t=titleHTML; titleHTML=function(){ const h=_t(); const a=S.st&&S.st.active; return a ? h.replace('<b>Continue</b>', a.started?'<b>Resume flight</b>':'<b>Continue to your flight</b>').replace(/(data-ts="continue" class="on"><b>[^<]*<\/b><span>)[^<]*/, `$1${esc(a.job.from)} → ${esc(a.job.local?a.job.from:a.job.to)} · ${esc(a.job.title)}`) : h; }; })();
+(function(){ const _t=titleHTML; titleHTML=function(){ const h=_t(); const a=S.st&&S.st.active; return a ? h.replace('<b>Continue</b>', a.started?'<b>Resume flight</b>':'<b>Continue to your flight</b>').replace(/(data-ts="continue" class="on"><b>[^<]*<\/b><span>)[^<]*/, m=>m+`${esc(a.job.from)} → ${esc(a.job.local?a.job.from:a.job.to)} · ${esc(a.job.title)}`) : h; }; })();
 
 
 
@@ -6902,7 +6901,6 @@ WHATS_NEW.unshift(['0.43','50 fixes: the new-career screen fits the story, Heat 
 
 
 (function(){ const s=document.createElement('style'); s.textContent=`
-.setup-wrap .hero, .setup-wrap header, .setup-wrap .setup-hero{filter:saturate(.55) brightness(.6) contrast(1.08)}
 #toasts{transform:none!important;align-items:flex-end!important;width:auto!important}
 .cup-grid .card > :first-child, .cup-card > :first-child, main .cup svg, .cup-art{filter:saturate(.5) brightness(.72) contrast(1.08)}
 .subtabs{overflow-x:auto;scrollbar-width:none;white-space:nowrap}.subtabs::-webkit-scrollbar{display:none}.subtabs button{flex:none}
@@ -6919,6 +6917,7 @@ WHATS_NEW.unshift(['0.43','50 fixes: the new-career screen fits the story, Heat 
 .jr-m{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}`; document.head.appendChild(s); })();
 WHATS_NEW.unshift(['0.50','Every story choice now comes back later, a fuller epilogue, Caribe Cargo becomes your own airline (Pilot → Airline), smuggling pays more and draws more Heat, and many fixes.']);
 WHATS_NEW.unshift(['0.51','Clearer story: "Previously" remembers your choices, no spoilers before takeoff, consistent chapter numbers. Castillo pays for your jet rating, and the MSFS clock is set correctly.']);
+WHATS_NEW.unshift(['0.52','A faster start: a new start screen, one setup screen, then chapter 1. The next story step is always the main button, checkrides can be booked from your story path, and many fixes.']);
 /* ===================== PAGE CHROME =====================
    The parts of the screen that surround every page: the side menu, the top bar with its
    status chips, and the phone-width menu. band() returns all of it as one piece of HTML. */
@@ -7557,6 +7556,7 @@ function checkrideJob(st, rid, acId){
 function migrate(st){
   registerCustomAc(st);
   st.celebs=st.celebs||{}; st.souvenirs=st.souvenirs||{}; st.gifts=st.gifts||{}; st.followups=st.followups||[]; st.ach=st.ach||{}; st.reviews=st.reviews||[]; if(!st.landedAt){ st.landedAt={}; (st.log||[]).forEach(l=>{ if(l.landing!=='crash') st.landedAt[l.to]=(st.landedAt[l.to]||0)+1; }); } if(!st.stats) st.stats={butter:0,smooth:0,firm:0,hard:0,crash:0,nm:0,diverts:0,scen:0}; if(!st.cooldown) st.cooldown={}; if(!st.visited) st.visited={}; Object.keys(AC).forEach(k=>{ if(st.hangar[k]===undefined) st.hangar[k]=true; }); Object.keys(CAST).forEach(k=>{ if(st.rep[k]===undefined) st.rep[k]=10; });
+  st.ui=st.ui||{}; if(st.ui.testSkip===undefined && (st.flights||0)>0) st.ui.testSkip=true;   // careers that already used the testing shortcut keep it
   /* careers that finished chapter 4 before Castillo paid for the jet rating get the money once */
   if(st.story && st.story.done && st.story.done.CR4 && !st.jetPaid){ const amt=TRAINING_FEES.JET; st.jetPaid=amt; try{ txn(st, amt, 'Gifts & windfalls', 'Castillo: your jet rating (back pay)'); setTimeout(()=>toast(`Castillo paid you back for your jet rating: +${money(amt)}.`), 2500); }catch(_){ st.cash+=amt; } }
   const r=finMigrate(st);
@@ -7796,6 +7796,7 @@ function settingsHTML(){
       <label class="row"><input type="checkbox" data-act="ui-tog2" data-k="skipCuts" ${u.skipCuts?'checked':''}> Skip all cutscenes (choices still appear on the result screen)</label>
       <label class="row"><input type="checkbox" data-act="ui-tog2" data-k="autoCut" ${u.autoCut?'checked':''}> Play cutscenes automatically (no clicking between lines)</label></div>
     <div><p class="label">Story</p><label class="row"><input type="checkbox" data-act="ui-tog" data-k="noRecap" ${story.noRecap?'':'checked'}> "Previously on" recap when the app opens</label>
+      <label class="row"><input type="checkbox" data-act="ui-tog2" data-k="testSkip" ${u.testSkip?'checked':''}> Testing shortcut: a "Skip flight" button that finishes any flight with an A</label>
       <div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap"><button class="btn sm" data-act="cold-again">Replay the opening scene</button><button class="btn sm" data-act="walk-again">Show the welcome walkthrough</button></div></div>
     <div><p class="label">Keyboard</p><p class="small muted" style="line-height:1.7"><kbd>1</kbd>–<kbd>5</kbd> pages · <kbd>Ctrl K</kbd> or <kbd>/</kbd> search · <kbd>F</kbd> your flight · <kbd>Space</kbd> next in a cutscene · <kbd>Esc</kbd> skip · <kbd>M</kbd> menu in flight mode · <kbd>←</kbd> back a line · <kbd>?</kbd> all shortcuts</p></div>
     <div><p class="label">Difficulty</p><div class="diff">${Object.keys(DIFF).map(k=>`<button class="${k===d?'on':''}" data-act="diff" data-v="${k}" title="${esc(DIFF[k].d)}">${DIFF[k].n}</button>`).join('')}</div><p class="tiny muted" style="margin-top:4px">${esc(DIFF[d].d)}</p></div>
@@ -7909,9 +7910,12 @@ function resultNextBar(st){
   const upNext=MC.find(m=>!st.story.done[m.id]); const n=MC.indexOf(upNext)+1;
   let btn='';
   if(next){ const lead = upNext ? `Chapter ${n}: ` : 'Next: ';
-    btn=chapterAction(st,next,availSet,false).replace('Fly this chapter',`${lead}${esc(next.title)}`).replace(/Fly in to (\w+) &amp; start · \$0/, (m,ap)=>`${lead}${esc(next.title)} (free flight to ${ap})`);
+    btn=chapterAction(st,next,availSet,false).replace('Fly this chapter',`${lead}${esc(next.title)}`).replace(/Fly in to (\w+) &amp; start · \$0/, (m,ap)=>`${lead}${esc(next.title)} (free flight to ${ap})`).replace(/Fly in to (\w+) &amp; start · (\$[\d,]+)/, (m,ap,cost)=>`${lead}${esc(next.title)} (seat to ${ap}, ${cost})`);
     if(upNext) btn=btn.replace('>Add an aircraft in the Hangar<', `>Chapter ${n} needs the ${esc(AC[upNext.ac[0]]?AC[upNext.ac[0]].n:upNext.ac[0])}: open Hangar<`); }
-  return `<div class="row next-bar"><button class="btn primary" data-act="nav" data-v="board">Side jobs</button>${btn}</div>`;
+  /* the next chapter is waiting on a licence: offer the checkride */
+  if(!btn && upNext){ const pa=playAction(st,upNext,availSet,n); btn=pa.btn.replace('btn action big','btn action'); }
+  if(!btn && crime(st).ending) btn=`<button class="btn action" data-act="nav" data-v="story">Your ending, and New Game+</button>`;
+  return `<div class="row next-bar">${btn}<button class="btn ${btn?'ghost':'primary'}" data-act="nav" data-v="board">Side jobs</button></div>`;
 }
 
 function resultView(){
@@ -7920,7 +7924,8 @@ function resultView(){
   const isChapter = CRIME_IDS.has(job.story);
   setTimeout(paintCard,0);
   const passFail = job.kind==='check' ? (out.pass?`<span class="chip good">Passed</span>`:`<span class="chip bad">Not passed</span>`) : '';
-  const crimeChips = (c.on && (job.network||job.kind==='story') ? `<span class="chip">Power ${c.power}</span><span class="chip ${c.heat>=60?'warn':''}">Heat ${c.heat}</span>` : '') + (c.dirty ? `<span class="chip warn">Dirty cash ${money(c.dirty)}</span>` : '');
+  const showsBars = !!(L.delta && c.on && (L.delta.power || L.delta.heat));
+  const crimeChips = (c.on && !showsBars && (job.network||job.kind==='story') ? `<span class="chip">Power ${c.power}</span><span class="chip ${c.heat>=60?'warn':''}">Heat ${c.heat}</span>` : '') + (c.dirty ? `<span class="chip warn">Dirty cash ${money(c.dirty)}</span>` : '');
   const choice = choiceHTML(st) || '';
   const manifest = out.manifest ? `<section class="panel stack"><p class="label">Your passengers</p><div class="mf-list">${out.manifest.map(x=>`<div class="mf"><span class="mf-ic">${TRAITS[x.p.trait].i}</span><div><b>${esc(x.p.name)}</b> <span class="stars small">${'★'.repeat(x.s)}${'☆'.repeat(5-x.s)}</span><span class="small">${esc(x.line)}</span></div></div>`).join('')}</div></section>` : '';
   const failedCheckride = job.kind==='check' && !out.pass && !st.ratings[job.rating];
@@ -7965,6 +7970,9 @@ function resultView(){
    While flying you can open the briefing again (S.ifBrief); that shows the full briefing layout. */
 
 /* ---------- pieces ---------- */
+
+/* "Skip flight (test)": only when Settings → Story → Testing shortcut is on */
+function testSkipBar(){ return uiP().testSkip ? `<div class="test-skip-bar">${SKIP_BTN}<span class="tiny muted">Testing shortcut</span></div>` : ''; }
 
 /* The flight display at the top of flight mode: route, progress, live numbers, and the goal. */
 function hudHTML(a){
@@ -8083,7 +8091,7 @@ function inflightView(){
   const rec=S.sim&&S.sim.recorder; const airborne = S.simState==='live' && ((S.sim.motion&&!S.sim.motion.onGround) || (rec && rec.takeoff && simRecFor(a)));
   let runways=''; try{ const R=runwayPlan(job); if(R.dep) runways=`<p class="if-rw">Take off <b class="mono">${esc(R.dep.water?'into wind':R.dep.rw)}</b>${R.arr?` · Land <b class="mono">${esc(R.arr.water?'into wind':R.arr.rw)}</b>`:''} · wind ${pad3(job.wx.dir)}°/${job.wx.spd} kt</p>`; }catch(_){}
   const orders = job.scen && a.opened && a.scenPlan ? ordersHTML(a,!!S.ordersPop) : job.scen ? `<div class="notice small">📩 Sealed orders aboard. They open automatically ${TRIG_LABEL[SCEN_TRIGGER[job.scen]||'mid']}.</div>` : '';
-  return `<main class="wrap stack fade inflight"><div class="test-skip-bar">${SKIP_BTN}<span class="tiny muted">Testing shortcut</span></div><div class="fm-bar"><span class="fm-dot"></span> Flight mode <button class="btn sm ghost" data-act="fm-menu">${S.fmMenu?'Hide menu':'Show menu'}</button></div>${hudHTML(a)}${guideActive()?guideHTML(a):''}
+  return `<main class="wrap stack fade inflight">${testSkipBar()}<div class="fm-bar"><span class="fm-dot"></span> Flight mode <button class="btn sm ghost" data-act="fm-menu">${S.fmMenu?'Hide menu':'Show menu'}</button></div>${hudHTML(a)}${guideActive()?guideHTML(a):''}
     <section class="if-head">
       <div style="min-width:0"><p class="label">In flight · ${esc(flightNo(job))} · ${esc(ac.n)}</p>${runways}<h1>${esc(job.title)}</h1></div>
       ${NOTE_BTN}<div class="row"><span class="if-timer mono" id="if-timer" data-start="${a.started}">${durTxt(mins)}</span>
@@ -8199,7 +8207,7 @@ function flightView(){
   if(started && !S.debrief && !S.showResult && !S.ifBrief && !S.confirm) return inflightView();
   if(S.debrief) return debriefView(job, p);
   const mins = started ? Math.round((Date.now()-started)/60000) : 0;
-  const skipBar = `<div class="test-skip-bar">${SKIP_BTN}<span class="tiny muted">Testing shortcut</span></div>`;
+  const skipBar = `${testSkipBar()}`;
   const pass = boardingPass(st, job, p, a, started, mins, job.ai);
   const guide = guideActive() ? guideHTML(act) : '';
 
@@ -8409,13 +8417,13 @@ function storyView(){
   const time = done.length ? done.map(m=>{ const ch=m.choice&&c.choice[m.id]!=null?m.choice.opts[c.choice[m.id]].t:null; const col=arcMeta(m.arc).col;
       const head = m.arc!==lastArc ? `<li class="sh-act-h" style="--c:${col}">Act ${actNo(m.arc)} · ${esc(m.arc)}</li>` : ''; lastArc=m.arc;
       return `${head}<li style="--c:${col}"><span class="sh-n">${MC.indexOf(m)+1}</span><div><b>${esc(m.title)}</b><button class="sh-replay" data-act="replay-ch" data-id="${m.id}" title="Replay the opening scene">▶ Replay</button><p>${esc(m.recap||'')}</p>${ch?`<p class="sh-ch">You chose: ${esc(ch)}</p>`:''}</div></li>`; }).join('')
-    : `<li style="--c:var(--muted)"><span class="sh-n">·</span><div><b>Nothing yet</b><p>Your story starts with chapter 1 below.</p></div></li>`;
+    : `<li style="--c:var(--muted)"><span class="sh-n">·</span><div><b>Nothing yet</b><p>Your story starts with chapter 1, at the top of this page.</p></div></li>`;
   /* the people you've met, with how much each trusts you */
   const people = metPeople(st).map(k=>{ const v=Math.round(st.rep[k]||0); return `<div class="sh-p">${avatar(k)}<div><b>${esc(CAST[k].n)}</b><span class="trust" title="Trust ${v}/100"><i style="width:${Math.min(100,v)}%"></i></span><p>${esc(personStatus(st,k))}</p></div></div>`; }).join('');
   const acts = CRIME_ACTS.map((a,i)=>{ const ch=MC.filter(m=>m.arc===a.arc); return `<div class="sh-act" style="--c:${a.col}"><p class="label">Act ${i+1} · ${ch.filter(m=>st.story.done[m.id]).length}/${ch.length}</p><h4>${esc(a.arc)}</h4><ol>${ch.map(m=>{ const isD=st.story.done[m.id], isN=m===next; const req=(m.req&&m.req.ratings||[]).filter(r=>!st.ratings[r]).map(r=>RATINGS[r]?RATINGS[r].n:r).join(', '); return `<li class="${isD?'d':isN?'n':''}">${isD?'✓':isN?'▶':'·'} ${esc(m.title)}${!isD&&req?` <small>${esc(req)}</small>`:''}</li>`; }).join('')}</ol></div>`; }).join('');
   const epi = c.ending ? epilogue(st) : [];
   const earned=fin(st).ledger.filter(x=>x.a>0).reduce((s,x)=>s+x.a,0); const best=(st.log||[]).filter(x=>x.fpm).reduce((b,x)=>Math.min(b,x.fpm),9999);
-  const stats=`<section class="panel sh-stats"><div><span>Chapters</span><b>${done.length}<small>/${MC.length}</small></b></div><div><span>Flights</span><b>${st.flights||0}</b></div><div><span>Hours</span><b>${Math.round((st.minutes||0)/6)/10}</b></div><div><span>Earned</span><b>${money(earned)}</b></div><div><span>Best landing</span><b>${best<9999?best+'<small> fpm</small>':'—'}</b></div><div><span>Laundered</span><b>${money(c.laundered||0)}</b></div></section>`;
+  const stats=`<section class="panel sh-stats"><div><span>Chapters</span><b>${done.length}<small>/${MC.length}</small></b></div><div><span>Flights</span><b>${st.flights||0}</b></div><div><span>Hours</span><b>${Math.round((st.minutes||0)/6)/10}</b></div><div><span>Earned</span><b>${money(earned)}</b></div><div><span>Best landing</span><b>${best<9999?best+'<small> fpm</small>':'—'}</b></div>${c.on?`<div><span>Laundered</span><b>${money(c.laundered||0)}</b></div>`:''}</section>`;
   const operation = !c.on ? '' : `<div class="sh-grid">${fleetCrewHTML(st)||''}<section class="panel"><h3>Rank rewards <span class="small muted">Power ${c.power}</span></h3><ul class="perks">${RANK_PERKS.map(([v,n,p])=>`<li class="${c.power>=v?'on':''}"><b>${n}</b> <span class="mono small">${v}+</span><p>${esc(p)}</p></li>`).join('')}</ul></section></div>`;
   const side = STORY.filter(m=>m.arc==='Starling'); const sNext=side.find(m=>!st.story.done[m.id]);
   return `<main class="wrap story-home fade">${ngHTML(st)||''}${fedsHTML(st)||''}
@@ -8549,6 +8557,7 @@ function playAftermath(){
   const nextCard=()=>{ const nx=MC.find(x=>!st.story.done[x.id]); const cc=crime(st); const out=[];
     if(cc.ending){ epilogue(st).forEach(t=>out.push(['Years later', null, t])); out.push({card:true, kicker:'The end', title:{kingpin:'Kingpin',witness:'Witness',ghost:'Ghost'}[cc.ending]||'The end', sub:`<p>Thank you for playing the main story. Side jobs and the Starling story are still out there.</p>`}); return out; }
     if(m.id==='CR4' && st.jetPaid) out.push([`Text message`, 'castillo', `Your jet training is paid for. ${money(st.jetPaid)} is in your account. Book the checkride. Don't make me wait.`]);
+    if(m.id==='CR4') out.push({card:true, kicker:'New: you work for Castillo', title:'Power, Heat and dirty cash', sub:`<p><b>Power</b> grows with every chapter and hard choice, and unlocks rewards.</p><p><b>Heat</b> is how close the law is. Network runs raise it, legit jobs cool it. At 60 customs starts searching your plane; at 80 the feds are watching and the story waits until you cool off. It's always shown at the top of the screen.</p><p><b>Dirty cash</b> from network runs has to be laundered on the Money page before you can spend it.</p>`});
     out.push({card:true, kicker:'Chapter complete', title:m.title, sub:`${cc.on?`<p class="cut-meters"><span>Power ${cc.power}</span><span>Heat ${cc.heat}</span><span>${esc(crimeRank(cc))}</span></p>`:''}${nx?`<p>Next: <b>${esc(nx.title)}</b> · ${esc(nx.hook||'')}</p>`:''}`}); return out; };
   if(m.choice && c.choice[m.id]==null && !L.res.crash){
     const opts=m.choice.opts.map(o=>({t:o.t, why: (m.id==='CR17' && o.ending && typeof ENDING_REQ!=='undefined') ? ENDING_REQ[o.ending](c) : null}));
@@ -8668,13 +8677,11 @@ let renderViewChanged = false; // did this draw switch pages?
 
 /* the job list remembers your tab and sort (read them back once) */
 function restoreJobListPrefs(){ if(!RENDER_ONCE.jobPrefs && S.st){ RENDER_ONCE.jobPrefs=true; const u=S.st.ui||{}; if(u.jobTab) S.jobTab=u.jobTab; if(u.jobSort) S.jobSort=u.jobSort; } }
-/* first-run walkthrough: the cold open, then three cards */
+/* first run: the cold open, then one card that jumps back to the start of the story */
 function maybeStartWalkthrough(){ if(RENDER_ONCE.walkthrough || !S.st || S._title) return; RENDER_ONCE.walkthrough=true; const st=S.st; st.ui=st.ui||{};
   if(!st.ui.walk3 && !(st.active&&st.active.started)){ S._walk=true; st.ui.walk3=1; save();
     setTimeout(()=>cutscene({col:'#c8962a', art:(typeof SCENES!=='undefined'?SCENES.ramp():''), shots:[...(typeof coldOpenShots==='function'?coldOpenShots():[]),
-      {card:true,kicker:'Welcome to Trade Winds · 1 of 3',title:'The story',sub:`<p>You're a pilot in the Caribbean. One main story in five acts takes you from a Cessna to a 747, and from a clean licence to running the islands' smuggling network.</p><p>Everything starts on the <b>Story</b> page.</p>`},
-      {card:true,kicker:'2 of 3',title:'How to fly a chapter',sub:`<p><b>1.</b> Press <b>Play</b>. A short cutscene sets it up.</p><p><b>2.</b> In MSFS, load the aircraft at the departure airport. The flight screen tells you where to park, how much fuel to load and which runway to use.</p><p><b>3.</b> Fly and land. The app follows you and grades the landing by itself.</p>`},
-      {card:true,kicker:'3 of 3',title:'Power, Heat and dirty cash',sub:`<p><b>Power</b> grows with every chapter and hard choice, and unlocks rewards.</p><p><b>Heat</b> is how close the law is. Network runs raise it, legit jobs cool it. Above 60, customs starts searching. Your Heat is always shown at the top of the screen.</p><p><b>Dirty cash</b> from network runs has to be laundered before you can spend it.</p><p class="small">Tip: press <b>Ctrl + K</b> anywhere to jump to any page, airport or action.</p>`}], onEnd:()=>{ S._walk=false; }}), 700); } }
+      {card:true,kicker:'How it works',title:'You fly every chapter',sub:`<p>Each chapter is a real flight in MSFS, with a scene before it and a choice after it. The game follows your flight and grades the landing by itself.</p>`}], onEnd:()=>{ S._walk=false; }}), 700); } }
 /* aircraft specs you measured in MSFS replace the built-in ones (once per app start) */
 function applyMeasuredAircraft(){ try{ if(!S._acReal && S.st){ S._acReal=true; for(const k in (S.st.acReal||{})) if(AC[k]) Object.assign(AC[k], S.st.acReal[k]); } }catch(_){} }
 /* an old save with no record of which tabs it has seen: mark the ones already unlocked */

@@ -15,8 +15,8 @@ function rightNow(st){ if(!st) return null; const a=st.active; if(a) return {t:a
 /* ---- 16. pilot page: the licence ladder says what each licence unlocks in the story ---- */
 const LADDER = [['PPL','Act 1 · the Cessna'],['JET','Act 2 · the Vision Jet and the CJ4'],['ATP','Act 4 · airliners and the 747']];
 const _uiPilot = pilotView;
-pilotView = function(){ const h=_uiPilot(); const st=S.st; const steps=LADDER.map(([r,u])=>{ const has=st.ratings[r]; const ready=!has && checkrideReady(st,r).ok; return `<div class="lad ${has?'has':ready?'ready':''}"><span class="lad-dot">${has?'✓':ready?'!':''}</span><b>${esc(RATINGS[r].n)}</b><small>${esc(u)}</small>${ready?`<a href="#" class="small" data-act="lad-go" data-r="${r}">Checkride ready, book below</a>`:''}</div>`; }).join('<i class="lad-line"></i>');
-  return h.replace(/(<main[^>]*>)/, `$1<section class="panel ladder"><p class="label">Your path through the story</p><div class="lad-row">${steps}</div><p class="small muted" style="margin-top:8px">Other ratings (Commercial, Instrument, Multi-Engine…) open more side jobs but aren't needed for the story.</p></section>`); };
+pilotView = function(){ const h=_uiPilot(); const st=S.st; const steps=LADDER.map(([r,u])=>{ const has=st.ratings[r]; const ready=!has && checkrideReady(st,r).ok; return `<div class="lad ${has?'has':ready?'ready':''}"><span class="lad-dot">${has?'✓':ready?'!':''}</span><b>${esc(RATINGS[r].n)}</b><small>${esc(u)}</small>${ready?(checkrideAircraft(st,r).length?`<button class="btn sm action" data-act="book-check" data-r="${r}">Book checkride · ${money(feeFor(st,r))}</button>`:`<a href="#" class="small" data-act="nav" data-v="hangar">Tick an aircraft for it in the Hangar</a>`):''}</div>`; }).join('<i class="lad-line"></i>');
+  return h.replace(/(<main[^>]*>)/, m=>m+`<section class="panel ladder"><p class="label">Your path through the story</p><div class="lad-row">${steps}</div><p class="small muted" style="margin-top:8px">Other ratings (Commercial, Instrument, Multi-Engine…) open more side jobs but aren't needed for the story.</p></section>`); };
 document.addEventListener('click', e=>{ const a=e.target.closest('[data-act="lad-go"]'); if(!a) return; e.preventDefault(); const el=document.querySelector(`[data-act="book-check"][data-r="${a.dataset.r}"]`); if(el) el.scrollIntoView({behavior:'smooth',block:'center'}); });
 
 /* ---- 17. the map shows the story: past chapters, and the next destination pulsing ---- */
@@ -26,7 +26,7 @@ mapView = function(){ const h=_uiMap(); try{ const st=S.st; const v=MAPV[S.mapZo
   const next=MC.find(m=>!st.story.done[m.id]); if(next && AP[next.to]){ const b=AP[next.to], a=AP[next.from]; g+=`<line x1="${X(a.lon)}" y1="${Y(a.lat)}" x2="${X(b.lon)}" y2="${Y(b.lat)}" stroke="#d23b2c" stroke-width="3"/><circle cx="${X(b.lon)}" cy="${Y(b.lat)}" r="9" fill="none" stroke="#d23b2c" stroke-width="3" class="map-pulse"/><text x="${X(b.lon)+12}" y="${Y(b.lat)-12}" class="map-next">Next: ${esc(next.title)}</text>`; }
   g+='</g>'; const i=h.indexOf('</svg>'); return i>0 ? h.slice(0,i)+g+h.slice(i) : h; }catch(_){ return h; } };
 
-(function(){ const _m=moneyView; moneyView=function(){ const h=_m(); try{ const l=launderHTML(S.st); return l ? h.replace(/(<main[^>]*>)/, '$1'+l) : h; }catch(_){ return h; } }; })();
+(function(){ const _m=moneyView; moneyView=function(){ const h=_m(); try{ const l=launderHTML(S.st); return l ? h.replace(/(<main[^>]*>)/, m=>m+l) : h; }catch(_){ return h; } }; })();
 
 /* ---- 19. test sessions: try things out, then put your real career back ---- */
 const TEST_KEY='tw.realCareer.backup';

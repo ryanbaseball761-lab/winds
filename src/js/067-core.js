@@ -190,9 +190,9 @@ const CRIME = [
   teach:[`Miami is huge and busy. Fly the full STAR and ILS, keep your speed exactly where approach wants it, and land in the touchdown zone.`],
   out:{good:`Wheels down at Miami, smooth as glass.`,ok:`Wheels down at Miami.`,bad:`A hard landing at Miami jolts Castillo awake.`},rep:{},
   choice:{q:`Engines off on the Miami cargo ramp. Castillo is unbuckling in the jump seat. Three things can happen next, and only you decide.`,opts:[
-    {t:`Take his place`,out:`You make one phone call. When the cargo door opens, it isn't Castillo's people on the ramp. It's yours. By morning, every route, every airline and every pilot in the Caribbean answers to you. ENDING: KINGPIN.`,power:100,ending:'kingpin'},
-    {t:`Hand him to Reyes`,out:`Agents swarm the 747. Castillo looks at you once and smiles, as if he always knew. You testify, lose your licences and your name, and start over on an island nobody has heard of. ENDING: WITNESS.`,heat:-100,ending:'witness'},
-    {t:`Take the money and vanish`,out:`While they argue on the ramp, you walk to a Citation you parked there yesterday, fueled and paid in cash. By sunrise you're over South America with ten million dollars in the back. Nobody ever sees you again. ENDING: GHOST.`,cash:250000,ending:'ghost'}]}}
+    {t:`Take his place`,out:`You make one phone call. When the cargo door opens, it isn't Castillo's people on the ramp. It's yours. By morning, every route, every airline and every pilot in the Caribbean answers to you.`,power:100,ending:'kingpin'},
+    {t:`Hand him to Reyes`,out:`Agents swarm the 747. Castillo looks at you once and smiles, as if he always knew. You testify, lose your licences and your name, and start over on an island nobody has heard of.`,heat:-100,ending:'witness'},
+    {t:`Take the money and vanish`,out:`While they argue on the ramp, you walk to a Citation you parked there yesterday, fueled and paid in cash. By sunrise you're over South America with ten million dollars in the back. Nobody ever sees you again.`,cash:250000,ending:'ghost'}]}}
 
 ];
 const CRIME_IDS = new Set(CRIME.map(m=>m.id));
@@ -224,9 +224,10 @@ function fxLine(o){ const b=[]; if(o.power) b.push(`Power ${o.power>0?'+':''}${o
 const _crChoice = choiceHTML;
 choiceHTML = function(st){ const h=crimeChoiceHTML(st); return h!=null ? h : _crChoice(st); };
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="crime-choose"]'); if(!b || !S.st || !S.st.last) return; const st=S.st; const id=st.last.job.story; const m=CRIME.find(x=>x.id===id); const c=crime(st); if(!m || !m.choice || c.choice[id]!=null) return;
-  const i=Number(b.dataset.i); const o=m.choice.opts[i]; c.choice[id]=i;
+  const i=Number(b.dataset.i); const o=m.choice.opts[i]; c.choice[id]=i; const p0=c.power, h0=c.heat;
   if(o.power) crBump(c,'power',o.power); if(o.heat) crBump(c,'heat',o.heat); if(o.con) crBump(c,'con',o.con); if(o.flag) c.flags[o.flag]=1; if(o.ending) c.ending=o.ending;
   if(o.cash) txn(st, o.cash, o.cash>0?'Story':'Story', m.title);
+  if(st.last.delta){ st.last.delta.power+=c.power-p0; st.last.delta.heat+=c.heat-h0; }
   if(o.rep) for(const k in o.rep){ st.rep[k]=clamp((st.rep[k]||10)+o.rep[k],0,100); }
   addJournal(st, `${m.title}: ${o.t}`, o.out, m.chars, o.ending?'milestone':'story'); save();
   if(o.ending) setTimeout(()=>{ try{ confetti && confetti(); }catch(_){} }, 300);

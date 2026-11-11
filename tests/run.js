@@ -54,6 +54,9 @@ const results=[]; const ok=(n,c,info)=>{ results.push([n,!!c,info||'']); };
   ok('Expert checklist penalty is not lost', g.expert, String(g.expert));
   ok('wear is capped at 12% per flight, no grounding above 25%', g.wear===48 && !g.grounded, JSON.stringify(g));
   ok('double click on New day counts once', g.days===1, String(g.days));
+  /* dollar amounts like $1,800 survive being placed into pages (they used to lose the "$1") */
+  const money1=await p.evaluate(()=>{ const st=S.st; ['CW1','CR2','CR3','CR4','CR5','CR10','CR14','CR15'].forEach(id=>st.story.done[id]=1); crime(st).on=true; crime(st).dirty=5000; const bad=[]; for(const v of ['money','story','hangar']){ S.view=v; S.showResult=false; render(); const t=document.querySelector('main').innerText; if(/(^|\n|: )\s*,\d{3}/.test(t)) bad.push(v); } return bad; });
+  ok('dollar amounts are never cut to ",800"', money1.length===0, money1.join(','));
   ok('no script errors in regression checks', p._errs.length===0, p._errs.join(' | ')); await p.close();
   }catch(err){ ok('suite crashed', false, err.message); }
   await b.close(); let fail=0; for(const [n,good,info] of results){ console.log((good?'ok   ':'FAIL ')+n+(good?'':'  -> '+info)); if(!good) fail++; } console.log(fail?`${fail} FAILED`:'ALL PASSED'); process.exit(fail?1:0); })();

@@ -84,7 +84,7 @@ var playPrologue; /* defined in full below (081-core.js) */
 window.addEventListener('click', e=>{ const b=e.target.closest('[data-act="accept-story"],[data-act="story-go"]'); if(!b || b.disabled || !S.st) return; if(typeof fedsWatching==='function' && crime().on && fedsWatching(S.st)) return; const id=b.dataset.id; if(!CRIME_IDS.has(id)) return; const c=crime(); c.proSeen=c.proSeen||{};
   if(S._proPass){ S._proPass=false; return; } if(c.proSeen[id]) return; const m=CRIME.find(x=>x.id===id); if(!m || !proFor(id)) return;
   e.stopImmediatePropagation(); e.preventDefault(); c.proSeen[id]=1; save();
-  playPrologue(m, ()=>{ S._proPass=true; const again=document.querySelector(`[data-act="${b.dataset.act}"][data-id="${id}"]`)||b; again.click(); S._proPass=false; }); }, true);
+  playPrologue(m, ()=>{ S._proPass=true; const again=document.querySelector(`[data-act="${b.dataset.act}"][data-id="${id}"]`)||b; again.click(); S._proPass=false; S.keepScroll=false; try{ window.scrollTo(0,0); }catch(_){} }); }, true);
 /* replay from the flight screen */
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="pro-replay"]')||!S.st||!S.st.active) return; const m=CRIME.find(x=>x.id===S.st.active.job.story); if(m) playPrologue(m, ()=>{}); });
 
