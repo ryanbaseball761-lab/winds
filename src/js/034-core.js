@@ -10,7 +10,7 @@ function profileStats(st){
   return { flights:st.flights||0, hours:(st.minutes||0)/60, nm:Math.round((st.stats&&st.stats.nm)||0), visited, apTotal:Object.keys(AP).filter(k=>!AP[k].water).length,
     avgFpm: ver.length? Math.round(ver.reduce((s,l)=>s+l.fpm,0)/ver.length):null, best: ver.length? Math.min(...ver.map(l=>l.fpm)) : null,
     aPct: L.length? Math.round(grades.A/L.length*100):0, grades, byAc, ach:Object.keys(st.ach||{}).length, achTotal:ACH.length,
-    chapters:Object.keys(st.story.done||{}).length, chTotal:STORY.length, earned:L.reduce((s,l)=>s+(l.pay||0),0), landings:st.stats||{} };
+    chapters:Object.keys(st.story.done||{}).length, chTotal:STORY.length, earned:totalEarned(st), landings:st.stats||{} };
 }
 function visitedMap(st, W=520, H=300){
   const ks=Object.keys(AP).filter(k=>!AP[k].water && AP[k].lon>-90 && AP[k].lon<-55); const la=ks.map(k=>AP[k].lat), lo=ks.map(k=>AP[k].lon);

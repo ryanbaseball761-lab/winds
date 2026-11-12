@@ -27,6 +27,10 @@
 ## Your airline and the economy
 - **Caribe Cargo is now a real airline.** When you launch it in chapter 16, it becomes your company: buy aircraft (new or used, with loans), hire pilots and put them on routes that earn while you rest. Find it under **Pilot → Airline**.
 - **Smuggling pays, and it's risky.** Network runs pay 2.4x a legit job (was 1.6x) and add more Heat. Players who take every run now reach customs-search Heat (60) and earn more than honest pilots; before, Heat never went past about 25 and crime paid no better than honest work.
+- "Earned" on the Profile and Story pages is the same number now (all income, not loans or savings moves).
+- Story pay, network bonuses and laundered cash count as income on the Money page instead of as costs.
+- The Airline page shows "Demand: High/Shoulder/Low" instead of "Season ×0.95".
+- When you hold dirty cash, your story page has a "Launder it" button.
 
 ## Flying and grading
 - Expert difficulty: skipping the checklist now always costs the 10 points it should.

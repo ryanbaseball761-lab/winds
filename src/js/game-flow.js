@@ -367,6 +367,6 @@ function rest(st){
   // Heat cools by 1 every day on its own
   try{ const c=crime(st); if(c.on) crBump(c,'heat',-1); }catch(_){}
   // daily costs never push cash below zero: what you can't pay costs Heat instead
-  try{ if(st.cash<0 && cashBefore>=0){ const short=-st.cash; txn(st, short, 'Operation', 'Costs you couldn\'t cover (owed to Castillo\'s people)'); const c=crime(st); if(c.on) crBump(c,'heat',2); setTimeout(()=>toast(`You couldn't cover ${money(short)} of today's costs. People talk: Heat +2.`), 600); } }catch(_){}
+  try{ if(st.cash<0 && cashBefore>=0){ const short=-st.cash; txn(st, short, 'Owed to Castillo', 'Costs you couldn\'t cover (owed to Castillo\'s people)'); const c=crime(st); if(c.on) crBump(c,'heat',2); setTimeout(()=>toast(`You couldn't cover ${money(short)} of today's costs. People talk: Heat +2.`), 600); } }catch(_){}
   return net;
 }
