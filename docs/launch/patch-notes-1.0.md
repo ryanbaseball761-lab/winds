@@ -35,6 +35,7 @@
 - **Bigger airline, more to spend on.** Your company can now buy the ES-30, A320neo, 737 MAX 8 and A321LR (hired crews fly them until you hold the ATP). Build six facilities (maintenance hangar, marketing office, revenue manager, pilot training center, premium lounge, VIP charter desk), open bases at other hubs, and refit cabins. The Airline page shows your company's value.
 - Each route now has a limited number of travellers a day, shared by your aircraft on it, so big jets need busy hub routes and smart fares.
 - Four new airline achievements.
+- Airline balance: passengers cost $14 plus 18% of the fare (handling, taxes, booking), airliner crews $22,000 a day, and cheap fares grow a route's market by at most 60%. An A320neo on its best route nets about $44,000 a day after its loan; business jets only pay in the charter pool.
 
 ## Flying and grading
 - Expert difficulty: skipping the checklist now always costs the 10 points it should.

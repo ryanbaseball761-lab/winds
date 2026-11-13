@@ -158,26 +158,6 @@ Reply with only JSON: {"headline": "max 8 words", "paragraphs": ["...", "...", "
   }catch(e){ S.busy.briefErr = aiErr(e); }
   S.busy.brief=false; S.keepScroll=true; render();
 }
-async function aiJournal(){
-  const st=S.st; const L=st.last; if(!L||!S.sample) return;
-  S.busy.journal=true; S.busy.journalErr=''; S.keepScroll=true; render();
-  const {job,res,out,f} = L; const sc = job.scen?SCEN[job.scen]:null;
-  const prompt = `Write a short first-person pilot's journal entry (about 120 words, one or two paragraphs, plain prose) for a flight in "Trade Winds", a Caribbean flight-sim career game. Be specific and human: what the light looked like, what the passengers said, what the pilot learned. Stay consistent with these facts:
-
-Pilot: ${st.pilot.name}
-Flight: ${job.title} (${job.label}), ${AP[job.from].isl} to ${AP[st.log[0]?.to||job.to].isl}, ${AC[job.ac].n}
-Time: ${timeLabel(job.dep)}, weather: ${job.wx.n}
-Landing: ${LANDING[f.landing].n}; grade ${res.grade} (${res.score}/100)
-${sc?`Situation in flight: ${sc.n}. Pilot's handling: ${({book:'by the book',messy:'handled, but messy',ignored:'ignored it'})[f.scen]}`:''}
-${out.story?`What happened next: ${out.story}`:''}
-
-Reply with the journal text only, no title.`;
-  try{
-    const r = await S.sample(prompt, { modelTier:'default', cache:false });
-    addJournal(st, `Notes: ${job.title}`, r.text.trim(), job.chars||[], 'ai'); save(); S.busy.journalDone=true;
-  }catch(e){ S.busy.journalErr = aiErr(e); }
-  S.busy.journal=false; S.keepScroll=true; render();
-}
 function aiErr(e){ const c=e&&e.code; if(['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(c)){ S.sampleOff=true; return `Claude isn't available on this page right now.`; } if(c==='rate_limited') return `Claude is busy. Try again in a minute.`; if(c==='cancelled') return ''; if(c==='invalid_json') return `The answer didn't come back in the expected format. Try again.`; return `Couldn't reach Claude. Try again.`; }
 
 /* ---------- events ---------- */
@@ -207,7 +187,6 @@ document.addEventListener('click', e=>{
     case 'done-result': S.showResult=false; S.busy.journalDone=false; S.busy.journalErr=''; go('board'); return;
     case 'show-last': S.showResult=true; render(); return;
     case 'ai-brief': aiBrief(); return;
-    case 'ai-journal': aiJournal(); return;
     case 'book-check': { const rid=b.dataset.r; const sel=document.getElementById('cr-'+rid); const acId=sel?sel.value:null; if(!acId) return; st.active={job:checkrideJob(st,rid,acId), accepted:Date.now()}; save(); S.showResult=false; go('flight'); return; }
     case 'buy': { const k=b.dataset.ac; const c=st.company; const first = !c.fleet.length && !c.bought; const price = Math.round(AC[k].price*(first&&st.voucher?1-st.voucher:1)); const t=loanTerms(price); if(st.cash<t.down) return; st.cash-=t.down; c.fleet.push({fid:uid(), ac:k, reg:regFor(st), price, loanLeft:t.total, daily:t.daily, hired:false, cond:100, flights:0}); if(first){ c.bought=true; st.voucher=0; } st.jobsKey=''; addJournal(st, `Bought a ${AC[k].n}`, `${c.name} takes delivery of ${c.fleet[c.fleet.length-1].reg}. ${money(t.down)} down, ${money(t.daily)} a day for five years.`, ['mari'], 'milestone'); save(); toast(`Welcome to the fleet, ${c.fleet[c.fleet.length-1].reg}.`); S.keepScroll=true; render(); return; }
     case 'hire': { const f=st.company.fleet.find(x=>x.fid===b.dataset.f); f.hired=!f.hired; st.jobsKey=''; save(); S.keepScroll=true; render(); return; }

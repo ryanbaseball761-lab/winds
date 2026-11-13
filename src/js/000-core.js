@@ -136,8 +136,8 @@ const CLS = {
   twin:{name:`Piston / diesel twin`,rate:10,over:16,daily:3000,wage:560},
   turbo:{name:`Turboprop`,rate:13,over:18,daily:5200,wage:900},
   jet:{name:`Business jet`,rate:20,over:22,daily:9000,wage:1600},
-  regional:{name:`Regional airliner`,rate:18,over:24,daily:16000,wage:2800},
-  airliner:{name:`Narrowbody airliner`,rate:24,over:30,daily:70000,wage:9000},
+  regional:{name:`Regional airliner`,rate:18,over:24,daily:16000,wage:4500},
+  airliner:{name:`Narrowbody airliner`,rate:24,over:30,daily:70000,wage:22000},
   widebody:{name:`Widebody airliner`,rate:30,over:35,daily:0,wage:0}
 };
 const RATINGS = {

@@ -1145,8 +1145,8 @@ const CLS = {
   twin:{name:`Piston / diesel twin`,rate:10,over:16,daily:3000,wage:560},
   turbo:{name:`Turboprop`,rate:13,over:18,daily:5200,wage:900},
   jet:{name:`Business jet`,rate:20,over:22,daily:9000,wage:1600},
-  regional:{name:`Regional airliner`,rate:18,over:24,daily:16000,wage:2800},
-  airliner:{name:`Narrowbody airliner`,rate:24,over:30,daily:70000,wage:9000},
+  regional:{name:`Regional airliner`,rate:18,over:24,daily:16000,wage:4500},
+  airliner:{name:`Narrowbody airliner`,rate:24,over:30,daily:70000,wage:22000},
   widebody:{name:`Widebody airliner`,rate:30,over:35,daily:0,wage:0}
 };
 const RATINGS = {
@@ -2271,26 +2271,6 @@ Reply with only JSON: {"headline": "max 8 words", "paragraphs": ["...", "...", "
   }catch(e){ S.busy.briefErr = aiErr(e); }
   S.busy.brief=false; S.keepScroll=true; render();
 }
-async function aiJournal(){
-  const st=S.st; const L=st.last; if(!L||!S.sample) return;
-  S.busy.journal=true; S.busy.journalErr=''; S.keepScroll=true; render();
-  const {job,res,out,f} = L; const sc = job.scen?SCEN[job.scen]:null;
-  const prompt = `Write a short first-person pilot's journal entry (about 120 words, one or two paragraphs, plain prose) for a flight in "Trade Winds", a Caribbean flight-sim career game. Be specific and human: what the light looked like, what the passengers said, what the pilot learned. Stay consistent with these facts:
-
-Pilot: ${st.pilot.name}
-Flight: ${job.title} (${job.label}), ${AP[job.from].isl} to ${AP[st.log[0]?.to||job.to].isl}, ${AC[job.ac].n}
-Time: ${timeLabel(job.dep)}, weather: ${job.wx.n}
-Landing: ${LANDING[f.landing].n}; grade ${res.grade} (${res.score}/100)
-${sc?`Situation in flight: ${sc.n}. Pilot's handling: ${({book:'by the book',messy:'handled, but messy',ignored:'ignored it'})[f.scen]}`:''}
-${out.story?`What happened next: ${out.story}`:''}
-
-Reply with the journal text only, no title.`;
-  try{
-    const r = await S.sample(prompt, { modelTier:'default', cache:false });
-    addJournal(st, `Notes: ${job.title}`, r.text.trim(), job.chars||[], 'ai'); save(); S.busy.journalDone=true;
-  }catch(e){ S.busy.journalErr = aiErr(e); }
-  S.busy.journal=false; S.keepScroll=true; render();
-}
 function aiErr(e){ const c=e&&e.code; if(['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'].includes(c)){ S.sampleOff=true; return `Claude isn't available on this page right now.`; } if(c==='rate_limited') return `Claude is busy. Try again in a minute.`; if(c==='cancelled') return ''; if(c==='invalid_json') return `The answer didn't come back in the expected format. Try again.`; return `Couldn't reach Claude. Try again.`; }
 
 /* ---------- events ---------- */
@@ -2320,7 +2300,6 @@ document.addEventListener('click', e=>{
     case 'done-result': S.showResult=false; S.busy.journalDone=false; S.busy.journalErr=''; go('board'); return;
     case 'show-last': S.showResult=true; render(); return;
     case 'ai-brief': aiBrief(); return;
-    case 'ai-journal': aiJournal(); return;
     case 'book-check': { const rid=b.dataset.r; const sel=document.getElementById('cr-'+rid); const acId=sel?sel.value:null; if(!acId) return; st.active={job:checkrideJob(st,rid,acId), accepted:Date.now()}; save(); S.showResult=false; go('flight'); return; }
     case 'buy': { const k=b.dataset.ac; const c=st.company; const first = !c.fleet.length && !c.bought; const price = Math.round(AC[k].price*(first&&st.voucher?1-st.voucher:1)); const t=loanTerms(price); if(st.cash<t.down) return; st.cash-=t.down; c.fleet.push({fid:uid(), ac:k, reg:regFor(st), price, loanLeft:t.total, daily:t.daily, hired:false, cond:100, flights:0}); if(first){ c.bought=true; st.voucher=0; } st.jobsKey=''; addJournal(st, `Bought a ${AC[k].n}`, `${c.name} takes delivery of ${c.fleet[c.fleet.length-1].reg}. ${money(t.down)} down, ${money(t.daily)} a day for five years.`, ['mari'], 'milestone'); save(); toast(`Welcome to the fleet, ${c.fleet[c.fleet.length-1].reg}.`); S.keepScroll=true; render(); return; }
     case 'hire': { const f=st.company.fleet.find(x=>x.fid===b.dataset.f); f.hired=!f.hired; st.jobsKey=''; save(); S.keepScroll=true; render(); return; }
@@ -2494,7 +2473,7 @@ function routeDay(st, f, noisy){
   let pax = seats * attract * demandIndex(st) * Math.pow(ref/fare, 1.5);
   // each route has a limited number of travellers a day, shared by your aircraft on it
   const share = Math.max(1, (st.company.fleet||[]).filter(x=>x.hired && x.route && x.route.to===to && baseOf(st,x)===base).length);
-  const market = (90 + hash01('m'+base+to)*260 + (HUBS.includes(to)?260:0) + (HUBS.includes(base)?120:0)) * demandIndex(st) * (coUpg(st,'mkt')?1.12:1) * Math.pow(ref/fare, 1.5);
+  const market = (50 + hash01('m'+base+to)*170 + (HUBS.includes(to)?180:0) + (HUBS.includes(base)?80:0)) * demandIndex(st) * (coUpg(st,'mkt')?1.12:1) * Math.min(1.6, Math.pow(ref/fare, 1.5));
   pax = Math.min(pax, market/share/legs);
   if(noisy) pax *= rnd(0.82,1.15); pax = Math.max(0, Math.min(seats, pax));
   const storm = stormActive(st); const grounded = storm && (AP[to].r===storm.region || AP[base].r===storm.region);
@@ -2503,7 +2482,7 @@ function routeDay(st, f, noisy){
   const dens = a.fuel==='avgas'?6:6.7; const price = fuelPrice(st, base, a.fuel==='avgas'?'avgas':'jeta');
   const fuel = grounded?0:Math.round(a.burn*block/60/dens*price*legs);
   const maint = grounded?0:Math.round(a.op*0.45*block/60*legs);
-  const fees = grounded?0:(FEES[a.cls]||50)*legs;
+  const fees = grounded?0:Math.round((FEES[a.cls]||50)*legs + pax*legs*(14+fare*0.18));   // landing fees, plus per-passenger handling, taxes and booking costs
   const wage = Math.round(CLS[a.cls].wage*(coUpg(st,'train')?0.8:1));
   return { d:Math.round(d), block:Math.round(block), legs, pax:Math.round(pax*10)/10, lf: seats?pax/seats:0, revenue, fuel, maint, fees, wage, profit: revenue-fuel-maint-fees-wage, grounded };
 }
@@ -3741,7 +3720,7 @@ ALT_OUT.BO5 = st => st.story.flags.BO4==='a' ? {good:`De Vries closes his notebo
 /* Hartwell now follows The Buyout */
 (function(){ const h=STORY.find(m=>m.id==='HW1'); if(h && h.req) h.req.after='BO3'; })();
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.55.0';
+const TW_VERSION = '0.56.0';
 
 /* ---------- live map ---------- */
 function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
@@ -6573,6 +6552,7 @@ WHATS_NEW.unshift(['0.52','A faster start: a new start screen, one setup screen,
 WHATS_NEW.unshift(['0.53','Money fixes: "Earned" matches everywhere, story pay and laundered cash count as income on the Money page, plainer Airline stats, and a "Launder it" shortcut on your story page.']);
 WHATS_NEW.unshift(['0.54','Your airline grows: buy airliners (ES-30, A320neo, 737 MAX, A321), build six facilities, open bases at other hubs, refit cabins, and track company value. Plus phone fixes for the job board and Pilot tabs.']);
 WHATS_NEW.unshift(['0.55','Behind the scenes: most of the game\'s code is now one clean definition per screen, which makes future fixes safer. The title screen shows your flight in progress properly, and new automatic checks cover the MSFS clock and the airline.']);
+WHATS_NEW.unshift(['0.56','Airline balance: every route has a limited number of travellers, passengers cost handling and taxes, and airliner crews cost what they should, so a big jet is a strong investment but not a money printer.']);
 /* ===================== PAGE CHROME =====================
    The parts of the screen that surround every page: the side menu, the top bar with its
    status chips, and the phone-width menu. band() returns all of it as one piece of HTML. */

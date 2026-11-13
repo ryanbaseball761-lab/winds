@@ -106,7 +106,7 @@ function routeDay(st, f, noisy){
   let pax = seats * attract * demandIndex(st) * Math.pow(ref/fare, 1.5);
   // each route has a limited number of travellers a day, shared by your aircraft on it
   const share = Math.max(1, (st.company.fleet||[]).filter(x=>x.hired && x.route && x.route.to===to && baseOf(st,x)===base).length);
-  const market = (90 + hash01('m'+base+to)*260 + (HUBS.includes(to)?260:0) + (HUBS.includes(base)?120:0)) * demandIndex(st) * (coUpg(st,'mkt')?1.12:1) * Math.pow(ref/fare, 1.5);
+  const market = (50 + hash01('m'+base+to)*170 + (HUBS.includes(to)?180:0) + (HUBS.includes(base)?80:0)) * demandIndex(st) * (coUpg(st,'mkt')?1.12:1) * Math.min(1.6, Math.pow(ref/fare, 1.5));
   pax = Math.min(pax, market/share/legs);
   if(noisy) pax *= rnd(0.82,1.15); pax = Math.max(0, Math.min(seats, pax));
   const storm = stormActive(st); const grounded = storm && (AP[to].r===storm.region || AP[base].r===storm.region);
@@ -115,7 +115,7 @@ function routeDay(st, f, noisy){
   const dens = a.fuel==='avgas'?6:6.7; const price = fuelPrice(st, base, a.fuel==='avgas'?'avgas':'jeta');
   const fuel = grounded?0:Math.round(a.burn*block/60/dens*price*legs);
   const maint = grounded?0:Math.round(a.op*0.45*block/60*legs);
-  const fees = grounded?0:(FEES[a.cls]||50)*legs;
+  const fees = grounded?0:Math.round((FEES[a.cls]||50)*legs + pax*legs*(14+fare*0.18));   // landing fees, plus per-passenger handling, taxes and booking costs
   const wage = Math.round(CLS[a.cls].wage*(coUpg(st,'train')?0.8:1));
   return { d:Math.round(d), block:Math.round(block), legs, pax:Math.round(pax*10)/10, lf: seats?pax/seats:0, revenue, fuel, maint, fees, wage, profit: revenue-fuel-maint-fees-wage, grounded };
 }
