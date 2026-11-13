@@ -46,6 +46,8 @@
 - Checkrides show the full flight details again (weather, weights, route), without repeating the task list.
 
 ## Interface
+- Flight mode: the flight timer shows MSFS block time when the sim is recording (so sim rate counts) instead of switching between that and real time every few seconds.
+- Phones: the checklist tabs wrap so the current one is always visible.
 - Flight mode: the "Course to" arrow on the flight display now turns with your heading (it always pointed straight up).
 - Flight mode: the checklist moves on by itself (start, taxi, takeoff, then the approach list in cruise, then landing); it never jumps back, and a tab you choose stays until the next phase.
 - Flight mode: the phase panel no longer repeats the flight display's numbers; it shows airspeed, vertical speed and heading.

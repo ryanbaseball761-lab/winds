@@ -63,4 +63,3 @@ document.addEventListener('click', e=>{ if(e.target.closest('[data-act="orders-o
 function simRateNow(){ const x=S.sim&&S.sim.ext; return x && x.simRate ? x.simRate : 1; }
 function ifLiveHTML(){ const h=ifLiveHTMLBase(); const r=simRateNow(); return r!==1 ? h.replace('<div class="if-phase">', `<div class="notice small">⏩ Sim rate ${r}×. That's fine: flight time, fuel and pay are all counted in simulated time.</div><div class="if-phase">`) : h; }
 /* block timer follows simulated time when MSFS is connected */
-setInterval(()=>{ const t=document.getElementById('if-timer'); const a=S.st&&S.st.active; if(!t||!a) return; const rec=simRecFor(a); if(rec && rec.blockMinutes!=null) t.textContent=durTxt(rec.blockMinutes); }, 3000);

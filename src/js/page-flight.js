@@ -125,7 +125,7 @@ function preflightHTML(job){
 
 function inflightView(){
   const st=S.st, a=st.active, job=a.job, ac=AC[job.ac];
-  const mins = Math.round((Date.now()-a.started)/60000);
+  const mins = flightMinutes(a);
   const rec=S.sim&&S.sim.recorder; const airborne = S.simState==='live' && ((S.sim.motion&&!S.sim.motion.onGround) || (rec && rec.takeoff && simRecFor(a)));
   let runways=''; try{ const R=runwayPlan(job); if(R.dep) runways=`<p class="if-rw">Take off <b class="mono">${esc(R.dep.water?'into wind':R.dep.rw)}</b>${R.arr?` · Land <b class="mono">${esc(R.arr.water?'into wind':R.arr.rw)}</b>`:''} · wind ${pad3(job.wx.dir)}°/${job.wx.spd} kt</p>`; }catch(_){}
   const orders = job.scen && a.opened && a.scenPlan ? ordersHTML(a,!!S.ordersPop) : job.scen ? `<div class="notice small">📩 Sealed orders aboard. They open automatically ${TRIG_LABEL[SCEN_TRIGGER[job.scen]||'mid']}.</div>` : '';

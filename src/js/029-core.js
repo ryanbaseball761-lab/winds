@@ -61,4 +61,6 @@ document.addEventListener('click', e=>{
 /* going to the in-flight screen the moment you start */
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="start"]')){ S.ifBrief=false; setTimeout(()=>{ if(S.st && S.st.active && S.st.active.started){ S.view='flight'; render(); window.scrollTo(0,0); } },0); } });
 /* live refresh without disturbing the checklist */
-setInterval(()=>{ const t=document.getElementById('if-timer'); if(t) t.textContent = durTxt(Math.round((Date.now()-Number(t.dataset.start))/60000)); }, 15000);
+/* the flight timer: MSFS block time when the sim is recording (so sim rate counts), else time since you started */
+function flightMinutes(a){ const rec=a&&simRecFor(a); return rec && rec.blockMinutes!=null ? rec.blockMinutes : Math.round((Date.now()-a.started)/60000); }
+setInterval(()=>{ const t=document.getElementById('if-timer'); const a=S.st&&S.st.active; if(t && a && a.started) t.textContent = durTxt(flightMinutes(a)); }, 3000);

@@ -2,7 +2,7 @@
 // click every visible button on every page (fresh page state per view), report script errors
 const {chromium}=require('playwright'),fs=require('fs');(async()=>{const b=await chromium.launch();const FIX=fs.readFileSync('./tests/fixture-save.json','utf8');
 const views=['story','board','map','pilot','profile','log','money','company','cup','academy','hangar','flight','cockpit'];const all=[];
-for(const mode of ['early','mid']) for(const v of views){ const p=await b.newPage({viewport:{width:1300,height:900}}); const errs=[]; p.on('pageerror',e=>errs.push(e.message+' @ '+(e.stack||'').split('\n').slice(1,3).join(' '))); p.on('dialog',d=>d.dismiss());
+for(const mode of ['early','mid']) for(const v of views){ const p=await b.newPage({viewport:{width:+(process.env.W||1300),height:900}}); const errs=[]; p.on('pageerror',e=>errs.push(e.message+' @ '+(e.stack||'').split('\n').slice(1,3).join(' '))); p.on('dialog',d=>d.dismiss());
   await p.goto('file://'+process.cwd()+'/index.html');await p.evaluate(s=>{localStorage.clear();localStorage.setItem('tradewinds.career.v1',s)},FIX);await p.reload();await p.waitForTimeout(1500);
   const n=await p.evaluate(async([v,mode])=>{ const W=ms=>new Promise(r=>setTimeout(r,ms)); const clean=()=>document.querySelectorAll('.cut,.title-screen,.lic-overlay').forEach(e=>e.remove()); clean(); S._title=false; const st=S.st;
     if(mode==='mid'){ for(const m of mainChapters().slice(0,12)) st.story.done[m.id]=1; const c=crime(st); c.on=true; c.heat=45; c.dirty=8000; Object.assign(st.ratings,{PPL:1,COMM:1,IR:1,ME:1,JET:1}); st.cash=3e6; st.company={name:'Caribe Cargo',base:'TNCM',fleet:[],ledger:[],founded:1}; }

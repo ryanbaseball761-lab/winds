@@ -78,6 +78,7 @@ WHATS_NEW.unshift(['0.43','50 fixes: the new-career screen fits the story, Heat 
 .heat-chip.cool span{color:#7cbf6f}.heat-chip.warm{border-color:#6b4e1a}.heat-chip.warm span{color:#e0b24a}.heat-chip.hot{border-color:#6b2a20;background:rgba(194,58,43,.12)}.heat-chip.hot span{color:#e5533d}
 @keyframes heatp{50%{box-shadow:0 0 0 4px rgba(229,83,61,.18)}}.heat-chip.hot{animation:heatp 1.6s ease-in-out infinite}
 .jr-m{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:600px){.if-phases{flex-wrap:wrap;overflow:visible!important}}
 .ac-hero{background:radial-gradient(120% 120% at 100% 0%,rgba(124,191,111,.18),transparent 55%),linear-gradient(135deg,#101413,#0b0b0d)!important;border:1px solid #23302b}
 .cup-hero{background:radial-gradient(120% 120% at 0% 0%,rgba(224,178,74,.22),transparent 55%),linear-gradient(135deg,#17130c,#0b0b0d)!important;border:1px solid #3a2f18}`; document.head.appendChild(s); })();
 WHATS_NEW.unshift(['0.50','Every story choice now comes back later, a fuller epilogue, Caribe Cargo becomes your own airline (Pilot → Airline), smuggling pays more and draws more Heat, and many fixes.']);
@@ -89,3 +90,4 @@ WHATS_NEW.unshift(['0.55','Behind the scenes: most of the game\'s code is now on
 WHATS_NEW.unshift(['0.56','Airline balance: every route has a limited number of travellers, passengers cost handling and taxes, and airliner crews cost what they should, so a big jet is a strong investment but not a money printer.']);
 WHATS_NEW.unshift(['0.57','Airline: "Find the best route" picks the most profitable destination and fare for a hired aircraft (or tells you the charter pool pays more). Fixed a crash when bringing on crew while you own an airline.']);
 WHATS_NEW.unshift(['0.58','Flight mode: the "course to" arrow now points where you need to turn (it was stuck pointing up), the checklist follows your flight phase on its own, duplicate numbers are gone from the phase panel, and the live weather line no longer shows "undefined".']);
+WHATS_NEW.unshift(['0.59','The flight timer no longer flickers between real time and sim time (it uses MSFS block time when the sim is recording), and the checklist tabs wrap on phones.']);
