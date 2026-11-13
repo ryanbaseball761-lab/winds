@@ -3216,8 +3216,8 @@ document.addEventListener('click', e=>{
 /* ===================== 4. THINGS THAT HAPPEN TO YOU ===================== */
 
 /* ---- (a) real MSFS weather: track what you actually flew through, and pay for it ---- */
-function liveWxLine(){ const x=S.sim&&S.sim.ext; if(!x || S.simState!=='live') return ''; const w=x.weather;
-  return `<div class="livewx"><span class="label">Live MSFS weather</span><span class="mono">${String(w.windDir).padStart(3,'0')}°/${w.windKt} kt · ${w.visSm>=10?'10+':w.visSm} sm · ${w.oatC} °C · ${w.qnhHpa} hPa${w.inCloud?' · in cloud':''}</span></div>`; }
+function liveWxLine(){ const x=S.sim&&S.sim.ext; if(!x || S.simState!=='live' || !x.weather || x.weather.windDir==null) return ''; const w=x.weather;
+  return `<div class="livewx"><span class="label">Live MSFS weather</span><span class="mono">${String(w.windDir).padStart(3,'0')}°/${w.windKt} kt · ${w.visSm==null?'':(w.visSm>=10?'10+':w.visSm)+' sm'}${w.oatC!=null?` · ${Math.round(w.oatC)} °C`:''}${w.qnhHpa!=null?` · ${Math.round(w.qnhHpa)} hPa`:''}${w.inCloud?' · in cloud':''}</span></div>`; }
 
 /* ---- (b) your phone rings: characters call with time-limited work ---- */
 
@@ -3721,7 +3721,7 @@ ALT_OUT.BO5 = st => st.story.flags.BO4==='a' ? {good:`De Vries closes his notebo
 /* Hartwell now follows The Buyout */
 (function(){ const h=STORY.find(m=>m.id==='HW1'); if(h && h.req) h.req.after='BO3'; })();
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.57.0';
+const TW_VERSION = '0.58.0';
 
 /* ---------- live map ---------- */
 function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
@@ -3885,13 +3885,11 @@ function ifLiveHTMLBase(){
   const tile=(lbl,val,unit,cls='')=>`<div class="if-tile ${cls}"><span>${lbl}</span><b class="mono">${val}</b><small>${unit}</small></div>`;
   const eta = live && !s.motion.onGround && pr.togo!=null ? Math.round(pr.togo/Math.max(s.motion.gs,1)*60) : null;
   const tiles = live ? [
-    tile('Airspeed', s.motion.ias, 'knots'), tile('Altitude', (s.position.altFt||0).toLocaleString(), 'feet'),
-    tile('Vertical speed', (s.motion.vsFpm>0?'+':'')+s.motion.vsFpm, 'fpm', s.motion.vsFpm<-1000?'warn':''), tile('Heading', String(s.position.hdg||0).padStart(3,'0')+'°', 'true'),
-    tile('Ground speed', s.motion.gs, 'knots'), tile('Fuel', s.systems?s.systems.fuelLb:'—', 'lb'),
-    tile(pr.togo!=null?'To go':'Tour', pr.togo!=null?Math.round(pr.togo):'—', pr.togo!=null?'nm':'local'), tile('ETA', eta!=null?eta:'—', 'min')
+    /* route, distance, ETA, altitude, ground speed and fuel are on the flight display above; these are the flying numbers */
+    tile('Airspeed', Math.round(s.motion.ias||0), 'knots'),
+    tile('Vertical speed', (s.motion.vsFpm>0?'+':'')+Math.round(s.motion.vsFpm||0), 'fpm', s.motion.vsFpm<-1000?'warn':''), tile('Heading', String(Math.round(s.position.hdg!=null?s.position.hdg:(s.motion.hdg||0))).padStart(3,'0')+'°', 'true')
   ].join('') : `<p class="small muted" style="grid-column:1/-1">Connect MSFS to see live instruments, your position and an ETA here.</p>`;
   return `<div class="if-phase"><span class="if-ph-dot ${ph.k}"></span><div><b>${esc(ph.n)}</b><span>${esc(ph.d)}</span></div></div>
-    <div class="if-route"><b class="mono">${esc(a.job.from)}</b><div class="if-bar"><i style="width:${pr.pct==null?0:pr.pct.toFixed(1)}%"></i>${pr.pct!=null?`<span class="if-plane" style="left:${pr.pct.toFixed(1)}%">${ICO_PLANE}</span>`:''}</div><b class="mono">${esc(a.job.local?a.job.from:a.job.to)}</b></div>
     <div class="if-tiles">${tiles}</div>`;
 }
 function ifMiniMap(a){
@@ -3906,8 +3904,13 @@ function ifMiniMap(a){
     <circle cx="${X(A.lon)}" cy="${Y(A.lat)}" r="6" class="r-start"/><circle cx="${X(B.lon)}" cy="${Y(B.lat)}" r="6" class="r-end"/>
     ${P?`<g transform="translate(${X(P.lon).toFixed(1)} ${Y(P.lat).toFixed(1)}) rotate(${s.position.hdg||0})" class="liveplane"><circle r="14" class="halo"/><path d="M0 -12 L3 -3 L12 2 L12 4 L3 2 L2 9 L5 11 L5 12 L0 11 L-5 12 L-5 11 L-2 9 L-3 2 L-12 4 L-12 2 L-3 -3Z"/></g>`:''}</svg>`;
 }
+/* the checklist moves on by itself as the flight does (start, taxi, takeoff, then the approach list in cruise);
+   it never goes backwards, and a tab you pick yourself stays until the next phase of flight */
+const CK_FOR = { pre:/before|start|preflight/i, taxi:/taxi|start/i, climb:/takeoff|climb/i, cruise:/approach|descent|cruise/i, descent:/approach|descent/i, final:/landing|approach/i, taxiin:/landing|after|shut/i };
+function ckFollowPhase(a, ph){ try{ const f=flightPhase(a); if(!CK_FOR[f.k] || a.ck.lastK===f.k) return; a.ck.lastK=f.k;
+  const i=ph.findIndex((x,j)=>j>=(a.ck.p||0) && CK_FOR[f.k].test(x.n)); if(i>=0) a.ck.p=i; }catch(_){} }
 function ifChecklistHTML(a){
-  const ph=cockpitPhases(S.st, a.job); a.ck=a.ck||{p:0,done:{}}; const cur=clamp(a.ck.p,0,ph.length-1); const P=ph[cur];
+  const ph=cockpitPhases(S.st, a.job); a.ck=a.ck||{p:0,done:{}}; ckFollowPhase(a, ph); const cur=clamp(a.ck.p,0,ph.length-1); const P=ph[cur];
   return `<div class="row between"><h3>Checklist · ${esc(P.n)}</h3><span class="mono small muted">${P.items.filter((_,i)=>a.ck.done[cur+'-'+i]).length}/${P.items.length}</span></div>
     <div class="if-phases">${ph.map((x,i)=>`<button class="${i===cur?'on':''}" data-act="ck-phase" data-i="${i}">${x.items.every((_,j)=>a.ck.done[i+'-'+j])?'✓ ':''}${esc(x.n)}</button>`).join('')}</div>
     <div class="if-ck">${P.items.map((t,i)=>{ const on=!!a.ck.done[cur+'-'+i]; return `<button class="ck ${on?'on':''}" data-act="ck-item" data-k="${cur}-${i}" aria-pressed="${on}"><span class="box">${on?'✓':''}</span><span>${esc(t)}</span></button>`; }).join('')}</div>`;
@@ -6555,6 +6558,7 @@ WHATS_NEW.unshift(['0.54','Your airline grows: buy airliners (ES-30, A320neo, 73
 WHATS_NEW.unshift(['0.55','Behind the scenes: most of the game\'s code is now one clean definition per screen, which makes future fixes safer. The title screen shows your flight in progress properly, and new automatic checks cover the MSFS clock and the airline.']);
 WHATS_NEW.unshift(['0.56','Airline balance: every route has a limited number of travellers, passengers cost handling and taxes, and airliner crews cost what they should, so a big jet is a strong investment but not a money printer.']);
 WHATS_NEW.unshift(['0.57','Airline: "Find the best route" picks the most profitable destination and fare for a hired aircraft (or tells you the charter pool pays more). Fixed a crash when bringing on crew while you own an airline.']);
+WHATS_NEW.unshift(['0.58','Flight mode: the "course to" arrow now points where you need to turn (it was stuck pointing up), the checklist follows your flight phase on its own, duplicate numbers are gone from the phase panel, and the live weather line no longer shows "undefined".']);
 /* ===================== PAGE CHROME =====================
    The parts of the screen that surround every page: the side menu, the top bar with its
    status chips, and the phone-width menu. band() returns all of it as one piece of HTML. */
@@ -7236,7 +7240,7 @@ const SIM_TICK = [
   function academy(){ academyTick(); },
   function liveMap(){ if(S.view==='map' && S.st && S.st.active && S.simState==='live'){ S.keepScroll=true; render(); } },
   function inflightPanels(){ if(S.view==='flight' && S.st && S.st.active && S.st.active.started && !S.debrief && !S.showResult && !S.ifBrief){
-    const l=document.getElementById('if-live'); if(l) l.innerHTML=ifLiveHTML(); const m=document.getElementById('if-map'); if(m) m.innerHTML=ifMiniMap(S.st.active); } },
+    const l=document.getElementById('if-live'); if(l) l.innerHTML=ifLiveHTML(); const m=document.getElementById('if-map'); if(m) m.innerHTML=ifMiniMap(S.st.active); const ck=document.getElementById('if-ck'); if(ck){ const a=S.st.active; const k0=a.ck&&a.ck.p; const h=ifChecklistHTML(a); if(!ck.dataset.p || a.ck.p!==k0 || ck.dataset.p!==String(a.ck.p)){ ck.innerHTML=h; ck.dataset.p=a.ck.p; } } } },
   function preflight(){ if(S.view==='flight') renderPreflight(); },
   /* cabin chimes with passengers on board: after takeoff, top of descent, parked */
   function cabinChimes(){ const a=S.st&&S.st.active; if(!a || S.simState!=='live') return; const rec=simRecFor(a); if(!rec) return; const s=S.sim; const key=a.recId||'x'; const F=SIM_CHIMES[key]=SIM_CHIMES[key]||{};
@@ -7624,7 +7628,7 @@ function hudHTML(a){
     if(pct!=null) prog=`<div class="fhud-prog"><i style="width:${pct}%"></i><span>${pct}%</span></div>`;
     if(air!=null) airCell=`<div class="hud-c"><span>In the air</span><b>${air}<small> min</small></b></div>`; }catch(_){}
   try{ /* course to the destination, the landing runway when close, and what this flight is for */
-    const cells=[]; if(live){ const b=Math.round(brg({lat:s.position.lat,lon:s.position.lon},dest)); const hdg=s.motion&&s.motion.hdg!=null?Math.round(s.motion.hdg):null; const off=hdg!=null?((b-hdg+540)%360)-180:0;
+    const cells=[]; if(live){ const b=Math.round(brg({lat:s.position.lat,lon:s.position.lon},dest)); const hdg=s.position.hdg!=null?Math.round(s.position.hdg):s.motion&&s.motion.hdg!=null?Math.round(s.motion.hdg):null; const off=hdg!=null?((b-hdg+540)%360)-180:0;
       cells.push(`<div class="hud-c hud-brg"><span>Course to ${esc(to)}</span><b>${pad3(b)}°</b><i style="transform:rotate(${off}deg)">↑</i></div>`);
       if(togo<20 && !dest.water){ const w=s.ext&&s.ext.weather; const wx=w?Object.assign({},job.wx,{dir:w.windDir,spd:w.windKt,gust:0}):job.wx; let r=null; try{ r=rwyAnalysis(to,wx,job.ac); }catch(_){} if(r&&!r.water) cells.push(`<div class="hud-c hud-rw"><span>Land runway</span><b>${esc(r.rw)}</b><small>${pad3(wx.dir)}°/${wx.spd} kt</small></div>`); } }
     const g = job.kind==='story' && typeof CH_GOAL!=='undefined' && CH_GOAL[job.story] ? `<p class="hud-goal"><span>Goal</span> ${esc(CH_GOAL[job.story][0])}</p>` : job.kind==='check' ? `<p class="hud-goal"><span>Checkride</span> ${esc((job.tasks||[]).join(' · '))}</p>` : job.network ? `<p class="hud-goal"><span>Network run</span> ${job.lowLevel?'Stay under 1,000 ft for the bonus. ':''}${job.drop?'Night drop at a closed strip. ':''}Heat +5 when you land.</p>` : '';
@@ -7738,7 +7742,7 @@ function inflightView(){
     <div class="callout-host" aria-live="assertive">${typeof calloutHTML==='function'?calloutHTML():''}</div>
     ${orders}<section class="panel stack if-live" id="if-live">${ifLiveHTML()}</section>
     <div class="if-grid">
-      <div class="stack"><section class="panel if-mapwrap" id="if-map">${ifMiniMap(a)}</section><section class="panel stack">${ifChecklistHTML(a)}</section></div>
+      <div class="stack"><section class="panel if-mapwrap" id="if-map">${ifMiniMap(a)}</section><section class="panel stack" id="if-ck">${ifChecklistHTML(a)}</section></div>
       <div class="stack">${typeof cabinBlock==='function'?cabinBlock():''}
         ${job.manifest?manifestHTML(job):''}<section class="panel stack small"><h3>Quick reference</h3><dl class="kv"><dt>Speeds</dt><dd class="mono">${esc(ac.v)}</dd><dt>Departure</dt><dd>${esc(job.from)} runway ${esc(rwyAnalysis(job.from,job.wx,job.ac).rw)}</dd>${job.local?'':`<dt>Arrival</dt><dd>${esc(job.to)} runway ${esc(rwyAnalysis(job.to,job.wx,job.ac).rw)}</dd>`}<dt>Wind</dt><dd class="mono">${pad3(job.wx.dir)}° / ${job.wx.spd}${job.wx.gust?'G'+job.wx.gust:''} kt</dd><dt>Load</dt><dd>${job.pax?job.pax+' pax':''}${job.pax&&job.cargo?' + ':''}${job.cargo?job.cargo+' lb':''}</dd></dl>
         ${job.scen?`<button class="btn sm" data-act="if-brief">Sealed orders: open in the briefing</button>`:''}<button class="btn sm ghost danger" data-act="cancel">Cancel flight</button></section>

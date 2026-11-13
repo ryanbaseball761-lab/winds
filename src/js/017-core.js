@@ -1,8 +1,8 @@
 /* ===================== 4. THINGS THAT HAPPEN TO YOU ===================== */
 
 /* ---- (a) real MSFS weather: track what you actually flew through, and pay for it ---- */
-function liveWxLine(){ const x=S.sim&&S.sim.ext; if(!x || S.simState!=='live') return ''; const w=x.weather;
-  return `<div class="livewx"><span class="label">Live MSFS weather</span><span class="mono">${String(w.windDir).padStart(3,'0')}°/${w.windKt} kt · ${w.visSm>=10?'10+':w.visSm} sm · ${w.oatC} °C · ${w.qnhHpa} hPa${w.inCloud?' · in cloud':''}</span></div>`; }
+function liveWxLine(){ const x=S.sim&&S.sim.ext; if(!x || S.simState!=='live' || !x.weather || x.weather.windDir==null) return ''; const w=x.weather;
+  return `<div class="livewx"><span class="label">Live MSFS weather</span><span class="mono">${String(w.windDir).padStart(3,'0')}°/${w.windKt} kt · ${w.visSm==null?'':(w.visSm>=10?'10+':w.visSm)+' sm'}${w.oatC!=null?` · ${Math.round(w.oatC)} °C`:''}${w.qnhHpa!=null?` · ${Math.round(w.qnhHpa)} hPa`:''}${w.inCloud?' · in cloud':''}</span></div>`; }
 
 /* ---- (b) your phone rings: characters call with time-limited work ---- */
 

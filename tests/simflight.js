@@ -15,7 +15,7 @@ const FREEZE=`(()=>{ let s=99; Math.random=()=>{ s=(s*1103515245+12345)%21474836
     const lerp=(a,b,f)=>a+(b-a)*f;
     const rec={id:'r1', armedAt:Date.now(), phase:'parked'};
     const mk=(f,phase)=>{ const lat=lerp(from.lat,to.lat,f), lon=lerp(from.lon,to.lon,f); const air=phase==='air';
-      return { position:{lat,lon,altFt:air?5500:from.el||0, aglFt:air?(f>0.97?400:5000):0}, motion:{onGround:!air, gs:phase==='parked'?0:air?140:15, ias:air?130:10, vsFpm:air?(f>0.9?-600:0):0, hdg:90},
+      return { position:{lat,lon,hdg:90,altFt:air?5500:from.el||0, aglFt:air?(f>0.97?400:5000):0}, motion:{onGround:!air, gs:phase==='parked'?0:air?140:15, ias:air?130:10, vsFpm:air?(f>0.9?-600:0):0, hdg:90},
         systems:{engineRunning:phase!=='parked'||f<0.5, fuelLb:600-f*200}, ext:{ flaps:{handle:air&&f>0.95?1:0,left:0,right:0,overspeed:false,damaged:false}, gear:{retractable:false,down:true,overspeed:false}, warnings:{stall:false,overspeed:false}, attitude:{bank:0,pitch:0}, controls:{yokeX:0}, lights:{landing:true}, autopilot:false, weather:{windKt:8,windDir:90,visSm:10,inCloud:false}, transponder:{mode:'alt'} },
         recorder:rec, aircraft:{title:AC[job.ac].n} }; };
     const steps=[[0,'parked'],[0,'taxi'],[0.02,'air'],[0.3,'air'],[0.6,'air'],[0.9,'air'],[0.98,'air'],[1,'taxi'],[1,'parked']];

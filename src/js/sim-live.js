@@ -34,7 +34,7 @@ const SIM_TICK = [
   function academy(){ academyTick(); },
   function liveMap(){ if(S.view==='map' && S.st && S.st.active && S.simState==='live'){ S.keepScroll=true; render(); } },
   function inflightPanels(){ if(S.view==='flight' && S.st && S.st.active && S.st.active.started && !S.debrief && !S.showResult && !S.ifBrief){
-    const l=document.getElementById('if-live'); if(l) l.innerHTML=ifLiveHTML(); const m=document.getElementById('if-map'); if(m) m.innerHTML=ifMiniMap(S.st.active); } },
+    const l=document.getElementById('if-live'); if(l) l.innerHTML=ifLiveHTML(); const m=document.getElementById('if-map'); if(m) m.innerHTML=ifMiniMap(S.st.active); const ck=document.getElementById('if-ck'); if(ck){ const a=S.st.active; const k0=a.ck&&a.ck.p; const h=ifChecklistHTML(a); if(!ck.dataset.p || a.ck.p!==k0 || ck.dataset.p!==String(a.ck.p)){ ck.innerHTML=h; ck.dataset.p=a.ck.p; } } } },
   function preflight(){ if(S.view==='flight') renderPreflight(); },
   /* cabin chimes with passengers on board: after takeoff, top of descent, parked */
   function cabinChimes(){ const a=S.st&&S.st.active; if(!a || S.simState!=='live') return; const rec=simRecFor(a); if(!rec) return; const s=S.sim; const key=a.recId||'x'; const F=SIM_CHIMES[key]=SIM_CHIMES[key]||{};

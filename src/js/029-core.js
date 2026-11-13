@@ -24,13 +24,11 @@ function ifLiveHTMLBase(){
   const tile=(lbl,val,unit,cls='')=>`<div class="if-tile ${cls}"><span>${lbl}</span><b class="mono">${val}</b><small>${unit}</small></div>`;
   const eta = live && !s.motion.onGround && pr.togo!=null ? Math.round(pr.togo/Math.max(s.motion.gs,1)*60) : null;
   const tiles = live ? [
-    tile('Airspeed', s.motion.ias, 'knots'), tile('Altitude', (s.position.altFt||0).toLocaleString(), 'feet'),
-    tile('Vertical speed', (s.motion.vsFpm>0?'+':'')+s.motion.vsFpm, 'fpm', s.motion.vsFpm<-1000?'warn':''), tile('Heading', String(s.position.hdg||0).padStart(3,'0')+'°', 'true'),
-    tile('Ground speed', s.motion.gs, 'knots'), tile('Fuel', s.systems?s.systems.fuelLb:'—', 'lb'),
-    tile(pr.togo!=null?'To go':'Tour', pr.togo!=null?Math.round(pr.togo):'—', pr.togo!=null?'nm':'local'), tile('ETA', eta!=null?eta:'—', 'min')
+    /* route, distance, ETA, altitude, ground speed and fuel are on the flight display above; these are the flying numbers */
+    tile('Airspeed', Math.round(s.motion.ias||0), 'knots'),
+    tile('Vertical speed', (s.motion.vsFpm>0?'+':'')+Math.round(s.motion.vsFpm||0), 'fpm', s.motion.vsFpm<-1000?'warn':''), tile('Heading', String(Math.round(s.position.hdg!=null?s.position.hdg:(s.motion.hdg||0))).padStart(3,'0')+'°', 'true')
   ].join('') : `<p class="small muted" style="grid-column:1/-1">Connect MSFS to see live instruments, your position and an ETA here.</p>`;
   return `<div class="if-phase"><span class="if-ph-dot ${ph.k}"></span><div><b>${esc(ph.n)}</b><span>${esc(ph.d)}</span></div></div>
-    <div class="if-route"><b class="mono">${esc(a.job.from)}</b><div class="if-bar"><i style="width:${pr.pct==null?0:pr.pct.toFixed(1)}%"></i>${pr.pct!=null?`<span class="if-plane" style="left:${pr.pct.toFixed(1)}%">${ICO_PLANE}</span>`:''}</div><b class="mono">${esc(a.job.local?a.job.from:a.job.to)}</b></div>
     <div class="if-tiles">${tiles}</div>`;
 }
 function ifMiniMap(a){
@@ -45,8 +43,13 @@ function ifMiniMap(a){
     <circle cx="${X(A.lon)}" cy="${Y(A.lat)}" r="6" class="r-start"/><circle cx="${X(B.lon)}" cy="${Y(B.lat)}" r="6" class="r-end"/>
     ${P?`<g transform="translate(${X(P.lon).toFixed(1)} ${Y(P.lat).toFixed(1)}) rotate(${s.position.hdg||0})" class="liveplane"><circle r="14" class="halo"/><path d="M0 -12 L3 -3 L12 2 L12 4 L3 2 L2 9 L5 11 L5 12 L0 11 L-5 12 L-5 11 L-2 9 L-3 2 L-12 4 L-12 2 L-3 -3Z"/></g>`:''}</svg>`;
 }
+/* the checklist moves on by itself as the flight does (start, taxi, takeoff, then the approach list in cruise);
+   it never goes backwards, and a tab you pick yourself stays until the next phase of flight */
+const CK_FOR = { pre:/before|start|preflight/i, taxi:/taxi|start/i, climb:/takeoff|climb/i, cruise:/approach|descent|cruise/i, descent:/approach|descent/i, final:/landing|approach/i, taxiin:/landing|after|shut/i };
+function ckFollowPhase(a, ph){ try{ const f=flightPhase(a); if(!CK_FOR[f.k] || a.ck.lastK===f.k) return; a.ck.lastK=f.k;
+  const i=ph.findIndex((x,j)=>j>=(a.ck.p||0) && CK_FOR[f.k].test(x.n)); if(i>=0) a.ck.p=i; }catch(_){} }
 function ifChecklistHTML(a){
-  const ph=cockpitPhases(S.st, a.job); a.ck=a.ck||{p:0,done:{}}; const cur=clamp(a.ck.p,0,ph.length-1); const P=ph[cur];
+  const ph=cockpitPhases(S.st, a.job); a.ck=a.ck||{p:0,done:{}}; ckFollowPhase(a, ph); const cur=clamp(a.ck.p,0,ph.length-1); const P=ph[cur];
   return `<div class="row between"><h3>Checklist · ${esc(P.n)}</h3><span class="mono small muted">${P.items.filter((_,i)=>a.ck.done[cur+'-'+i]).length}/${P.items.length}</span></div>
     <div class="if-phases">${ph.map((x,i)=>`<button class="${i===cur?'on':''}" data-act="ck-phase" data-i="${i}">${x.items.every((_,j)=>a.ck.done[i+'-'+j])?'✓ ':''}${esc(x.n)}</button>`).join('')}</div>
     <div class="if-ck">${P.items.map((t,i)=>{ const on=!!a.ck.done[cur+'-'+i]; return `<button class="ck ${on?'on':''}" data-act="ck-item" data-k="${cur}-${i}" aria-pressed="${on}"><span class="box">${on?'✓':''}</span><span>${esc(t)}</span></button>`; }).join('')}</div>`;

@@ -25,7 +25,7 @@ function hudHTML(a){
     if(pct!=null) prog=`<div class="fhud-prog"><i style="width:${pct}%"></i><span>${pct}%</span></div>`;
     if(air!=null) airCell=`<div class="hud-c"><span>In the air</span><b>${air}<small> min</small></b></div>`; }catch(_){}
   try{ /* course to the destination, the landing runway when close, and what this flight is for */
-    const cells=[]; if(live){ const b=Math.round(brg({lat:s.position.lat,lon:s.position.lon},dest)); const hdg=s.motion&&s.motion.hdg!=null?Math.round(s.motion.hdg):null; const off=hdg!=null?((b-hdg+540)%360)-180:0;
+    const cells=[]; if(live){ const b=Math.round(brg({lat:s.position.lat,lon:s.position.lon},dest)); const hdg=s.position.hdg!=null?Math.round(s.position.hdg):s.motion&&s.motion.hdg!=null?Math.round(s.motion.hdg):null; const off=hdg!=null?((b-hdg+540)%360)-180:0;
       cells.push(`<div class="hud-c hud-brg"><span>Course to ${esc(to)}</span><b>${pad3(b)}°</b><i style="transform:rotate(${off}deg)">↑</i></div>`);
       if(togo<20 && !dest.water){ const w=s.ext&&s.ext.weather; const wx=w?Object.assign({},job.wx,{dir:w.windDir,spd:w.windKt,gust:0}):job.wx; let r=null; try{ r=rwyAnalysis(to,wx,job.ac); }catch(_){} if(r&&!r.water) cells.push(`<div class="hud-c hud-rw"><span>Land runway</span><b>${esc(r.rw)}</b><small>${pad3(wx.dir)}°/${wx.spd} kt</small></div>`); } }
     const g = job.kind==='story' && typeof CH_GOAL!=='undefined' && CH_GOAL[job.story] ? `<p class="hud-goal"><span>Goal</span> ${esc(CH_GOAL[job.story][0])}</p>` : job.kind==='check' ? `<p class="hud-goal"><span>Checkride</span> ${esc((job.tasks||[]).join(' · '))}</p>` : job.network ? `<p class="hud-goal"><span>Network run</span> ${job.lowLevel?'Stay under 1,000 ft for the bonus. ':''}${job.drop?'Night drop at a closed strip. ':''}Heat +5 when you land.</p>` : '';
@@ -139,7 +139,7 @@ function inflightView(){
     <div class="callout-host" aria-live="assertive">${typeof calloutHTML==='function'?calloutHTML():''}</div>
     ${orders}<section class="panel stack if-live" id="if-live">${ifLiveHTML()}</section>
     <div class="if-grid">
-      <div class="stack"><section class="panel if-mapwrap" id="if-map">${ifMiniMap(a)}</section><section class="panel stack">${ifChecklistHTML(a)}</section></div>
+      <div class="stack"><section class="panel if-mapwrap" id="if-map">${ifMiniMap(a)}</section><section class="panel stack" id="if-ck">${ifChecklistHTML(a)}</section></div>
       <div class="stack">${typeof cabinBlock==='function'?cabinBlock():''}
         ${job.manifest?manifestHTML(job):''}<section class="panel stack small"><h3>Quick reference</h3><dl class="kv"><dt>Speeds</dt><dd class="mono">${esc(ac.v)}</dd><dt>Departure</dt><dd>${esc(job.from)} runway ${esc(rwyAnalysis(job.from,job.wx,job.ac).rw)}</dd>${job.local?'':`<dt>Arrival</dt><dd>${esc(job.to)} runway ${esc(rwyAnalysis(job.to,job.wx,job.ac).rw)}</dd>`}<dt>Wind</dt><dd class="mono">${pad3(job.wx.dir)}° / ${job.wx.spd}${job.wx.gust?'G'+job.wx.gust:''} kt</dd><dt>Load</dt><dd>${job.pax?job.pax+' pax':''}${job.pax&&job.cargo?' + ':''}${job.cargo?job.cargo+' lb':''}</dd></dl>
         ${job.scen?`<button class="btn sm" data-act="if-brief">Sealed orders: open in the briefing</button>`:''}<button class="btn sm ghost danger" data-act="cancel">Cancel flight</button></section>

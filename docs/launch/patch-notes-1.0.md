@@ -46,6 +46,10 @@
 - Checkrides show the full flight details again (weather, weights, route), without repeating the task list.
 
 ## Interface
+- Flight mode: the "Course to" arrow on the flight display now turns with your heading (it always pointed straight up).
+- Flight mode: the checklist moves on by itself (start, taxi, takeoff, then the approach list in cruise, then landing); it never jumps back, and a tab you choose stays until the next phase.
+- Flight mode: the phase panel no longer repeats the flight display's numbers; it shows airspeed, vertical speed and heading.
+- The live MSFS weather line skips temperature or pressure when the sim doesn't send them, instead of printing "undefined".
 - Dollar amounts starting with $1 (like $1,800 upkeep) no longer lose their first digits on the Money page and the Pilot page.
 - The Power and Heat bars after a chapter include what your choice changed, and are shown once.
 - The flight page opens at the top after a chapter's opening scene.
