@@ -32,6 +32,10 @@
 - The Airline page shows "Demand: High/Shoulder/Low" instead of "Season ×0.95".
 - When you hold dirty cash, your story page has a "Launder it" button.
 
+- **Bigger airline, more to spend on.** Your company can now buy the ES-30, A320neo, 737 MAX 8 and A321LR (hired crews fly them until you hold the ATP). Build six facilities (maintenance hangar, marketing office, revenue manager, pilot training center, premium lounge, VIP charter desk), open bases at other hubs, and refit cabins. The Airline page shows your company's value.
+- Each route now has a limited number of travellers a day, shared by your aircraft on it, so big jets need busy hub routes and smart fares.
+- Four new airline achievements.
+
 ## Flying and grading
 - Expert difficulty: skipping the checklist now always costs the 10 points it should.
 - One flight never costs more than 12% airframe health (unless you crash); aircraft at 25% or more are never grounded; the damage deductible matches the damage.
@@ -46,6 +50,10 @@
 - The Hangar tabs are at the top on every tab.
 - The chapter label on the ticket no longer reads "Ch 0" for chapters changed by earlier choices.
 - On a phone-width window, the cabin panel in flight mode no longer pushes the page sideways.
+
+- Phone: job cards show the full title, with Accept below the price; Pilot tabs scroll to the one you're on.
+- Academy and Butter Cup headers match the rest of the game, and so does the launch splash.
+- The Butter Cup asks you to connect MSFS before starting an attempt it can't score.
 
 ## Under the hood
 - The game's code was reorganised into clear files by area (jobs, flight results, live sim, each page, cutscenes). Behaviour was checked screen by screen against the previous version, and with a full simulated MSFS flight.

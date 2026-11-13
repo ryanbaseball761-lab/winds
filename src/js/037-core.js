@@ -19,6 +19,7 @@ function cupBoard(st, c){ const me=cupState(st).best[c.id]; const rows=rivalScor
   return `<ol class="cup-board">${rows.map((r,i)=>`<li class="${r.me?'me':''}"><span>${i+1}</span><b>${esc(r.n)}</b><span class="mono">${r.fpm} fpm</span></li>`).join('')}</ol>`; }
 async function startCup(id){
   const st=S.st, C=cupState(st); if(st.active){ toast('Finish or cancel your current job first.'); return; }
+  if(!S.mcp || ['off','nobridge'].includes(S.simState)){ toast('Connect MSFS first: the Butter Cup scores your touchdown straight from the sim.'); return; }
   C.cur=id; C.recId=null; C.started=Date.now(); C.tries[id]=(C.tries[id]||0)+1; save(); render();
   if(S.mcp && S.simState!=='nobridge'){ try{ const r=await S.mcp.callTool(SIM_SERVER,'flight_recorder_reset',{label:'Butter Cup: '+id},{cache:false}); let p=r.payload; if(typeof p==='string'){ try{p=JSON.parse(p);}catch(_){} } if(p&&p.recorderId){ C.recId=p.recorderId; save(); } }catch(_){} }
 }

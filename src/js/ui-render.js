@@ -118,7 +118,7 @@ const AFTER_RENDER = [
   /* metric units, if chosen in Settings */
   function metricUnits(){ if(uiP().metric){ const w=document.createTreeWalker(document.getElementById('app')||document.body, NodeFilter.SHOW_TEXT); const L=[]; while(w.nextNode()) L.push(w.currentNode); L.forEach(n=>{ if(/\d\s?(lb|gal)\b/.test(n.nodeValue)) n.nodeValue=toMetric(n.nodeValue); }); } },
   /* the sub-tab for the page you're on is the one highlighted */
-  function subTabHighlight(){ document.querySelectorAll('.subtabs button').forEach(b=>{ if(b.dataset.v==='pilot' && ['profile','log'].includes(S.view)) b.classList.remove('on'); if(b.dataset.v===S.view) b.classList.add('on'); }); },
+  function subTabHighlight(){ document.querySelectorAll('.subtabs button').forEach(b=>{ if(b.dataset.v==='pilot' && ['profile','log'].includes(S.view)) b.classList.remove('on'); if(b.dataset.v===S.view) b.classList.add('on'); }); document.querySelectorAll('.subtabs').forEach(t=>{ const on=t.querySelector('.on'); if(on && t.scrollWidth>t.clientWidth) t.scrollLeft=Math.max(0,on.offsetLeft-t.clientWidth/2+on.offsetWidth/2); t.classList.toggle('more', t.scrollWidth>t.clientWidth+4 && t.scrollLeft+t.clientWidth<t.scrollWidth-4); }); },
   /* the job list remembers your tab and sort (write them back) */
   function storeJobListPrefs(){ if(S.st){ const u=S.st.ui=S.st.ui||{}; if(u.jobTab!==S.jobTab||u.jobSort!==S.jobSort){ u.jobTab=S.jobTab; u.jobSort=S.jobSort; } } },
   /* the window title says where you are in the story */

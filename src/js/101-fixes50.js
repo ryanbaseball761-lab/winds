@@ -64,7 +64,7 @@ WHATS_NEW.unshift(['0.43','50 fixes: the new-career screen fits the story, Heat 
 (function(){ const s=document.createElement('style'); s.textContent=`
 #toasts{transform:none!important;align-items:flex-end!important;width:auto!important}
 .cup-grid .card > :first-child, .cup-card > :first-child, main .cup svg, .cup-art{filter:saturate(.5) brightness(.72) contrast(1.08)}
-.subtabs{overflow-x:auto;scrollbar-width:none;white-space:nowrap}.subtabs::-webkit-scrollbar{display:none}.subtabs button{flex:none}
+.subtabs{overflow-x:auto;scrollbar-width:none;white-space:nowrap}.subtabs::-webkit-scrollbar{display:none}.subtabs button{flex:none}.subtabs.more{-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)}
 .fhud-route{min-width:0}.fhud-route b{font-size:clamp(20px,6vw,30px)}.fhud-route i{flex:1 1 40px;min-width:20px}.fhud-route span{flex-basis:100%;margin-left:0}
 @media (min-width:900px){.fhud-route span{flex-basis:auto;margin-left:auto}}
 .mrail{background:#0b0b0d!important;border-color:#222!important}.mrail{justify-content:space-around}.mrail button,.mrail a{flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border:0!important;border-radius:9px;background:transparent!important;color:#bdb6a8!important;font:600 11px var(--f-ui,inherit)}.mrail button svg,.mrail a svg{width:20px;height:20px}.mrail .on,.mrail [aria-current=page]{color:#e0b24a!important;background:rgba(224,178,74,.08)!important}
@@ -75,8 +75,11 @@ WHATS_NEW.unshift(['0.43','50 fixes: the new-career screen fits the story, Heat 
 .heat-chip{display:inline-grid;line-height:1.1;text-align:left;border:1px solid var(--line);border-radius:10px;padding:4px 10px;cursor:pointer;background:var(--surface);color:var(--ink)}.heat-chip span{font-size:10px;letter-spacing:.12em;text-transform:uppercase}.heat-chip b{font-family:var(--f-mono);font-size:13px}
 .heat-chip.cool span{color:#7cbf6f}.heat-chip.warm{border-color:#6b4e1a}.heat-chip.warm span{color:#e0b24a}.heat-chip.hot{border-color:#6b2a20;background:rgba(194,58,43,.12)}.heat-chip.hot span{color:#e5533d}
 @keyframes heatp{50%{box-shadow:0 0 0 4px rgba(229,83,61,.18)}}.heat-chip.hot{animation:heatp 1.6s ease-in-out infinite}
-.jr-m{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}`; document.head.appendChild(s); })();
+.jr-m{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-hero{background:radial-gradient(120% 120% at 100% 0%,rgba(124,191,111,.18),transparent 55%),linear-gradient(135deg,#101413,#0b0b0d)!important;border:1px solid #23302b}
+.cup-hero{background:radial-gradient(120% 120% at 0% 0%,rgba(224,178,74,.22),transparent 55%),linear-gradient(135deg,#17130c,#0b0b0d)!important;border:1px solid #3a2f18}`; document.head.appendChild(s); })();
 WHATS_NEW.unshift(['0.50','Every story choice now comes back later, a fuller epilogue, Caribe Cargo becomes your own airline (Pilot → Airline), smuggling pays more and draws more Heat, and many fixes.']);
 WHATS_NEW.unshift(['0.51','Clearer story: "Previously" remembers your choices, no spoilers before takeoff, consistent chapter numbers. Castillo pays for your jet rating, and the MSFS clock is set correctly.']);
 WHATS_NEW.unshift(['0.52','A faster start: a new start screen, one setup screen, then chapter 1. The next story step is always the main button, checkrides can be booked from your story path, and many fixes.']);
 WHATS_NEW.unshift(['0.53','Money fixes: "Earned" matches everywhere, story pay and laundered cash count as income on the Money page, plainer Airline stats, and a "Launder it" shortcut on your story page.']);
+WHATS_NEW.unshift(['0.54','Your airline grows: buy airliners (ES-30, A320neo, 737 MAX, A321), build six facilities, open bases at other hubs, refit cabins, and track company value. Plus phone fixes for the job board and Pilot tabs.']);

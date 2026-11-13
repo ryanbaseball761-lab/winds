@@ -86,5 +86,6 @@ body.flying #app > .side,body.flying .topbar .hud .now-pill{display:none}body.fl
 .jr-go{position:absolute;right:16px;top:9px}.jr-go .btn{padding:8px 16px}
 .jr-card{padding:0 18px 18px}.jr-card .jcard{margin:0;max-width:640px}.jr-card .jc-art{display:none}.jr-card .jc-go{display:none}
 @media (max-width:1000px){.jl-head{display:none}.jr-main{grid-template-columns:1fr auto;padding-right:120px}.jr-k,.jr-m{grid-column:1}.jr-rt{grid-column:1}.jr-t{grid-column:1}.jr-p{grid-column:2;grid-row:1}}
+@media (max-width:600px){.jr-main{padding:14px 18px 60px}.jr-go{top:auto;bottom:12px;right:18px}.jr-t{white-space:normal}.jr-m{white-space:normal!important}}
 .loaded-now{border-left:4px solid #7cbf6f}`; document.head.appendChild(s); })();
 (function(){ const s=document.createElement('style'); s.textContent=`.cut-title .cut-sub p{font-family:inherit;text-transform:none;letter-spacing:0;color:#d6d0c4;font-size:clamp(15px,1.5vw,19px);margin:8px 0;line-height:1.5}.cut-title .cut-sub p b{color:#fff}.cut-title .cut-sub .cut-nerve span,.cut-title .cut-sub .cut-meters span{font-family:var(--f-mono)}`; document.head.appendChild(s); })();
