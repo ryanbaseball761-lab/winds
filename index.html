@@ -1667,6 +1667,10 @@ function simPanelHTML(){
     </ul></div>` : (a ? `<p class="small muted">${a.started?'Recorder not linked to this flight yet.':'Press Start flight and the recorder arms automatically.'}</p>` : '')}`;
 }
 function simHangarHTML(){
+  if(window.TW_STANDALONE) return `<div class="row between"><h3>Live MSFS connection</h3>${simStatusLine()}</div>
+  <p class="small">The Trade Winds app reads MSFS 2020 or 2024 through SimConnect: your position, fuel and an automatic flight recording (block out, takeoff, touchdown rate, landing spot, block in). The debrief fills itself in from it.</p>
+  <ol class="tight small"><li>Start MSFS and load into a flight (on the runway or at a gate, not the main menu).</li><li>This page turns <b>live</b> within a few seconds. The status dot in the sidebar turns green.</li><li>Still off? Make sure MSFS has finished loading, then press Check connection.</li></ol>
+  ${S.mcp?`<button class="btn sm" data-act="sim-retry">Check connection</button>`:''}`;
   return `<div class="row between"><h3>Live MSFS connection</h3>${simStatusLine()}</div>
   <p class="small">The MSFS Bridge is a small program on your PC that reads MSFS 2020 or 2024 through SimConnect and hands this page your position, fuel and an automatic flight recording: block out, takeoff, touchdown rate, landing spot and block in. The debrief fills itself in from it.</p>
   <ol class="tight small"><li>Install Node.js (LTS) if you don't have it.</li><li>Unzip the <b>msfs-bridge</b> folder somewhere permanent, for example <span class="mono">C:\\Users\\you\\msfs-bridge</span>, and double-click <span class="mono">install.bat</span>.</li><li>In the Claude desktop app: Settings → Developer → Edit Config, and add the <span class="mono">msfs-bridge</span> entry from the README. Restart the Claude app.</li><li>Open this page in the Claude desktop app on the same PC, start MSFS, and load into a flight.</li></ol>
@@ -3721,7 +3725,7 @@ ALT_OUT.BO5 = st => st.story.flags.BO4==='a' ? {good:`De Vries closes his notebo
 /* Hartwell now follows The Buyout */
 (function(){ const h=STORY.find(m=>m.id==='HW1'); if(h && h.req) h.req.after='BO3'; })();
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.59.0';
+const TW_VERSION = '0.60.0';
 
 /* ---------- live map ---------- */
 function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
@@ -5136,7 +5140,7 @@ function saneTouchdown(td){ if(!td) return td; const t=Object.assign({}, td); co
 function touchdownAnalysis(code, td){ const A=touchdownAnalysisBase(code, td); if(A && A.runway && Math.abs(A.xt) > A.w*0.9){ A.approx=true; A.center='unknown'; } return A; }
 
 /* 4 + 5. fairer landing grades, and a checkride isn't failed for a firm 373 fpm landing */
-function landingClass(fpm){ const d=diff(); const T = d==='expert' ? [80,170,320] : d==='casual' ? [130,260,600] : [110,220,450]; return fpm<T[0]?'butter':fpm<T[1]?'smooth':fpm<T[2]?'firm':'hard'; }
+function landingClass(fpm){ fpm=Math.abs(Number(fpm)); if(!isFinite(fpm)) return 'smooth'; const d=diff(); const T = d==='expert' ? [80,170,320] : d==='casual' ? [130,260,600] : [110,220,450]; return fpm<T[0]?'butter':fpm<T[1]?'smooth':fpm<T[2]?'firm':'hard'; }
 LANDING.hard.pts = 10; LANDING.firm.pts = 20;
 
 /* 6. local flights (tours, circuits, searches) were planned twice as long as they really take */
@@ -6562,6 +6566,7 @@ WHATS_NEW.unshift(['0.56','Airline balance: every route has a limited number of 
 WHATS_NEW.unshift(['0.57','Airline: "Find the best route" picks the most profitable destination and fare for a hired aircraft (or tells you the charter pool pays more). Fixed a crash when bringing on crew while you own an airline.']);
 WHATS_NEW.unshift(['0.58','Flight mode: the "course to" arrow now points where you need to turn (it was stuck pointing up), the checklist follows your flight phase on its own, duplicate numbers are gone from the phase panel, and the live weather line no longer shows "undefined".']);
 WHATS_NEW.unshift(['0.59','The flight timer no longer flickers between real time and sim time (it uses MSFS block time when the sim is recording), and the checklist tabs wrap on phones.']);
+WHATS_NEW.unshift(['0.60','Hangar → MSFS connection explains how the Trade Winds app connects (no Claude setup steps), and touchdown grading ignores the sign of the reading.']);
 /* ===================== PAGE CHROME =====================
    The parts of the screen that surround every page: the side menu, the top bar with its
    status chips, and the phone-width menu. band() returns all of it as one piece of HTML. */

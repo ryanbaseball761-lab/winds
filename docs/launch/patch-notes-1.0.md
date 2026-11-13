@@ -40,12 +40,14 @@
 - Airline balance: passengers cost $14 plus 18% of the fare (handling, taxes, booking), airliner crews $22,000 a day, and cheap fares grow a route's market by at most 60%. An A320neo on its best route nets about $44,000 a day after its loan; business jets only pay in the charter pool.
 
 ## Flying and grading
+- Touchdown grading uses the size of the reading, so a bridge that reports descent as a negative number can't turn a hard landing into a butter one.
 - Expert difficulty: skipping the checklist now always costs the 10 points it should.
 - One flight never costs more than 12% airframe health (unless you crash); aircraft at 25% or more are never grounded; the damage deductible matches the damage.
 - Overnight repairs are applied once (12% a day, 24% while grounded).
 - Checkrides show the full flight details again (weather, weights, route), without repeating the task list.
 
 ## Interface
+- Hangar → MSFS connection: in the Trade Winds app it now says how the app connects to MSFS, instead of the Claude-desktop setup steps meant for the web version.
 - Flight mode: the flight timer shows MSFS block time when the sim is recording (so sim rate counts) instead of switching between that and real time every few seconds.
 - Phones: the checklist tabs wrap so the current one is always visible.
 - Flight mode: the "Course to" arrow on the flight display now turns with your heading (it always pointed straight up).

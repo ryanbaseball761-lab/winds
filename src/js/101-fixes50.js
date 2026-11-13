@@ -91,3 +91,4 @@ WHATS_NEW.unshift(['0.56','Airline balance: every route has a limited number of 
 WHATS_NEW.unshift(['0.57','Airline: "Find the best route" picks the most profitable destination and fare for a hired aircraft (or tells you the charter pool pays more). Fixed a crash when bringing on crew while you own an airline.']);
 WHATS_NEW.unshift(['0.58','Flight mode: the "course to" arrow now points where you need to turn (it was stuck pointing up), the checklist follows your flight phase on its own, duplicate numbers are gone from the phase panel, and the live weather line no longer shows "undefined".']);
 WHATS_NEW.unshift(['0.59','The flight timer no longer flickers between real time and sim time (it uses MSFS block time when the sim is recording), and the checklist tabs wrap on phones.']);
+WHATS_NEW.unshift(['0.60','Hangar → MSFS connection explains how the Trade Winds app connects (no Claude setup steps), and touchdown grading ignores the sign of the reading.']);

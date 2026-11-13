@@ -68,6 +68,10 @@ function simPanelHTML(){
     </ul></div>` : (a ? `<p class="small muted">${a.started?'Recorder not linked to this flight yet.':'Press Start flight and the recorder arms automatically.'}</p>` : '')}`;
 }
 function simHangarHTML(){
+  if(window.TW_STANDALONE) return `<div class="row between"><h3>Live MSFS connection</h3>${simStatusLine()}</div>
+  <p class="small">The Trade Winds app reads MSFS 2020 or 2024 through SimConnect: your position, fuel and an automatic flight recording (block out, takeoff, touchdown rate, landing spot, block in). The debrief fills itself in from it.</p>
+  <ol class="tight small"><li>Start MSFS and load into a flight (on the runway or at a gate, not the main menu).</li><li>This page turns <b>live</b> within a few seconds. The status dot in the sidebar turns green.</li><li>Still off? Make sure MSFS has finished loading, then press Check connection.</li></ol>
+  ${S.mcp?`<button class="btn sm" data-act="sim-retry">Check connection</button>`:''}`;
   return `<div class="row between"><h3>Live MSFS connection</h3>${simStatusLine()}</div>
   <p class="small">The MSFS Bridge is a small program on your PC that reads MSFS 2020 or 2024 through SimConnect and hands this page your position, fuel and an automatic flight recording: block out, takeoff, touchdown rate, landing spot and block in. The debrief fills itself in from it.</p>
   <ol class="tight small"><li>Install Node.js (LTS) if you don't have it.</li><li>Unzip the <b>msfs-bridge</b> folder somewhere permanent, for example <span class="mono">C:\\Users\\you\\msfs-bridge</span>, and double-click <span class="mono">install.bat</span>.</li><li>In the Claude desktop app: Settings → Developer → Edit Config, and add the <span class="mono">msfs-bridge</span> entry from the README. Restart the Claude app.</li><li>Open this page in the Claude desktop app on the same PC, start MSFS, and load into a flight.</li></ol>

@@ -9,7 +9,7 @@ function saneTouchdown(td){ if(!td) return td; const t=Object.assign({}, td); co
 function touchdownAnalysis(code, td){ const A=touchdownAnalysisBase(code, td); if(A && A.runway && Math.abs(A.xt) > A.w*0.9){ A.approx=true; A.center='unknown'; } return A; }
 
 /* 4 + 5. fairer landing grades, and a checkride isn't failed for a firm 373 fpm landing */
-function landingClass(fpm){ const d=diff(); const T = d==='expert' ? [80,170,320] : d==='casual' ? [130,260,600] : [110,220,450]; return fpm<T[0]?'butter':fpm<T[1]?'smooth':fpm<T[2]?'firm':'hard'; }
+function landingClass(fpm){ fpm=Math.abs(Number(fpm)); if(!isFinite(fpm)) return 'smooth'; const d=diff(); const T = d==='expert' ? [80,170,320] : d==='casual' ? [130,260,600] : [110,220,450]; return fpm<T[0]?'butter':fpm<T[1]?'smooth':fpm<T[2]?'firm':'hard'; }
 LANDING.hard.pts = 10; LANDING.firm.pts = 20;
 
 /* 6. local flights (tours, circuits, searches) were planned twice as long as they really take */
