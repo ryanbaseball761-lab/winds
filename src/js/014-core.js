@@ -39,10 +39,9 @@ function cabinInner(){
   const a=S.st && S.st.active; if(!a) return '';
   const C=a.cab; const pax=a.job.pax>0; const live=S.simState==='live'; const coach=shortName(coachFor(a.job));
   const meter = pax ? `<div class="row between small"><span>Passenger comfort</span><b class="mono">${C?Math.round(C.comfort):100}/100</b></div><div class="meter ${C&&C.comfort<50?'bad':C&&C.comfort<80?'warn':''}"><i style="width:${C?C.comfort:100}%"></i></div>` : '';
-  const feed = C && C.log.length ? `<ol class="feed">${C.log.map(m=>`<li class="${m.kind||''}"><span class="who">${esc(m.who)}</span><span>${esc(m.text)}</span><time class="mono">${new Date(m.t).toTimeString().slice(0,5)}</time></li>`).join('')}</ol>`
+  const feed = C && C.log.length ? `<ol class="feed">${C.log.slice(0,4).map(m=>`<li class="${m.kind||''}"><span class="who">${esc(m.who)}</span><span>${esc(m.text)}</span><time class="mono">${new Date(m.t).toTimeString().slice(0,5)}</time></li>`).join('')}</ol>`
     : `<p class="small muted">${live ? `${esc(coach)} is listening on the radio. Passengers, ATC and ${esc(coach)} react here as you taxi, take off, hit turbulence and land.` : `Connect the MSFS Bridge and the cabin comes alive: ${esc(coach)} coaches you live, and passengers and ATC react to what you actually do.`}</p>`;
-  return `<div class="row between"><h3>Cabin &amp; radio</h3><span class="chip ${live?'sea':''}">${live?'● Live':'Offline'}</span></div><p class="tiny muted">${esc(coach)} is riding along today.</p>${meter}${feed}${pax?`<p class="tiny muted">Smooth flying keeps passengers happy. 90+ comfort earns a bonus tip.</p>`:''}`;
+  const voice = window.speechSynthesis ? `<button class="btn sm ghost voice-btn" data-act="sfx-toggle">${sfxOn()?'🎧 Sounds':'🎧 Off'}</button><button class="btn sm ghost voice-btn" data-act="voice">${voiceOn()?'🔊 Voices on':'🔇 Voices off'}</button>` : '';
+  return `<div class="row between"><h3>Cabin &amp; radio</h3>${voice}<span class="chip ${live?'sea':''}">${live?'● Live':'Offline'}</span></div><p class="tiny muted">${esc(coach)} is riding along today.</p>${liveWxLine()}${meter}${feed}${pax?`<p class="tiny muted">Smooth flying keeps passengers happy. 90+ comfort earns a bonus tip.</p>`:''}`;
 }
-const _coachCockpit = cockpitView;
-cockpitView = function(){ const h=_coachCockpit(); return h.replace('<main class="wrap stack fade cockpit">', '<main class="wrap stack fade cockpit"><div class="callout-host" aria-live="assertive">'+calloutHTML()+'</div>'); };
 /* keep a reference to the cabin on the job so the debrief can read it after the flight closes */

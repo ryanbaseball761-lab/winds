@@ -65,7 +65,7 @@ function guideHTML(a){ const s=S.simState==='live'?S.sim:null; const G=a.guide=a
   return `<section class="panel stack guide"><div class="row between"><div><p class="label">Your first flight</p><h3>Step ${Math.max(1,cur+1)} of ${GUIDE.length}: ${esc((GUIDE[cur]||GUIDE[GUIDE.length-1]).t)}</h3></div><button class="btn sm ghost" data-act="guide-hide">Hide guide</button></div>
     <ol class="guide-steps">${GUIDE.map((g,i)=>`<li class="${G.done[g.k]?'done':i===cur?'cur':''}"><b>${esc(g.t)}</b>${i===cur?`<span class="small">${esc(g.d)}</span>${!s?`<button class="btn xs" data-act="guide-next" data-k="${g.k}">Done</button>`:''}`:''}</li>`).join('')}</ol>
     ${!s?'<p class="tiny muted">MSFS isn\'t connected, so tick each step yourself.</p>':''}</section>`; }
-function guideActive(){ const st=S.st, a=st&&st.active; return !!(a && st.flights<1 && !proPrefs().noGuide); }
+function guideActiveBase(){ const st=S.st, a=st&&st.active; return !!(a && st.flights<1 && !proPrefs().noGuide); }
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="guide-next"],[data-act="guide-hide"]'); if(!b||!S.st) return; if(b.dataset.act==='guide-hide'){ proPrefs().noGuide=true; } else { const a=S.st.active; if(a){ a.guide=a.guide||{done:{}}; a.guide.done[b.dataset.k]=1; } } save(); S.keepScroll=true; render(); });
 
 /* ---- 5. weekend events ---- */
@@ -106,5 +106,3 @@ STORY.push(
 
 /* ---- settings: voices, copilot, in-sim panel ---- */
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="pro-flag"]'); if(!b||!S.st) return; proPrefs()[b.dataset.k]=b.checked; save(); });
-const _proCockpit = cockpitView;
-cockpitView = function(){ const h=_proCockpit(); const p=panelSetupHTML(); return p ? h.replace(/<\/main>\s*$/, p+'</main>') : h; };

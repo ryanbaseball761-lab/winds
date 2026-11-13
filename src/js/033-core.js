@@ -15,15 +15,12 @@ function chime(double=false){
   tone(659.25,t0); tone(523.25,t0+0.45); if(double){ tone(659.25,t0+1.1); tone(523.25,t0+1.55); }
 }
 /* squelch before radio voices */
-const _sdSpeak = speakNew;
-speakNew = function(){
+function speakNew(){
   const a=S.st&&S.st.active; const log=a&&a.cab&&a.cab.log; if(log && voiceOn()){ const fresh=log.filter(m=>m.t>VQ.lastT); if(fresh.some(m=>m.who!=='Cabin' && m.who!=='Recorder')) crackle(); }
-  return _sdSpeak();
-};
+  return speakNewBase();
+}
 /* cabin chimes on the big moments, and the radio murmuring in the background */
 const ATC_CALLS = [`{cs}, descend and maintain four thousand.`,`{cs}, contact San Juan Center, one two four point six five.`,`{cs}, traffic two o'clock, five miles, opposite direction.`,`{cs}, turn left heading two seven zero, vectors for the I L S.`,`{cs}, climb and maintain flight level two four zero.`,`{cs}, roger, maintain V F R, report the field in sight.`,`{cs}, radar contact, altimeter three zero zero one.`,`{cs}, cleared to land runway one zero, wind zero nine zero at twelve.`];
 const CALLSIGNS = [`American twelve forty`,`JetBlue four sixty one`,`Winair one zero seven`,`LIAT three two two`,`Cessna two four Kilo Tango`,`Seaborne six zero five`,`Caribbean three five two`,`Delta eight eleven`,`Cape Air nine one`,`November five Alpha Victor`];
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="sfx-toggle"]')) return; const on=!sfxOn(); try{ localStorage.setItem('tw.sfx', on?'on':'off'); }catch(_){} if(on){ crackle(); setTimeout(()=>chime(),300); } toast(on?'Radio sounds on.':'Radio sounds off.'); render(); });
 /* sound switch next to the voice switch */
-const _sdCabin = cabinInner;
-cabinInner = function(){ const h=_sdCabin(); return h ? h.replace('<button class="btn sm ghost voice-btn"', `<button class="btn sm ghost voice-btn" data-act="sfx-toggle">${sfxOn()?'🎧 Sounds':'🎧 Off'}</button><button class="btn sm ghost voice-btn"`) : h; };

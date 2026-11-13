@@ -16,14 +16,10 @@ document.addEventListener('click', e=>{ const s=e.target.closest('.cut-skip'); i
 
 
 /* 12. the sidebar says where your career is really saved */
-(function(){ const _st=syncText; syncText=function(){ if(window.twNative) return 'Saved to Documents\\Trade Winds'; return _st(); }; })();
-
-/* 13. the map opens on the airport you searched for, highlighted */
-(function(){ const _mv=mapView; mapView=function(){ const h=_mv(); if(!S.mapSel||!AP[S.mapSel]) return h; try{ const v=MAPV[S.mapZoom||'east']; const a=AP[S.mapSel]; if(a.lon<v.lon[0]||a.lon>v.lon[1]||a.lat<v.lat[0]||a.lat>v.lat[1]){ const k=Object.keys(MAPV).find(z=>a.lon>=MAPV[z].lon[0]&&a.lon<=MAPV[z].lon[1]&&a.lat>=MAPV[z].lat[0]&&a.lat<=MAPV[z].lat[1]); if(k && k!==S.mapZoom){ S.mapZoom=k; return _mv(); } } }catch(_){} return h; }; })();
+function syncText(){ if(window.twNative) return 'Saved to Documents\\Trade Winds'; return syncTextBase(); }
 
 
-/* 15. achievements wait until a cutscene has finished before popping up */
-(function(){ const _ap=achPop; achPop=function(a){ if(document.querySelector('.cut')){ setTimeout(()=>achPop(a), 1500); return; } return _ap(a); }; })();
+
 
 /* 17. M shows or hides the menu in flight mode */
 document.addEventListener('keydown', e=>{ if(e.key.toLowerCase()!=='m' || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || e.ctrlKey||e.metaKey||e.altKey) return; if(document.body.classList.contains('flying') || S.fmMenu){ S.fmMenu=!S.fmMenu; S.keepScroll=true; render(); } });
@@ -33,9 +29,3 @@ document.addEventListener('keydown', e=>{ if(e.key.toLowerCase()!=='m' || /INPUT
 
 (function(){ const s=document.createElement('style'); s.textContent=`.launder-mini{gap:12px}.launder-mini .btn{margin-left:auto}`; document.head.appendChild(s); })();
 
-/* + profile numbers: story progress counts the current story, and impossible touchdown readings are left out of the average */
-(function(){ const _pv=profileView; profileView=function(){ const h=_pv(); try{ const st=S.st; const t=tpl(h); const MC=mainChapters(); const done=MC.filter(m=>st.story.done[m.id]).length; const good=(st.log||[]).map(x=>x.fpm).filter(v=>v>0&&v<1500); const avg=good.length?Math.round(good.reduce((a,b)=>a+b,0)/good.length):null;
-  t.content.querySelectorAll('*').forEach(el=>{ if(el.children.length) return; const x=el.textContent.trim(); const box=el.parentElement; if(!box) return;
-    if(/^story$/i.test(x)){ const v=[...box.querySelectorAll('*')].find(e=>!e.children.length && /\d+\s*\/\s*\d+/.test(e.textContent)); if(v) v.textContent=`${done}/${MC.length}`; else { const v2=[...box.childNodes].find(n=>n.nodeType===3 && /\d+\/\d+/.test(n.nodeValue)); if(v2) v2.nodeValue=v2.nodeValue.replace(/\d+\/\d+/, `${done}/${MC.length}`); } }
-    if(/^avg touchdown$/i.test(x) && avg!=null){ const v=[...box.querySelectorAll('*')].find(e=>e!==el && !e.children.length && /^\d+$/.test(e.textContent.trim())); if(v) v.textContent=String(avg); } });
-  return t.innerHTML; }catch(_){ return h; } }; })();

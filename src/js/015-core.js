@@ -1,5 +1,5 @@
 /* ===================== 2. LANDING REPLAY CARD (shareable image) ===================== */
-function drawFlightCard(st){
+function flightCardBase(st){
   const {job,res,f,out} = st.last; const W=1200, H=630;
   const cv=document.createElement('canvas'); cv.width=W; cv.height=H; const g=cv.getContext('2d');
   const disp='"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif', body='"Instrument Sans", "Segoe UI", system-ui, sans-serif', mono='"IBM Plex Mono", Consolas, monospace';
@@ -36,6 +36,24 @@ function drawFlightCard(st){
   g.textAlign='left';
   return cv;
 }
+/* the shareable flight card: the base card, then the route you flew, then where you touched down on the runway */
+function drawFlightCard(st){ const cv=flightCardBase(st); cardReplay(cv,st); cardRunway(cv,st); return cv; }
+function cardReplay(cv,st){ const R=st.last&&st.last.replay; if(!R || !R.track || R.track.length<2) return;
+  const g=cv.getContext('2d'); const pts=replaySvgPath(R.track, 360, 150).map(p=>[p[0]+780, p[1]+440]);
+  g.save(); g.strokeStyle='rgba(255,255,255,.9)'; g.lineWidth=4; g.lineCap='round'; g.lineJoin='round'; g.setLineDash([2,8]); g.beginPath(); pts.forEach((p,i)=> i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1])); g.stroke(); g.setLineDash([]);
+  g.fillStyle='#43d17f'; g.beginPath(); g.arc(pts[0][0],pts[0][1],7,0,7); g.fill(); g.fillStyle='#ff9470'; g.beginPath(); g.arc(pts[pts.length-1][0],pts[pts.length-1][1],7,0,7); g.fill(); g.restore(); }
+function cardRunway(cv,st){ const A=st.last&&st.last.f&&st.last.f.tda; if(!A || !A.runway) return; const g=cv.getContext('2d');
+  const x0=740, x1=1160, y=545, h=34, L=A.len, sx=v=>x0+(v/L)*(x1-x0), disp=A.len-A.avail;
+  g.fillStyle='rgba(4,20,24,.78)'; roundRect(g,x0-20,y-56,x1-x0+40,h+86,18); g.fill();
+  g.fillStyle='#3b4148'; roundRect(g,x0,y,x1-x0,h,4); g.fill();
+  g.fillStyle='rgba(255,255,255,.25)'; g.fillRect(sx(disp+400),y+5,sx(disp+1800)-sx(disp+400),h-10);
+  g.strokeStyle='rgba(255,255,255,.7)'; g.setLineDash([12,9]); g.lineWidth=2; g.beginPath(); g.moveTo(x0+6,y+h/2); g.lineTo(x1-6,y+h/2); g.stroke(); g.setLineDash([]);
+  const tx=sx(Math.max(0,Math.min(L,disp+A.fromThr))), ty=y+h/2+(A.approx?0:Math.max(-h/2,Math.min(h/2, A.xt/(A.w/2)*(h/2))));
+  g.fillStyle='#f2b33d'; g.strokeStyle='#08171c'; g.lineWidth=3; g.beginPath(); g.arc(tx,ty,9,0,Math.PI*2); g.fill(); g.stroke();
+  g.fillStyle='#fff'; g.font='700 15px "Instrument Sans","Segoe UI",sans-serif'; g.fillText(`RUNWAY ${A.runway}`, x0, y-28);
+  g.fillStyle='rgba(255,255,255,.8)'; g.font='600 15px "IBM Plex Mono",Consolas,monospace'; g.textAlign='right';
+  g.fillText(A.fromThr<0?`${Math.abs(A.fromThr)} ft short`:`${A.fromThr.toLocaleString()} ft in${A.approx?'':` · ${Math.abs(A.xt)} ft ${A.xt>=0?'R':'L'}`}`, x1, y-28); g.textAlign='left'; }
+
 function roundRect(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
 function wrapText(g,t,x,y,max,lh,lines){ const words=t.split(' '); let line='', n=0; for(const w of words){ const test=line?line+' '+w:w; if(g.measureText(test).width>max && line){ g.fillText(line,x,y); y+=lh; line=w; n++; if(n>=lines-1){ /* last line */ } if(n>=lines){ return; } } else line=test; } if(line && n<lines) g.fillText(line.length>60?line.slice(0,58)+'…':line,x,y); }
 function cardSection(){

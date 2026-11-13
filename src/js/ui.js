@@ -9,12 +9,11 @@ const TOAST_QUEUE = [];   // messages waiting for a cutscene or the title screen
    During a cutscene or on the title screen it waits its turn. */
 function toast(msg){
   if(/^New tab unlocked/i.test(String(msg))) return;   // the five-item menu has everything now
-  if(document.querySelector('.cut,.title-screen') && !S._cabMute){ TOAST_QUEUE.push(msg); return; }
+  if(document.querySelector('.cut,.title-screen')){ TOAST_QUEUE.push(msg); return; }
   showToast(msg);
 }
 function showToast(msg){
-  try{ if(!S._cabMute && msg){ S.notifs.unshift({t:Date.now(), m:String(msg)}); S.notifs=S.notifs.slice(0,40); const b=document.querySelector('.bell b'); if(b){ b.textContent=S.notifs.length-S.notifSeen; b.style.display=''; } } }catch(_){}
-  if(S._cabMute) return;
+  try{ if(msg){ S.notifs.unshift({t:Date.now(), m:String(msg)}); S.notifs=S.notifs.slice(0,40); const b=document.querySelector('.bell b'); if(b){ b.textContent=S.notifs.length-S.notifSeen; b.style.display=''; } } }catch(_){}
   const m=String(msg); const now=Date.now(); if(S._lt===m && now-(S._ltT||0)<20000) return; S._lt=m; S._ltT=now;   // the same message twice in 20 s shows once
   S.toast=msg; let host=document.getElementById('toasts'); if(!host){ host=document.createElement('div'); host.id='toasts'; host.setAttribute('role','status'); host.setAttribute('aria-live','polite'); document.body.appendChild(host); }
   const k=toastKind(msg); const el=document.createElement('div'); el.className='toast2 '+k; el.innerHTML=`<span class="ti">${k==='ok'?'✓':k==='warn'?'!':'✈'}</span><span class="tt"></span><i class="tbar"></i>`; el.querySelector('.tt').textContent=msg;

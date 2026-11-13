@@ -37,8 +37,5 @@ async function writeFlightLog(job, f, res){ const T=S.trace; if(!window.twNative
   const rec = S.sim && S.sim.recorder; const body={ app: (typeof TW_VERSION!=='undefined'?TW_VERSION:''), difficulty:diff(), job:{id:job.id,title:job.title,from:job.from,to:job.to,ac:job.ac,kind:job.kind,scen:job.scen||null,dep:job.dep,est:job.est}, result:{score:res.score, grade:res.grade, parts:res.parts}, input:Object.assign({}, f, {td:f.td||null}), recorder:rec||null, samples:(T&&T.id===job.id)?T.samples:[], aircraftTitle:S.sim&&S.sim.aircraft&&S.sim.aircraft.title, errors:errLog().slice(-10) };
   try{ await twNative.flightLog(name, JSON.stringify(body)); }catch(_){} S.trace=null; }
 /* ---- a calmer job board ---- */
-const _dcDispatch = dispatchCard;
-dispatchCard = function(st){ let h=_dcDispatch(st); const n=(st.brief&&st.brief.msgs||[]).length;
-  return h.replace('<div class="msgs">', `<details class="dispatch-more"><summary class="small">Crew messages and today's tip (${n})</summary><div class="msgs">`).replace(/<\/section>\s*$/, '</details></section>'); };
-const _dcWeekly = weeklyPanel;
-weeklyPanel = function(st){ if(st.flights < 2 && !(st.ui&&st.ui.allTabs)) return ''; let h=_dcWeekly(st); if(st.flights < 5 && !(st.ui&&st.ui.allTabs)) h=h.replace(/<div class="league">[\s\S]*(?=<\/section>\s*$)/, ''); return h; };
+function dispatchCard(st){ let h=dispatchCardBase(st); const n=(st.brief&&st.brief.msgs||[]).length;
+  return h.replace('<div class="msgs">', `<details class="dispatch-more"><summary class="small">Crew messages and today's tip (${n})</summary><div class="msgs">`).replace(/<\/section>\s*$/, '</details></section>'); }

@@ -4,7 +4,7 @@
 /* setup tiles in the order you do them, numbered; parking first */
 const STEP_ORDER = [['Parking spot','Spawn here'],['Fuel & cargo','Fuel & weight'],['Time of day','Time of day'],['Runways','Runways'],['Weather','Weather']];
 /* fuel and weights are locked once you're rolling or airborne; and only fuel is loaded, so the plane can't tip over */
-loadIntoSim = async function(job){ if(!S.mcp){ toast('MSFS isn\'t connected.'); return; } const s=S.sim; const rec=s&&s.recorder;
+async function loadIntoSim(job){ if(!S.mcp){ toast('MSFS isn\'t connected.'); return; } const s=S.sim; const rec=s&&s.recorder;
   if(s && s.motion && (!s.motion.onGround || s.motion.gs>2) || (rec && rec.takeoff && S.st.active && S.st.active.started)){ toast('Fuel is locked once you\'re moving.'); return; }
   const p=plan(job); const fuelGal=Math.ceil(Math.max(p.gal*1.3, p.gal+5)); S.loading=true; renderPreflight();
   try{ const r=await S.mcp.callTool(SIM_SERVER,'load_aircraft',{fuelGal},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} }
@@ -16,11 +16,10 @@ loadIntoSim = async function(job){ if(!S.mcp){ toast('MSFS isn\'t connected.'); 
 /* (replaces the check inside the safety calls by giving it honest inputs) */
 
 /* ---- 5 + 6. no duty day, no "past midnight": the day rolls over by itself ---- */
-dutyAfter = function(){ return 0; };
+function dutyAfter(){ return 0; }
 
 /* ---- 7. Coral Wing pays your deadhead tickets until you run your own company ---- */
-const _fbDh = deadheadCost;
-deadheadCost = function(st, to){ const d=_fbDh(st, to); return (st && st.company) ? d : Object.assign({}, d, {cost:0, paid:true}); };
+function deadheadCost(st, to){ const d=deadheadCostBase(st, to); return (st && st.company) ? d : Object.assign({}, d, {cost:0, paid:true}); }
 
 /* ---- 8. two storylines: the main story and Starling; the other stories become special charters once you're Commercial ---- */
 const KEEP_ARCS = new Set([...MAIN_ORDER, 'Starling']);
@@ -34,5 +33,4 @@ function skyIsClear(){ const w=S.simState==='live' && S.sim && S.sim.ext && S.si
 
 /* ---- comfort only counts when the cabin actually rode along ---- */
 /* ---- the board's sky matches MSFS when you're sitting at that airport ---- */
-const _fbLocWx = genLocWx;
-genLocWx = function(st){ const base=_fbLocWx(st); try{ const s=S.sim; if(S.simState==='live' && s && s.position && distNm({lat:s.position.lat,lon:s.position.lon},AP[st.loc])<5){ const w=simWx(base); if(w) return w; } }catch(_){} return base; };
+function genLocWx(st){ const base=genLocWxBase(st); try{ const s=S.sim; if(S.simState==='live' && s && s.position && distNm({lat:s.position.lat,lon:s.position.lon},AP[st.loc])<5){ const w=simWx(base); if(w) return w; } }catch(_){} return base; }

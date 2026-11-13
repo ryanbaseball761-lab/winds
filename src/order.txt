@@ -19,7 +19,6 @@
 018-core.js
 019-core.js
 020-core.js
-021-core.js
 022-core.js
 023-core.js
 024-core.js
@@ -37,7 +36,6 @@
 036-core.js
 037-core.js
 038-core.js
-039-core.js
 040-core.js
 041-core.js
 042-core.js
@@ -108,6 +106,9 @@ page-result.js
 page-flight.js
 page-jobs.js
 page-story.js
+page-money.js
+page-map.js
+page-pilot.js
 cutscenes.js
 ui.js
 ui-render.js

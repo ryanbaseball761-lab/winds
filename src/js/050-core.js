@@ -1,10 +1,9 @@
 /* ===================== STORY CONTINUITY: chapter order and facts that have to agree ===================== */
 /* chapters can need more than one earlier chapter ("also") */
-storyAvailable = function(st){ return STORY.filter(m=>{ if(st.story.done[m.id]) return false; const r=m.req||{};
+function storyAvailable(st){ return STORY.filter(m=>{ if(st.story.done[m.id]) return false; const r=m.req||{};
   if(r.after && !st.story.done[r.after]) return false; if((r.also||[]).some(x=>!st.story.done[x])) return false;
-  if(r.ratings && !ratingsOk(st, r.ratings)) return false; if(r.hours && st.minutes/60 < r.hours) return false; return true; }); };
-const _ctHint = unlockHint;
-unlockHint = function(st, m){ const miss=_ctHint(st, m); for(const x of ((m.req||{}).also||[])){ if(!st.story.done[x]){ const p=STORY.find(y=>y.id===x); miss.unshift(`finish “${p?p.title:x}”`); } } return miss; };
+  if(r.ratings && !ratingsOk(st, r.ratings)) return false; if(r.hours && st.minutes/60 < r.hours) return false; return true; }); }
+function unlockHint(st, m){ const miss=unlockHintBase(st, m); for(const x of ((m.req||{}).also||[])){ if(!st.story.done[x]){ const p=STORY.find(y=>y.id===x); miss.unshift(`finish “${p?p.title:x}”`); } } return miss; }
 (function fix(){ const S_ = id => STORY.find(m=>m.id===id); const also=(id, ...ids)=>{ const m=S_(id); if(m){ m.req=m.req||{}; m.req.also=[...new Set([...(m.req.also||[]), ...ids])]; } };
   // Mari hands over Coral Wing only after her last flight, and Vale's comeback only makes sense after you beat him in the Buyout
   also('CO3','MR1'); also('CO2','BO5');

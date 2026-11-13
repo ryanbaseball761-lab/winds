@@ -1,7 +1,7 @@
 /* ===================== 20 FIXES AND SMALL UPGRADES (Nov 9) ===================== */
 
 /* 1. art: preload the portraits and scenes so they never pop in mid-cutscene */
-(function(){ const _al=artLoad; artLoad=function(i){ _al(i); setTimeout(()=>{ [...Object.values(ART.portraits), ...Object.values(ART.scenes)].forEach(u=>{ const im=new Image(); im.src=u; }); }, 4000); }; })();
+function artLoad(i){ artLoadBase(i); setTimeout(()=>{ [...Object.values(ART.portraits), ...Object.values(ART.scenes)].forEach(u=>{ const im=new Image(); im.src=u; }); }, 4000); }
 
 /* 2. click anyone on the Story page for their card: big portrait, who they are, where you stand */
 function personCard(k){ const st=S.st; const c=CAST[k]; if(!c) return; const trust=Math.round(st.rep[k]||0); const big=ART.portraits[k]?`<div class="pc-img" style="background-image:url('${ART.portraits[k]}')"></div>`:`<div class="pc-img pc-svg">${avatar(k)}</div>`;
@@ -33,7 +33,6 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="cut
 
 /* 14. "What's new" on the title screen */
 const WHATS_NEW = [['0.42','Illustrated portraits and scenes, person cards on the Story page, flight progress in flight mode, ← to go back in cutscenes, shortcuts list (?), and more.'],['0.41','Fixed Butter Cup, Academy and Profile pages; 21 smaller fixes.'],['0.40','20 small fixes: the right airline on your ticket, dirty cash in the header, cutscene auto-play.'],['0.39','Title screen, cold open, music, character voices, volume and units settings.'],['0.38','Backups before every chapter, safehouses, the feds, New Game+.']];
-(function(){ const _t=titleHTML; titleHTML=function(){ return _t().replace('<p class="ts-foot">', `<button class="ts-new" data-ts-new="1">What's new in ${WHATS_NEW[0][0]}</button><p class="ts-foot">`); }; })();
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-ts-new]')) return; e.stopPropagation(); const d=document.createElement('div'); d.className='pc-wrap'; d.style.zIndex=13000; d.innerHTML=`<div class="pc keys"><div class="pc-in"><p class="label">Updates</p><h2>What's new</h2><dl>${WHATS_NEW.map(([v,t])=>`<dt><b>${v}</b></dt><dd>${esc(t)}</dd>`).join('')}</dl><button class="btn sm" data-act="pc-close">Close</button></div></div>`; document.body.appendChild(d); d.addEventListener('click', ev=>{ if(ev.target===d||ev.target.closest('[data-act="pc-close"]')) d.remove(); }); }, true);
 
 
@@ -42,7 +41,7 @@ document.addEventListener('click', e=>{ const li=e.target.closest('.sh-time li')
   const d=document.createElement('div'); d.className='pc-wrap'; d.innerHTML=`<div class="pc keys"><div class="pc-in"><p class="label">Chapter ${n} · ${esc(m.arc)}</p><h2>${esc(m.title)}</h2><p>${esc((m.brief||[]).join(' '))}</p><p class="pc-status">${esc(m.recap||'')}</p>${ch?`<p><b>You chose:</b> ${esc(ch.t)}. ${esc(ch.out)}</p>`:''}<div class="row" style="gap:8px"><button class="btn sm" data-act="replay-ch" data-id="${m.id}">▶ Replay the opening</button><button class="btn sm ghost" data-act="pc-close">Close</button></div></div></div>`; document.body.appendChild(d); d.addEventListener('click', ev=>{ if(ev.target===d||ev.target.closest('[data-act="pc-close"],[data-act="replay-ch"]')) d.remove(); }); });
 
 /* 17. a small "Saved" tick in the sidebar when your career is saved */
-(function(){ const _sv=save; save=function(){ const r=_sv.apply(this, arguments); try{ clearTimeout(S._svT); S._svT=setTimeout(()=>{ const el=document.querySelector('.band .sync, .side .sync, .side-foot'); if(el){ el.classList.add('saved-flash'); setTimeout(()=>el.classList.remove('saved-flash'), 900); } }, 50); }catch(_){} return r; }; })();
+function save(){ const r=saveBase.apply(this, arguments); try{ clearTimeout(S._svT); S._svT=setTimeout(()=>{ const el=document.querySelector('.band .sync, .side .sync, .side-foot'); if(el){ el.classList.add('saved-flash'); setTimeout(()=>el.classList.remove('saved-flash'), 900); } }, 50); }catch(_){} return r; }
 
 
 /* 19. bigger portraits in "The people" now that there's art */

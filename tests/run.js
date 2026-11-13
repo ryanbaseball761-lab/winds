@@ -58,5 +58,24 @@ const results=[]; const ok=(n,c,info)=>{ results.push([n,!!c,info||'']); };
   const money1=await p.evaluate(()=>{ const st=S.st; ['CW1','CR2','CR3','CR4','CR5','CR10','CR14','CR15'].forEach(id=>st.story.done[id]=1); crime(st).on=true; crime(st).dirty=5000; const bad=[]; for(const v of ['money','story','hangar']){ S.view=v; S.showResult=false; render(); const t=document.querySelector('main').innerText; if(/(^|\n|: )\s*,\d{3}/.test(t)) bad.push(v); } return bad; });
   ok('dollar amounts are never cut to ",800"', money1.length===0, money1.join(','));
   ok('no script errors in regression checks', p._errs.length===0, p._errs.join(' | ')); await p.close();
+  // 9. MSFS clock: whatever offset the sim applies, setSimClock ends on the target time
+  p=await page(); const clk=await p.evaluate(async()=>{ const out=[]; const realST=window.setTimeout; window.setTimeout=(f,ms)=>realST(f,0);
+    for(const bug of [0,-240,300,720,-60]){ let simMin=0; S.simState='live'; S.sim=S.sim||{}; const set=m=>{ simMin=((m+bug)%1440+1440)%1440; S.sim.simLocalTime=`${String(Math.floor(simMin/60)).padStart(2,'0')}:${String(simMin%60).padStart(2,'0')}`; };
+      S.mcp={ callTool: async(srv,tool,args)=>{ if(tool==='set_time'){ set(args.localMin); return {payload:{ok:true}}; } return {payload:{}}; } };
+      for(const target of [9*60+30, 21*60, 5]){ const r=await setSimClock(target); const d=Math.abs(((simMinutes()-target)%1440+1440+720)%1440-720); out.push({bug,target,ok:r.ok,d}); } }
+    window.setTimeout=realST; S.mcp=null; S.simState='off'; return out; });
+  ok('MSFS clock lands on the planned time for any sim offset', clk.every(x=>x.ok && x.d<=3), JSON.stringify(clk.filter(x=>!x.ok||x.d>3)));
+  // 10. airline: airliners, facilities, bases, refits, route market
+  const co=await p.evaluate(()=>{ const st=S.st; st.cash=9e7; st.company={name:'Test Air',base:'TNCM',fleet:[],ledger:[],founded:1}; S.downPct=100; S.view='company'; render();
+    document.querySelector('[data-act="co-buy"][data-src="new:A320"]').click(); const f=st.company.fleet[0]; const o={bought:!!f, hired:f&&f.hired===!canFly(st,'A320')};
+    f.route={to:'TJSJ',fare:refFare(distNm(AP.TNCM,AP.TJSJ))}; const r0=routeDay(st,f,false);
+    S.view='company'; render(); document.querySelector('[data-act="co-upg"][data-v="mkt"]').click(); const r1=routeDay(st,f,false); o.mktUp=r1.pax>=r0.pax;
+    const f2={...f, fid:'x'}; st.company.fleet.push(f2); const r2=routeDay(st,f,false); o.shared=r2.pax<=r1.pax; st.company.fleet.pop();
+    S.view='company'; render(); const sel=document.getElementById('co-newbase'); sel.value='TJSJ'; document.querySelector('[data-act="co-base"]').click(); o.base=(st.company.bases||[]).includes('TJSJ');
+    S.view='company'; render(); document.querySelector('[data-act="co-refit"]').click(); o.refit=!!f.refit; const cash=st.cash; companyTick(st); o.tick=cash!==st.cash; o.value=companyValue(st)>0; return o; });
+  ok('airline: buy an A320, facilities, bases, refits, shared routes', Object.values(co).every(Boolean), JSON.stringify(co));
+  const earned=await p.evaluate(()=>{ const st=S.st; S.view='profile'; render(); const a=[...document.querySelectorAll('main *')].find(e=>/^Earned$/i.test(e.textContent.trim())); const pv=a&&a.parentElement.textContent.replace(/Earned/i,'').trim(); S.view='story'; render(); const b=[...document.querySelectorAll('.sh-stats span')].find(e=>/Earned/i.test(e.textContent)); const sv=b&&b.nextElementSibling.textContent.trim(); return [pv,sv]; });
+  ok('Earned is the same on Profile and Story', earned[0] && earned[0].includes(earned[1]), JSON.stringify(earned));
+  ok('no script errors in clock and airline checks', p._errs.length===0, p._errs.join(' | ')); await p.close();
   }catch(err){ ok('suite crashed', false, err.message); }
   await b.close(); let fail=0; for(const [n,good,info] of results){ console.log((good?'ok   ':'FAIL ')+n+(good?'':'  -> '+info)); if(!good) fail++; } console.log(fail?`${fail} FAILED`:'ALL PASSED'); process.exit(fail?1:0); })();

@@ -8,7 +8,6 @@ const URG_REASONS = [
   {arch:'vip_ceo', t:`Executive needs {to} now`, d:`A CEO's meeting moved up. They'll pay double for a pilot who's rolling in 15 minutes.`},
   {arch:'catch', t:`Fresh catch, short shelf life`, d:`A restaurant at {to} needs the morning catch before lunch service. Double pay for a fast departure.`}
 ];
-var urgentOn; /* defined in full below (055-core.js) */
 function notifyUrgent(job){
   const body = `${job.from} → ${job.to} · ${money(job.pay)} (2× pay) · accept in ${URG_ACCEPT_MIN} min, wheels up within ${URG_TAKEOFF_MIN}`;
   toast(`URGENT: ${job.title}`);

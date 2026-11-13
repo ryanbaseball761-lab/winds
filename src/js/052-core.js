@@ -30,7 +30,7 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="sig
 /* ---- flight setup: big, obvious tiles for runway, fuel, clock, parking and weather ---- */
 function runwayPlan(job){ const dep=rwyAnalysis(job.from, job.wx, job.ac); const arr=job.local?null:rwyAnalysis(job.to, job.wx, job.ac); return {dep, arr}; }
 function windTxt(r){ if(!r) return ''; if(r.water) return 'into the wind'; return `${Math.round(Math.max(0,r.head))} kt headwind, ${Math.round(r.xw)} kt crosswind${r.head<0?' (tailwind!)':''}`; }
-renderPreflight = function(){ const el=document.getElementById('preflight'); const a=S.st&&S.st.active; if(el && a) el.innerHTML=preflightHTML(a.job); };
+function renderPreflight(){ const el=document.getElementById('preflight'); const a=S.st&&S.st.active; if(el && a) el.innerHTML=preflightHTML(a.job); }
 /* setup sits right under the boarding pass */
 
 /* ---- each screen gets its own atmosphere ---- */

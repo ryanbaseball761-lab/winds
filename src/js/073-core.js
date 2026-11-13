@@ -12,8 +12,8 @@ function dynM(st, m){ const d=DYN[m.id]; return d ? Object.assign({}, m, d(flags
 
 /* endings: you only get the ones you earned */
 const ENDING_REQ = { kingpin:c=>c.power>=50 ? null : `Needs Power 50+ (you have ${c.power})`, witness:c=>(c.flags.informant||c.flags.ledgers||c.flags.medinaBurned||c.flags.drivecopy||c.flags.patient) ? null : `You have nothing to give Reyes`, ghost:()=>null };
-(function(){ const _ch=crimeChoiceHTML; crimeChoiceHTML=function(st){ const h=_ch(st); if(!h || !st.last || st.last.job.story!=='CR17' || crime(st).choice.CR17!=null) return h; const c=crime(st); const m=CRIME.find(x=>x.id==='CR17'); const t=tpl(h);
-  t.content.querySelectorAll('[data-act="crime-choose"]').forEach(b=>{ const o=m.choice.opts[Number(b.dataset.i)]; const why=o.ending && ENDING_REQ[o.ending](c); if(why){ b.disabled=true; b.title=why; b.insertAdjacentHTML('beforeend', ` <small>(${esc(why)})</small>`); } }); return t.innerHTML; }; })();
+function crimeChoiceHTML(st){ const h=crimeChoiceHTMLBase(st); if(!h || !st.last || st.last.job.story!=='CR17' || crime(st).choice.CR17!=null) return h; const c=crime(st); const m=CRIME.find(x=>x.id==='CR17'); const t=tpl(h);
+  t.content.querySelectorAll('[data-act="crime-choose"]').forEach(b=>{ const o=m.choice.opts[Number(b.dataset.i)]; const why=o.ending && ENDING_REQ[o.ending](c); if(why){ b.disabled=true; b.title=why; b.insertAdjacentHTML('beforeend', ` <small>(${esc(why)})</small>`); } }); return t.innerHTML; }
 window.addEventListener('click', e=>{ const b=e.target.closest('[data-act="crime-choose"]'); if(b && b.disabled){ e.stopImmediatePropagation(); e.preventDefault(); } }, true);
 function epilogue(st){ const f=flagsOf(st), L=[]; const end=crime(st).ending;
   if(f.mari) L.push(`Mari runs the logistics, and she never lets anyone put a kid in the back again.`); else if(st.story.done.CR13) L.push(`Mari sends a postcard once a year from somewhere cold. It never has a return address.`);

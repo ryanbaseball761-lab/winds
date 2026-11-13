@@ -24,7 +24,6 @@ async function simPoll(manual){
 }
 
 function nearestAirport(lat, lon){ let best=null, bd=1e9; for(const k in AP){ const d=distNm({lat,lon},AP[k]); if(d<bd){bd=d;best=k;} } return {code:best, d:bd}; }
-var landingClass; /* defined in full below (062-core.js) */
 function acMatches(title, acId){
   if(!title) return null; const t = title.toLowerCase(); const n = AC[acId].n.toLowerCase();
   const keys = n.match(/[a-z]*\d+[a-z0-9-]*|caravan|beaver|goose|otter|porter|cub|savage|bonanza|citation|king air|vision|skyhawk|icon|pilatus|tbm|dc-3|airbus|boeing|heart/g) || [];

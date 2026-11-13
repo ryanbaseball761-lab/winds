@@ -7,8 +7,6 @@ const DIFF = {
 };
 function diff(){ return (S.st && S.st.difficulty) || 'standard'; }
  // Preflight, Start, Taxi, Before takeoff
-var checklistDone; /* defined in full below (051-core.js) */
-var checklistCount; /* defined in full below (051-core.js) */
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="diff"]'); if(b && S.st){ S.st.difficulty=b.dataset.v; save(); toast(`${DIFF[b.dataset.v].n}: ${DIFF[b.dataset.v].d}`); S.keepScroll=true; render(); return; }
   const s=e.target.closest('[data-act="start"]'); if(s && S.st && S.st.active && diff()==='expert' && !checklistDone(S.st.active)){ e.stopImmediatePropagation(); e.preventDefault(); toast('Expert mode: finish the checklist first.'); go('cockpit'); }

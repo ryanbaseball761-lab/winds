@@ -62,5 +62,3 @@ function portraitSVG(k){ const P=PORTRAIT[k]; if(!P) return null; const sk=P.ski
   if(A.has('headscarf')) extra += `<path d="M29 38 C28 18 72 18 71 38 C64 31 36 31 29 38 Z" fill="${P.scarfC}"/><circle cx="50" cy="20" r="3" fill="${shade(P.scarfC,.2)}" opacity=".6"/>`;
   if(A.has('scarf')) extra += `<path d="M38 68 C44 76 56 76 62 68 L64 74 C56 82 44 82 36 74 Z" fill="${P.scarfC}"/><path d="M58 76 L62 92 L56 90 Z" fill="${P.scarfC}"/>`;
   return `<svg viewBox="0 0 100 100" aria-hidden="true">${back}${top}${head}${front}${face}${extra}</svg>`; }
-const _ptAvatar = avatar;
-avatar = function(k){ const svg=portraitSVG(k); if(!svg) return _ptAvatar(k); const c=CAST[k]||{}; return `<div class="avatar portrait" style="background:${c.col||'#0b746f'}" aria-hidden="true">${svg}</div>`; };

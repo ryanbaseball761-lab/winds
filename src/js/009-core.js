@@ -41,7 +41,7 @@ const TOUR = [
   {t:`Fly it with the Cockpit tab`, d:`Open the Cockpit tab on your phone or second screen. It walks you through each phase of the flight with your speeds, runway and winds. Some flights carry sealed envelopes: open them when they say.`},
   {t:`Log the landing honestly`, d:`After shutdown, press "Log the landing". Your grade sets your pay, your reputation and how the story turns. Get the free MSFS Bridge (Hangar tab) and the debrief fills itself in.`}
 ];
-function tourHTML(st){
+function tourBase(st){
   if(!st || st.tourDone) return ''; const i=S.tourStep||0; const s=TOUR[i];
   return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="tour-t"><div class="tour panel">
     <div class="tour-dots">${TOUR.map((_,k)=>`<span class="${k===i?'on':''}"></span>`).join('')}</div>
@@ -49,9 +49,13 @@ function tourHTML(st){
     <div class="row between" style="margin-top:8px"><button class="btn ghost" data-act="tour-skip">Skip</button><div class="row">${i>0?`<button class="btn" data-act="tour-back">Back</button>`:''}<button class="btn action" data-act="tour-next">${i===TOUR.length-1?`Let's fly`:'Next'}</button></div></div>
   </div></div>`;
 }
+/* top of the Flight page when no flight is booked: the setup screen for a new career, or the tour */
+function tourHTML(st){ const wiz = st && ((!st.tourDone && (st.flights||0)===0) || S.wizOpen);
+  return wiz ? wizardHTML(st) : tourBase(st); }
+
 
 /* ---------- today hero on the board ---------- */
-function todayHero(st){
+function todayHeroBase(st){
   const ap=AP[st.loc]; const wx=genLocWx(st); const r=rankOf(st); const sky=skyClass(st.clock);
   return `<section class="today sky-${sky}">
     <div class="sun" aria-hidden="true"></div>
@@ -64,7 +68,7 @@ function todayHero(st){
 
 /* ---------- boarding pass ---------- */
 const ICAO_TYPE = {C152:'C152',C172:'C172',DA40:'DA40',G36:'BE36',BEAVER:'DHC2',GOOSE:'G21',PC6:'PC6T',C208:'C208',DA62:'DA62',DHC6:'DHC6',PC12:'PC12',TBM:'TBM9',KA350:'B350',DC3:'DC3',SF50:'SF50',CJ4:'C25C',A320:'A20N',B38M:'B38M',A321:'A21N',A333:'A333',B748:'B748'};
-function flightNo(job){ let h=0; for(const ch of job.id) h=(h*31+ch.charCodeAt(0))%900; if(job.lend) return job.tail||'N50VL'; return (job.company?'':'CW ')+(100+h); }
+function flightNoBase(job){ let h=0; for(const ch of job.id) h=(h*31+ch.charCodeAt(0))%900; if(job.lend) return job.tail||'N50VL'; return (job.company?'':'CW ')+(100+h); }
 function planLinks(job){
   if(job.local || AP[job.to].water) return '';
   const t = ICAO_TYPE[job.ac]; const sb = `https://dispatch.simbrief.com/options/custom?orig=${job.from}&dest=${job.to}${t?`&type=${t}`:''}`; const sv = `https://skyvector.com/?fpl=${job.from}%20${job.to}`;
@@ -90,7 +94,7 @@ function licenseCard(st){
 
 /* ---------- cockpit companion ---------- */
 function speedsOf(a){ const out={}; for(const part of a.v.split('·')){ const m=part.trim().match(/^([A-Za-z\- ]+?)\s*~?\s*(M?[\d.]+)/); if(m) out[m[1].trim().toLowerCase()]=m[2]; } return out; }
-function cockpitPhases(st, job){
+function cockpitPhasesBase(st, job){
   const a=AC[job.ac]; const p=plan(job); const sp=speedsOf(a); const dep=rwyAnalysis(job.from, job.wx, job.ac), arr=rwyAnalysis(job.to, job.wx, job.ac);
   const piston = a.fuel==='avgas' && !['DC3'].includes(job.ac); const turbine = ['turbo','stol'].includes(a.cls) && a.fuel==='jeta' && !['DA40','DA62'].includes(job.ac);
   const jet = ['jet','airliner','widebody','regional'].includes(a.cls); const retract = ['G36','KA350','TBM','PC12','DA62','GOOSE','DC3','SF50','CJ4','A320','B38M','A321','A333','B748','ES30'].includes(job.ac);
@@ -108,7 +112,7 @@ function cockpitPhases(st, job){
     {n:`Shutdown`, items:[`Clear the runway, flaps up, transponder standby`,`Taxi to parking, parking brake set`,`Engine shutdown, avionics and master off`,`Note fuel remaining and block time, then press "Log the landing"`]}
   ];
 }
-function cockpitView(){
+function cockpitBase(){
   const st=S.st; const a0=st.active;
   if(!a0) return `<main class="wrap"><div class="empty fade"><h3>No flight in progress</h3><p>Accept a job and this tab becomes your phase-by-phase cockpit companion. It works best on a phone or tablet beside your sim.</p><p style="margin-top:14px"><button class="btn primary" data-act="nav" data-v="board">Find a job</button></p></div></main>`;
   const job=a0.job; const a=AC[job.ac]; const ph=cockpitPhases(st, job); a0.ck=a0.ck||{p:0,done:{}}; const cur=clamp(a0.ck.p,0,ph.length-1);
@@ -126,6 +130,10 @@ function cockpitView(){
     <section class="panel"><dl class="kv"><dt>Speeds</dt><dd class="mono small">${esc(a.v)}</dd><dt>Departure</dt><dd>${esc(job.from)} runway ${esc(rwyAnalysis(job.from,job.wx,job.ac).rw)}</dd>${job.local?'':`<dt>Arrival</dt><dd>${esc(job.to)} runway ${esc(rwyAnalysis(job.to,job.wx,job.ac).rw)}</dd>`}<dt>Wind</dt><dd class="mono">${pad3(job.wx.dir)}° / ${job.wx.spd}${job.wx.gust?'G'+job.wx.gust:''} kt</dd></dl></section>
   </main>`;
 }
+/* the cockpit companion: live callouts on top, then the phase-by-phase page, the cabin and the panel setup */
+function cockpitView(){ let h=cockpitBase().replace('<main class="wrap stack fade cockpit">', '<main class="wrap stack fade cockpit"><div class="callout-host" aria-live="assertive">'+calloutHTML()+'</div>');
+  h=h.replace(/<\/main>\s*$/, cabinBlock()+'</main>'); const p=panelSetupHTML(); return p ? h.replace(/<\/main>\s*$/, p+'</main>') : h; }
+
 
 /* ---------- events ---------- */
 document.addEventListener('click', e=>{

@@ -78,7 +78,6 @@ const PRO_DYN = {
 };
 const PRO_VOICE = { dez:[false,1.05,1], mari:[true,1,1.05], castillo:[false,0.92,0.8], hartwell:[false,0.95,0.9], tico:[false,1.12,1.05], reyes:[true,1,1], medina:[false,0.95,0.85] };
 
-var playPrologue; /* defined in full below (081-core.js) */
 
 /* play it the first time you start a chapter; the click goes through once it's over */
 window.addEventListener('click', e=>{ const b=e.target.closest('[data-act="accept-story"],[data-act="story-go"]'); if(!b || b.disabled || !S.st) return; if(typeof fedsWatching==='function' && crime().on && fedsWatching(S.st)) return; const id=b.dataset.id; if(!CRIME_IDS.has(id)) return; const c=crime(); c.proSeen=c.proSeen||{};

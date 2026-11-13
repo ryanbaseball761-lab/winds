@@ -1,7 +1,6 @@
 /* ===================== FROM YOUR FIRST TEST FLIGHTS ===================== */
 
 /* ---- 1. shorter checklists (5 phases, 3–4 items), detailed list optional ---- */
-const _tfPhases = cockpitPhases;
 const CK_GROUPS = [
   {n:'Before start', rx:/preflight/i, keys:[/fuel on board|^fuel/i,/payload|weight/i,/brief|weather/i,/passenger/i]},
   {n:'Start & taxi', rx:/^start|taxi/i, keys:[/mixture|starter|start/i,/avionics|transponder|frequenc/i,/taxi|hold short/i]},
@@ -9,19 +8,17 @@ const CK_GROUPS = [
   {n:'Approach', rx:/cruise|descent|approach/i, keys:[/expect runway|runway/i,/before landing|seatbelt/i,/approach speed|kt/i]},
   {n:'Landing', rx:/landing|shutdown/i, keys:[/stabiliz/i,/touchdown|centerline/i,/parking brake|park|shutdown/i]}
 ];
-cockpitPhases = function(st, job){ const full=_tfPhases(st, job); if((st&&st.pro&&st.pro.fullChecklist) || !full || full.length<5) return full;
+function cockpitPhases(st, job){ const full=cockpitPhasesBase(st, job); if((st&&st.pro&&st.pro.fullChecklist) || !full || full.length<5) return full;
   return CK_GROUPS.map(g=>{ const pool=[].concat(...full.filter(p=>g.rx.test(p.n) && !(g.n==='Start & taxi' && /before takeoff/i.test(p.n))).map(p=>p.items)); const out=[];
     for(const k of g.keys){ const it=pool.find(x=>k.test(x) && !out.includes(x)); if(it) out.push(it); }
     for(const x of pool){ if(out.length>=3) break; if(!out.includes(x)) out.push(x); }
-    return {n:g.n, items:out.slice(0,4)}; }).filter(p=>p.items.length); };
+    return {n:g.n, items:out.slice(0,4)}; }).filter(p=>p.items.length); }
 /* expert: only "Before start" and "Start & taxi" are required before engine start */
-checklistDone = function(a){ if(!a) return false; const ph=cockpitPhases(S.st, a.job); const ck=a.ck||{done:{}}; const n=(S.st.pro&&S.st.pro.fullChecklist)?4:2; for(let i=0;i<Math.min(n,ph.length);i++) for(let j=0;j<ph[i].items.length;j++) if(!ck.done[i+'-'+j]) return false; return true; };
-checklistCount = function(a){ const ph=cockpitPhases(S.st, a.job); const ck=a.ck||{done:{}}; const n=(S.st.pro&&S.st.pro.fullChecklist)?4:2; let d=0,t=0; for(let i=0;i<Math.min(n,ph.length);i++) for(let j=0;j<ph[i].items.length;j++){ t++; if(ck.done[i+'-'+j]) d++; } return [d,t]; };
+function checklistDone(a){ if(!a) return false; const ph=cockpitPhases(S.st, a.job); const ck=a.ck||{done:{}}; const n=(S.st.pro&&S.st.pro.fullChecklist)?4:2; for(let i=0;i<Math.min(n,ph.length);i++) for(let j=0;j<ph[i].items.length;j++) if(!ck.done[i+'-'+j]) return false; return true; }
+function checklistCount(a){ const ph=cockpitPhases(S.st, a.job); const ck=a.ck||{done:{}}; const n=(S.st.pro&&S.st.pro.fullChecklist)?4:2; let d=0,t=0; for(let i=0;i<Math.min(n,ph.length);i++) for(let j=0;j<ph[i].items.length;j++){ t++; if(ck.done[i+'-'+j]) d++; } return [d,t]; }
 
 /* ---- 2. no scripted ATC: MSFS ATC does that job ---- */
 const ATC_WHO = /^(Ground|Radio|ATC|Approach|Tower|Center|Departure)$/i;
-const _tfCabin = cabinTick;
-cabinTick = function(){ const r=_tfCabin.apply(this, arguments); try{ const a=S.st&&S.st.active; if(a&&a.cab&&a.cab.log) a.cab.log=a.cab.log.filter(m=>!ATC_WHO.test(m.who||'')); }catch(_){} return r; };
 
 /* ---- 3. big moments take over the screen ---- */
 
@@ -100,7 +97,5 @@ ARCH.push({id:'mainland',label:`Mainland charter`,kind:'vip',w:0,cls:['jet','tur
     return { title:`Charter to ${c.to.isl}`, client:who[0], paras:[`${who[0]}, ${who[1]}, wants a private flight from ${c.from.isl} to ${c.to.n} in ${c.to.isl}. Airlines would mean two connections and a day of airports. You can do it in a few hours.`,`It's a long leg off the islands and onto the mainland, so plan fuel carefully, file the right customs paperwork, and expect busy, fast-talking airspace at the other end.`] }; }});
 const MAINLAND = ['KMIA','KFLL','KPBI','KTEB','KJFK','KATL','KORD','MMUN','MZBZ','MRLB','MPTO'].filter(k=>AP[k]);
 /* the clock row offers to set MSFS instead of moving the flight */
-const _tfChecks = preflightChecks;
-preflightChecks = function(job){ const out=_tfChecks(job); const t=out.find(c=>c.k==='time'); if(t && !t.ok && window.twNative){ t.act='pf-settime'; t.actLabel=`Set MSFS to ${hhmm(job.dep)}`; t.d='Or set the time in the MSFS weather & time panel.'; } return out; };
 document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="pf-settime"]') || !S.st || !S.st.active || !S.mcp) return; const job=S.st.active.job;
   const o=await setSimClock(job.dep); toast(o.ok?`MSFS clock set to ${hhmm(job.dep)}.`:`Couldn't set the clock${o.error?': '+o.error:''}. Set it in the MSFS time panel.`); setTimeout(()=>simPoll(true), 1200); });

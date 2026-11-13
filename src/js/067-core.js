@@ -216,13 +216,12 @@ function crBump(c, k, v){ c[k]=clamp(Math.round((c[k]||0)+v), k==='con'?-10:0, k
 /* ---- after a chapter: power, heat, customs searches; side jobs are legit cover that cools the heat ---- */
 
 /* ---- choices: two or three options, each changes Power / Heat / cash / people ---- */
-function crimeChoiceHTML(st){ const L=st.last; const j=L&&L.job; if(!j || j.kind!=='story' || !CRIME_IDS.has(j.story) || (L.res&&L.res.crash)) return null;
+function crimeChoiceHTMLBase(st){ const L=st.last; const j=L&&L.job; if(!j || j.kind!=='story' || !CRIME_IDS.has(j.story) || (L.res&&L.res.crash)) return null;
   const m=CRIME.find(x=>x.id===j.story); if(!m || !m.choice) return null; const c=crime(st); const picked=c.choice[m.id];
   if(picked!=null){ const o=m.choice.opts[picked]; return `<section class="panel choice made" style="--arc:${arcMeta(m.arc).col}"><p class="label">You chose: ${esc(o.t)}</p><p class="brief" style="margin:6px 0 0">${esc(o.out)}</p>${fxLine(o)}</section>`; }
   return `<section class="panel choice" style="--arc:${arcMeta(m.arc).col}"><p class="label">Your call</p><p class="brief" style="margin:6px 0 12px">${esc(m.choice.q)}</p><div class="choice-btns">${m.choice.opts.map((o,i)=>`<button class="btn ${i===0?'primary':''}" data-act="crime-choose" data-i="${i}">${esc(o.t)}</button>`).join('')}</div><p class="tiny muted" style="margin-top:8px">This choice sticks, and the story remembers it.</p></section>`; }
 function fxLine(o){ const b=[]; if(o.power) b.push(`Power ${o.power>0?'+':''}${o.power>=100?'max':o.power}`); if(o.heat) b.push(`Heat ${o.heat>0?'+':''}${o.heat<=-100?'cleared':o.heat}`); if(o.cash) b.push(`${o.cash>0?'+':'−'}${money(Math.abs(o.cash))}`); return b.length?`<p class="tiny muted" style="margin-top:8px">${b.join(' · ')}</p>`:''; }
-const _crChoice = choiceHTML;
-choiceHTML = function(st){ const h=crimeChoiceHTML(st); return h!=null ? h : _crChoice(st); };
+function choiceHTML(st){ const h=crimeChoiceHTML(st); return h!=null ? h : choiceHTMLBase(st); }
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="crime-choose"]'); if(!b || !S.st || !S.st.last) return; const st=S.st; const id=st.last.job.story; const m=CRIME.find(x=>x.id===id); const c=crime(st); if(!m || !m.choice || c.choice[id]!=null) return;
   const i=Number(b.dataset.i); const o=m.choice.opts[i]; c.choice[id]=i; const p0=c.power, h0=c.heat;
   if(o.power) crBump(c,'power',o.power); if(o.heat) crBump(c,'heat',o.heat); if(o.con) crBump(c,'con',o.con); if(o.flag) c.flags[o.flag]=1; if(o.ending) c.ending=o.ending;

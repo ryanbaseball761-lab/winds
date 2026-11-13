@@ -3,7 +3,7 @@
 const COL_MAIN = '#1f9d55', COL_STARLING = '#e8782a';
 Object.keys(ARC_META).forEach(k=>{ if(ARC_META[k].main) ARC_META[k].col = COL_MAIN; });
 if(ARC_META.Starling) ARC_META.Starling.col = COL_STARLING;
-function jobKind(job){
+function jobKindBase(job){
   const arc = job.kind==='story' ? (STORY.find(m=>m.id===job.story)||{}).arc : null;
   if(job.kind==='story') return {k:'story', t:job.label, c: arc==='Starling' ? COL_STARLING : (ARC_META[arc]&&ARC_META[arc].main) ? COL_MAIN : (ARC_META[arc]&&ARC_META[arc].col) || COL_MAIN};
   if(job.kind==='check') return {k:'check', t:job.label||'Checkride', c:'var(--violet)'};
@@ -57,12 +57,10 @@ setInterval(()=>{ const a=S.st&&S.st.active; if(a && a.job.scen && !a.opened && 
 /* no more "open" button: show when they'll open, and the orders once they do */
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="orders-ok"]')){ S.ordersPop=false; S.keepScroll=true; render(); } });
 /* flights with sealed orders log themselves too, graded on what you actually did */
-var autoReady; /* defined in full below (060-core.js) */
 /* applyResult's own divert check should accept the planned diversion */
 
 /* ---- sim rate ---- */
 function simRateNow(){ const x=S.sim&&S.sim.ext; return x && x.simRate ? x.simRate : 1; }
-const _orLive = ifLiveHTML;
-ifLiveHTML = function(){ const h=_orLive(); const r=simRateNow(); return r!==1 ? h.replace('<div class="if-phase">', `<div class="notice small">⏩ Sim rate ${r}×. That's fine: flight time, fuel and pay are all counted in simulated time.</div><div class="if-phase">`) : h; };
+function ifLiveHTML(){ const h=ifLiveHTMLBase(); const r=simRateNow(); return r!==1 ? h.replace('<div class="if-phase">', `<div class="notice small">⏩ Sim rate ${r}×. That's fine: flight time, fuel and pay are all counted in simulated time.</div><div class="if-phase">`) : h; }
 /* block timer follows simulated time when MSFS is connected */
 setInterval(()=>{ const t=document.getElementById('if-timer'); const a=S.st&&S.st.active; if(!t||!a) return; const rec=simRecFor(a); if(rec && rec.blockMinutes!=null) t.textContent=durTxt(rec.blockMinutes); }, 3000);

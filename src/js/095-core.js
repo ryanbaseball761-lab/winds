@@ -4,14 +4,14 @@ function volOf(ch){ const v=uiP().vol||{}; return (v[ch]==null?80:v[ch])/100; }
 
 /* ---- title screen on every launch ---- */
 S._title = !navigator.webdriver;
-function titleHTML(){ const st=S.st; let cont=''; if(st){ const MC=mainChapters(); const next=MC.find(m=>!st.story.done[m.id]); const n=next?MC.indexOf(next)+1:MC.length; cont = next ? `Chapter ${n} · ${next.title}` : 'Story complete'; }
+function titleHTML(){ const st=S.st; const a=st&&st.active; let cont=''; if(st){ const MC=mainChapters(); const next=MC.find(m=>!st.story.done[m.id]); const n=next?MC.indexOf(next)+1:MC.length; cont = next ? `Chapter ${n} · ${next.title}` : 'Story complete'; }
   return `<div class="ts-bg">${typeof SCENES!=='undefined'?SCENES.ramp():''}</div><div class="ts-rain"></div><div class="ts-shade"></div>
   <div class="ts-in"><div class="ts-logo"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="none" stroke="#c8962a" stroke-width="2"/><path d="M32 6 L36 28 L58 32 L36 36 L32 58 L28 36 L6 32 L28 28Z" fill="#c8962a"/></svg><div><h1>TRADE WINDS</h1><p>Every cargo has a price</p></div></div>
-  <nav class="ts-menu">${st?`<button data-ts="continue" class="on"><b>Continue</b><span>${esc(st.pilot&&st.pilot.name||'')}${cont?` · ${esc(cont)}`:''}</span></button>`:''}
+  <nav class="ts-menu">${st?`<button data-ts="continue" class="on"><b>${a?(a.started?'Resume flight':'Continue to your flight'):'Continue'}</b><span>${esc(st.pilot&&st.pilot.name||'')}${a?` · ${esc(a.job.from)} → ${esc(a.job.local?a.job.from:a.job.to)} · ${esc(a.job.title)}`:cont?` · ${esc(cont)}`:''}</span></button>`:''}
     <button data-ts="new"><b>New game</b><span>${st?'Start a new career (your current one is backed up)':'Start your career'}</span></button>
     ${st?'<button data-ts="settings"><b>Settings</b><span>Sound, units, cutscenes</span></button>':''}
     ${window.twNative?'<button data-ts="quit"><b>Quit</b></button>':''}</nav>
-  <p class="ts-foot">v${typeof TW_VERSION!=='undefined'?TW_VERSION:''} · A story career for Microsoft Flight Simulator 2024 · Not affiliated with Microsoft or Asobo</p></div>`; }
+  <button class="ts-new" data-ts-new="1">What's new in ${WHATS_NEW[0][0]}</button><p class="ts-foot">v${typeof TW_VERSION!=='undefined'?TW_VERSION:''} · A story career for Microsoft Flight Simulator 2024 · Not affiliated with Microsoft or Asobo</p></div>`; }
 function showTitle(){ if(document.querySelector('.title-screen')) return; const el=document.createElement('div'); el.className='title-screen'; el.innerHTML=titleHTML(); document.body.appendChild(el); requestAnimationFrame(()=>el.classList.add('on'));
   try{ MUSIC && MUSIC.play('title'); }catch(_){}
   const buttons=()=>[...el.querySelectorAll('.ts-menu button:not([disabled])')]; let idx=0;
@@ -43,7 +43,7 @@ function coldOpenShots(){ const st=S.st; if(!st || (st.flights||0)>0 || st.story
 function toMetric(t){ return t.replace(/(\d[\d,]*(?:\.\d+)?)\s?lb\b/g,(m,n)=>`${Math.round(Number(n.replace(/,/g,''))*0.4536).toLocaleString()} kg`).replace(/(\d[\d,]*(?:\.\d+)?)\s?gal\b/g,(m,n)=>`${Math.round(Number(n.replace(/,/g,''))*3.785).toLocaleString()} L`); }
 
 /* ---- volume per channel: voices, music, effects ---- */
-(function(){ const _vv=voiceVol; voiceVol=function(){ return _vv()*volOf('voice')/0.8*0.8; }; })();
+function voiceVol(){ return voiceVolBase()*volOf('voice')/0.8*0.8; }
 (function(){ const _ac=actx; let wired=null; actx=function(){ const c=_ac(); if(!c) return c; if(wired!==c){ wired=c; try{ const real=c.destination; const fx=c.createGain(); fx.connect(real); const mus=c.createGain(); mus.connect(real); Object.defineProperty(c,'destination',{configurable:true, get(){ return fx; }}); c._real=real; c._fx=fx; c._mus=mus; }catch(_){} }
   try{ c._fx.gain.value=volOf('fx'); c._mus.gain.value=volOf('music'); }catch(_){} return c; }; })();
 

@@ -19,7 +19,7 @@ function seasonOf(st){ const d=new Date(Date.UTC(2026,5,1)+ (st.day-1)*864e5); c
   return m>=5 && m<=10 ? {n:`Hurricane season`, d:`June to November. Tropical waves and storms roll through. Relief flights pay well; watch the forecasts.`, c:'#3d5a80'}
     : m===11 || m<=3 ? {n:`High season`, d:`Winter tourists flood the islands. More VIP and charter work, busier airports.`, c:'#d9532f'}
     : {n:`Shoulder season`, d:`Quieter skies between the winter rush and the storms.`, c:'#0b746f'}; }
-function weeklyPanel(st){
+function weeklyBase(st){
   const W=weeklyState(st); const picks=weekPicks(W.key); const s=seasonOf(st);
   return `<section class="panel stack weekly"><div class="row between"><div><p class="label">This week · ${esc(W.key)}</p><h3>Weekly challenges</h3></div><span class="chip">${weekEnds()}</span></div>
     ${picks.map(ch=>{ const p=Math.min(ch.goal, W.prog[ch.id]||0); const done=!!W.done[ch.id]; return `<div class="wk ${done?'done':''}"><div class="row between" style="gap:6px"><b>${done?'✓ ':''}${esc(ch.n)}</b><span class="mono small">${p}/${ch.goal}</span></div><p class="tiny muted">${esc(ch.d)} Reward ${money(ch.cash)}.</p><div class="meter"><i style="width:${p/ch.goal*100}%"></i></div></div>`; }).join('')}
@@ -27,10 +27,19 @@ function weeklyPanel(st){
     <div class="season" style="--c:${s.c}"><b>${esc(s.n)}</b><span class="tiny">${esc(s.d)}</span></div>
   </section>`;
 }
+/* Profile page, "This week": the weekly panel, real-world Caribbean news (storms, events), and the landing league.
+   Hidden until your second flight; the league shows from your fifth (or with "show all tabs"). */
+function weeklyPanel(st){ const all=st.ui&&st.ui.allTabs; if(st.flights<2 && !all) return '';
+  let h=weeklyBase(st).replace('</section>', realNowHTML()+'</section>');
+  if(st.flights>=5 || all) h=h.replace(/<\/section>\s*$/, leagueHTML(st)+'</section>');
+  return h; }
+function realNowHTML(){ const evs=realEvents(); if(!(evs.length||REAL_STORMS.length)) return '';
+  return `<div class="realnow"><p class="label">In the real Caribbean right now</p>${REAL_STORMS.map(s=>`<p class="small">🌀 <b>${esc(s.name)}</b> (${esc(s.classification||'storm')}) is active, per the US National Hurricane Center. Relief work is in demand.</p>`).join('')}${evs.map(e=>`<p class="small">🌍 <b>${esc(e.n)}</b>: flights to ${e.ap.join(', ')} pay 20% more.</p>`).join('')}</div>`; }
+function leagueHTML(st){ const rows=leagueRows(st);
+  return `<div class="league"><p class="label">Landing league · this week</p><ol>${rows.slice(0,6).map((r,i)=>`<li class="${r.me?'me':''}"><span>${i+1}</span><b>${esc(r.n)}</b><span class="mono">${r.fpm} fpm</span></li>`).join('')}</ol>${rows.some(r=>r.me)?'':'<p class="tiny muted">Land with MSFS connected to join the league.</p>'}</div>`; }
+
 function recordsPanel(st){
   const R=st.records||{}; const row=(lbl,r,fmt)=>`<div class="rec"><span class="label">${lbl}</span><b class="mono">${r?fmt(r.v):'—'}</b><span class="tiny muted">${r&&r.at?esc(r.at)+' · day '+r.day:'Not set yet'}</span></div>`;
   return `<section><div class="section-title"><h2>Personal records</h2><span class="small muted">${st.weeksWon?`${st.weeksWon} weekly championship${st.weeksWon>1?'s':''}`:'Beat your best'}</span></div>
     <div class="recs">${row('Softest landing',R.fpm,v=>`${v} fpm`)}${row('Best score',R.score,v=>`${v}/100`)}${row('Longest flight',R.long,v=>`${v} nm`)}${row('Happiest cabin',R.comfort,v=>`${v}/100`)}<div class="rec"><span class="label">Best A streak</span><b class="mono">${R.bestStreak||0}</b><span class="tiny muted">Grade A flights in a row</span></div></div></section>`;
 }
-const _wkPilot = pilotView;
-pilotView = function(){ const h=_wkPilot(); return h.replace(/<\/main>\s*$/, recordsPanel(S.st)+'</main>'); };

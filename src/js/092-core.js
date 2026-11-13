@@ -7,5 +7,4 @@ const SAFEHOUSES = [ {id:'flat',n:'Apartment in Philipsburg',cost:25000,perk:'He
 function safeLevel(st){ const c=crime(st); return SAFEHOUSES.findIndex(s=>s.id===c.safe); }
 function dailyCosts(st){ const d=st.story.done; const L=[]; FLEET.forEach(f=>{ if(d[f[0]] && UPKEEP[f[1]]) L.push([`${f[2]} (${f[3]}) upkeep`, UPKEEP[f[1]]]); }); const c=crime(st); if(c.crew){ for(const k in WAGES) if(crewHas(st,k)) L.push([`${CREW.find(x=>x.id===k).n} wages`, WAGES[k]]); } return L; }
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="buy-safe"]'); if(!b||!S.st) return; const s=SAFEHOUSES.find(x=>x.id===b.dataset.v); if(!s||S.st.cash<s.cost) return; txn(S.st,-s.cost,'Safehouse',s.n); crime().safe=s.id; save(); toast(`Bought: ${s.n}.`); S.keepScroll=true; render(); });
-(function(){ const _m=moneyView; moneyView=function(){ const h=_m(); try{ const o=operationHTML(S.st); return o ? h.replace(/(<main[^>]*>(?:<div class="subtabs">[\s\S]*?<\/div>)?)/, m=>m+o) : h; }catch(_){ return h; } }; })();
 

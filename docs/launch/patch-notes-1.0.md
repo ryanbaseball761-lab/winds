@@ -56,4 +56,7 @@
 - The Butter Cup asks you to connect MSFS before starting an attempt it can't score.
 
 ## Under the hood
+- Code cleanup, round 2: 71 patched-over functions down to 9, each screen drawn by one function. Dead code from retired features (passenger chatter, the end-of-day recap) is gone.
+- Title screen: "Resume flight" shows the route and job cleanly instead of running it into the chapter name.
+- New automatic checks: the MSFS clock lands on the planned time whatever offset the sim applies, the airline (airliners, facilities, bases, refits, shared routes), and "Earned" matching between pages.
 - The game's code was reorganised into clear files by area (jobs, flight results, live sim, each page, cutscenes). Behaviour was checked screen by screen against the previous version, and with a full simulated MSFS flight.

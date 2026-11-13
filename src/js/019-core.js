@@ -1,6 +1,6 @@
 /* ===================== THEME SWITCH & CAREER FILES ===================== */
 function themePref(){ try{ return localStorage.getItem('tw.theme') || (window.TW_STANDALONE ? 'dark' : 'auto'); }catch(e){ return window.TW_STANDALONE ? 'dark' : 'auto'; } }
-function applyTheme(){ const p=themePref(); const r=document.documentElement; if(p==='auto') delete r.dataset.theme; else r.dataset.theme=p; }
+function applyThemeBase(){ const p=themePref(); const r=document.documentElement; if(p==='auto') delete r.dataset.theme; else r.dataset.theme=p; }
 applyTheme();
 const THEME_LBL = {auto:'Theme: auto', dark:'Theme: dark', light:'Theme: light'};
 document.addEventListener('click', e=>{

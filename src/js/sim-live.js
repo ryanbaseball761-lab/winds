@@ -47,7 +47,7 @@ const SIM_TICK = [
   function sealedOrders(){ const a=S.st&&S.st.active; if(a && a.job.scen && !a.opened && a.started && trigReached(a)) openOrders(a,'live'); },
   function syncWeather(){ trySyncWx(); },
   function trace(){ traceSample(); },
-  function copilot(){ copilotTick(); },
+  function copilot(){ if(simRelevant(S.st&&S.st.active)) noGearCheck(copilotTick)(); },
   /* the step-by-step flight guide moves on */
   function flightGuide(){ if(guideActive() && S.view==='flight'){ const a=S.st.active; const before=JSON.stringify(a.guide||{}); guideHTML(a); if(JSON.stringify(a.guide)!==before){ S.keepScroll=true; render(); } } },
   function clock(){ autoClock(); },

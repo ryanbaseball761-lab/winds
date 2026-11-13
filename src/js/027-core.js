@@ -1,5 +1,5 @@
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.54.0';
+const TW_VERSION = '0.55.0';
 
 /* ---------- live map ---------- */
 function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
@@ -10,16 +10,6 @@ function liveFlightInfo(){
   const togo = distNm(pos, dest); const gs = Math.max(s.motion.gs||0, 1); const eta = s.motion.onGround ? null : Math.round(togo/gs*60);
   const rec = simRecFor(a); return {job, pos, dest, togo, eta, gs:s.motion.gs, alt:s.position.altFt, hdg:s.position.hdg, track: rec && rec.track || []};
 }
-const _lvMap = mapView;
-mapView = function(){
-  let h=_lvMap(); const L=liveFlightInfo(); if(!L) return h; const P=mapProj();
-  const path = L.track.length>1 ? `<polyline class="flown" points="${L.track.map(p=>`${P.X(p[1]).toFixed(1)},${P.Y(p[0]).toFixed(1)}`).join(' ')}"/>` : '';
-  const px=P.X(L.pos.lon), py=P.Y(L.pos.lat);
-  const plane = `<g class="liveplane" transform="translate(${px.toFixed(1)} ${py.toFixed(1)}) rotate(${L.hdg||0})"><circle r="16" class="halo"/><path d="M0 -12 L3 -3 L12 2 L12 4 L3 2 L2 9 L5 11 L5 12 L0 11 L-5 12 L-5 11 L-2 9 L-3 2 L-12 4 L-12 2 L-3 -3Z"/></g>`;
-  h = h.replace('</svg>', path+plane+'</svg>');
-  const box = `<div class="livebox"><span class="dot-live"></span><b>Live</b><span>${esc(L.job.from)} → ${esc(L.job.local?L.job.from:L.job.to)}</span><span class="mono">${Math.round(L.togo)} nm to go</span>${L.eta!=null?`<span class="mono">ETA ${L.eta} min</span>`:''}<span class="mono">${L.gs} kt · ${L.alt.toLocaleString()} ft</span></div>`;
-  return h.replace('<div class="grid-2">', box+'<div class="grid-2">');
-};
 
 /* ---------- replay: keep the path and approach with the result ---------- */
 function replaySvgPath(track, w, h){
@@ -28,7 +18,7 @@ function replaySvgPath(track, w, h){
   const sx=w/((o1-o0)*k||1), sy=h/((a1-a0)||1), sc=Math.min(sx,sy); const ox=(w-(o1-o0)*k*sc)/2, oy=(h-(a1-a0)*sc)/2;
   return track.map(p=>[ox+(p[1]-o0)*k*sc, h-(oy+(p[0]-a0)*sc)]);
 }
-function replaySection(st){
+function replaySectionBase(st){
   const R=st.last && st.last.replay; if(!R || (!(R.track&&R.track.length>1) && !R.approach)) return '';
   let pathSvg=''; if(R.track && R.track.length>1){ const pts=replaySvgPath(R.track, 520, 300); const maxAlt=Math.max(...R.track.map(p=>p[2]),1);
     pathSvg = `<svg viewBox="0 0 520 300" class="replay-map" role="img" aria-label="Flown path">${pts.slice(1).map((p,i)=>{ const q=pts[i]; const t=R.track[i+1][2]/maxAlt; return `<line x1="${q[0].toFixed(1)}" y1="${q[1].toFixed(1)}" x2="${p[0].toFixed(1)}" y2="${p[1].toFixed(1)}" stroke="hsl(${(170-t*150).toFixed(0)} 70% 50%)" stroke-width="4" stroke-linecap="round"/>`; }).join('')}<circle cx="${pts[0][0]}" cy="${pts[0][1]}" r="7" class="r-start"/><circle cx="${pts[pts.length-1][0]}" cy="${pts[pts.length-1][1]}" r="7" class="r-end"/></svg><p class="tiny muted">Color shows altitude: teal low, orange high. Max ${maxAlt.toLocaleString()} ft.</p>`; }
@@ -40,11 +30,6 @@ function replaySection(st){
       <p class="small">Final 12 seconds: average <b>${avgVs} fpm</b>, crossing at <b>${ias} kt</b>. ${R.td?`Touchdown <b>${R.td.fpm} fpm</b>, ${R.td.g} G.`:''} Dots turn orange past 700 fpm down and red past 1,000.</p>`; }
   return `<section class="panel stack replay"><div><p class="label">Flight replay</p><h3>Your path and approach</h3></div><div class="replay-grid">${pathSvg?`<div>${pathSvg}</div>`:''}${apSvg?`<div>${apSvg}</div>`:''}</div></section>`;
 }
-const _lvCard = drawFlightCard;
-drawFlightCard = function(st){ const cv=_lvCard(st); const R=st.last&&st.last.replay; if(!R || !R.track || R.track.length<2) return cv;
-  const g=cv.getContext('2d'); const pts=replaySvgPath(R.track, 360, 150).map(p=>[p[0]+780, p[1]+440]);
-  g.save(); g.strokeStyle='rgba(255,255,255,.9)'; g.lineWidth=4; g.lineCap='round'; g.lineJoin='round'; g.setLineDash([2,8]); g.beginPath(); pts.forEach((p,i)=> i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1])); g.stroke(); g.setLineDash([]);
-  g.fillStyle='#43d17f'; g.beginPath(); g.arc(pts[0][0],pts[0][1],7,0,7); g.fill(); g.fillStyle='#ff9470'; g.beginPath(); g.arc(pts[pts.length-1][0],pts[pts.length-1][1],7,0,7); g.fill(); g.restore(); return cv; };
 
 /* ---------- add your aircraft straight from MSFS ---------- */
 function specGuess(sp){
@@ -58,7 +43,7 @@ function specGuess(sp){
 
 /* ---------- problem reports ---------- */
 function errLog(){ try{ return JSON.parse(localStorage.getItem('tw.errors')||'[]'); }catch(e){ return []; } }
-function logErr(msg){ try{ const a=errLog(); a.push({t:new Date().toISOString(), msg:String(msg).slice(0,400), view:S.view}); localStorage.setItem('tw.errors', JSON.stringify(a.slice(-30))); }catch(e){} }
+function logErrBase(msg){ try{ const a=errLog(); a.push({t:new Date().toISOString(), msg:String(msg).slice(0,400), view:S.view}); localStorage.setItem('tw.errors', JSON.stringify(a.slice(-30))); }catch(e){} }
 window.addEventListener('error', e=>logErr(`${e.message} @ ${(e.filename||'').split('/').pop()}:${e.lineno}`));
 window.addEventListener('unhandledrejection', e=>logErr(`Promise: ${e.reason && (e.reason.message||e.reason.code||e.reason)}`));
 function buildReport(note){ const st=S.st||{}; return JSON.stringify({ app:'Trade Winds', version:TW_VERSION, standalone:!!window.TW_STANDALONE, at:new Date().toISOString(), note,
@@ -112,6 +97,3 @@ function realEvents(now=new Date()){
 let REAL_STORMS = [];
 async function loadRealStorms(){ if(!window.twNative || !twNative.storms) return; try{ const r=await twNative.storms(); REAL_STORMS = (r||[]).filter(s=>s.lat>8 && s.lat<30 && s.lon<-55 && s.lon>-90); if(REAL_STORMS.length && S.st) render(); }catch(_){} }
 setTimeout(loadRealStorms, 3000); setInterval(loadRealStorms, 30*60000);
-const _lvWeekly = weeklyPanel;
-weeklyPanel = function(st){ const evs=realEvents(); const extra = (evs.length||REAL_STORMS.length) ? `<div class="realnow"><p class="label">In the real Caribbean right now</p>${REAL_STORMS.map(s=>`<p class="small">🌀 <b>${esc(s.name)}</b> (${esc(s.classification||'storm')}) is active, per the US National Hurricane Center. Relief work is in demand.</p>`).join('')}${evs.map(e=>`<p class="small">🌍 <b>${esc(e.n)}</b>: flights to ${e.ap.join(', ')} pay 20% more.</p>`).join('')}</div>` : '';
-  return _lvWeekly(st).replace('</section>', extra+'</section>'); };

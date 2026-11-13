@@ -3,12 +3,9 @@
 /* ---- (a) real MSFS weather: track what you actually flew through, and pay for it ---- */
 function liveWxLine(){ const x=S.sim&&S.sim.ext; if(!x || S.simState!=='live') return ''; const w=x.weather;
   return `<div class="livewx"><span class="label">Live MSFS weather</span><span class="mono">${String(w.windDir).padStart(3,'0')}°/${w.windKt} kt · ${w.visSm>=10?'10+':w.visSm} sm · ${w.oatC} °C · ${w.qnhHpa} hPa${w.inCloud?' · in cloud':''}</span></div>`; }
-const _evCabin = cabinInner;
-cabinInner = function(){ const h=_evCabin(); return h ? h.replace(/(<p class="tiny muted">[^<]*riding along today\.<\/p>)/, m=>m+liveWxLine()) : h; };
 
 /* ---- (b) your phone rings: characters call with time-limited work ---- */
 
-var maybeCall; /* defined in full below (055-core.js) */
 function callHTML(st){
   const c=st.call; if(!c) return ''; if(st.clock > c.until){ st.call=null; return ''; }
   const j=c.job; const a=AC[j.ac];
@@ -46,7 +43,7 @@ const ALT_OUT = {
   VJ8: st => st.story.flags.VJ7==='b' ? {good:`Starling II lands beautifully. On the ramp, Vivienne hands you a folder: the broker's emails, including the one about your fee. "I'd have paid you that myself if you'd asked," she says, and walks away. Abe shakes his head slowly.`, ok:`Starling II comes home in one piece. Vivienne is polite, nothing more. Somebody told her about the broker.`, bad:`A rough arrival, and a rougher conversation afterwards. Vivienne knows about the fee.`}
     : st.story.flags.VJ7==='a' && st.story.flags.VJ3==='a' ? {good:`The whole Coral Wing ramp turns out to watch Starling II taxi in. Vivienne hands you a second set of keys. "Chief pilot of Saltwater Air. Don't argue." Abe hands you the finished crossword with "PILOT" written across the margin.`, ok:`A long flight, flown honestly and well. Vivienne offers you a permanent seat on every Starling trip, at double the rate.`, bad:`It wasn't pretty, but Vivienne doesn't care. "You're the one I trust," she says. "The landing we can fix."`} : null,
 };
-function choiceHTML(st){
+function choiceHTMLBase(st){
   const j=st.last && st.last.job; if(!j || j.kind!=='story' || !CHOICES[j.story] || st.story.flags[j.story] || st.last.res.crash) return '';
   const c=CHOICES[j.story];
   return `<section class="panel choice"><p class="label">Your call</p><p class="brief" style="margin:6px 0 12px">${esc(c.q)}</p><div class="choice-btns"><button class="btn primary" data-act="choose" data-v="a">${esc(c.a.t)}</button><button class="btn" data-act="choose" data-v="b">${esc(c.b.t)}</button></div><p class="tiny muted" style="margin-top:8px">Choices stick. People remember, and some chapters end differently because of them.</p></section>`;

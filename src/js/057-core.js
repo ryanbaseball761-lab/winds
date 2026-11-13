@@ -5,7 +5,6 @@ const ARC_COLORS = {
 };
 for(const k in ARC_COLORS){ if(ARC_META[k]) ARC_META[k].col = ARC_COLORS[k]; }
 function arcColor(arc){ return ARC_COLORS[arc] || (ARC_META[arc]&&ARC_META[arc].col) || '#0b8a7a'; }
-const _clrKind = jobKind;
-jobKind = function(job){ const k=_clrKind(job); if(job.kind==='story'){ const m=STORY.find(x=>x.id===job.story); if(m) k.c=arcColor(m.arc); } return k; };
+function jobKind(job){ const k=jobKindBase(job); if(job.kind==='story'){ const m=STORY.find(x=>x.id===job.story); if(m) k.c=arcColor(m.arc); } return k; }
 
 

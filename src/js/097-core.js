@@ -16,15 +16,13 @@ window.addEventListener('keydown', e=>{ if(document.querySelector('.title-screen
 
 
 
-/* 12. title screen: "Resume flight" when you were in the middle of one */
-(function(){ const _t=titleHTML; titleHTML=function(){ const h=_t(); const a=S.st&&S.st.active; return a ? h.replace('<b>Continue</b>', a.started?'<b>Resume flight</b>':'<b>Continue to your flight</b>').replace(/(data-ts="continue" class="on"><b>[^<]*<\/b><span>)[^<]*/, m=>m+`${esc(a.job.from)} → ${esc(a.job.local?a.job.from:a.job.to)} · ${esc(a.job.title)}`) : h; }; })();
 
 
 
 
 
 /* 17. laundering: the cheapest option is highlighted */
-(function(){ const _l=launderHTML; launderHTML=function(st){ const h=_l(st); if(!h) return h; const L=launderOpts(st); const best=L.slice().sort((a,b)=>a.fee-b.fee)[0]; return best ? h.replace(`<button class="btn sm" data-act="launder" data-v="${best.id}">`, `<button class="btn sm primary" data-act="launder" data-v="${best.id}">`) : h; }; })();
+function launderHTML(st){ const h=launderHTMLBase(st); if(!h) return h; const L=launderOpts(st); const best=L.slice().sort((a,b)=>a.fee-b.fee)[0]; return best ? h.replace(`<button class="btn sm" data-act="launder" data-v="${best.id}">`, `<button class="btn sm primary" data-act="launder" data-v="${best.id}">`) : h; }
 
 
 /* 19. a backup every 30 minutes of play, too */

@@ -1,8 +1,7 @@
 /* ===================== YOUR PLANE REMEMBERS: airframe health ===================== */
 function airframe(st, id){ st.airframes = st.airframes || {}; return st.airframes[id] = st.airframes[id] || {h:100, grounded:0, log:[]}; }
 function isGrounded(st, id){ const a=st.airframes && st.airframes[id]; return !!(a && a.grounded && st.day < a.grounded); }
-const _wCanFly = canFly;
-canFly = function(st, id){ return _wCanFly(st, id) && !isGrounded(st, id); };
+function canFly(st, id){ return canFlyBase(st, id) && !isGrounded(st, id); }
 /* Dez works on the fleet overnight */
 /* tired airframes sometimes misbehave */
 document.addEventListener('click', e=>{

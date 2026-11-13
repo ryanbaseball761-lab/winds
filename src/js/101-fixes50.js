@@ -3,11 +3,13 @@
 
 
 
-/* 5 + 6. pop-ups really sit bottom-right; achievements show one at a time */
-(function(){ const Q=[]; let busy=false; const _ap=achPop; achPop=function(a){ Q.push(a); pump(); }; function pump(){ if(busy||!Q.length) return; if(document.querySelector('.cut')){ setTimeout(pump,1500); return; } busy=true; _ap(Q.shift()); setTimeout(()=>{ busy=false; pump(); }, 4400); } })();
+/* 5 + 6. pop-ups really sit bottom-right; achievements show one at a time, after any cutscene */
+const ACH_Q=[]; let achBusy=false;
+function achPop(a){ ACH_Q.push(a); achPump(); }
+function achPump(){ if(achBusy||!ACH_Q.length) return; if(document.querySelector('.cut')){ setTimeout(achPump,1500); return; } achBusy=true; achPopBase(ACH_Q.shift()); setTimeout(()=>{ achBusy=false; achPump(); }, 4400); }
 
 /* 7. network runs have no airline flight number on the ticket */
-(function(){ const _fn=flightNo; flightNo=function(job){ return job && job.network ? 'Unlisted' : _fn(job); }; })();
+function flightNo(job){ return job && job.network ? 'Unlisted' : flightNoBase(job); }
 
 
 
@@ -83,3 +85,4 @@ WHATS_NEW.unshift(['0.51','Clearer story: "Previously" remembers your choices, n
 WHATS_NEW.unshift(['0.52','A faster start: a new start screen, one setup screen, then chapter 1. The next story step is always the main button, checkrides can be booked from your story path, and many fixes.']);
 WHATS_NEW.unshift(['0.53','Money fixes: "Earned" matches everywhere, story pay and laundered cash count as income on the Money page, plainer Airline stats, and a "Launder it" shortcut on your story page.']);
 WHATS_NEW.unshift(['0.54','Your airline grows: buy airliners (ES-30, A320neo, 737 MAX, A321), build six facilities, open bases at other hubs, refit cabins, and track company value. Plus phone fixes for the job board and Pilot tabs.']);
+WHATS_NEW.unshift(['0.55','Behind the scenes: most of the game\'s code is now one clean definition per screen, which makes future fixes safer. The title screen shows your flight in progress properly, and new automatic checks cover the MSFS clock and the airline.']);

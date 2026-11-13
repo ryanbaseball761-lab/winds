@@ -1,7 +1,7 @@
 /* ===================== 20 UPGRADES: clarity, pages and testing ===================== */
 
 /* ---- 14. one "Right now" button in the header on every page ---- */
-function rightNow(st){ if(!st) return null; const a=st.active; if(a) return {t:a.started?'Flight in progress':'Your booked flight', b:a.started?'Open flight':'Open flight', act:'nav', v:'flight'};
+function rightNowBase(st){ if(!st) return null; const a=st.active; if(a) return {t:a.started?'Flight in progress':'Your booked flight', b:a.started?'Open flight':'Open flight', act:'nav', v:'flight'};
   const MC=mainChapters(); const next=MC.find(m=>!st.story.done[m.id]); if(!next) return {t:'Story complete', b:'Side jobs', act:'nav', v:'board'};
   const availSet=new Set(storyAvailable(st).map(m=>m.id)); const s=chapterStatus(st,next,availSet); const n=MC.indexOf(next)+1;
   if(s.k==='ready') return {t:`Chapter ${n} · ${next.title}`, b:'▶ Play', act:'accept-story', id:next.id};
@@ -14,19 +14,10 @@ function rightNow(st){ if(!st) return null; const a=st.active; if(a) return {t:a
 
 /* ---- 16. pilot page: the licence ladder says what each licence unlocks in the story ---- */
 const LADDER = [['PPL','Act 1 · the Cessna'],['JET','Act 2 · the Vision Jet and the CJ4'],['ATP','Act 4 · airliners and the 747']];
-const _uiPilot = pilotView;
-pilotView = function(){ const h=_uiPilot(); const st=S.st; const steps=LADDER.map(([r,u])=>{ const has=st.ratings[r]; const ready=!has && checkrideReady(st,r).ok; return `<div class="lad ${has?'has':ready?'ready':''}"><span class="lad-dot">${has?'✓':ready?'!':''}</span><b>${esc(RATINGS[r].n)}</b><small>${esc(u)}</small>${ready?(checkrideAircraft(st,r).length?`<button class="btn sm action" data-act="book-check" data-r="${r}">Book checkride · ${money(feeFor(st,r))}</button>`:`<a href="#" class="small" data-act="nav" data-v="hangar">Tick an aircraft for it in the Hangar</a>`):''}</div>`; }).join('<i class="lad-line"></i>');
-  return h.replace(/(<main[^>]*>)/, m=>m+`<section class="panel ladder"><p class="label">Your path through the story</p><div class="lad-row">${steps}</div><p class="small muted" style="margin-top:8px">Other ratings (Commercial, Instrument, Multi-Engine…) open more side jobs but aren't needed for the story.</p></section>`); };
 document.addEventListener('click', e=>{ const a=e.target.closest('[data-act="lad-go"]'); if(!a) return; e.preventDefault(); const el=document.querySelector(`[data-act="book-check"][data-r="${a.dataset.r}"]`); if(el) el.scrollIntoView({behavior:'smooth',block:'center'}); });
 
 /* ---- 17. the map shows the story: past chapters, and the next destination pulsing ---- */
-const _uiMap = mapView;
-mapView = function(){ const h=_uiMap(); try{ const st=S.st; const v=MAPV[S.mapZoom||'east']; const W=1000; const X=lon=>(lon-v.lon[0])/(v.lon[1]-v.lon[0])*W; const H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05); const Y=lat=>H-(lat-v.lat[0])/(v.lat[1]-v.lat[0])*H;
-  const MC=mainChapters(); let g='<g class="story-lines">'; MC.forEach(m=>{ if(!st.story.done[m.id]) return; const a=AP[m.from], b=AP[m.to]; if(!a||!b) return; const col=(CRIME_ACTS.find(x=>x.arc===m.arc)||{}).col||'#c8962a'; g+=`<line x1="${X(a.lon)}" y1="${Y(a.lat)}" x2="${X(b.lon)}" y2="${Y(b.lat)}" stroke="${col}" stroke-width="2" stroke-opacity=".55" stroke-dasharray="5 4"/>`; });
-  const next=MC.find(m=>!st.story.done[m.id]); if(next && AP[next.to]){ const b=AP[next.to], a=AP[next.from]; g+=`<line x1="${X(a.lon)}" y1="${Y(a.lat)}" x2="${X(b.lon)}" y2="${Y(b.lat)}" stroke="#d23b2c" stroke-width="3"/><circle cx="${X(b.lon)}" cy="${Y(b.lat)}" r="9" fill="none" stroke="#d23b2c" stroke-width="3" class="map-pulse"/><text x="${X(b.lon)+12}" y="${Y(b.lat)-12}" class="map-next">Next: ${esc(next.title)}</text>`; }
-  g+='</g>'; const i=h.indexOf('</svg>'); return i>0 ? h.slice(0,i)+g+h.slice(i) : h; }catch(_){ return h; } };
 
-(function(){ const _m=moneyView; moneyView=function(){ const h=_m(); try{ const l=launderHTML(S.st); return l ? h.replace(/(<main[^>]*>)/, m=>m+l) : h; }catch(_){ return h; } }; })();
 
 /* ---- 19. test sessions: try things out, then put your real career back ---- */
 const TEST_KEY='tw.realCareer.backup';
@@ -38,7 +29,6 @@ document.addEventListener('click', async e=>{ const b=e.target.closest('[data-ac
 
 /* ---- 20. leftovers from the old career: Academy, Butter Cup and old names ---- */
 TEXT_FIX.push([/Coral Wing's (pilots|crews|chief pilot)/g,'the island pilots'],[/Mari says,?/g,'Your instructor says'],[/the Coral Wing (team|family)/g,'the islands']);
-(function(){ const _av=typeof academyView==='function'?academyView:null; if(!_av) return; academyView=function(){ return _av().replace(/Coral Wing/g,'the islands'); }; })();
 
 (function(){ const s=document.createElement('style'); s.textContent=`
 .now-pill{display:flex;align-items:center;gap:10px;padding:4px 4px 4px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:13px;max-width:420px}.now-pill span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}.now-pill .btn{border-radius:999px;white-space:nowrap}

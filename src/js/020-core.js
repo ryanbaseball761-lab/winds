@@ -15,7 +15,7 @@ function autoArm(){
 /* ---- Voices ---- */
 const FEMALE = ['mari','celeste','vivienne','rosa','wilkins','marchetti','okafor','amara'];
 function voiceOn(){ try{ return localStorage.getItem('tw.voice')!=='off'; }catch(e){ return true; } }
-function voiceVol(){ try{ return Number(localStorage.getItem('tw.vol')||'0.9'); }catch(e){ return 0.9; } }
+function voiceVolBase(){ try{ return Number(localStorage.getItem('tw.vol')||'0.9'); }catch(e){ return 0.9; } }
 let _voices=[];
 function loadVoices(){ try{ _voices = (window.speechSynthesis && speechSynthesis.getVoices()) || []; }catch(e){ _voices=[]; } }
 if(window.speechSynthesis){ loadVoices(); try{ speechSynthesis.onvoiceschanged = loadVoices; }catch(e){} }
@@ -27,7 +27,7 @@ function speakerFor(who, job){
   const fem = FEMALE.includes(k);
   return {voice:pickVoice(fem, fem?0:0), rate: k==='abe'?0.92:k==='dez'?1.08:1.0, pitch: k==='abe'?0.85:k==='calloway'?1.05:1.0};
 }
-function spokenText(m){
+function spokenTextBase(m){
   if(m.who==='Recorder') return null;
   let t=m.text;
   if(m.who==='Cabin'){ const q=t.match(/"([^"]+)"/); if(!q) return null; t=q[1]; }   // passengers only say their quoted words
@@ -35,7 +35,7 @@ function spokenText(m){
   return t.length>2 ? t : null;
 }
 const VQ = { lastT: Date.now(), busy:false };
-function speakNew(){
+function speakNewBase(){
   if(!voiceOn() || !window.speechSynthesis) return;
   const a=S.st && S.st.active; const log=a && a.cab && a.cab.log; if(!log) return;
   const fresh = log.filter(m=>m.t > VQ.lastT).sort((x,y)=>x.t-y.t); if(!fresh.length) return;
@@ -47,10 +47,6 @@ function speakNew(){
 }
 
 /* voice toggle in the Cabin & radio panel */
-const _vCabin = cabinInner;
-cabinInner = function(){ const h=_vCabin(); if(!h) return h;
-  const btn = window.speechSynthesis ? `<button class="btn sm ghost voice-btn" data-act="voice">${voiceOn()?'🔊 Voices on':'🔇 Voices off'}</button>` : '';
-  return h.replace('</h3>', '</h3>'+btn); };
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="voice"]'); if(!b) return;
   const on=!voiceOn(); try{ localStorage.setItem('tw.voice', on?'on':'off'); }catch(_){}

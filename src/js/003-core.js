@@ -40,7 +40,7 @@ function newState(name, call){
 function hasRating(st,r){ return !!st.ratings[r]; }
 function ratingsOk(st, list){ return (list||[]).every(r=>hasRating(st,r)); }
 function allowedRegions(st){ return Object.keys(REGIONS).filter(r=>{ const u=REGIONS[r].unlock; return !u || hasRating(st,u) || (r==='LONG' && hasRating(st,'ATP')); }); }
-function canFly(st, acId){ const a=AC[acId]; return a && st.hangar[acId] && ratingsOk(st, a.req); }
+function canFlyBase(st, acId){ const a=AC[acId]; return a && st.hangar[acId] && ratingsOk(st, a.req); }
 function eligibleAircraft(st){ return Object.keys(AC).filter(k=>canFly(st,k)); }
 function apOk(st, code, acId){
   const ap=AP[code]; if(!ap) return false; const a=AC[acId];
@@ -100,7 +100,7 @@ function rwyAnalysis(code, wx, acId){
 function densityAlt(el, t, qnh){ const pa = el + (1013-qnh)*30; const isa = 15 - 2*el/1000; return Math.round(pa + 120*(t-isa)); }
 
 /* ---------- Planning ---------- */
-function plan(job){
+function planBase(job){
   const a=AC[job.ac]; const from=AP[job.from], to=AP[job.to];
   const dist = job.local ? (job.tourNm||40) : distNm(from,to);
   const est = Math.round(dist/a.cruise*60 + CLS[a.cls].over + (job.local?5:0));
@@ -185,8 +185,6 @@ function archOk(st, arch){
 }
 
 /* ---------- Story & checkride jobs ---------- */
-var storyAvailable; /* defined in full below (050-core.js) */
-
 function checkrideReady(st, rid){
   const R=RATINGS[rid]; if(!R.req || st.ratings[rid]) return {ok:false, earned:!!st.ratings[rid]};
   const r=R.req, miss=[];
@@ -220,4 +218,4 @@ const LANDING = { butter:{n:`Butter (under 100 fpm)`,pts:30}, smooth:{n:`Smooth 
 function gradeOf(score){ return score>=90?'A':score>=78?'B':score>=62?'C':score>=45?'D':'F'; }
 function addJournal(st, title, text, chars, kind, grade){ st.journal.unshift({id:uid(), day:st.day, clock:st.clock, title, text, chars:chars||[], kind:kind||'flight', grade}); st.journal = st.journal.slice(0,200); }
 
-function deadheadCost(st, to){ const d = distNm(AP[st.loc], AP[to]); return { cost: Math.round(60 + d*0.55), min: Math.round(d/380*60 + 75), d:Math.round(d) }; }
+function deadheadCostBase(st, to){ const d = distNm(AP[st.loc], AP[to]); return { cost: Math.round(60 + d*0.55), min: Math.round(d/380*60 + 75), d:Math.round(d) }; }

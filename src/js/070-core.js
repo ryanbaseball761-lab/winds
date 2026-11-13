@@ -1,6 +1,5 @@
 /* ===================== NOIR: a darker, criminal look ===================== */
-const _nrApply = applyTheme;
-applyTheme = function(){ _nrApply(); const r=document.documentElement; if(themePref()==='light'){ delete r.dataset.noir; } else { r.dataset.noir='1'; r.dataset.theme='dark'; } };
+function applyTheme(){ applyThemeBase(); const r=document.documentElement; if(themePref()==='light'){ delete r.dataset.noir; } else { r.dataset.noir='1'; r.dataset.theme='dark'; } }
 THEME_LBL.auto='Theme: noir'; THEME_LBL.dark='Theme: noir'; THEME_LBL.light='Theme: light';
 (function(){ const css=`
 :root[data-noir]{--bg:#0a0a0c;--surface:#131316;--surface-2:#0f0f12;--ink:#ece6da;--muted:#8f897e;--line:#26262b;

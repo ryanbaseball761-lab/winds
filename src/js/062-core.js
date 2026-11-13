@@ -6,16 +6,14 @@ function saneTouchdown(td){ if(!td) return td; const t=Object.assign({}, td); co
   return t; }
 
 /* 3. a touchdown "300 ft off the centerline" on a 150 ft runway means the runway data doesn't match the scenery, not your flying */
-const _frTda = touchdownAnalysis;
-touchdownAnalysis = function(code, td){ const A=_frTda(code, td); if(A && A.runway && Math.abs(A.xt) > A.w*0.9){ A.approx=true; A.center='unknown'; } return A; };
+function touchdownAnalysis(code, td){ const A=touchdownAnalysisBase(code, td); if(A && A.runway && Math.abs(A.xt) > A.w*0.9){ A.approx=true; A.center='unknown'; } return A; }
 
 /* 4 + 5. fairer landing grades, and a checkride isn't failed for a firm 373 fpm landing */
-landingClass = function(fpm){ const d=diff(); const T = d==='expert' ? [80,170,320] : d==='casual' ? [130,260,600] : [110,220,450]; return fpm<T[0]?'butter':fpm<T[1]?'smooth':fpm<T[2]?'firm':'hard'; };
+function landingClass(fpm){ const d=diff(); const T = d==='expert' ? [80,170,320] : d==='casual' ? [130,260,600] : [110,220,450]; return fpm<T[0]?'butter':fpm<T[1]?'smooth':fpm<T[2]?'firm':'hard'; }
 LANDING.hard.pts = 10; LANDING.firm.pts = 20;
 
 /* 6. local flights (tours, circuits, searches) were planned twice as long as they really take */
-const _frPlan = plan;
-plan = function(job){ const p=_frPlan(job); if(job && job.local){ p.est = Math.max(10, Math.round(p.est*0.6)); } return p; };
+function plan(job){ const p=planBase(job); if(job && job.local){ p.est = Math.max(10, Math.round(p.est*0.6)); } return p; }
 
 /* 7. one rough landing shouldn't ground a plane: damage per flight is capped and Dez repairs more overnight */
 

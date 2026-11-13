@@ -12,5 +12,5 @@ function backupsHTML(){ let a=[]; try{ a=JSON.parse(localStorage.getItem('tw.bac
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="bk-restore"]'); if(!b) return; if(!b.dataset.ok){ b.dataset.ok=1; b.textContent='Click again to restore'; b.classList.add('action'); return; }
   try{ const a=JSON.parse(localStorage.getItem('tw.backups')||'[]'); const x=a[Number(b.dataset.i)]; if(!x) return; backupLabeled(S.st,'Before restoring a backup'); S.st=migrate(x.st); S.st.savedAt=Date.now(); save(); S.view='story'; S.showResult=false; render(); toast(`Restored: ${x.label||'backup'}.`); }catch(_){ toast('That backup could not be restored.'); } });
 /* errors also go into a report file you can send me */
-(function(){ const _le=logErr; logErr=function(msg){ _le(msg); try{ if(window.twNative&&twNative.flightLog){ const now=Date.now(); if(now-(S._errT||0)>60000){ S._errT=now; twNative.flightLog(`error-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.json`, buildReport(String(msg))); } } }catch(_){} }; })();
+function logErr(msg){ logErrBase(msg); try{ if(window.twNative&&twNative.flightLog){ const now=Date.now(); if(now-(S._errT||0)>60000){ S._errT=now; twNative.flightLog(`error-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.json`, buildReport(String(msg))); } } }catch(_){} }
 

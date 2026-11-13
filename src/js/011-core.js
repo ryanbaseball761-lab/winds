@@ -15,7 +15,7 @@ function arcMeta(arc){ return ARC_META[arc] || {n:99, tag:'', col:'#0b746f'}; }
 
 function arcChapters(arc){ return STORY.filter(m=>m.arc===arc); }
 
-function unlockHint(st, m){
+function unlockHintBase(st, m){
   const r=m.req||{}, miss=[];
   if(r.after && !st.story.done[r.after]){ const p=STORY.find(x=>x.id===r.after); miss.push(`finish “${p?p.title:r.after}”`); }
   (r.ratings||[]).forEach(x=>{ if(!st.ratings[x]) miss.push(RATINGS[x].n); });
@@ -32,14 +32,7 @@ function chapterStatus(st, m, availSet){
   if(st.loc!==m.from) return {k:'travel', at:m.from};
   return {k:'ready', at:m.from};
 }
-var arcState; /* defined in full below (055-core.js) */
-
-
-
-
-
 /* ---------- board: "Your story" tracker ---------- */
-var campaignCard; /* defined in full below (085-core.js) */
 
 /* Story strips say which chapter they are */
 
@@ -60,7 +53,6 @@ const NAV_GROUPS = [['board','map','flight','cockpit'],['pilot','story','log'],[
 
 
 /* ---------- Story tab ---------- */
-var storyView; /* defined in full below (077-core.js) */
 
 /* Keep the active tab in view on narrow screens */
 (function(){ const app=document.getElementById('app'); if(!app || !window.MutationObserver) return;

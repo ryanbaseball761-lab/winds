@@ -16,7 +16,7 @@ const MID = {
 };
 Object.keys(MID).forEach(id=>{ if(BEATS[id]) BEATS[id].push(MID[id]); else BEATS[id]=[MID[id]]; });
 /* echoes: the next prologue opens with what you did last time */
-(function(){ const _sb=showBeat; showBeat=function(a,b,idx){ const r=_sb(a,b,idx); try{ const d=document.querySelector('.beat'); if(d && b.opts) d.addEventListener('click', e=>{ const btn=e.target.closest('[data-act="beat-opt"]'); if(!btn) return; const o=b.opts[Number(btn.dataset.i)]; const c=crime(); if(o.cash) txn(S.st,o.cash,'Story',a.job.title); if(o.echo){ c.echo={text:o.echo, from:a.job.story}; save(); } }); }catch(_){} return r; }; })();
+function showBeat(a,b,idx){ const r=showBeatBase(a,b,idx); try{ const d=document.querySelector('.beat'); if(d && b.opts) d.addEventListener('click', e=>{ const btn=e.target.closest('[data-act="beat-opt"]'); if(!btn) return; const o=b.opts[Number(btn.dataset.i)]; const c=crime(); if(o.cash) txn(S.st,o.cash,'Story',a.job.title); if(o.echo){ c.echo={text:o.echo, from:a.job.story}; save(); } }); }catch(_){} return r; }
 
 
 /* ---- 6 + 9 + 13. network runs: night drops at closed strips, hot airports, rank rewards ---- */
@@ -25,7 +25,7 @@ const RANK_PERKS = [[12,'Courier','Network runs unlocked'],[28,'Runner','One mor
 function rankMul(c){ return c.power>=65?1.3:c.power>=45?1.2:1; }
 
 
-function launderHTML(st){ const c=crime(st); if(!c.dirty) return ''; const L=launderOpts(st); return `<section class="panel launder"><div class="row between"><div><p class="label">Dirty cash</p><h3>${money(c.dirty)}</h3></div><p class="small muted" style="max-width:420px">Money from network runs. Launder it to move it into your cash. Better options unlock as the story goes on.</p></div><div class="row" style="flex-wrap:wrap;gap:8px;margin-top:10px">${L.map(o=>`<button class="btn sm" data-act="launder" data-v="${o.id}">${esc(o.n)} · ${Math.round(o.fee*100)}% fee${o.heat?` · Heat +${o.heat}`:''}</button>`).join('')}</div></section>`; }
+function launderHTMLBase(st){ const c=crime(st); if(!c.dirty) return ''; const L=launderOpts(st); return `<section class="panel launder"><div class="row between"><div><p class="label">Dirty cash</p><h3>${money(c.dirty)}</h3></div><p class="small muted" style="max-width:420px">Money from network runs. Launder it to move it into your cash. Better options unlock as the story goes on.</p></div><div class="row" style="flex-wrap:wrap;gap:8px;margin-top:10px">${L.map(o=>`<button class="btn sm" data-act="launder" data-v="${o.id}">${esc(o.n)} · ${Math.round(o.fee*100)}% fee${o.heat?` · Heat +${o.heat}`:''}</button>`).join('')}</div></section>`; }
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="launder"]'); if(!b||!S.st) return; const st=S.st, c=crime(st); const o=launderOpts(st).find(x=>x.id===b.dataset.v); if(!o||!c.dirty) return; const amt=c.dirty, net=Math.round(amt*(1-o.fee)); c.dirty=0; txn(st,net,'Laundered',o.n); if(o.heat) crBump(c,'heat',o.heat); save(); toast(`Laundered ${money(amt)} through ${o.n}: ${money(net)} clean.`); S.keepScroll=true; render(); });
 
 /* ---- 11 + 12. your fleet and your crew ---- */

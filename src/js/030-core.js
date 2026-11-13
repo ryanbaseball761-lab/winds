@@ -4,7 +4,7 @@ function cruiseAltFor(job){ const a=AC[job.ac], d=plan(job).dist; const c=a.cls;
   if(c==='jet') return d<120?14000:(job.ac==='SF50'?28000:37000);
   if(c==='turbo') return d<80?8500:d<250?16500:24000;
   if(job.local) return 2500; return d<30?2500:d<90?4500:d<200?6500:8500; }
-function preflightChecks(job){
+function preflightBase(job){
   const s=S.sim, live=S.simState==='live' && s && s.position; const p=plan(job); const out=[];
   out.push({k:'sim', ok:!!live, t:live?'MSFS connected':'MSFS not connected', d:live?'':'Start MSFS and load into a flight. Trade Winds will see it in a few seconds.'});
   if(!live) return out;
@@ -17,6 +17,15 @@ function preflightChecks(job){
   const parked = s.motion.onGround && s.motion.gs<1; out.push({k:'park', ok:parked, t:parked?'Parked on the ground':'Moving or airborne', d:parked?'':'Run the check while parked at the gate.'});
   return out;
 }
+/* the pre-flight check list on the Flight page: MSFS connected, position, MSFS clock, aircraft, fuel, parked, weather */
+function preflightChecks(job){ const out=preflightBase(job); const m=simMinutes(); if(m==null) return out;
+  if(syncPrefs().time){ const diffMin = Math.abs((((m - job.dep) % 1440) + 1440 + 720) % 1440 - 720); const ok = diffMin <= 45;
+    const t={k:'time', ok, t: ok?`MSFS time ${hhmm(m)} matches`:`MSFS time is ${hhmm(m)}, flight planned for ${hhmm(job.dep)}`, d: ok?'':`Set the MSFS time to ${hhmm(job.dep)}, or move this flight to the sim's time.`, act: ok?null:'pf-usetime', actLabel:'Use MSFS time'};
+    if(!ok && window.twNative){ t.act='pf-settime'; t.actLabel=`Set MSFS to ${hhmm(job.dep)}`; t.d='Or set the time in the MSFS weather & time panel.'; }
+    out.splice(2,0,t); }
+  const wxOk = !!(job.wx&&job.wx.live); out.push({k:'wx', ok:wxOk, t: wxOk?'Briefing uses live MSFS weather':'Briefing weather is generated', d: wxOk?'':(atDeparture(job)?'':'It switches to your MSFS weather once you\'re at the departure airport.'), act: (!wxOk && simWx())?'pf-usewx':null, actLabel:'Use MSFS weather'});
+  return out; }
+
 function plnLLA(lat, lon, altFt){ const f=(v,pos,neg)=>{ const a=Math.abs(v), d=Math.floor(a), m=Math.floor((a-d)*60), s=((a-d)*60-m)*60; return `${v>=0?pos:neg}${d}° ${m}' ${s.toFixed(2)}"`; }; return `${f(lat,'N','S')},${f(lon,'E','W')},+${String((altFt||0).toFixed(2)).padStart(9,'0')}`; }
 function buildPLN(job){
   const A=AP[job.from], B=job.local?AP[job.from]:AP[job.to]; const to=job.local?job.from:job.to; const alt=cruiseAltFor(job); const ifr = plan(job).ifr || ['jet','airliner','regional','widebody'].includes(AC[job.ac].cls);
@@ -48,8 +57,6 @@ async function savePLN(job){
   try{ const dl=window.claude && await claude.use('downloads'); if(dl){ await dl.save({filename:name+'.txt', data:text}); toast('Saved as .pln.txt (the browser only allows text files). Rename it to .pln, then in MSFS: World Map → Load.'); return; } }catch(err){ if(err && err.code==='declined') return; }
   try{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:'application/xml'})); a.download=name; a.click(); }catch(_){ toast('Saving isn\'t available here.'); }
 }
-var loadIntoSim; /* defined in full below (061-core.js) */
-var renderPreflight; /* defined in full below (052-core.js) */
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act="pf-load"],[data-act="pf-pln"],[data-act="pf-recheck"]'); if(!b || !S.st || !S.st.active) return; const job=S.st.active.job;
   if(b.dataset.act==='pf-load') loadIntoSim(job); else if(b.dataset.act==='pf-pln') savePLN(job); else { simPoll(true); toast('Checking MSFS…'); }

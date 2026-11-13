@@ -30,3 +30,19 @@ list is the starting point for the bug hunt (Phase 4).
   is missing, because the code that hides the duplicate task list removes the drawer it sits in.
 - Result page: the "Write a journal entry with Claude" button was dropped by a later layout change; the
   handler and the AI-briefing button in the client briefing are leftovers of that feature.
+
+## Round 2 (0.55)
+Wrapped functions went from 71 to 9. Every page and helper that used to be patched by later files
+(`x = function(){ … _old() … }`) is now one definition:
+- New page files: `page-money.js`, `page-map.js`, `page-pilot.js`. Money, Map and the Licences tab are each one function;
+  the extras (operation panel, dirty cash, live flight, story lines, "show on map" route, story ladder) are named helpers.
+- Multi-layer functions (profile, weekly panel, cockpit, cabin panel, avatar, flight card, title screen, pre-flight checks,
+  setup/tour) were folded into single definitions; single wrappers became `function x(){ … xBase() … }`.
+- Placeholders like `var storyAvailable; /* defined below */` are gone; those functions are now normal declarations.
+- Removed dead code: the retired passenger/ATC chatter (cabin line tables, `cabinPick`, `manifestLine`, IMC lines,
+  the examiner lines), the retired end-of-day recap, the no-op `renderToast`, an Academy text replace that never matched,
+  and the `_cabMute` toast switch. `cabinTick()` now only tracks passenger comfort.
+- Only snapshot change: random review lines on two test flights, because the removed chatter no longer uses random numbers.
+- Still wrapped (audio/voice hooks and two story data overrides, left alone on purpose): `SS.speak`, `SS.cancel`, `actx`,
+  `pvVoiceFor`, `pvInstr`, `twSpeaker`, `playRecapNow`, `ALT_OUT.BO5`, `ALT_OUT.CO3`.
+- Title screen bug fixed on the way: with a flight in progress, the Continue line ran the chapter name and the route together.

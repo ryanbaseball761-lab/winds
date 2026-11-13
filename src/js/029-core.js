@@ -18,7 +18,7 @@ function ifProgress(a){
   const togo = job.local ? null : distNm({lat:s.position.lat,lon:s.position.lon}, to);
   return {pct: togo==null?null:Math.max(0,Math.min(100,(1-togo/Math.max(total,1))*100)), togo, total};
 }
-function ifLiveHTML(){
+function ifLiveHTMLBase(){
   const st=S.st, a=st&&st.active; if(!a) return '';
   const s=S.sim, live = S.simState==='live' && s && s.motion; const ph=flightPhase(a); const pr=ifProgress(a);
   const tile=(lbl,val,unit,cls='')=>`<div class="if-tile ${cls}"><span>${lbl}</span><b class="mono">${val}</b><small>${unit}</small></div>`;

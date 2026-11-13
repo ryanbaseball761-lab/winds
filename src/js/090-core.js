@@ -20,7 +20,7 @@ ACH.push(
   {id:'cx_radar',n:`Under the Radar`,d:`Earn a low-level bonus on a network run.`,t:s=>!!(s.crime&&s.crime.radar)}
 );
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="launder"]'); if(!b||!S.st) return; const c=crime(); c.laundered=(c.laundered||0)+(c.dirty||0); }, true);
-function achPop(a){ const d=document.createElement('div'); d.className='achpop'; d.innerHTML=`<span>Achievement</span><b>${esc(a.n)}</b><small>${esc(a.d)}</small>`; document.body.appendChild(d); try{ chimeUp&&chimeUp(); }catch(_){} setTimeout(()=>{ d.classList.add('out'); setTimeout(()=>d.remove(),500); }, 3800); }
+function achPopBase(a){ const d=document.createElement('div'); d.className='achpop'; d.innerHTML=`<span>Achievement</span><b>${esc(a.n)}</b><small>${esc(a.d)}</small>`; document.body.appendChild(d); try{ chimeUp&&chimeUp(); }catch(_){} setTimeout(()=>{ d.classList.add('out'); setTimeout(()=>d.remove(),500); }, 3800); }
 
 /* ---- 4 + 5. story page: trust with each person, your numbers, and replay any chapter's scenes ---- */
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="replay-ch"]'); if(!b) return; const m=CRIME.find(x=>x.id===b.dataset.id); if(m) playPrologue(m, ()=>{}); });
@@ -34,11 +34,6 @@ const CX_TIPS = { Power:`Power: how much of the network answers to you. Grows wi
 
 /* ---- 8. jobs: see the route on the map ---- */
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="job-map"]'); if(!b||!S.st) return; S.mapRoute=b.dataset.id; const j=(S.st.jobs||[]).find(x=>x.id===b.dataset.id); if(j) S.mapSel=j.local?j.from:j.to; go('map'); });
-const _m8Map = mapView;
-mapView = function(){ const h=_m8Map(); try{ const j=S.mapRoute&&(S.st.jobs||[]).find(x=>x.id===S.mapRoute); if(!j) return h; const v=MAPV[S.mapZoom||'east']; const W=1000; const X=lon=>(lon-v.lon[0])/(v.lon[1]-v.lon[0])*W; const H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05); const Y=lat=>H-(lat-v.lat[0])/(v.lat[1]-v.lat[0])*H;
-  const a=AP[j.from], b=AP[j.local?j.from:j.to]; const g=`<g><line x1="${X(a.lon)}" y1="${Y(a.lat)}" x2="${X(b.lon)}" y2="${Y(b.lat)}" stroke="#c8962a" stroke-width="3"/><circle cx="${X(b.lon)}" cy="${Y(b.lat)}" r="7" fill="#c8962a"/><text x="${X(b.lon)+10}" y="${Y(b.lat)+18}" class="map-next">${esc(j.title)} · ${money(j.pay)}</text></g>`; const i=h.indexOf('</svg>');
-  const back=`<div class="row" style="gap:8px;margin-bottom:10px"><button class="btn sm" data-act="map-back">← Back to jobs</button><button class="btn sm primary" data-act="accept" data-id="${j.id}">Accept · ${money(j.pay)}</button></div>`;
-  return (i>0?h.slice(0,i)+g+h.slice(i):h).replace(/(<main[^>]*>)/, m=>m+back); }catch(_){ return h; } };
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="map-back"]')){ S.mapRoute=null; go('board'); } else if(e.target.closest('[data-act="nav"]')) S.mapRoute=null; }, true);
 
 

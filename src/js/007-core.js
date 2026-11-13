@@ -5,7 +5,7 @@ const VIEWS = [['board','Job board'],['map','Map'],['flight','Flight'],['cockpit
 
 /* ---------- persistence ---------- */
 function loadLocal(){ try{ const t=localStorage.getItem(KEY); return t?JSON.parse(t):null; }catch(e){ return null; } }
-function save(){ const st=S.st; if(!st) return; st.savedAt=Date.now(); try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){}
+function saveBase(){ const st=S.st; if(!st) return; st.savedAt=Date.now(); try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){}
   clearTimeout(S.saveTimer); S.saveTimer=setTimeout(flush, 1200); }
 async function flush(){ if(!S.db || !S.st) return; if(S.saving){ S.pending=true; return; } S.saving=true;
   try{ await S.db.doc(DB_DOC).set({ json: JSON.stringify(S.st), savedAt: S.st.savedAt }); S.sync='account'; }
@@ -28,15 +28,17 @@ async function connect(){
 }
 
 /* ---------- helpers ---------- */
-var toast; /* defined in full below (047-core.js) */
-var renderToast; /* defined in full below (047-core.js) */
 function topRating(st){ const order=['ATP','JET','TURB','IR','COMM','PPL']; for(const r of order) if(st.ratings[r]) return RATINGS[r]; return RATINGS.PPL; }
-function syncText(){ return {account:'Saved to your account', device:'Saved in this browser', full:'Account storage full: saving in this browser'}[S.sync]; }
+function syncTextBase(){ return {account:'Saved to your account', device:'Saved in this browser', full:'Account storage full: saving in this browser'}[S.sync]; }
 function renderSync(){ const el=document.getElementById('sync'); if(el) el.textContent=syncText(); }
 
 
-var dutyAfter; /* defined in full below (061-core.js) */
-function avatar(k){ const c=CAST[k]; const ini=c.n.replace(/".*?"\s*/,'').split(' ').filter(w=>/^[A-Z]/.test(w)).slice(-2).map(w=>w[0]).join(''); return `<div class="avatar" style="background:${c.col}" aria-hidden="true">${esc(ini)}</div>`; }
+function avatarBase(k){ const c=CAST[k]; const ini=c.n.replace(/".*?"\s*/,'').split(' ').filter(w=>/^[A-Z]/.test(w)).slice(-2).map(w=>w[0]).join(''); return `<div class="avatar" style="background:${c.col}" aria-hidden="true">${esc(ini)}</div>`; }
+/* a character's face: painted portrait if there is one, else the drawn SVG portrait, else initials */
+function avatar(k){ const u=ART.portraits[k]; if(u) return `<span class="avatar art-av" style="background-image:url('${u}')" role="img" aria-label="${esc(CAST[k]?CAST[k].n:k)}"></span>`;
+  const svg=portraitSVG(k); if(svg){ const c=CAST[k]||{}; return `<div class="avatar portrait" style="background:${c.col||'#0b746f'}" aria-hidden="true">${svg}</div>`; }
+  return avatarBase(k); }
+
 
 
 /* ---------- band ---------- */
@@ -47,7 +49,7 @@ function avatar(k){ const c=CAST[k]; const ini=c.n.replace(/".*?"\s*/,'').split(
 
 /* ---------- board ---------- */
 
-function genLocWx(st){ const k=st.loc+'|'+st.day; if(!st.locWx || st.locWx.k!==k){ st.locWx = {k, wx: genWx(st, st.loc, null, st.clock)}; } return st.locWx.wx; }
+function genLocWxBase(st){ const k=st.loc+'|'+st.day; if(!st.locWx || st.locWx.k!==k){ st.locWx = {k, wx: genWx(st, st.loc, null, st.clock)}; } return st.locWx.wx; }
 
 /* ---------- flight ---------- */
 function autoTeach(st, job, p){
@@ -101,38 +103,6 @@ function debriefView(job, p){
 }
 
 /* ---------- pilot ---------- */
-function pilotView(){
-  const st=S.st; const s=st.stats;
-  const rungs = RATING_ORDER.map(rid=>{
-    const R=RATINGS[rid]; const earned=!!st.ratings[rid]; const chk = checkrideReady(st, rid);
-    let action='';
-    if(earned) action = `<span class="chip good">Earned</span>`;
-    else if(rid==='CO') action = chk.ok ? `<button class="btn sm action" data-act="nav" data-v="company">Apply on the Company tab</button>` : '';
-    else if(chk.ok){ const acs = checkrideAircraft(st, rid); action = acs.length ? `<div class="row"><select id="cr-${rid}" style="width:auto;padding:6px 8px;font-size:13px" aria-label="Checkride aircraft">${acs.map(k=>`<option value="${k}">${esc(AC[k].n)}</option>`).join('')}</select>${feeSelect(st,rid)}<button class="btn sm action" data-act="book-check" data-r="${rid}" ${st.active?'disabled':''}>Book checkride</button></div>` : `<span class="chip warn">No suitable aircraft in your hangar</span>`; }
-    const req = R.req||{}; const hrsPct = req.hours ? Math.min(100, st.minutes/60/req.hours*100) : 100;
-    return `<div class="rung ${earned?'earned':chk.ok?'ready':''}">
-      <div class="badge">${R.code}</div>
-      <div style="min-width:0"><div class="row" style="gap:8px"><b>${esc(R.n)}</b>${R.dest?`<span class="chip">${R.dest}</span>`:''}</div>
-        <p class="small muted">${esc(R.unlocks||R.blurb||'')}</p>
-        ${!earned && req.hours ? `<div class="row small" style="margin-top:6px;gap:8px"><div class="meter" style="flex:1;min-width:120px"><i style="width:${hrsPct}%"></i></div><span class="mono">${(st.minutes/60).toFixed(1)} / ${req.hours} h</span></div>`:''}
-        ${!earned && !chk.ok && chk.miss?.length ? `<p class="tiny muted" style="margin-top:4px">Needs: ${esc(chk.miss.join(' · '))}</p>`:''}
-      </div><div>${action}</div></div>`;
-  }).join('');
-  const types = Object.keys(st.types).sort((a,b)=>st.types[b]-st.types[a]);
-  const landTot = ['butter','smooth','firm','hard','crash'].reduce((t,k)=>t+(s[k]||0),0)||1;
-  return `<main class="wrap stack fade">
-    
-    ${licenseCard(st)}
-    ${pilotExtras(st)}
-    <div class="grid-2">
-      <section><div class="section-title"><h2>Ratings & qualifications</h2><span class="small muted">Earn each one with a checkride</span></div><div class="ladder">${rungs}</div></section>
-      <aside class="stack">
-        <section class="panel stack"><h3>Landings</h3>${['butter','smooth','firm','hard','crash'].map(k=>`<div><div class="row between small"><span>${LANDING[k].n}</span><span class="mono">${s[k]||0}</span></div><div class="meter ${k==='hard'?'warn':k==='crash'?'bad':''}"><i style="width:${(s[k]||0)/landTot*100}%"></i></div></div>`).join('')}
-        <p class="small muted">Diversions: ${s.diverts} · Emergencies handled by the book: ${s.scen}</p></section>
-        <section class="panel stack"><h3>Types flown</h3>${types.length?`<ul class="tight small">${types.map(k=>`<li>${esc(AC[k].n)} <span class="muted">· ${st.types[k]} flight${st.types[k]===1?'':'s'}</span></li>`).join('')}</ul>`:'<p class="small muted">None yet. Your first flight adds one.</p>'}
-        <p class="small muted">Airports visited: ${Object.keys(st.visited).length} of ${Object.keys(AP).filter(k=>!AP[k].water).length}</p></section>
-      </aside></div></main>`;
-}
 
 /* ---------- story ---------- */
 
@@ -153,7 +123,7 @@ function logView(){
 /* ---------- hangar ---------- */
 
 /* ---------- render ---------- */
-function go(v){ if(v==='flight' && S.mcp && S.simState!=='nobridge') setTimeout(()=>simPoll(true),0); S.view=v; S.confirm=null; if(v!=='flight'){ S.debrief=false; } if(location.hash!=='#'+v){ try{ history.replaceState(null,'','#'+v); }catch(e){ location.hash=v; } } render(); window.scrollTo(0,0); }
+function goBase(v){ if(v==='flight' && S.mcp && S.simState!=='nobridge') setTimeout(()=>simPoll(true),0); S.view=v; S.confirm=null; if(v!=='flight'){ S.debrief=false; } if(location.hash!=='#'+v){ try{ history.replaceState(null,'','#'+v); }catch(e){ location.hash=v; } } render(); window.scrollTo(0,0); }
 
 /* ---------- AI ---------- */
 function castBible(){ return Object.values(CAST).map(c=>`- ${c.n}: ${c.role}. ${c.bio}`).join('\n'); }
@@ -277,7 +247,7 @@ function boot(){
 
 /* ---------- extras UI ---------- */
 function stars(n){ return `<span class="on">${'★'.repeat(n)}</span><span class="off">${'★'.repeat(5-n)}</span>`; }
-function dispatchCard(st){
+function dispatchCardBase(st){
   if(!st.brief || st.brief.day!==st.day){ newDayBrief(st); save(); }
   const b=st.brief; const storm=stormActive(st); const fest=festivalOn(st);
   return `<section class="panel dispatch"><div class="row between"><p class="label">Morning dispatch · Day ${st.day} · ${dateTxt(st.day)}</p><span class="small muted">Coral Wing ops board</span></div>

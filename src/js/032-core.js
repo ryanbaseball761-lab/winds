@@ -10,8 +10,6 @@ function wizardHTML(st){ const live=S.simState==='live';
     <div class="row between wiz-go"><button class="btn ghost" data-act="wiz-academy">New to flight sims? Learn the basics first</button>${st.story.done.CW1?`<button class="btn primary" data-act="tour-skip">Done</button>`:`<button class="btn action" data-act="wiz-fly">▶ Play chapter 1</button>`}</div>
   </div></div>`;
 }
-const _wzTour = tourHTML;
-tourHTML = function(st){ if(st && !st.tourDone && (st.flights||0)===0) return wizardHTML(st); if(st && S.wizOpen) return wizardHTML(st); return _wzTour(st); };
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act^="wiz-"],[data-act="tour-skip"]'); if(!b || !S.st) return; const act=b.dataset.act;
   if(act==='tour-skip'){ S.wizOpen=false; S.wiz=0; return; }

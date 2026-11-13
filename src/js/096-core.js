@@ -48,15 +48,13 @@ pvInstr = function(text){ const k=PV._char; PV._char=null; return (k && CHAR_VOI
 /* tag the speech from cutscenes and in-flight moments with the speaker */
 (function(){ const U=window.SpeechSynthesisUtterance; if(!U) return; let pending=null; window.twSpeaker=k=>{ pending=k; setTimeout(()=>{ if(pending===k) pending=null; }, 1500); };
   const SS=window.speechSynthesis; if(!SS) return; const sp=SS.speak.bind(SS); SS.speak=function(u){ if(pending){ u.twChar=pending; pending=null; } return sp(u); }; })();
-(function(){ const _say=speakBeat; speakBeat=function(b){ try{ twSpeaker(b.who); }catch(_){} return _say(b); }; })();
+function speakBeat(b){ try{ twSpeaker(b.who); }catch(_){} return speakBeatBase(b); }
 
 /* ---- art pipeline: drop in painted portraits and scenes and they replace the drawings ---- */
 const ART = { portraits:{}, scenes:{}, bases:['https://raw.githubusercontent.com/ryanbaseball761-lab/winds/main/art/'] };
 /* one small index file per location lists the art that exists, e.g. {"portraits":["castillo"],"scenes":["villa"]} */
-function artLoad(i){ if(i>=ART.bases.length) return; const base=ART.bases[i]; fetch(base+'index.json',{cache:'no-cache'}).then(r=>r.ok?r.json():Promise.reject()).then(ix=>{ (ix.portraits||[]).forEach(k=>{ if(!ART.portraits[k]) ART.portraits[k]=`${base}portraits/${k}.jpg`; }); (ix.scenes||[]).forEach(k=>{ if(!ART.scenes[k]) ART.scenes[k]=`${base}scenes/${k}.jpg`; }); try{ render(); }catch(_){} }).catch(()=>{}).finally(()=>artLoad(i+1)); }
+function artLoadBase(i){ if(i>=ART.bases.length) return; const base=ART.bases[i]; fetch(base+'index.json',{cache:'no-cache'}).then(r=>r.ok?r.json():Promise.reject()).then(ix=>{ (ix.portraits||[]).forEach(k=>{ if(!ART.portraits[k]) ART.portraits[k]=`${base}portraits/${k}.jpg`; }); (ix.scenes||[]).forEach(k=>{ if(!ART.scenes[k]) ART.scenes[k]=`${base}scenes/${k}.jpg`; }); try{ render(); }catch(_){} }).catch(()=>{}).finally(()=>artLoad(i+1)); }
 setTimeout(()=>artLoad(0), 1500);
-const _artAvatar = avatar;
-avatar = function(k){ const u=ART.portraits[k]; if(!u) return _artAvatar(k); return `<span class="avatar art-av" style="background-image:url('${u}')" role="img" aria-label="${esc(CAST[k]?CAST[k].n:k)}"></span>`; };
 Object.keys(SCENES).forEach(k=>{ const f=SCENES[k]; SCENES[k]=()=>ART.scenes[k] ? `<div class="art-scene" style="background-image:url('${ART.scenes[k]}')"></div>` : f(); });
 
 (function(){ const s=document.createElement('style'); s.textContent=`

@@ -20,41 +20,21 @@ function initials(n){ return n.split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[
 })();
 
 /* ---------- Live cabin & radio: characters react to what you actually do in MSFS ---------- */
-const CABIN_LINES = {
-  takeoff:[`"Here we go!" Someone in row 2 grips the armrest, then laughs at themselves.`,`A passenger presses their nose to the window as the island drops away.`,`"Is it always this quick?" asks the passenger in the back. "I barely felt that."`],
-  cruise:[`The cabin settles down. Someone opens a bag of plantain chips.`,`"Can we see Saba from here?" a passenger asks, pointing at a dark shape on the horizon.`,`Quiet in the back. Somebody has fallen asleep, mouth open.`],
-  bump:[`The airplane drops and a phone hits the floor. "Was that us?"`,`"Whoa!" A water bottle rolls down the aisle. Nervous laughter.`,`Somebody yelps. You hear the unmistakable crinkle of a sick bag being opened.`],
-  dive:[`"My ears!" Two passengers are pinching their noses and blowing.`,`The descent feels steep from the back. Someone asks if everything is okay.`],
-  near:[`"Is that {isl}? It's beautiful." Phones come out all over the cabin.`,`The water below turns turquoise. A passenger starts filming out the window.`],
-  tdB:[`Silence, then: "Wait, are we down already?" A round of applause from the cabin.`,`That one was butter. Someone in the back actually says "Bravo."`],
-  tdS:[`A soft, smooth arrival. A passenger gives you a thumbs-up through the cockpit gap.`,`Nice landing. The cabin barely notices.`],
-  tdF:[`A firm thump. "Well, we're definitely down," someone says.`,`A solid arrival. A coffee cup rattles but survives.`],
-  tdH:[`BANG. Overhead bins rattle and somebody swears in three languages.`,`A hard landing. The cabin goes very quiet.`],
-  cargoTo:[`Dez on the radio: "Wheels up. Don't break my eggs." Even when there are no eggs.`,`Dispatch: "Copy your departure. Cargo's insured, but fly like it isn't."`],
-  cargoTd:[`Dispatch: "Nice arrival. Ground crew is heading out to unload."`,`Dez: "Cargo's in one piece? Good. Mari wants pictures."`]
-};
 
+/* passenger comfort: jolts, steep dives and the touchdown cost comfort; a butter landing earns some back.
+   (The passenger and ATC chatter that used to come with this was retired: the cabin stays quiet.) */
 function cabinTick(){
-  const st=S.st; const a=st && st.active; const s=S.sim; if(!a || !s || S.simState!=='live' || !s.motion) return;
+  const st=S.st; const a=st && st.active; const s=S.sim; if(!simRelevant(a) || !s.motion) return;
   const rec = simRecFor(a); if(!rec) return;
   const job=a.job; a.cab = a.cab || {f:{}, log:[], comfort:100, cd:0};
-  const C=a.cab, now=Date.now(); const pax = job.pax>0;
-  const host = job.chars && job.chars[0] && CAST[job.chars[0]] ? CAST[job.chars[0]].n.replace(/".*?"\s*/,'').split(' ')[0] : (job.client||'').split(' ')[0];
-  const say = (key, who, text) => { if(C.f[key]) return; C.f[key]=now; C.log.unshift({t:now, who, text}); C.log=C.log.slice(0,12); if(S.view!=='flight' && S.view!=='cockpit') toast(`${who}: ${text.replace(/<[^>]+>/g,'')}`.slice(0,140)); };
-  const air = rec.takeoff && !rec.touchdown && !s.motion.onGround;
-  if(rec.blockOut) say('out','Ground',`${flightNo(job)}, taxi approved. Have a good flight.`);
-  if(rec.takeoff) say('to', pax?'Cabin':'Radio', cabinPick(pax?'takeoff':'cargoTo', job));
-  if(air && s.position.aglFt>1500 && Math.abs(s.motion.vsFpm)<300) say('cruise', pax?'Cabin':'Radio', pax?cabinPick('cruise',job):`ATC: "${flightNo(job)}, radar contact. Proceed on course."`);
-  if(air && (s.motion.gForce>1.35 || s.motion.gForce<0.65) && now-C.cd>15000){ C.cd=now; C.comfort=Math.max(0,C.comfort-8); if(pax){ if(!C.f.bump) say('bump','Cabin',cabinPick('bump',job)); else if(!C.f.bump2) say('bump2','Cabin',`Another jolt. ${host?host+' is':'Everyone is'} gripping the seat now.`); } }
-  if(air && s.motion.vsFpm < -1800 && now-C.cd>15000){ C.cd=now; C.comfort=Math.max(0,C.comfort-5); if(pax) say('dive','Cabin',cabinPick('dive',job)); }
-  if(air && !job.local && AP[job.to] && s.position){ const d=distNm({lat:s.position.lat,lon:s.position.lon},AP[job.to]); const tot=distNm(AP[job.from],AP[job.to]); if(d<Math.min(12, tot*0.45)) say('near', pax?'Cabin':'Radio', pax?cabinPick('near',job):`Approach: "${flightNo(job)}, ${job.to} in sight? Cleared visual approach."`); }
-  if(rec.touchdown && !C.f.td){ const fpm=rec.touchdown.fpm; const k=fpm<100?'tdB':fpm<200?'tdS':fpm<350?'tdF':'tdH'; C.comfort=Math.max(0, C.comfort-({tdB:0,tdS:0,tdF:6,tdH:20}[k])); if(fpm<100) C.comfort=Math.min(100,C.comfort+5); say('td', pax?'Cabin':'Radio', pax?cabinPick(k,job):cabinPick('cargoTd',job)); say('td2','Recorder',`Touchdown at ${fpm} fpm, ${rec.touchdown.g} G.`); }
-  if(rec.blockIn) say('in', host||'Ground', host ? `${host} unbuckles and smiles. "Thanks for the ride. Same time next week?"` : `Parked. Shut down when you're ready.`);
+  const C=a.cab, now=Date.now(); const air = rec.takeoff && !rec.touchdown && !s.motion.onGround;
+  if(air && (s.motion.gForce>1.35 || s.motion.gForce<0.65) && now-C.cd>15000){ C.cd=now; C.comfort=Math.max(0,C.comfort-8); }
+  if(air && s.motion.vsFpm < -1800 && now-C.cd>15000){ C.cd=now; C.comfort=Math.max(0,C.comfort-5); }
+  if(rec.touchdown && !C.f.td){ C.f.td=now; const fpm=rec.touchdown.fpm; C.comfort=Math.max(0, C.comfort-(fpm<200?0:fpm<350?6:20)); if(fpm<100) C.comfort=Math.min(100,C.comfort+5); }
+  C.log=C.log.filter(m=>m.kind && !ATC_WHO.test(m.who||''));
   job.comfort = Math.round(C.comfort);
   try{ save(); }catch(e){}
 }
 
 function cabinBlock(){ return S.st && S.st.active ? `<section class="panel stack cabin-host">${cabinInner()}</section>` : ''; }
-const _shellCockpit = cockpitView;
-cockpitView = function(){ const h=_shellCockpit(); return h.replace(/<\/main>\s*$/, cabinBlock()+'</main>'); };
 /* comfort pays */

@@ -9,10 +9,9 @@ function wxFx(key){ const rain=['showers','tstorm','wave','squall'].includes(key
   if(rain) h+=`<div class="fx-rain ${key==='tstorm'||key==='squall'?'heavy':''}" aria-hidden="true"></div>`;
   if(key==='dust') h+=`<div class="fx-haze" aria-hidden="true"></div>`;
   return h; }
-const _flHero = todayHero;
-todayHero = function(st){ let h=_flHero(st); const P=skyPos(st.clock); const wx=genLocWx(st);
+function todayHero(st){ let h=todayHeroBase(st); const P=skyPos(st.clock); const wx=genLocWx(st);
   h=h.replace('<section class="today ', `<section style="--sx:${P.x.toFixed(1)}%;--sy:${P.y.toFixed(1)}%" class="today live-sky wx-${esc(wx.key||'')} ${P.night?'is-night':''} `);
-  return h.replace('<div class="sun" aria-hidden="true"></div>', `<div class="stars" aria-hidden="true" style="box-shadow:${STARS}"></div><div class="sun" aria-hidden="true"></div>${wxFx(wx.key)}`); };
+  return h.replace('<div class="sun" aria-hidden="true"></div>', `<div class="stars" aria-hidden="true" style="box-shadow:${STARS}"></div><div class="sun" aria-hidden="true"></div>${wxFx(wx.key)}`); }
 
 /* 3. splash on launch */
 (function splash(){ try{ const d=document.createElement('div'); d.id='tw-splash'; d.setAttribute('aria-hidden','true');
@@ -51,7 +50,6 @@ function passPlane(){ const a=S.st&&S.st.active; let pct=null; try{ if(a && a.st
 
 /* 9. toasts: stacked, with an icon, slide in, and a timer bar */
 function toastKind(msg){ const m=String(msg).toLowerCase(); if(/couldn|can't|cannot|not connected|fail|error|expert mode|grounded|fine/.test(m)) return 'warn'; if(/unlocked|saved|logged|loaded|matches|repaired|moved|welcome|you're now|passed|earned/.test(m)) return 'ok'; return 'info'; }
-renderToast = function(){};
 
 /* 10. UI sound: soft ticks, a whoosh on departure, a till on payday */
 function softTone(freq, vol=0.05, dur=0.09, type='sine'){ try{ if(!sfxOn()) return; const c=actx(); if(!c) return; const t=c.currentTime; const o=c.createOscillator(), g=c.createGain(); o.type=type; o.frequency.setValueAtTime(freq,t); g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.connect(g).connect(c.destination); o.start(t); o.stop(t+dur+0.02); }catch(_){} }

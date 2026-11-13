@@ -3,14 +3,15 @@ VIEWS.push(['profile','Profile']); NAV_GROUPS[1].splice(1,0,'profile');
 NAV_ICON.profile = `<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c1-4 4.5-6 8-6s7 2 8 6"/>`;
 VIEW_META.profile = ['Pilot profile','Your flying, in numbers'];
 function profileStats(st){
-  const L=st.log||[]; const ver=L.filter(l=>l.verified && l.fpm!=null);
+  const L=st.log||[]; const ver=L.filter(l=>l.verified && l.fpm!=null); const good=L.map(x=>x.fpm).filter(v=>v>0&&v<1500); // impossible touchdown readings are left out
+  const MC=mainChapters();
   const byAc={}; L.forEach(l=>{ byAc[l.ac]=(byAc[l.ac]||0)+(l.min||0); });
   const grades={A:0,B:0,C:0,D:0,F:0}; L.forEach(l=>{ if(grades[l.grade]!=null) grades[l.grade]++; });
   const visited=Object.keys(st.landedAt||{}).filter(k=>AP[k]&&!AP[k].water);
   return { flights:st.flights||0, hours:(st.minutes||0)/60, nm:Math.round((st.stats&&st.stats.nm)||0), visited, apTotal:Object.keys(AP).filter(k=>!AP[k].water).length,
-    avgFpm: ver.length? Math.round(ver.reduce((s,l)=>s+l.fpm,0)/ver.length):null, best: ver.length? Math.min(...ver.map(l=>l.fpm)) : null,
+    avgFpm: good.length? Math.round(good.reduce((s,v)=>s+v,0)/good.length) : ver.length? Math.round(ver.reduce((s,l)=>s+l.fpm,0)/ver.length):null, best: ver.length? Math.min(...ver.map(l=>l.fpm)) : null,
     aPct: L.length? Math.round(grades.A/L.length*100):0, grades, byAc, ach:Object.keys(st.ach||{}).length, achTotal:ACH.length,
-    chapters:Object.keys(st.story.done||{}).length, chTotal:STORY.length, earned:totalEarned(st), landings:st.stats||{} };
+    chapters:MC.filter(m=>st.story.done[m.id]).length, chTotal:MC.length, earned:totalEarned(st), landings:st.stats||{} };
 }
 function visitedMap(st, W=520, H=300){
   const ks=Object.keys(AP).filter(k=>!AP[k].water && AP[k].lon>-90 && AP[k].lon<-55); const la=ks.map(k=>AP[k].lat), lo=ks.map(k=>AP[k].lon);
@@ -31,6 +32,7 @@ function profileView(){
       <div class="stack"><section class="panel stack"><h3>Hours by aircraft</h3>${acRows.length?acRows.map(k=>`<div class="pf-bar"><span>${esc(AC[k].n)}</span><div><i style="width:${(P.byAc[k]/maxM*100).toFixed(0)}%"></i></div><b class="mono">${(P.byAc[k]/60).toFixed(1)} h</b></div>`).join(''):'<p class="small muted">Fly a few jobs to fill this in.</p>'}</section>
         <section class="panel stack"><h3>Landings</h3>${lands.map(([k,v])=>`<div class="pf-bar"><span>${esc((LANDING[k]&&LANDING[k].n||k).split(' (')[0])}</span><div><i class="l-${k}" style="width:${(v/lmax*100).toFixed(0)}%"></i></div><b class="mono">${v}</b></div>`).join('')}</section></div>
     </div>
+    ${safeHTML(()=>weeklyPanel(st))}
   </main>`;
 }
 function drawProfileCard(st){
