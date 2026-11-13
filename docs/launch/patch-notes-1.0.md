@@ -35,6 +35,8 @@
 - **Bigger airline, more to spend on.** Your company can now buy the ES-30, A320neo, 737 MAX 8 and A321LR (hired crews fly them until you hold the ATP). Build six facilities (maintenance hangar, marketing office, revenue manager, pilot training center, premium lounge, VIP charter desk), open bases at other hubs, and refit cabins. The Airline page shows your company's value.
 - Each route now has a limited number of travellers a day, shared by your aircraft on it, so big jets need busy hub routes and smart fares.
 - Four new airline achievements.
+- "Find the best route" on each hired aircraft tries every destination at its best fare and picks the winner, or keeps the charter pool if that pays more.
+- Fixed: bringing on crew from the story page crashed if you owned an airline (an old button handler was still listening).
 - Airline balance: passengers cost $14 plus 18% of the fare (handling, taxes, booking), airliner crews $22,000 a day, and cheap fares grow a route's market by at most 60%. An A320neo on its best route nets about $44,000 a day after its loan; business jets only pay in the charter pool.
 
 ## Flying and grading
@@ -57,6 +59,7 @@
 - The Butter Cup asks you to connect MSFS before starting an attempt it can't score.
 
 ## Under the hood
+- New click-everything test (`tests/fuzz.js`) presses every button on every page in an early and a mid-game career and reports script errors.
 - Code cleanup, round 2: 71 patched-over functions down to 9, each screen drawn by one function. Dead code from retired features (passenger chatter, the end-of-day recap) is gone.
 - Title screen: "Resume flight" shows the route and job cleanly instead of running it into the chapter name.
 - New automatic checks: the MSFS clock lands on the planned time whatever offset the sim applies, the airline (airliners, facilities, bases, refits, shared routes), and "Earned" matching between pages.
