@@ -1126,7 +1126,7 @@ const AC = {
   PC12:{n:`Pilatus PC-12 NGX`,cls:'turbo',req:['TURB','IR'],pax:8,useful:4000,cruise:270,burn:400,fuel:'jeta',range:1800,rwy:2700,xw:25,price:5200000,op:800,v:`Vr 87 · Vy 120 · Cruise 270 · Approach 100 KIAS`,note:`Pressurized single turboprop with jet-like comfort. The VIP island shuttle.`},
   TBM:{n:`Daher TBM 930`,cls:'turbo',req:['TURB','IR'],pax:5,useful:2000,cruise:300,burn:400,fuel:'jeta',range:1700,rwy:2400,xw:25,price:4400000,op:850,v:`Vr 90 · Vy 124 · Cruise 300 · Approach 85 KIAS`,note:`One of the fastest single turboprops anywhere. Respect the torque on the takeoff roll.`},
   KA350:{n:`Beechcraft King Air 350i`,cls:'turbo',req:['TURB','ME','IR'],pax:9,useful:5000,cruise:300,burn:650,fuel:'jeta',range:1800,rwy:3300,xw:25,price:8500000,op:1300,v:`Vr ~100 · Cruise 300 · Vref ~105 KIAS`,note:`Corporate twin turboprop, flown single-pilot with two-crew comfort.`},
-  DC3:{n:`Douglas DC-3`,cls:'twin',req:['ME','IR'],pax:21,useful:7000,cruise:150,burn:600,fuel:'avgas',range:1000,rwy:3500,xw:15,price:1200000,op:1100,v:`Lift-off ~85 · Cruise 150 · Approach 85 KIAS`,note:`1930s airliner with a tailwheel and radial engines. Vintage charters love it.`},
+  DC3:{n:`Douglas DC-3`,cls:'twin',req:['ME','IR'],pax:21,useful:7000,cruise:150,burn:600,fuel:'avgas',range:1000,rwy:3500,xw:15,price:1200000,op:2400,v:`Lift-off ~85 · Cruise 150 · Approach 85 KIAS`,note:`1930s airliner with a tailwheel and radial engines. Vintage charters love it.`},
   SF50:{n:`Cirrus Vision Jet G2`,cls:'jet',req:['JET'],pax:4,useful:2100,cruise:300,burn:400,fuel:'jeta',range:1200,rwy:3500,xw:16,price:3200000,op:900,v:`Vr ~85 · Cruise 300 · Approach ~90 KIAS`,note:`Single-engine personal jet with a whole-airframe parachute.`},
   CJ4:{n:`Cessna Citation CJ4`,cls:'jet',req:['JET'],pax:7,useful:5800,cruise:440,burn:1000,fuel:'jeta',range:2100,rwy:3500,xw:25,price:10500000,op:1900,v:`Vr ~105 · Cruise 440 · Vref ~110 KIAS`,note:`A serious business jet: FMS, VNAV and the flight levels.`},
   ES30:{n:`Heart Aerospace ES-30`,cls:'regional',req:['ATP'],pax:30,useful:7500,cruise:200,burn:0,fuel:'elec',range:216,rwy:3000,xw:25,price:0,op:1000,v:`Cruise ~200 · Approach ~105 KIAS (estimates)`,note:`Experimental electric-hybrid regional airliner. Short range, quiet, and perhaps the future of island hops.`},
@@ -2484,7 +2484,7 @@ function routeDay(st, f, noisy){
   const maint = grounded?0:Math.round(a.op*0.45*block/60*legs);
   const fees = grounded?0:Math.round((FEES[a.cls]||50)*legs + pax*legs*(14+fare*0.18));   // landing fees, plus per-passenger handling, taxes and booking costs
   const wage = Math.round(CLS[a.cls].wage*(coUpg(st,'train')?0.8:1));
-  return { d:Math.round(d), block:Math.round(block), legs, pax:Math.round(pax*10)/10, lf: seats?pax/seats:0, revenue, fuel, maint, fees, wage, profit: revenue-fuel-maint-fees-wage, grounded };
+  return { d:Math.round(d), block:Math.round(block), legs, market:Math.round(market), share, pax:Math.round(pax*10)/10, lf: seats?pax/seats:0, revenue, fuel, maint, fees, wage, profit: revenue-fuel-maint-fees-wage, grounded };
 }
 function bestFare(st, f){ let best=null; const d=distNm(AP[baseOf(st,f)],AP[f.route.to]); for(let fare=Math.round(refFare(d)*0.4); fare<=refFare(d)*2.2; fare+=5){ const r=routeDay(st,{...f,route:{...f.route,fare}},false); if(!best||r.profit>best.profit) best={fare,profit:r.profit}; } return best; }
 
@@ -2580,7 +2580,7 @@ function companyView(){
       routeHTML = `<div class="stack" style="gap:6px;border-top:1px dashed var(--line);padding-top:8px"><p class="label">Route for the hired pilot</p>
         <div class="row" style="gap:6px;flex-wrap:wrap"><select data-route-to="${f.fid}" style="width:auto;max-width:100%" aria-label="Route destination"><option value="">Charter pool (no fixed route)</option>${opts.map(k=>`<option value="${k}" ${f.route&&f.route.to===k?'selected':''}>${baseOf(st,f)} ⇄ ${k} · ${esc(AP[k].isl)} (${Math.round(distNm(AP[baseOf(st,f)],AP[k]))} nm)</option>`).join('')}</select><button class="btn sm" data-act="co-bestroute" data-f="${f.fid}" title="Tries every destination at its best fare and picks the most profitable">Find the best route</button></div>
         ${f.route?`<label class="field"><span>Fare per seat, each way: ${money(f.route.fare)} <span class="muted">(market rate ${money(refFare(r.d))})</span></span><input type="range" min="${Math.round(refFare(r.d)*0.4)}" max="${Math.round(refFare(r.d)*2.2)}" step="5" value="${f.route.fare}" data-route-fare="${f.fid}"></label>
-          <dl class="kv small"><dt>Schedule</dt><dd>${r.legs} legs/day · ${durTxt(r.block)} each</dd><dt>Load factor</dt><dd>${Math.round(r.lf*100)}% (${r.pax} of ${a.pax} seats)</dd><dt>Revenue</dt><dd>${money(r.revenue)}/day</dd><dt>Costs</dt><dd>fuel ${money(r.fuel)}, maint ${money(r.maint)}, fees ${money(r.fees)}, pilot ${money(r.wage)}</dd><dt>Profit</dt><dd><b style="color:${r.profit<0?'var(--bad)':'var(--good)'}">${money(r.profit)}/day</b> before loan & insurance</dd></dl>
+          <dl class="kv small"><dt>Schedule</dt><dd>${r.legs} legs/day · ${durTxt(r.block)} each</dd><dt>Load factor</dt><dd>${Math.round(r.lf*100)}% (${r.pax} of ${a.pax} seats)</dd><dt>Travellers</dt><dd title="People who fly this route each day at your fare. Every aircraft you put on it shares them.">~${r.market}/day${r.share>1?` · shared by ${r.share} of your aircraft`:''}</dd><dt>Revenue</dt><dd>${money(r.revenue)}/day</dd><dt>Costs</dt><dd>fuel ${money(r.fuel)}, maint ${money(r.maint)}, fees ${money(r.fees)}, pilot ${money(r.wage)}</dd><dt>Profit</dt><dd><b style="color:${r.profit<0?'var(--bad)':'var(--good)'}">${money(r.profit)}/day</b> before loan & insurance</dd></dl>
           ${bf && Math.abs(bf.fare-f.route.fare)>10?`<p class="tiny muted">Your revenue manager thinks ${money(bf.fare)} would earn about ${money(bf.profit)}/day.</p>`:''}`:`<p class="tiny muted">Charter pool: the pilot takes whatever charters come up. Steady but unremarkable. Pick a route to set your own fares.</p>`}</div>`; }
     return `<div class="cell stack" style="gap:6px"><div class="row between"><h4 class="mono">${esc(f.reg)}</h4>${f.aog?'<span class="chip bad">AOG</span>':f.hired?'<span class="chip sky">Hired pilot</span>':'<span class="chip">With you</span>'}</div><p class="small">${esc(a.n)}${f.refit?' · <span class="chip good">Refitted cabin</span>':''}</p>
       ${(c.bases||[]).length?`<label class="row small" style="gap:6px">Based at <select data-co-base="${f.fid}" style="width:auto" aria-label="Base for ${esc(f.reg)}">${[c.base,...c.bases].map(k=>`<option value="${k}" ${baseOf(st,f)===k?'selected':''}>${k} · ${esc(AP[k].isl)}</option>`).join('')}</select></label>`:''}
@@ -3725,7 +3725,7 @@ ALT_OUT.BO5 = st => st.story.flags.BO4==='a' ? {good:`De Vries closes his notebo
 /* Hartwell now follows The Buyout */
 (function(){ const h=STORY.find(m=>m.id==='HW1'); if(h && h.req) h.req.after='BO3'; })();
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.60.0';
+const TW_VERSION = '0.61.0';
 
 /* ---------- live map ---------- */
 function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
@@ -4031,7 +4031,12 @@ document.addEventListener('click', e=>{ if(e.target.closest('[data-act="tour-ski
 /* ===================== RADIO ATMOSPHERE: squelch, cabin chimes, background ATC ===================== */
 function sfxOn(){ try{ return localStorage.getItem('tw.sfx')!=='off'; }catch(e){ return true; } }
 let AC_CTX=null;
-function actx(){ try{ if(!AC_CTX){ const C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC_CTX=new C(); } if(AC_CTX.state==='suspended') AC_CTX.resume(); return AC_CTX; }catch(e){ return null; } }
+/* the one audio context; sound effects and music each get their own volume (Settings → Sound) */
+function actx(){ try{ if(!AC_CTX){ const C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC_CTX=new C();
+      try{ const c=AC_CTX, real=c.destination, fx=c.createGain(), mus=c.createGain(); fx.connect(real); mus.connect(real); Object.defineProperty(c,'destination',{configurable:true, get(){ return fx; }}); c._real=real; c._fx=fx; c._mus=mus; }catch(_){} }
+    if(AC_CTX.state==='suspended') AC_CTX.resume();
+    try{ AC_CTX._fx.gain.value=volOf('fx'); AC_CTX._mus.gain.value=volOf('music'); }catch(_){}
+    return AC_CTX; }catch(e){ return null; } }
 document.addEventListener('pointerdown', ()=>{ actx(); }, {once:true});
 function crackle(len=0.18, vol=0.22){
   if(!sfxOn()) return; const c=actx(); if(!c) return; const n=Math.floor(c.sampleRate*len); const buf=c.createBuffer(1,n,c.sampleRate); const d=buf.getChannelData(0);
@@ -4643,8 +4648,10 @@ document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="p
 const PV = { on:false, q:[], cur:null, busy:false, warned:false };
 const PV_F = ['coral','nova','shimmer','sage'], PV_M = ['ash','echo','onyx','fable','ballad'];
 function pvFemale(v){ return !!(v && /zira|aria|jenny|hazel|susan|eva|female|libby|sonia|clara|natasha|catherine|linda|heera|michelle|emma|ava|samantha|karen|moira|tessa/i.test(v.name||'')); }
-function pvVoiceFor(u){ const key=((u.voice&&u.voice.name)||'')+'|'+u.pitch+'|'+u.rate; let h=0; for(const c of key) h=(h*31+c.charCodeAt(0))>>>0; const L=pvFemale(u.voice)?PV_F:PV_M; return L[h%L.length]; }
-function pvInstr(text){ if(/cleared|runway|contact|squawk|traffic|tower|approach/i.test(text)) return 'Calm air traffic controller on a radio frequency: clipped, efficient, neutral.'; if(/sealed orders/i.test(text)) return 'Serious dispatcher reading new orders over the radio.'; return 'Warm Caribbean-based pilot character speaking naturally in the cockpit, conversational, not theatrical.'; }
+function pvVoiceFor(u){ PV._char = u && u.twChar; if(u && u.twChar && CHAR_VOICE[u.twChar]) return CHAR_VOICE[u.twChar][0];   // story characters have their own voice
+  const key=((u.voice&&u.voice.name)||'')+'|'+u.pitch+'|'+u.rate; let h=0; for(const c of key) h=(h*31+c.charCodeAt(0))>>>0; const L=pvFemale(u.voice)?PV_F:PV_M; return L[h%L.length]; }
+function pvInstr(text){ const k=PV._char; PV._char=null; if(k && CHAR_VOICE[k]) return CHAR_VOICE[k][1];
+  if(/cleared|runway|contact|squawk|traffic|tower|approach/i.test(text)) return 'Calm air traffic controller on a radio frequency: clipped, efficient, neutral.'; if(/sealed orders/i.test(text)) return 'Serious dispatcher reading new orders over the radio.'; return 'Warm Caribbean-based pilot character speaking naturally in the cockpit, conversational, not theatrical.'; }
 (function hookSpeech(){ if(!window.speechSynthesis || !window.twNative || !twNative.tts) return; const SS=window.speechSynthesis; const origSpeak=SS.speak.bind(SS), origCancel=SS.cancel.bind(SS);
   try{ twNative.ttsKeyHas().then(h=>{ PV.on = !!h && (localStorage.getItem('tw.pv')!=='off'); }); }catch(_){}
   async function next(){ if(PV.busy) return; const u=PV.q.shift(); if(!u) return; PV.busy=true;
@@ -4809,6 +4816,8 @@ async function autoClock(){ const a=S.st&&S.st.active; if(!a || a.started || a._
   a._clockSet=true; const r=await setSimClock(a.job.dep); if(r.ok) toast(`MSFS clock set to ${hhmm(a.job.dep)} for this flight.`); }
 /* Sets the MSFS clock, then reads back what MSFS actually shows and corrects it once if it's off
    (MSFS can apply the time-zone shift differently from what the bridge expects). */
+/* an error from the bridge, in words a player can act on: an older bridge simply doesn't have the newer tools */
+function bridgeErr(e){ const m=String(e&&(e.message||e.error||e)||''); return /unknown tool|not found|no such tool|method not found|-32601/i.test(m) ? 'your MSFS Bridge is older than this feature (update to 1.5, or use the Trade Winds app)' : m; }
 async function setSimClock(target){
   const send=async m=>{ const r=await S.mcp.callTool(SIM_SERVER,'set_time',{localMin:((Math.round(m)%1440)+1440)%1440},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} } return o||{}; };
   const readBack=async()=>{ await new Promise(r=>setTimeout(r,2500)); try{ await simPoll(true); }catch(_){} return simMinutes(); };
@@ -4819,7 +4828,7 @@ async function setSimClock(target){
     o=await send(target-off); const again=await readBack(); return Object.assign({}, o, {ok: !!o.ok && (again==null || Math.abs(diffMin(again,target))<=3)});
   }catch(e){ return {ok:false, error:e.message}; } }
 document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="park-move"]') || !S.st || !S.st.active) return; const s=suggestParking(S.st.active.job); if(!s.spot) return;
-  try{ const r=await S.mcp.callTool(SIM_SERVER,'move_to',{lat:s.spot.lat, lon:s.spot.lon, hdg:s.spot.hdg},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} } toast(o&&o.ok?`Moved to ${s.spot.name}.`:`Couldn't move: ${o&&o.error||'update the MSFS Bridge'}`); }catch(err){ toast('Moving the aircraft needs the Trade Winds app (or MSFS Bridge 1.5).'); } });
+  try{ const r=await S.mcp.callTool(SIM_SERVER,'move_to',{lat:s.spot.lat, lon:s.spot.lon, hdg:s.spot.hdg},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} } toast(o&&o.ok?`Moved to ${s.spot.name}.`:`Couldn't move: ${o&&o.error?bridgeErr(o.error):'update the MSFS Bridge'}`); }catch(err){ toast('Moving the aircraft needs the Trade Winds app (or MSFS Bridge 1.5).'); } });
 /* after "Start flight": keep the loading tools until you take off */
 
 
@@ -4863,7 +4872,7 @@ ARCH.push({id:'mainland',label:`Mainland charter`,kind:'vip',w:0,cls:['jet','tur
 const MAINLAND = ['KMIA','KFLL','KPBI','KTEB','KJFK','KATL','KORD','MMUN','MZBZ','MRLB','MPTO'].filter(k=>AP[k]);
 /* the clock row offers to set MSFS instead of moving the flight */
 document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="pf-settime"]') || !S.st || !S.st.active || !S.mcp) return; const job=S.st.active.job;
-  const o=await setSimClock(job.dep); toast(o.ok?`MSFS clock set to ${hhmm(job.dep)}.`:`Couldn't set the clock${o.error?': '+o.error:''}. Set it in the MSFS time panel.`); setTimeout(()=>simPoll(true), 1200); });
+  const o=await setSimClock(job.dep); toast(o.ok?`MSFS clock set to ${hhmm(job.dep)}.`:`Couldn't set the clock${o.error?': '+bridgeErr(o.error):''}. Set it in the MSFS time panel.`); setTimeout(()=>simPoll(true), 1200); });
 /* ===================== CLARITY: one main story, fly from the story card, an obvious flight setup, calmer screens ===================== */
 /* ---- the main story is one line, in this order; everything else is a side story ---- */
 const MAIN_ORDER = ['Coral Wing','The Buyout','Hartwell','Own Wings','The Tour','Your Company'];
@@ -5103,7 +5112,7 @@ async function loadIntoSim(job){ if(!S.mcp){ toast('MSFS isn\'t connected.'); re
   if(s && s.motion && (!s.motion.onGround || s.motion.gs>2) || (rec && rec.takeoff && S.st.active && S.st.active.started)){ toast('Fuel is locked once you\'re moving.'); return; }
   const p=plan(job); const fuelGal=Math.ceil(Math.max(p.gal*1.3, p.gal+5)); S.loading=true; renderPreflight();
   try{ const r=await S.mcp.callTool(SIM_SERVER,'load_aircraft',{fuelGal},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} }
-    toast(o && o.ok ? `Loaded ${o.fuel!=null?o.fuel+' gal of fuel':'fuel'}. Set passengers and bags (${Math.max(0,p.payload-170)} lb) in the MSFS weight menu.` : `Couldn't load fuel${o&&o.error?': '+o.error:''}.`); }
+    toast(o && o.ok ? `Loaded ${o.fuel!=null?o.fuel+' gal of fuel':'fuel'}. Set passengers and bags (${Math.max(0,p.payload-170)} lb) in the MSFS weight menu.` : `Couldn't load fuel${o&&o.error?': '+bridgeErr(o.error):''}.`); }
   catch(e){ toast('Couldn\'t reach MSFS to load fuel.'); }
   S.loading=false; setTimeout(()=>simPoll(true), 800); renderPreflight(); };
 
@@ -6232,7 +6241,10 @@ function showTitle(){ if(document.querySelector('.title-screen')) return; const 
     if(a==='continue') close(()=>{ S.view = S.st.active ? 'flight' : 'story'; render(); setTimeout(playRecapNow, 300); });
     if(a==='settings') close(()=>{ S.view='hangar'; S.hangarTab='settings'; render(); });
     if(a==='new') close(()=>{ if(S.st){ try{ backupLabeled(S.st,'Before starting a new game'); }catch(_){} } S.st=null; try{ localStorage.removeItem(KEY); }catch(_){} S.view='board'; render(); }); }); }
-function playRecapNow(){ try{ const st=S.st; if(!st || uiP().noRecap || uiP().skipCuts || !uiP().walk3) return; const MC=mainChapters(); const dn=MC.filter(m=>st.story.done[m.id]); if(!dn.length || (st.active&&st.active.started)) return;
+/* "Previously on": only when you've been away 3+ hours */
+function markSeen(){ try{ localStorage.setItem('tw.lastSeen', String(Date.now())); }catch(_){} }
+setInterval(markSeen, 60000); window.addEventListener('beforeunload', markSeen);
+function playRecapNow(){ try{ const st=S.st; if(!st || uiP().noRecap || uiP().skipCuts || !uiP().walk3) return; let last=0; try{ last=Number(localStorage.getItem('tw.lastSeen')||0); }catch(_){} if(Date.now()-last < 3*3600000) return; const MC=mainChapters(); const dn=MC.filter(m=>st.story.done[m.id]); if(!dn.length || (st.active&&st.active.started)) return;
   const next=MC.find(m=>!st.story.done[m.id]); const act=next?CRIME_ACTS.find(a=>a.arc===next.arc):CRIME_ACTS[CRIME_ACTS.length-1];
   const shots=[{card:true,kicker:'Previously on',title:'Trade Winds',auto:1600}].concat(dn.slice(-3).map(m=>[`Chapter ${MC.indexOf(m)+1} · ${m.title}`, null, recapOf(st,m)])); if(next) shots.push({card:true,kicker:`Up next · Chapter ${MC.indexOf(next)+1}`,title:next.title,sub:`<p>${esc(next.hook||'')}</p>`});
   cutscene({shots, col:act.col, art:SCENES.office(), onEnd:()=>{}}); }catch(_){} }
@@ -6251,8 +6263,7 @@ function toMetric(t){ return t.replace(/(\d[\d,]*(?:\.\d+)?)\s?lb\b/g,(m,n)=>`${
 
 /* ---- volume per channel: voices, music, effects ---- */
 function voiceVol(){ return voiceVolBase()*volOf('voice')/0.8*0.8; }
-(function(){ const _ac=actx; let wired=null; actx=function(){ const c=_ac(); if(!c) return c; if(wired!==c){ wired=c; try{ const real=c.destination; const fx=c.createGain(); fx.connect(real); const mus=c.createGain(); mus.connect(real); Object.defineProperty(c,'destination',{configurable:true, get(){ return fx; }}); c._real=real; c._fx=fx; c._mus=mus; }catch(_){} }
-  try{ c._fx.gain.value=volOf('fx'); c._mus.gain.value=volOf('music'); }catch(_){} return c; }; })();
+
 
 /* ---- settings page additions ---- */
 document.addEventListener('input', e=>{ const b=e.target.closest('[data-act="vol"]'); if(!b||!S.st) return; const u=uiP(); u.vol=u.vol||{}; u.vol[b.dataset.k]=Number(b.value); const out=b.parentElement.querySelector('b'); if(out) out.textContent=b.value; try{ actx(); }catch(_){} save(); });
@@ -6315,9 +6326,6 @@ const CHAR_VOICE = {
   hartwell:['fable',`Refined older British billionaire. Weary, regretful, measured.`],
   self:['onyx',`Inner monologue of a pilot. Quiet, close to the microphone, reflective.`],
   radio:['echo',`Radio transmission. Clipped, professional, slightly distorted cadence.`] };
-const _cvVoice = pvVoiceFor, _cvInstr = pvInstr;
-pvVoiceFor = function(u){ PV._char = u && u.twChar; return (u && u.twChar && CHAR_VOICE[u.twChar]) ? CHAR_VOICE[u.twChar][0] : _cvVoice(u); };
-pvInstr = function(text){ const k=PV._char; PV._char=null; return (k && CHAR_VOICE[k]) ? CHAR_VOICE[k][1] : _cvInstr(text); };
 /* tag the speech from cutscenes and in-flight moments with the speaker */
 (function(){ const U=window.SpeechSynthesisUtterance; if(!U) return; let pending=null; window.twSpeaker=k=>{ pending=k; setTimeout(()=>{ if(pending===k) pending=null; }, 1500); };
   const SS=window.speechSynthesis; if(!SS) return; const sp=SS.speak.bind(SS); SS.speak=function(u){ if(pending){ u.twChar=pending; pending=null; } return sp(u); }; })();
@@ -6341,8 +6349,7 @@ Object.keys(SCENES).forEach(k=>{ const f=SCENES[k]; SCENES[k]=()=>ART.scenes[k] 
 function carrierFor(st, job){ const c=crime(st); if(job.network) return 'Unlisted charter'; if(job.kind==='story' && CRIME_IDS.has(job.story)){ if(st.story.done.CR15 || job.story==='CR15') return 'Caribe Cargo'; if(c.on || ['CR5','CR6','CR7','CR8','CR9','CR10'].includes(job.story)) return 'Castillo Logistics'; } if(job.kind==='check') return 'Flight examination'; return null; }
 
 
-/* 3. "Previously on" only when you've been away for a while (3+ hours) */
-(function(){ const _p=playRecapNow; playRecapNow=function(){ let last=0; try{ last=Number(localStorage.getItem('tw.lastSeen')||0); }catch(_){} if(Date.now()-last < 3*3600000) return; return _p(); }; setInterval(()=>{ try{ localStorage.setItem('tw.lastSeen', String(Date.now())); }catch(_){} }, 60000); window.addEventListener('beforeunload', ()=>{ try{ localStorage.setItem('tw.lastSeen', String(Date.now())); }catch(_){} }); })();
+
 
 
 /* 5 + 6. keys: number shortcuts don't fire behind the title screen or a popup; Esc closes popups and the open job */
@@ -6567,6 +6574,7 @@ WHATS_NEW.unshift(['0.57','Airline: "Find the best route" picks the most profita
 WHATS_NEW.unshift(['0.58','Flight mode: the "course to" arrow now points where you need to turn (it was stuck pointing up), the checklist follows your flight phase on its own, duplicate numbers are gone from the phase panel, and the live weather line no longer shows "undefined".']);
 WHATS_NEW.unshift(['0.59','The flight timer no longer flickers between real time and sim time (it uses MSFS block time when the sim is recording), and the checklist tabs wrap on phones.']);
 WHATS_NEW.unshift(['0.60','Hangar → MSFS connection explains how the Trade Winds app connects (no Claude setup steps), and touchdown grading ignores the sign of the reading.']);
+WHATS_NEW.unshift(['0.61','Airline: each route shows how many travellers it has and how many of your aircraft share them, and the DC-3 costs more to keep flying. Older MSFS Bridges now say "update to 1.5" instead of "Unknown tool". Audio code cleaned up.']);
 /* ===================== PAGE CHROME =====================
    The parts of the screen that surround every page: the side menu, the top bar with its
    status chips, and the phone-width menu. band() returns all of it as one piece of HTML. */

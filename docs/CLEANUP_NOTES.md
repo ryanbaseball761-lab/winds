@@ -43,6 +43,7 @@ Wrapped functions went from 71 to 9. Every page and helper that used to be patch
   the examiner lines), the retired end-of-day recap, the no-op `renderToast`, an Academy text replace that never matched,
   and the `_cabMute` toast switch. `cabinTick()` now only tracks passenger comfort.
 - Only snapshot change: random review lines on two test flights, because the removed chatter no longer uses random numbers.
-- Still wrapped (audio/voice hooks and two story data overrides, left alone on purpose): `SS.speak`, `SS.cancel`, `actx`,
-  `pvVoiceFor`, `pvInstr`, `twSpeaker`, `playRecapNow`, `ALT_OUT.BO5`, `ALT_OUT.CO3`.
+- 0.61: `actx`, `pvVoiceFor`, `pvInstr` and `playRecapNow` folded into single definitions too. What's left is not
+  patching: `speechSynthesis.speak/cancel` hooks (they wrap the browser's API to add premium voices and per-character voices),
+  `window.twSpeaker`, and `ALT_OUT.BO5` / `ALT_OUT.CO3`, which each chapter file registers for itself.
 - Title screen bug fixed on the way: with a flight in progress, the Continue line ran the chapter name and the route together.

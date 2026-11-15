@@ -1,7 +1,12 @@
 /* ===================== RADIO ATMOSPHERE: squelch, cabin chimes, background ATC ===================== */
 function sfxOn(){ try{ return localStorage.getItem('tw.sfx')!=='off'; }catch(e){ return true; } }
 let AC_CTX=null;
-function actx(){ try{ if(!AC_CTX){ const C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC_CTX=new C(); } if(AC_CTX.state==='suspended') AC_CTX.resume(); return AC_CTX; }catch(e){ return null; } }
+/* the one audio context; sound effects and music each get their own volume (Settings → Sound) */
+function actx(){ try{ if(!AC_CTX){ const C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC_CTX=new C();
+      try{ const c=AC_CTX, real=c.destination, fx=c.createGain(), mus=c.createGain(); fx.connect(real); mus.connect(real); Object.defineProperty(c,'destination',{configurable:true, get(){ return fx; }}); c._real=real; c._fx=fx; c._mus=mus; }catch(_){} }
+    if(AC_CTX.state==='suspended') AC_CTX.resume();
+    try{ AC_CTX._fx.gain.value=volOf('fx'); AC_CTX._mus.gain.value=volOf('music'); }catch(_){}
+    return AC_CTX; }catch(e){ return null; } }
 document.addEventListener('pointerdown', ()=>{ actx(); }, {once:true});
 function crackle(len=0.18, vol=0.22){
   if(!sfxOn()) return; const c=actx(); if(!c) return; const n=Math.floor(c.sampleRate*len); const buf=c.createBuffer(1,n,c.sampleRate); const d=buf.getChannelData(0);

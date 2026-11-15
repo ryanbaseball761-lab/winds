@@ -25,7 +25,10 @@ function showTitle(){ if(document.querySelector('.title-screen')) return; const 
     if(a==='continue') close(()=>{ S.view = S.st.active ? 'flight' : 'story'; render(); setTimeout(playRecapNow, 300); });
     if(a==='settings') close(()=>{ S.view='hangar'; S.hangarTab='settings'; render(); });
     if(a==='new') close(()=>{ if(S.st){ try{ backupLabeled(S.st,'Before starting a new game'); }catch(_){} } S.st=null; try{ localStorage.removeItem(KEY); }catch(_){} S.view='board'; render(); }); }); }
-function playRecapNow(){ try{ const st=S.st; if(!st || uiP().noRecap || uiP().skipCuts || !uiP().walk3) return; const MC=mainChapters(); const dn=MC.filter(m=>st.story.done[m.id]); if(!dn.length || (st.active&&st.active.started)) return;
+/* "Previously on": only when you've been away 3+ hours */
+function markSeen(){ try{ localStorage.setItem('tw.lastSeen', String(Date.now())); }catch(_){} }
+setInterval(markSeen, 60000); window.addEventListener('beforeunload', markSeen);
+function playRecapNow(){ try{ const st=S.st; if(!st || uiP().noRecap || uiP().skipCuts || !uiP().walk3) return; let last=0; try{ last=Number(localStorage.getItem('tw.lastSeen')||0); }catch(_){} if(Date.now()-last < 3*3600000) return; const MC=mainChapters(); const dn=MC.filter(m=>st.story.done[m.id]); if(!dn.length || (st.active&&st.active.started)) return;
   const next=MC.find(m=>!st.story.done[m.id]); const act=next?CRIME_ACTS.find(a=>a.arc===next.arc):CRIME_ACTS[CRIME_ACTS.length-1];
   const shots=[{card:true,kicker:'Previously on',title:'Trade Winds',auto:1600}].concat(dn.slice(-3).map(m=>[`Chapter ${MC.indexOf(m)+1} · ${m.title}`, null, recapOf(st,m)])); if(next) shots.push({card:true,kicker:`Up next · Chapter ${MC.indexOf(next)+1}`,title:next.title,sub:`<p>${esc(next.hook||'')}</p>`});
   cutscene({shots, col:act.col, art:SCENES.office(), onEnd:()=>{}}); }catch(_){} }
@@ -44,8 +47,7 @@ function toMetric(t){ return t.replace(/(\d[\d,]*(?:\.\d+)?)\s?lb\b/g,(m,n)=>`${
 
 /* ---- volume per channel: voices, music, effects ---- */
 function voiceVol(){ return voiceVolBase()*volOf('voice')/0.8*0.8; }
-(function(){ const _ac=actx; let wired=null; actx=function(){ const c=_ac(); if(!c) return c; if(wired!==c){ wired=c; try{ const real=c.destination; const fx=c.createGain(); fx.connect(real); const mus=c.createGain(); mus.connect(real); Object.defineProperty(c,'destination',{configurable:true, get(){ return fx; }}); c._real=real; c._fx=fx; c._mus=mus; }catch(_){} }
-  try{ c._fx.gain.value=volOf('fx'); c._mus.gain.value=volOf('music'); }catch(_){} return c; }; })();
+
 
 /* ---- settings page additions ---- */
 document.addEventListener('input', e=>{ const b=e.target.closest('[data-act="vol"]'); if(!b||!S.st) return; const u=uiP(); u.vol=u.vol||{}; u.vol[b.dataset.k]=Number(b.value); const out=b.parentElement.querySelector('b'); if(out) out.textContent=b.value; try{ actx(); }catch(_){} save(); });

@@ -4,8 +4,7 @@
 function carrierFor(st, job){ const c=crime(st); if(job.network) return 'Unlisted charter'; if(job.kind==='story' && CRIME_IDS.has(job.story)){ if(st.story.done.CR15 || job.story==='CR15') return 'Caribe Cargo'; if(c.on || ['CR5','CR6','CR7','CR8','CR9','CR10'].includes(job.story)) return 'Castillo Logistics'; } if(job.kind==='check') return 'Flight examination'; return null; }
 
 
-/* 3. "Previously on" only when you've been away for a while (3+ hours) */
-(function(){ const _p=playRecapNow; playRecapNow=function(){ let last=0; try{ last=Number(localStorage.getItem('tw.lastSeen')||0); }catch(_){} if(Date.now()-last < 3*3600000) return; return _p(); }; setInterval(()=>{ try{ localStorage.setItem('tw.lastSeen', String(Date.now())); }catch(_){} }, 60000); window.addEventListener('beforeunload', ()=>{ try{ localStorage.setItem('tw.lastSeen', String(Date.now())); }catch(_){} }); })();
+
 
 
 /* 5 + 6. keys: number shortcuts don't fire behind the title screen or a popup; Esc closes popups and the open job */

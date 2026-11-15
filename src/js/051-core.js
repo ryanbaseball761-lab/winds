@@ -44,6 +44,8 @@ async function autoClock(){ const a=S.st&&S.st.active; if(!a || a.started || a._
   a._clockSet=true; const r=await setSimClock(a.job.dep); if(r.ok) toast(`MSFS clock set to ${hhmm(a.job.dep)} for this flight.`); }
 /* Sets the MSFS clock, then reads back what MSFS actually shows and corrects it once if it's off
    (MSFS can apply the time-zone shift differently from what the bridge expects). */
+/* an error from the bridge, in words a player can act on: an older bridge simply doesn't have the newer tools */
+function bridgeErr(e){ const m=String(e&&(e.message||e.error||e)||''); return /unknown tool|not found|no such tool|method not found|-32601/i.test(m) ? 'your MSFS Bridge is older than this feature (update to 1.5, or use the Trade Winds app)' : m; }
 async function setSimClock(target){
   const send=async m=>{ const r=await S.mcp.callTool(SIM_SERVER,'set_time',{localMin:((Math.round(m)%1440)+1440)%1440},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} } return o||{}; };
   const readBack=async()=>{ await new Promise(r=>setTimeout(r,2500)); try{ await simPoll(true); }catch(_){} return simMinutes(); };
@@ -54,7 +56,7 @@ async function setSimClock(target){
     o=await send(target-off); const again=await readBack(); return Object.assign({}, o, {ok: !!o.ok && (again==null || Math.abs(diffMin(again,target))<=3)});
   }catch(e){ return {ok:false, error:e.message}; } }
 document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="park-move"]') || !S.st || !S.st.active) return; const s=suggestParking(S.st.active.job); if(!s.spot) return;
-  try{ const r=await S.mcp.callTool(SIM_SERVER,'move_to',{lat:s.spot.lat, lon:s.spot.lon, hdg:s.spot.hdg},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} } toast(o&&o.ok?`Moved to ${s.spot.name}.`:`Couldn't move: ${o&&o.error||'update the MSFS Bridge'}`); }catch(err){ toast('Moving the aircraft needs the Trade Winds app (or MSFS Bridge 1.5).'); } });
+  try{ const r=await S.mcp.callTool(SIM_SERVER,'move_to',{lat:s.spot.lat, lon:s.spot.lon, hdg:s.spot.hdg},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} } toast(o&&o.ok?`Moved to ${s.spot.name}.`:`Couldn't move: ${o&&o.error?bridgeErr(o.error):'update the MSFS Bridge'}`); }catch(err){ toast('Moving the aircraft needs the Trade Winds app (or MSFS Bridge 1.5).'); } });
 /* after "Start flight": keep the loading tools until you take off */
 
 
@@ -98,4 +100,4 @@ ARCH.push({id:'mainland',label:`Mainland charter`,kind:'vip',w:0,cls:['jet','tur
 const MAINLAND = ['KMIA','KFLL','KPBI','KTEB','KJFK','KATL','KORD','MMUN','MZBZ','MRLB','MPTO'].filter(k=>AP[k]);
 /* the clock row offers to set MSFS instead of moving the flight */
 document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="pf-settime"]') || !S.st || !S.st.active || !S.mcp) return; const job=S.st.active.job;
-  const o=await setSimClock(job.dep); toast(o.ok?`MSFS clock set to ${hhmm(job.dep)}.`:`Couldn't set the clock${o.error?': '+o.error:''}. Set it in the MSFS time panel.`); setTimeout(()=>simPoll(true), 1200); });
+  const o=await setSimClock(job.dep); toast(o.ok?`MSFS clock set to ${hhmm(job.dep)}.`:`Couldn't set the clock${o.error?': '+bridgeErr(o.error):''}. Set it in the MSFS time panel.`); setTimeout(()=>simPoll(true), 1200); });

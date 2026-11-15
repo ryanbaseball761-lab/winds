@@ -10,8 +10,10 @@ document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="p
 const PV = { on:false, q:[], cur:null, busy:false, warned:false };
 const PV_F = ['coral','nova','shimmer','sage'], PV_M = ['ash','echo','onyx','fable','ballad'];
 function pvFemale(v){ return !!(v && /zira|aria|jenny|hazel|susan|eva|female|libby|sonia|clara|natasha|catherine|linda|heera|michelle|emma|ava|samantha|karen|moira|tessa/i.test(v.name||'')); }
-function pvVoiceFor(u){ const key=((u.voice&&u.voice.name)||'')+'|'+u.pitch+'|'+u.rate; let h=0; for(const c of key) h=(h*31+c.charCodeAt(0))>>>0; const L=pvFemale(u.voice)?PV_F:PV_M; return L[h%L.length]; }
-function pvInstr(text){ if(/cleared|runway|contact|squawk|traffic|tower|approach/i.test(text)) return 'Calm air traffic controller on a radio frequency: clipped, efficient, neutral.'; if(/sealed orders/i.test(text)) return 'Serious dispatcher reading new orders over the radio.'; return 'Warm Caribbean-based pilot character speaking naturally in the cockpit, conversational, not theatrical.'; }
+function pvVoiceFor(u){ PV._char = u && u.twChar; if(u && u.twChar && CHAR_VOICE[u.twChar]) return CHAR_VOICE[u.twChar][0];   // story characters have their own voice
+  const key=((u.voice&&u.voice.name)||'')+'|'+u.pitch+'|'+u.rate; let h=0; for(const c of key) h=(h*31+c.charCodeAt(0))>>>0; const L=pvFemale(u.voice)?PV_F:PV_M; return L[h%L.length]; }
+function pvInstr(text){ const k=PV._char; PV._char=null; if(k && CHAR_VOICE[k]) return CHAR_VOICE[k][1];
+  if(/cleared|runway|contact|squawk|traffic|tower|approach/i.test(text)) return 'Calm air traffic controller on a radio frequency: clipped, efficient, neutral.'; if(/sealed orders/i.test(text)) return 'Serious dispatcher reading new orders over the radio.'; return 'Warm Caribbean-based pilot character speaking naturally in the cockpit, conversational, not theatrical.'; }
 (function hookSpeech(){ if(!window.speechSynthesis || !window.twNative || !twNative.tts) return; const SS=window.speechSynthesis; const origSpeak=SS.speak.bind(SS), origCancel=SS.cancel.bind(SS);
   try{ twNative.ttsKeyHas().then(h=>{ PV.on = !!h && (localStorage.getItem('tw.pv')!=='off'); }); }catch(_){}
   async function next(){ if(PV.busy) return; const u=PV.q.shift(); if(!u) return; PV.busy=true;

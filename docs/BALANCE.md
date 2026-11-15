@@ -23,7 +23,7 @@ Best single route from TNCM for one hired aircraft at its best fare, vs. the dai
 |---|---|---|---|---|
 | Cessna 172 | $0.42M | $651 | $152 | ~$500 |
 | Bonanza G36 | $0.95M | $2,158 | $344 | ~$1,800 |
-| DC-3 | $1.2M | $7,943 | $435 | ~$7,500 |
+| DC-3 | $1.2M | $3,797 | $435 | ~$3,350 |
 | Twin Otter | $6.5M | $5,776 | $2,356 | ~$3,400 |
 | King Air 350 | $8.5M | $1,725 (pool $2,123) | $3,081 | about −$1,000 |
 | Citation CJ4 | $10.5M | pool $3,633 | $3,806 | about break-even |
@@ -34,3 +34,11 @@ Best single route from TNCM for one hired aircraft at its best fare, vs. the dai
   and cheap fares can grow it by up to 60%. Passengers cost $14 + 18% of the fare each (handling, taxes, booking).
 - Airliner crews cost $22,000/day, regional crews $4,500/day.
 - Business jets don't make money on scheduled routes; use the charter pool (VIP charter desk +30%).
+
+### Airline playthrough check (0.61)
+A bot company starting with $1.5M, buying with 20% down and putting each plane on its best route, run for 120 days:
+- Two DC-3s on the same best route (Antigua) earn about $1,700/day each after loan payments, wear and repairs:
+  +$410k cash in 120 days on $480k down (one DC-3 alone: +$205k). The route has ~570 travellers a day, so two fit.
+- Stacking four aircraft on that route (two DC-3s, two Caravans) loses money because they share its travellers, so growth
+  needs new routes, bases or bigger hubs, not just more planes. The best-route finder and the new "Travellers" line show this.
+- DC-3 maintenance raised (op cost 1,100 → 2,400/hr) so a $1.2M vintage plane no longer out-earns a $6.5M Twin Otter.

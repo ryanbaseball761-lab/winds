@@ -42,9 +42,6 @@ const CHAR_VOICE = {
   hartwell:['fable',`Refined older British billionaire. Weary, regretful, measured.`],
   self:['onyx',`Inner monologue of a pilot. Quiet, close to the microphone, reflective.`],
   radio:['echo',`Radio transmission. Clipped, professional, slightly distorted cadence.`] };
-const _cvVoice = pvVoiceFor, _cvInstr = pvInstr;
-pvVoiceFor = function(u){ PV._char = u && u.twChar; return (u && u.twChar && CHAR_VOICE[u.twChar]) ? CHAR_VOICE[u.twChar][0] : _cvVoice(u); };
-pvInstr = function(text){ const k=PV._char; PV._char=null; return (k && CHAR_VOICE[k]) ? CHAR_VOICE[k][1] : _cvInstr(text); };
 /* tag the speech from cutscenes and in-flight moments with the speaker */
 (function(){ const U=window.SpeechSynthesisUtterance; if(!U) return; let pending=null; window.twSpeaker=k=>{ pending=k; setTimeout(()=>{ if(pending===k) pending=null; }, 1500); };
   const SS=window.speechSynthesis; if(!SS) return; const sp=SS.speak.bind(SS); SS.speak=function(u){ if(pending){ u.twChar=pending; pending=null; } return sp(u); }; })();

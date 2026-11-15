@@ -13,11 +13,27 @@ Microsoft Flight Simulator 2024 through SimConnect. While you fly, it records:
   - your live position, speed, altitude and the aircraft you loaded
 
 The Trade Winds debrief fills itself in from that recording.
-It only READS from the sim. It never changes anything in MSFS.
+
+USING THE TRADE WINDS APP? You don't need anything in this file. The app connects to MSFS by
+itself: start MSFS, load into a flight, and Hangar > MSFS connection turns live. These steps are
+only for playing the web version inside the Claude desktop app.
+
+What it can do
+--------------
+  sim_status             position, speed, fuel, weather, sim clock and the flight recording (read only)
+  flight_recorder_reset  starts a fresh recording for a new flight
+  load_aircraft          sets the fuel for the flight you're about to fly
+  set_time               sets the MSFS clock to the flight's departure time          (1.5 and later)
+  parking_spots          lists the gates and ramps at an airport                       (1.5 and later)
+  move_to                moves your aircraft to a parking spot                         (1.5 and later)
+
+Apart from fuel, time and position (each only when you press the button for it), it only reads.
+If your bridge is older than 1.5, the game says so when you press one of the newer buttons;
+everything else still works.
 
 What you need
 -------------
-  - Windows PC with MSFS 2024
+  - Windows PC with MSFS 2020 or 2024
   - Node.js LTS (https://nodejs.org)
   - The Claude desktop app, on the same PC
 
@@ -50,14 +66,16 @@ Setup (about 5 minutes)
    Settings > Developer should now list msfs-bridge as running.
 
 5. Open the Trade Winds page in the Claude desktop app. Start MSFS and load into a flight.
-   The Flight tab shows "MSFS live" within a few seconds. The first time, Claude asks
+   The sidebar shows "MSFS live" within a few seconds. The first time, Claude asks
    whether the page may use msfs-bridge: allow it.
 
 Using it
 --------
-  - Accept a job, spawn at the departure airport, press "Start flight" (that arms the recorder).
-  - Fly. Taxi in and park: engine off or parking brake on, and wait 5 seconds.
-  - Press "Log the landing". The touchdown rate, fuel, block time and airport are filled in.
+  - Accept a job and spawn at the departure airport. The flight starts by itself when your
+    engine is running (or press "Start flight").
+  - Fly. Taxi in and park at the destination: engine off or parking brake on.
+  - The flight finishes by itself and the debrief opens with the touchdown rate, fuel,
+    block time and airport filled in.
 
 Troubleshooting
 ---------------
