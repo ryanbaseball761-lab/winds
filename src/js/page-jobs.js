@@ -48,7 +48,7 @@ function jobRow(st, j){
   const accept = canAcceptJob(st, j) ? `<button class="btn primary jc-go" data-act="accept" data-id="${j.id}">${j.network?'Take the run':'Accept'} ${ICO_PLANE}</button>` : '';
   return `<div class="jrow k-${kind} ${open?'open':''}"><button class="jr-main" data-act="job-open" data-id="${j.id}" aria-expanded="${open}">
       <span class="jr-k">${esc(lbl)}</span><span class="jr-rt"><b>${esc(j.from)}</b> → <b>${esc(to==='????'?'????':to)}</b></span><span class="jr-t" title="${esc(j.title)}">${esc(j.title)}${tag?` <em>${tag}</em>`:''}</span>
-      <span class="jr-m" title="${esc((AC[j.ac]||{}).n||'')}">${esc(AC[j.ac]?AC[j.ac].n:j.ac)} · ${est?durTxt(est):''} · ${j.dep<=st.clock?'now':hhmm(j.dep)}</span><span class="jr-p">${money(j.pay)}${j.network?'<small class="dirty">dirty · Heat +5</small>':''}</span></button>
+      <span class="jr-m" title="${esc((AC[j.ac]||{}).n||'')}">${j.dep<=st.clock?'Now':hhmm(j.dep)} · ${est?durTxt(est)+' · ':''}${esc(AC[j.ac]?AC[j.ac].n:j.ac)}</span><span class="jr-p">${money(j.pay)}${j.network?'<small class="dirty">dirty · Heat +5</small>':''}</span></button>
     <span class="jr-go">${accept}</span>${open?`<div class="jr-card"><button class="btn sm ghost" data-act="job-map" data-id="${j.id}" style="margin:0 0 10px">Show route on the map</button>${stripHTML(st, j)}</div>`:''}</div>`;
 }
 
@@ -86,7 +86,7 @@ function boardView(){
   const tabs=[['all','All'],['network','Network runs'],['legit','Legit'],['special','Charters']].filter(([k])=>k==='all'||count(k)).map(([k,n])=>`<button class="${tab===k?'on':''}" data-act="job-tab" data-v="${k}">${n} <small>${count(k)}</small></button>`).join('');
   const rows=shown.filter(j=>canAcceptJob(st,j));
   /* rows you can accept; with a flight already booked, the jobs are shown as cards to browse */
-  const list = rows.length ? `<div class="jlist"><div class="jl-head"><span>Type</span><span>Route</span><span>Job</span><span>Aircraft · time · departs</span><span>Pay</span><span></span></div>${rows.map(j=>jobRow(st,j)).join('')}</div>`
+  const list = rows.length ? `<div class="jlist"><div class="jl-head"><span>Type</span><span>Route</span><span>Job</span><span>Departs · time · aircraft</span><span>Pay</span><span></span></div>${rows.map(j=>jobRow(st,j)).join('')}</div>`
     : `<div class="jgrid b2-grid">${shown.length ? shown.map(j=>stripHTML(st,j)).join('') : `<div class="empty"><h3>No jobs here right now</h3><p>Start a new day for fresh work, or travel to a busier airport.</p><div class="row" style="gap:8px;justify-content:center;margin-top:10px"><button class="btn sm" data-act="rest">New day</button><button class="btn sm" data-act="cmd">Find an airport</button></div></div>`}</div>`;
   /* travel as a passenger */
   const regions=allowedRegions(st); const dests=Object.keys(AP).filter(k=>k!==st.loc && !AP[k].water && regions.includes(AP[k].r)).sort((a,b)=>AP[a].isl.localeCompare(AP[b].isl)); const tv=S.travelTo&&dests.includes(S.travelTo)?S.travelTo:dests[0]; const dh=tv?deadheadCost(st,tv):null;

@@ -38,13 +38,14 @@ function chapterHero(job, lead=''){
   const m=STORY.find(x=>x.id===job.story); if(!m) return ''; const chs=STORY.filter(x=>x.arc===m.arc); const idx=chs.indexOf(m)+1;
   const to=job.local?AP[job.from]:AP[job.to]; const d=job.local?(job.tourNm||40):Math.round(distNm(AP[job.from],AP[job.to]));
   const feat = m.feature || (m.teach&&m.teach[0]) || '';
-  const art = typeof islandArt==='function' ? (()=>{ try{ return islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 300, job.ac); }catch(_){ return ''; } })() : '';
+  /* the scene art behind the banner (the drawn islands only when the art hasn't loaded) */
+  const art = (typeof ART!=='undefined' && ART.scenes && ART.scenes.ramp) ? SCENES.ramp() : (typeof islandArt==='function' ? (()=>{ try{ return islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 300, job.ac); }catch(_){ return ''; } })() : '');
   const g=CH_GOAL[job.story];
   return `<section class="chapter-hero" style="--arc:${arcColor(m.arc)}">${lead}${art?`<div class="ch-art" aria-hidden="true">${art}</div>`:''}<div class="ch-in">
     <div class="row between"><p class="ch-kicker">${CRIME_IDS.has(m.id)?`Act ${CRIME_ACTS.findIndex(a=>a.arc===m.arc)+1} · ${esc(m.arc)} · Chapter ${mainChapters().indexOf(m)+1} of ${mainChapters().length}`:`${esc(m.arc)} · Chapter ${idx} of ${chs.length}${m.side?' · side story':''}`}</p><div class="row ch-cast">${(m.chars||[]).filter(k=>CAST[k]).map(k=>avatar(k)).join('')}</div></div>
     <h1>${esc(m.title)}</h1>${g?`<div class="ch-goal"><p class="ch-prev">${CRIME_IDS.has(m.id)&&prevChapter(m)?`<span>Previously</span> ${esc(recapOf(S.st,prevChapter(m)))}`:`<span>${CRIME_IDS.has(m.id)?'The setup':'Previously'}</span> ${esc(g[1])}`}</p><p class="ch-obj"><span>Your goal</span> ${esc(g[0])}</p></div>`:''}
     ${CRIME_IDS.has(job.story) ? '' : `<div class="ch-brief">${(job.paras||m.brief||[]).map(t=>`<p>${esc(t)}</p>`).join('')}</div>`}
-    <div class="ch-feature"><div><span class="label">Featured flight</span><b class="mono">${esc(job.from)} → ${esc(job.local?job.from:job.to)}</b><span class="small">${esc(to.n)}, ${esc(to.isl)} · ${d.toLocaleString()} nm</span></div>${feat?`<p class="small">${esc(feat)}</p>`:''}</div>
+    ${feat?`<p class="ch-tip"><span>About ${esc(to.n)}</span> ${esc(feat)}</p>`:''}
   </div></section>`;
 }
 
@@ -59,8 +60,8 @@ function boardingPass(st, job, p, a, started, mins, ai){
   return `<section class="pass"><div class="pass-art">${islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 170, job.ac)}</div>
     <div class="pass-main">
       <div class="row between"><span class="carrier">${LOGO}<b>${carrier}</b></span><span class="row">${chipsFor(st,job)}</span></div>
-      <p class="label" style="margin-top:12px">${esc(job.label)}${job.client?` · ${esc(job.client)}`:''}</p>
-      <h1 class="pass-title">${esc(ai?.headline || job.title)}</h1>
+      ${job.kind==='story' ? '' : `<p class="label" style="margin-top:12px">${esc(job.label)}${job.client?` · ${esc(job.client)}`:''}</p>
+      <h1 class="pass-title">${esc(ai?.headline || job.title)}</h1>`}
       <div class="pass-route">
         <div><div class="code">${esc(job.from)}</div><div class="city">${esc(from.isl)}</div></div>
         ${passPlane()}

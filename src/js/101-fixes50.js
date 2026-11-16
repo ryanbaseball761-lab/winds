@@ -81,6 +81,17 @@ WHATS_NEW.unshift(['0.43','50 fixes: the new-career screen fits the story, Heat 
 @media (max-width:600px){.if-phases{flex-wrap:wrap;overflow:visible!important}}
 button.on small{color:inherit!important}
 .scroll-x:focus-visible{outline:2px solid var(--c,#e0b24a);outline-offset:2px}
+.chapter-hero .ch-in{gap:8px!important;padding:18px 26px 18px!important}.chapter-hero .ch-art{opacity:.6}
+.ch-tip{margin:0;font-size:13.5px;color:rgba(255,255,255,.78);max-width:760px}.ch-tip span{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--arc,#e0b24a);margin-right:8px}
+.setup2{padding:0!important;margin:-8px!important;width:calc(100% + 16px)}.setup2 .setup-hero{min-height:100vh;align-items:center;padding:48px 0;border-radius:0}
+.setup2 .s2-grid{position:relative;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,400px);gap:56px;align-items:center;width:100%}
+.setup2 .setup-copy h1{margin:8px 0 16px}.setup2 .lede{margin:0 0 22px}
+.setup2 .s2-feats{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:14px 28px;max-width:720px}
+.setup2 .s2-feats li{border-left:2px solid #e0b24a;padding-left:12px}.setup2 .s2-feats b{display:block;font-size:14px;margin-bottom:3px;color:#f1e9d8}.setup2 .s2-feats span{font-size:13px;line-height:1.45;color:rgba(241,233,216,.72);text-shadow:none}
+.setup2 .setup-card{background:rgba(14,13,12,.88);backdrop-filter:blur(6px);border:1px solid rgba(224,178,74,.25);box-shadow:0 20px 60px rgba(0,0,0,.5);text-shadow:none}
+.setup2 .import-row{margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;text-shadow:none}
+@media (max-width:900px){.setup2 .s2-grid{grid-template-columns:1fr;gap:28px}.setup2 .s2-feats{grid-template-columns:1fr}.setup2 .setup-hero{padding:32px 0}}
+.avatar.art-av{box-shadow:0 0 0 2px rgba(224,178,74,.55),0 2px 8px rgba(0,0,0,.4)}
 .ac-hero{background:radial-gradient(120% 120% at 100% 0%,rgba(124,191,111,.18),transparent 55%),linear-gradient(135deg,#101413,#0b0b0d)!important;border:1px solid #23302b}
 .cup-hero{background:radial-gradient(120% 120% at 0% 0%,rgba(224,178,74,.22),transparent 55%),linear-gradient(135deg,#17130c,#0b0b0d)!important;border:1px solid #3a2f18}`; document.head.appendChild(s); })();
 WHATS_NEW.unshift(['0.50','Every story choice now comes back later, a fuller epilogue, Caribe Cargo becomes your own airline (Pilot → Airline), smuggling pays more and draws more Heat, and many fixes.']);

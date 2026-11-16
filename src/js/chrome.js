@@ -39,7 +39,7 @@ function band(){
       <div class="pav">${esc(initials(st.pilot.name))}</div>
       <div style="min-width:0"><b>${esc(st.pilot.name)}</b><span>${rankLine}</span>
         <div class="xp" title="${rk.next?`Next rank: ${rk.next} at ${rk.nextH} h`:'Top rank'}"><i style="width:${rk.pct.toFixed(0)}%"></i></div>
-        <small>${fmtH(st.minutes)} logged${rk.next?` · ${esc(rk.next)} at ${rk.nextH} h`:''}</small></div>
+        <small>${fmtH(st.minutes)} logged${rk.next?` · ${esc(rk.next)} at ${rk.nextH}&nbsp;h`:''}</small></div>
     </div>
     <nav class="side-nav" aria-label="Main menu">${NAV5.map(sideItem).join('')}</nav>
     <div class="side-foot"><span class="simdot ${live?'on':''}"></span><span id="sim-band">${live?'MSFS live':'Sim not connected'}</span><span class="sep">·</span><span id="sync">${syncText()}</span></div>

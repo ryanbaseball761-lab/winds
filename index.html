@@ -2723,27 +2723,29 @@ function setupView(){
     ['Power and Heat','Every run makes you stronger and more wanted. Push too hard and customs starts searching your plane.'],
     ['Cessna to 747','Earn your licenses with real checkrides as the story moves you from a borrowed Cessna to the Vision Jet, the CJ4, the 737 and the 747.'],
     ['Graded by the sim','Trade Winds follows your flight live and grades the touchdown, the centerline, the fuel and the airmanship by itself.']];
-  return `<main class="setup-wrap">
+  /* one screen: the scene behind, the pitch on the left, the name form on the right (stacked on phones) */
+  return `<main class="setup-wrap setup2">
     <section class="setup-hero noir">
       <div class="sh-art" aria-hidden="true">${typeof SCENES!=='undefined'?SCENES.ramp():''}</div><div class="sh-shade" aria-hidden="true"></div>
-      <div class="wrap setup-copy">
-        <p class="eyebrow">A crime story for Microsoft Flight Simulator</p>
-        <h1>Trade Winds</h1>
-        <p class="lede">A fresh license and a cheap job flying a Cessna in St. Martin. Then the mechanic asks you for a small favor. Five acts later you're flying a 747 full of contraband, and either running the Caribbean or running from it.</p>
+      <div class="wrap s2-grid">
+        <div class="setup-copy">
+          <p class="eyebrow">A crime story for Microsoft Flight Simulator</p>
+          <h1>Trade Winds</h1>
+          <p class="lede">A fresh license and a cheap job flying a Cessna in St. Martin. Then the mechanic asks you for a small favor. Five acts later you're flying a 747 full of contraband, and either running the Caribbean or running from it.</p>
+          <ul class="s2-feats">${feats.map(([t,d])=>`<li><b>${t}</b><span>${d}</span></li>`).join('')}</ul>
+        </div>
+        <div class="s2-side">
+          <form id="setup-form" class="panel stack setup-card">
+            <h2>Who's flying?</h2>
+            <label class="field"><span>Your name</span><input id="pname" type="text" placeholder="Your name" maxlength="40" required autofocus></label>
+            <label class="field"><span>Callsign or nickname <small>(optional)</small></span><input id="pcall" type="text" placeholder="e.g. Maverick" maxlength="30"></label>
+            <button class="btn action big" type="submit">Start the story</button>
+            <p class="tiny muted">Your career saves automatically.</p>
+          </form>
+          <div class="import-row"><span class="small muted">Already flying Trade Winds somewhere else?</span><button class="btn sm" type="button" data-act="import-file">Import career file</button></div>
+        </div>
       </div>
-    </section>
-    <div class="wrap">
-      <div class="setup-grid">
-        <form id="setup-form" class="panel stack setup-card">
-          <h2>Who's flying?</h2>
-          <label class="field"><span>Your name</span><input id="pname" type="text" placeholder="Your name" maxlength="40" required autofocus></label>
-          <label class="field"><span>Callsign or nickname <small>(optional)</small></span><input id="pcall" type="text" placeholder="e.g. Maverick" maxlength="30"></label>
-          <button class="btn action big" type="submit">Start the story</button>
-          <p class="tiny muted">Your career saves automatically.</p>
-        </form><div class="import-row"><span class="small muted">Already flying Trade Winds somewhere else?</span><button class="btn sm" type="button" data-act="import-file">Import career file</button></div>
-        <div class="features">${feats.map(([t,d])=>`<div class="feat"><b>${t}</b><p>${d}</p></div>`).join('')}</div>
-      </div>
-    </div></main>`;
+    </section></main>`;
 }
 
 /* ---------- welcome tour ---------- */
@@ -6791,6 +6793,17 @@ WHATS_NEW.unshift(['0.43','50 fixes: the new-career screen fits the story, Heat 
 @media (max-width:600px){.if-phases{flex-wrap:wrap;overflow:visible!important}}
 button.on small{color:inherit!important}
 .scroll-x:focus-visible{outline:2px solid var(--c,#e0b24a);outline-offset:2px}
+.chapter-hero .ch-in{gap:8px!important;padding:18px 26px 18px!important}.chapter-hero .ch-art{opacity:.6}
+.ch-tip{margin:0;font-size:13.5px;color:rgba(255,255,255,.78);max-width:760px}.ch-tip span{font-family:var(--f-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--arc,#e0b24a);margin-right:8px}
+.setup2{padding:0!important;margin:-8px!important;width:calc(100% + 16px)}.setup2 .setup-hero{min-height:100vh;align-items:center;padding:48px 0;border-radius:0}
+.setup2 .s2-grid{position:relative;display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,400px);gap:56px;align-items:center;width:100%}
+.setup2 .setup-copy h1{margin:8px 0 16px}.setup2 .lede{margin:0 0 22px}
+.setup2 .s2-feats{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:14px 28px;max-width:720px}
+.setup2 .s2-feats li{border-left:2px solid #e0b24a;padding-left:12px}.setup2 .s2-feats b{display:block;font-size:14px;margin-bottom:3px;color:#f1e9d8}.setup2 .s2-feats span{font-size:13px;line-height:1.45;color:rgba(241,233,216,.72);text-shadow:none}
+.setup2 .setup-card{background:rgba(14,13,12,.88);backdrop-filter:blur(6px);border:1px solid rgba(224,178,74,.25);box-shadow:0 20px 60px rgba(0,0,0,.5);text-shadow:none}
+.setup2 .import-row{margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;text-shadow:none}
+@media (max-width:900px){.setup2 .s2-grid{grid-template-columns:1fr;gap:28px}.setup2 .s2-feats{grid-template-columns:1fr}.setup2 .setup-hero{padding:32px 0}}
+.avatar.art-av{box-shadow:0 0 0 2px rgba(224,178,74,.55),0 2px 8px rgba(0,0,0,.4)}
 .ac-hero{background:radial-gradient(120% 120% at 100% 0%,rgba(124,191,111,.18),transparent 55%),linear-gradient(135deg,#101413,#0b0b0d)!important;border:1px solid #23302b}
 .cup-hero{background:radial-gradient(120% 120% at 0% 0%,rgba(224,178,74,.22),transparent 55%),linear-gradient(135deg,#17130c,#0b0b0d)!important;border:1px solid #3a2f18}`; document.head.appendChild(s); })();
 WHATS_NEW.unshift(['0.50','Every story choice now comes back later, a fuller epilogue, Caribe Cargo becomes your own airline (Pilot → Airline), smuggling pays more and draws more Heat, and many fixes.']);
@@ -6871,7 +6884,7 @@ function band(){
       <div class="pav">${esc(initials(st.pilot.name))}</div>
       <div style="min-width:0"><b>${esc(st.pilot.name)}</b><span>${rankLine}</span>
         <div class="xp" title="${rk.next?`Next rank: ${rk.next} at ${rk.nextH} h`:'Top rank'}"><i style="width:${rk.pct.toFixed(0)}%"></i></div>
-        <small>${fmtH(st.minutes)} logged${rk.next?` · ${esc(rk.next)} at ${rk.nextH} h`:''}</small></div>
+        <small>${fmtH(st.minutes)} logged${rk.next?` · ${esc(rk.next)} at ${rk.nextH}&nbsp;h`:''}</small></div>
     </div>
     <nav class="side-nav" aria-label="Main menu">${NAV5.map(sideItem).join('')}</nav>
     <div class="side-foot"><span class="simdot ${live?'on':''}"></span><span id="sim-band">${live?'MSFS live':'Sim not connected'}</span><span class="sep">·</span><span id="sync">${syncText()}</span></div>
@@ -7925,13 +7938,14 @@ function chapterHero(job, lead=''){
   const m=STORY.find(x=>x.id===job.story); if(!m) return ''; const chs=STORY.filter(x=>x.arc===m.arc); const idx=chs.indexOf(m)+1;
   const to=job.local?AP[job.from]:AP[job.to]; const d=job.local?(job.tourNm||40):Math.round(distNm(AP[job.from],AP[job.to]));
   const feat = m.feature || (m.teach&&m.teach[0]) || '';
-  const art = typeof islandArt==='function' ? (()=>{ try{ return islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 300, job.ac); }catch(_){ return ''; } })() : '';
+  /* the scene art behind the banner (the drawn islands only when the art hasn't loaded) */
+  const art = (typeof ART!=='undefined' && ART.scenes && ART.scenes.ramp) ? SCENES.ramp() : (typeof islandArt==='function' ? (()=>{ try{ return islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 300, job.ac); }catch(_){ return ''; } })() : '');
   const g=CH_GOAL[job.story];
   return `<section class="chapter-hero" style="--arc:${arcColor(m.arc)}">${lead}${art?`<div class="ch-art" aria-hidden="true">${art}</div>`:''}<div class="ch-in">
     <div class="row between"><p class="ch-kicker">${CRIME_IDS.has(m.id)?`Act ${CRIME_ACTS.findIndex(a=>a.arc===m.arc)+1} · ${esc(m.arc)} · Chapter ${mainChapters().indexOf(m)+1} of ${mainChapters().length}`:`${esc(m.arc)} · Chapter ${idx} of ${chs.length}${m.side?' · side story':''}`}</p><div class="row ch-cast">${(m.chars||[]).filter(k=>CAST[k]).map(k=>avatar(k)).join('')}</div></div>
     <h1>${esc(m.title)}</h1>${g?`<div class="ch-goal"><p class="ch-prev">${CRIME_IDS.has(m.id)&&prevChapter(m)?`<span>Previously</span> ${esc(recapOf(S.st,prevChapter(m)))}`:`<span>${CRIME_IDS.has(m.id)?'The setup':'Previously'}</span> ${esc(g[1])}`}</p><p class="ch-obj"><span>Your goal</span> ${esc(g[0])}</p></div>`:''}
     ${CRIME_IDS.has(job.story) ? '' : `<div class="ch-brief">${(job.paras||m.brief||[]).map(t=>`<p>${esc(t)}</p>`).join('')}</div>`}
-    <div class="ch-feature"><div><span class="label">Featured flight</span><b class="mono">${esc(job.from)} → ${esc(job.local?job.from:job.to)}</b><span class="small">${esc(to.n)}, ${esc(to.isl)} · ${d.toLocaleString()} nm</span></div>${feat?`<p class="small">${esc(feat)}</p>`:''}</div>
+    ${feat?`<p class="ch-tip"><span>About ${esc(to.n)}</span> ${esc(feat)}</p>`:''}
   </div></section>`;
 }
 
@@ -7946,8 +7960,8 @@ function boardingPass(st, job, p, a, started, mins, ai){
   return `<section class="pass"><div class="pass-art">${islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 170, job.ac)}</div>
     <div class="pass-main">
       <div class="row between"><span class="carrier">${LOGO}<b>${carrier}</b></span><span class="row">${chipsFor(st,job)}</span></div>
-      <p class="label" style="margin-top:12px">${esc(job.label)}${job.client?` · ${esc(job.client)}`:''}</p>
-      <h1 class="pass-title">${esc(ai?.headline || job.title)}</h1>
+      ${job.kind==='story' ? '' : `<p class="label" style="margin-top:12px">${esc(job.label)}${job.client?` · ${esc(job.client)}`:''}</p>
+      <h1 class="pass-title">${esc(ai?.headline || job.title)}</h1>`}
       <div class="pass-route">
         <div><div class="code">${esc(job.from)}</div><div class="city">${esc(from.isl)}</div></div>
         ${passPlane()}
@@ -8205,7 +8219,7 @@ function jobRow(st, j){
   const accept = canAcceptJob(st, j) ? `<button class="btn primary jc-go" data-act="accept" data-id="${j.id}">${j.network?'Take the run':'Accept'} ${ICO_PLANE}</button>` : '';
   return `<div class="jrow k-${kind} ${open?'open':''}"><button class="jr-main" data-act="job-open" data-id="${j.id}" aria-expanded="${open}">
       <span class="jr-k">${esc(lbl)}</span><span class="jr-rt"><b>${esc(j.from)}</b> → <b>${esc(to==='????'?'????':to)}</b></span><span class="jr-t" title="${esc(j.title)}">${esc(j.title)}${tag?` <em>${tag}</em>`:''}</span>
-      <span class="jr-m" title="${esc((AC[j.ac]||{}).n||'')}">${esc(AC[j.ac]?AC[j.ac].n:j.ac)} · ${est?durTxt(est):''} · ${j.dep<=st.clock?'now':hhmm(j.dep)}</span><span class="jr-p">${money(j.pay)}${j.network?'<small class="dirty">dirty · Heat +5</small>':''}</span></button>
+      <span class="jr-m" title="${esc((AC[j.ac]||{}).n||'')}">${j.dep<=st.clock?'Now':hhmm(j.dep)} · ${est?durTxt(est)+' · ':''}${esc(AC[j.ac]?AC[j.ac].n:j.ac)}</span><span class="jr-p">${money(j.pay)}${j.network?'<small class="dirty">dirty · Heat +5</small>':''}</span></button>
     <span class="jr-go">${accept}</span>${open?`<div class="jr-card"><button class="btn sm ghost" data-act="job-map" data-id="${j.id}" style="margin:0 0 10px">Show route on the map</button>${stripHTML(st, j)}</div>`:''}</div>`;
 }
 
@@ -8243,7 +8257,7 @@ function boardView(){
   const tabs=[['all','All'],['network','Network runs'],['legit','Legit'],['special','Charters']].filter(([k])=>k==='all'||count(k)).map(([k,n])=>`<button class="${tab===k?'on':''}" data-act="job-tab" data-v="${k}">${n} <small>${count(k)}</small></button>`).join('');
   const rows=shown.filter(j=>canAcceptJob(st,j));
   /* rows you can accept; with a flight already booked, the jobs are shown as cards to browse */
-  const list = rows.length ? `<div class="jlist"><div class="jl-head"><span>Type</span><span>Route</span><span>Job</span><span>Aircraft · time · departs</span><span>Pay</span><span></span></div>${rows.map(j=>jobRow(st,j)).join('')}</div>`
+  const list = rows.length ? `<div class="jlist"><div class="jl-head"><span>Type</span><span>Route</span><span>Job</span><span>Departs · time · aircraft</span><span>Pay</span><span></span></div>${rows.map(j=>jobRow(st,j)).join('')}</div>`
     : `<div class="jgrid b2-grid">${shown.length ? shown.map(j=>stripHTML(st,j)).join('') : `<div class="empty"><h3>No jobs here right now</h3><p>Start a new day for fresh work, or travel to a busier airport.</p><div class="row" style="gap:8px;justify-content:center;margin-top:10px"><button class="btn sm" data-act="rest">New day</button><button class="btn sm" data-act="cmd">Find an airport</button></div></div>`}</div>`;
   /* travel as a passenger */
   const regions=allowedRegions(st); const dests=Object.keys(AP).filter(k=>k!==st.loc && !AP[k].water && regions.includes(AP[k].r)).sort((a,b)=>AP[a].isl.localeCompare(AP[b].isl)); const tv=S.travelTo&&dests.includes(S.travelTo)?S.travelTo:dests[0]; const dh=tv?deadheadCost(st,tv):null;
