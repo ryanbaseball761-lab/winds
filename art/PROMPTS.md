@@ -26,3 +26,23 @@ Make each image with the same style line so they match. Send me the finished fil
 | ramp.jpg | dark cargo ramp at night, a jet with engines running, two pickup trucks with headlights on, rain on the tarmac |
 | phone.jpg | close-up of a phone glowing on a dark table, incoming call, rain on a window behind |
 | cockpit.jpg | business jet cockpit at night, glowing displays, stars and dark ocean through the windscreen |
+
+## Side characters still drawn by the game (portraits, same size and style)
+These show in side stories, checkrides and the Starling story. Until a painting arrives, the game draws them.
+| File | Prompt |
+|---|---|
+| devries.jpg | Inspector Henk de Vries, Dutch aviation examiner in his sixties, neat grey beard, reading glasses, uniform shirt, holding a cup of tea, polite and precise |
+| marchetti.jpg | Capitaine Hélène Marchetti, French flight examiner in her fifties, short grey hair, aviator sunglasses pushed up, unsmiling, sharp eyes |
+| wilkins.jpg | Grace Wilkins, Caribbean pilot examiner in her forties, braids tied back, clipboard, calm and fair expression |
+| amara.jpg | Dr. Amara Okafor, Nigerian marine biologist in her thirties, sun hat, camera around her neck, wetsuit top, enthusiastic |
+| calloway.jpg | Jack Calloway, American charter pilot in his forties, aviator sunglasses, open Hawaiian shirt, cocky grin |
+| celeste.jpg | Celeste Moreau, French hotel owner in her fifties, elegant silk scarf, champagne glass, knowing smile |
+| rosa.jpg | Rosa Delgado, Puerto Rican baker in her sixties, flour on her apron, warm laugh lines, pastry box in hand |
+| vivienne.jpg | Vivienne Okafor-Lang, British-Nigerian entrepreneur in her thirties, stylish linen suit, confident, slightly nervous about flying |
+| abe.jpg | Captain Theo "Abe" Abernathy, retired Texan airline captain in his sixties, white moustache, crossword and pen in shirt pocket, patient |
+| preston.jpg | Preston Vale, airline CEO in his forties, perfect suit, perfect teeth, smile that doesn't reach his eyes |
+| lucille.jpg | Lucille Bain, Antiguan retired schoolteacher, seventy-one, cardigan, sharp eyes behind glasses, stern |
+| ortiz.jpg | Lt. Daniela Ortiz, US Coast Guard helicopter pilot in her forties, flight suit, headset around her neck, calm authority |
+| nova.jpg | Nova Reyes, pop star from Sint Maarten in her twenties, stage jacket, sunglasses, a little airsick |
+
+Add each finished file to `art/portraits/` and its name (without .jpg) to the `portraits` list in `art/index.json`.
