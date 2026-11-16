@@ -10,7 +10,7 @@
 /* ---------- pieces ---------- */
 
 /* "Skip flight (test)": only when Settings → Story → Testing shortcut is on */
-function testSkipBar(){ return uiP().testSkip ? `<div class="test-skip-bar">${SKIP_BTN}<span class="tiny muted">Testing shortcut</span></div>` : ''; }
+function testSkipBar(){ return uiP().testSkip ? `<div class="test-skip-bar">${SKIP_BTN}</div>` : ''; }
 
 /* The flight display at the top of flight mode: route, progress, live numbers, and the goal. */
 function hudHTML(a){

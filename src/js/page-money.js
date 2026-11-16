@@ -15,7 +15,7 @@ function moneyView(){
   const H=HOUSING[F.housing]||HOUSING.bunk; const lim=creditLimit(st);
   // charts
   const hist = F.history.slice(-60); const W=600,Hh=160,P=28;
-  let nwChart = `<p class="small muted">Rest a few days to build up a history.</p>`;
+  let nwChart = `<p class="small muted">No history yet.</p>`;
   if(hist.length>=2){ const vals=hist.flatMap(h=>[h.net,h.cash]); const mn=Math.min(0,...vals), mx=Math.max(1,...vals); const x=i=>P+i*(W-2*P)/(hist.length-1), y=v=>Hh-P-(v-mn)/(mx-mn)*(Hh-2*P);
     const line=k=>hist.map((h,i)=>`${x(i).toFixed(1)},${y(h[k]).toFixed(1)}`).join(' ');
     nwChart = `<svg viewBox="0 0 ${W} ${Hh}" class="chart" role="img" aria-label="Net worth and cash over time"><line x1="${P}" x2="${W-P}" y1="${y(0)}" y2="${y(0)}" class="cg"/><text x="2" y="${y(mx)+4}" class="ct">${money(mx).replace('$','$')}</text><text x="2" y="${y(mn)+4}" class="ct">${money(mn)}</text><polyline points="${line('cash')}" class="cl2"/><polyline points="${line('net')}" class="cl"/><circle cx="${x(hist.length-1)}" cy="${y(hist[hist.length-1].net)}" r="4" class="cd gB"/></svg><div class="row small muted" style="gap:14px"><span><i class="lk sea"></i> Net worth</span><span><i class="lk sky"></i> Cash</span></div>`; }
@@ -26,13 +26,13 @@ function moneyView(){
           <dl class="kv small"><dt>Savings</dt><dd>${money(F.savings)} at 4.5% APY</dd><dt>Credit line</dt><dd>${money(F.credit)} used of ${money(lim)} at 19.9% APR</dd><dt>Credit score</dt><dd>${Math.round(F.score)} · aircraft loans at ${(loanRate(st)*100).toFixed(1)}% APR</dd>${F.bond>0?`<dt>Training bond</dt><dd>${money(F.bond)} owed to Coral Wing, repaid at 20% of each flight's pay</dd>`:''}</dl>
           <label class="field"><span>Amount</span><input id="fin-amt" type="number" min="0" step="100" value="1000"></label>
           <div class="row"><button class="btn sm" data-act="fin-dep">Deposit</button><button class="btn sm" data-act="fin-wd">Withdraw</button><button class="btn sm" data-act="fin-draw">Borrow</button><button class="btn sm" data-act="fin-repay">Repay credit</button>${F.bond>0?`<button class="btn sm" data-act="fin-bond">Repay bond</button>`:''}</div>
-          <p class="tiny muted">Paying debts on time raises your score. Overdrafts drop it. If your cash goes negative, the bank automatically draws on your credit line.</p></section>`;
+          <p class="tiny muted">Go negative and the bank pulls from your credit line.</p></section>`;
   return `<main class="wrap stack fade">${safeHTML(()=>operationHTML(st))}${safeHTML(()=>launderHTML(st))}
     <div class="tiles">
       <div class="tile"><span class="label">Cash</span><b class="mono">${money(st.cash)}</b><span class="tiny muted">${seasonName(st)} · charter demand ${demandIndex(st)>=1?'+':''}${Math.round((demandIndex(st)-1)*100)}%</span></div>
       <div class="tile"><span class="label">Savings</span><b class="mono">${money(F.savings)}</b><span class="tiny muted">4.5% APY</span></div>
       <div class="tile"><span class="label">Debt</span><b class="mono">${money(debtTotal(st))}</b><span class="tiny muted">Credit score ${Math.round(F.score)}</span></div>
-      <div class="tile"><span class="label">Net worth</span><b class="mono">${money(netWorth(st))}</b><span class="tiny muted">Cash + savings + aircraft equity − debt</span></div>
+      <div class="tile"><span class="label">Net worth</span><b class="mono">${money(netWorth(st))}</b></div>
     </div>
     <div class="grid-2">
       <section class="panel stack"><div class="row between"><h3>Net worth</h3><span class="small muted">${hist.length>=2?`Last ${hist.length} days`:""}</span></div>${nwChart}</section>
@@ -48,11 +48,11 @@ function moneyView(){
           <tr><td><b>Operating profit</b></td><td class="num"><b style="color:${opProfit<0?'var(--bad)':'var(--good)'}">${money(opProfit)}</b></td></tr>
           ${groups.inv.length||groups.fin.length?`<tr><th colspan="2">Investing & financing</th></tr>${[...groups.inv,...groups.fin].map(row).join('')}`:''}
         </tbody></table></div>
-        <p class="tiny muted">Operating profit excludes aircraft purchases and sales, loan principal and bond repayments, which change what you own and owe rather than what you earn.</p></section>
+        </section>
       <aside class="stack">
         <section class="panel stack"><h3>Where you live</h3><p class="small"><b>${esc(H.n)}</b> · ${money(H.rent)}/day</p><p class="small muted">${esc(H.blurb)}</p>
           <select id="fin-house" aria-label="Housing">${Object.entries(HOUSING).map(([k,h])=>`<option value="${k}" ${k===F.housing?'selected':''}>${esc(h.n)} · ${money(h.rent)}/day${h.rep?` · +${h.rep} rep/week`:''}</option>`).join('')}</select></section>
-        <section class="panel stack"><h3>Fuel today at ${esc(st.loc)}</h3><dl class="kv small"><dt>Avgas</dt><dd class="mono">$${fuelPrice(st,st.loc,'avgas').toFixed(2)}/gal</dd><dt>Jet-A</dt><dd class="mono">$${fuelPrice(st,st.loc,'jeta').toFixed(2)}/gal</dd><dt>Oil index</dt><dd class="mono">${F.oil.toFixed(2)}</dd></dl><p class="tiny muted">Small islands charge more. Fuel only costs you money on your own company's aircraft.</p></section>
+        <section class="panel stack"><h3>Fuel today at ${esc(st.loc)}</h3><dl class="kv small"><dt>Avgas</dt><dd class="mono">$${fuelPrice(st,st.loc,'avgas').toFixed(2)}/gal</dd><dt>Jet-A</dt><dd class="mono">$${fuelPrice(st,st.loc,'jeta').toFixed(2)}/gal</dd><dt>Oil index</dt><dd class="mono">${F.oil.toFixed(2)}</dd></dl><p class="tiny muted">You only pay for fuel on your own company's planes.</p></section>
       </aside>
     </div>
     <section class="panel"><div class="section-title"><h2>Transactions</h2><span class="small muted">Most recent first</span></div><div class="scroll-x" tabindex="0"><table><thead><tr><th>Day</th><th>Category</th><th>Details</th><th class="num">Amount</th></tr></thead><tbody>${F.ledger.slice(0,60).map(e=>`<tr><td class="mono">${e.d} · ${hhmm(e.t)}</td><td>${esc(e.c)}${e.transfer?' <span class="chip">transfer</span>':''}</td><td style="white-space:normal">${esc(e.m)}</td><td class="num" style="color:${e.a<0?'var(--bad)':'var(--good)'}">${money(e.a)}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">No transactions yet. Fly a job.</td></tr>'}</tbody></table></div></section>

@@ -155,7 +155,7 @@ html.ckp body.flying .cb-sub{display:none}
 `;
 (function(){ const s=document.createElement('style'); s.id='ck-theme'; s.textContent=CK_CSS; document.head.appendChild(s);
   // styles injected later by other modules must not outrank the theme: keep it last in <head>
-  new MutationObserver(()=>{ const t=document.getElementById('ck-theme'), p=document.getElementById('ck-pages'); if(!t||!p) return; const last=document.head.lastElementChild; if(last!==p && [...document.head.children].slice([...document.head.children].indexOf(p)+1).some(e=>e.tagName==='STYLE')){ document.head.appendChild(t); document.head.appendChild(p); } }).observe(document.head,{childList:true}); })();
+  new MutationObserver(()=>{ const t=document.getElementById('ck-theme'), p=document.getElementById('ck-pages'), h=document.getElementById('ck-human'); if(!t||!p||!h) return; if([...document.head.children].slice([...document.head.children].indexOf(h)+1).some(e=>e.tagName==='STYLE')){ document.head.appendChild(t); document.head.appendChild(p); document.head.appendChild(h); } }).observe(document.head,{childList:true}); })();
 
 /* ===================== PAGES ===================== */
 const CK_PAGES = `
@@ -314,3 +314,29 @@ html.ckp .setup2{border:0!important;outline:0!important}
 }
 `;
 (function(){ const s=document.createElement('style'); s.id='ck-pages'; s.textContent=CK_PAGES; document.getElementById('ck-theme').after(s); })();
+
+/* ===================== LESS TEMPLATE, MORE HAND-MADE (0.66) =====================
+   Tiny letter-spaced capitals on every label were the loudest "generated" tell. Labels, buttons and
+   readouts now read as plain sentence-case text; only the main tabs keep capitals, like a panel placard. */
+const CK_HUMAN = `
+html.ckp .label,html.ckp .section-title .small,html.ckp .mn-kicker,html.ckp .ch-kicker,html.ckp .sc-k,html.ckp .sc-act,
+html.ckp .ro-strip small,html.ckp .sh-stats span,html.ckp .pass-fields span,html.ckp .pass-stub .label,html.ckp .cb-ro small,html.ckp .field span,
+html.ckp .ch-tip span,html.ckp .sc-whos>small,html.ckp .sc-prev span,html.ckp .jl-head *,html.ckp .jr-k,html.ckp .cb-booked small,
+html.ckp .eyebrow,html.ckp .sh-act-h,html.ckp .cut .kicker,html.ckp [class*="kicker"],html.ckp .pass-route .city{
+  font-family:var(--f-body)!important;text-transform:none!important;letter-spacing:0!important;font-weight:500!important;font-size:12.5px!important}
+html.ckp .label,html.ckp .sc-k{color:var(--muted)!important}
+html.ckp .sc-act{color:var(--amb)!important;font-size:14px!important;font-weight:600!important}
+html.ckp .cb-ro small{font-size:10.5px!important;color:var(--dim)!important}
+html.ckp .btn,html.ckp .subtabs button,html.ckp .diff button,html.ckp .b2-tabs button,html.ckp .hg-tabs button,html.ckp .if-phases button,html.ckp .seg button,html.ckp .tabs button,html.ckp .calm-showmore,html.ckp .b2-more{
+  text-transform:none!important;letter-spacing:0!important;font-family:var(--f-body)!important;font-weight:600!important}
+html.ckp .btn{font-size:14px}html.ckp .btn.sm{font-size:13px}html.ckp .btn.big{font-size:16px}
+html.ckp .subtabs button,html.ckp .diff button,html.ckp .b2-tabs button,html.ckp .hg-tabs button{font-size:14px!important}
+html.ckp .chip,html.ckp .badge,html.ckp .jr-t em{text-transform:none!important;letter-spacing:0!important;font-family:var(--f-body)!important;font-size:12px!important}
+html.ckp .cbar .now-pill>span::before{content:"Next: ";font-family:var(--f-body);letter-spacing:0;font-size:12.5px}
+html.ckp .cb-sync{display:none}
+html.ckp .b2-tabs small{opacity:1!important;color:var(--muted)!important}
+html.ckp .ts-logo p,html.ckp .s2-feats,html.ckp .setup2 .eyebrow{display:none}
+`;
+(function(){ const s=document.createElement('style'); s.id='ck-human'; s.textContent=CK_HUMAN; document.getElementById('ck-pages').after(s); })();
+/* a little film grain over everything so flat surfaces don't look rendered */
+(function(){ const s=document.createElement('style'); s.textContent=`html.ckp body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:99999;opacity:.06;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}`; document.getElementById('ck-human').after(s); s.id='ck-grain'; })();

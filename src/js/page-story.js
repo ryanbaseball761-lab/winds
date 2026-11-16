@@ -21,7 +21,7 @@ function playAction(st, m, availSet, n){
     if(!st.active && crime(st).on && fedsWatching(st) && CRIME_IDS.has(m.id)) return {btn:`<button class="btn" data-act="nav" data-v="board">Lie low first</button>`, note:`Heat ${crime(st).heat}: the feds are watching. Get it under 80 to play.`};
     if(st.active) return {btn:`<button class="btn" data-act="nav" data-v="flight">Finish your current flight first</button>`, note:''};
     if(s.k==='ready') return {btn:`<button class="btn action big" data-act="accept-story" data-id="${m.id}">▶ Play chapter ${n}</button>`, note:''};
-    if(s.k==='travel'){ const d=deadheadCost(st,s.at); return {btn:`<button class="btn action big" data-act="story-go" data-id="${m.id}" ${st.cash<d.cost?'disabled':''}>▶ Play chapter ${n}</button>`, note: d.cost ? `Includes a ${money(d.cost)} seat to ${esc(s.at)}.` : `You'll be flown to ${esc(s.at)} for free first.`}; }
+    if(s.k==='travel'){ const d=deadheadCost(st,s.at); return {btn:`<button class="btn action big" data-act="story-go" data-id="${m.id}" ${st.cash<d.cost?'disabled':''}>▶ Play chapter ${n}</button>`, note: d.cost ? `Starts at ${esc(s.at)}. Seat over: ${money(d.cost)}.` : `Starts at ${esc(s.at)}. The ride over is free.`}; }
     if(s.k==='aircraft') return {btn:`<button class="btn" data-act="nav" data-v="hangar">Open the Hangar</button>`, note:`Written for the ${m.ac.map(k=>AC[k]?AC[k].n:k).join(', ')}. Any ${storyRoleName(m)} in your hangar with ${m.pax||1}+ seats works too, including payware and mods (Hangar → Bring your own aircraft).`};
     if(s.k==='locked'){ const need=((m.req||{}).ratings||[]).filter(r=>!st.ratings[r]); const btns=chapterAction(st, m, availSet, false);
       return {btn: btns || `<button class="btn" data-act="nav" data-v="pilot">Open Pilot</button>`, note: need.length ? `Needs your ${need.map(r=>RATINGS[r].n).join(' and ')} first.` : `Finish the previous chapter first.`}; }
@@ -42,14 +42,14 @@ function campaignCard(st){ const c=crime(st); const MC=mainChapters(); const ava
     const who=mm.chars.filter(k=>CAST[k]).map(k=>`<span class="sc-who"><span class="sc-avw">${avatar(k)}</span>${esc({reyes:'Reyes',castillo:'Castillo'}[k]||shortName(k))}</span>`).join('');
     let length=''; try{ const jj=storyJob(st,next,acN); length=`<span>~${durTxt(jj.est||plan(jj).est)}</span>`; }catch(_){}   // roughly how long the flight is
     body=`<div class="sc-next">
-      <p class="sc-k">Chapter ${n} of ${MC.length}</p><h2>${esc(next.title)}</h2><p class="sc-hook">${esc(next.hook||'')}</p>
+      <p class="sc-k">Chapter ${n}</p><h2>${esc(next.title)}</h2><p class="sc-hook">${esc(next.hook||'')}</p>
       <div class="sc-meta ro-strip"><div><small>Route</small><b class="mono">${esc(next.from)} → ${esc(next.to)}</b></div>${length?`<div><small>Flight</small><b class="mono">${length.replace(/<\/?span>/g,'')}</b></div>`:''}<div><small>Aircraft</small><b>${esc(AC[acN]?AC[acN].n:acN)}</b></div><div><small>Light</small><b>${esc({dawn:'Dawn',day:'Daytime',dusk:'Dusk',night:'Night'}[next.time]||'Any')}</b></div></div>
       ${who?`<div class="sc-whos"><small>With</small>${who}</div>`:''}
       <div class="sc-go">${pa.btn}${pa.note?`<span class="small muted">${pa.note}</span>`:''}</div></div>`; }
   else { const end={kingpin:'Kingpin',witness:'Witness',ghost:'Ghost'}[c.ending]||'The end'; body=`<div class="sc-next"><p class="sc-k">Story complete</p><h2>Ending: ${esc(end)}</h2><p class="sc-hook">Side jobs and the Starling story are still out there.</p></div>`; }
   const artK=['ramp','hangar','office','villa','cockpit'][Math.max(0,ai)]||'ramp'; const art=(typeof SCENES!=='undefined'&&SCENES[artK])?SCENES[artK]():'';
   return `<section class="panel campaign story-card fade" style="--arc:${act.col}"><div class="sc-art" aria-hidden="true">${art}</div>
-    <div class="sc-top"><p class="sc-act">Act ${ai+1} · ${esc(act.arc)}</p>${meters}</div>
+    <div class="sc-top"><p class="sc-act">Act ${ai+1}: ${esc(act.arc)}</p>${meters}</div>
     <div class="sc-bar">${bar}</div>
     ${last?`<p class="sc-prev"><span>Previously</span> ${esc(recapOf(st,last))}</p>`:''}
     ${body}
@@ -82,7 +82,7 @@ function storyView(){
   const time = done.length ? done.map(m=>{ const ch=m.choice&&c.choice[m.id]!=null?m.choice.opts[c.choice[m.id]].t:null; const col=arcMeta(m.arc).col;
       const head = m.arc!==lastArc ? `<li class="sh-act-h" style="--c:${col}">Act ${actNo(m.arc)} · ${esc(m.arc)}</li>` : ''; lastArc=m.arc;
       return `${head}<li style="--c:${col}"><span class="sh-n">${MC.indexOf(m)+1}</span><div><b>${esc(m.title)}</b><button class="sh-replay" data-act="replay-ch" data-id="${m.id}" title="Replay the opening scene">▶ Replay</button><p>${esc(m.recap||'')}</p>${ch?`<p class="sh-ch">You chose: ${esc(ch)}</p>`:''}</div></li>`; }).join('')
-    : `<li style="--c:var(--muted)"><span class="sh-n">·</span><div><b>Nothing yet</b><p>Your story starts with chapter 1, at the top of this page.</p></div></li>`;
+    : `<li style="--c:var(--muted)"><span class="sh-n">·</span><div><p>Nothing yet. Fly chapter 1.</p></div></li>`;
   /* the people you've met, with how much each trusts you */
   const people = metPeople(st).map(k=>{ const v=Math.round(st.rep[k]||0); return `<div class="sh-p">${avatar(k)}<div><b>${esc(CAST[k].n)}</b><span class="trust" title="Trust ${v}/100"><i style="width:${Math.min(100,v)}%"></i></span><p>${esc(personStatus(st,k))}</p></div></div>`; }).join('');
   const acts = CRIME_ACTS.map((a,i)=>{ const ch=MC.filter(m=>m.arc===a.arc); return `<div class="sh-act" style="--c:${a.col}"><p class="label">Act ${i+1} · ${ch.filter(m=>st.story.done[m.id]).length}/${ch.length}</p><h4>${esc(a.arc)}</h4><ol>${ch.map(m=>{ const isD=st.story.done[m.id], isN=m===next; const req=(m.req&&m.req.ratings||[]).filter(r=>!st.ratings[r]).map(r=>RATINGS[r]?RATINGS[r].n:r).join(', '); return `<li class="${isD?'d':isN?'n':''}">${isD?'✓':isN?'▶':'·'} ${esc(m.title)}${!isD&&req?` <small>${esc(req)}</small>`:''}</li>`; }).join('')}</ol></div>`; }).join('');
@@ -100,6 +100,6 @@ function storyView(){
       <section class="panel"><h3>The people</h3><div class="sh-people">${people||'<p class="small muted">You\'ll meet them soon.</p>'}</div></section>
     </div>
     ${operation}${operationHTML(st)||''}<section class="panel"><h3>The five acts</h3><div class="sh-acts">${acts}</div></section>
-    ${sNext?`<section class="panel sh-side"><p class="label">Side story · legit work</p><h3>Starling</h3><p class="small muted">${esc(sNext.title)}: a clean charter job flying private jets. Doesn't affect the main story.</p><div class="row" style="margin-top:8px">${chapterAction(st,sNext,availSet,true).replace(' &amp; start · $0',' &amp; start (free)')}</div></section>`:''}
+    ${sNext?`<section class="panel sh-side"><h3>Starling</h3><p class="small muted">${esc(sNext.title)}. Private jet charters, clean money, nothing to do with Castillo.</p><div class="row" style="margin-top:8px">${chapterAction(st,sNext,availSet,true).replace(' &amp; start · $0',' &amp; start (free)')}</div></section>`:''}
   </main>`;
 }

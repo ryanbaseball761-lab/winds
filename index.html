@@ -2729,10 +2729,9 @@ function setupView(){
       <div class="sh-art" aria-hidden="true">${typeof SCENES!=='undefined'?SCENES.ramp():''}</div><div class="sh-shade" aria-hidden="true"></div>
       <div class="wrap s2-grid">
         <div class="setup-copy">
-          <p class="eyebrow">A crime story for Microsoft Flight Simulator</p>
-          <h1>Trade Winds</h1>
+                    <h1>Trade Winds</h1>
           <p class="lede">A fresh license and a cheap job flying a Cessna in St. Martin. Then the mechanic asks you for a small favor. Five acts later you're flying a 747 full of contraband, and either running the Caribbean or running from it.</p>
-          <ul class="s2-feats">${feats.map(([t,d])=>`<li><b>${t}</b><span>${d}</span></li>`).join('')}</ul>
+          
         </div>
         <div class="s2-side">
           <form id="setup-form" class="panel stack setup-card">
@@ -2740,7 +2739,7 @@ function setupView(){
             <label class="field"><span>Your name</span><input id="pname" type="text" placeholder="Your name" maxlength="40" required autofocus></label>
             <label class="field"><span>Callsign or nickname <small>(optional)</small></span><input id="pcall" type="text" placeholder="e.g. Maverick" maxlength="30"></label>
             <button class="btn action big" type="submit">Start the story</button>
-            <p class="tiny muted">Your career saves automatically.</p>
+            
           </form>
           <div class="import-row"><span class="small muted">Already flying Trade Winds somewhere else?</span><button class="btn sm" type="button" data-act="import-file">Import career file</button></div>
         </div>
@@ -3664,7 +3663,7 @@ function academyView(){
       <div class="grid-tips"><div><p class="label">Tips</p><ul class="tight small">${L.tips.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div><div class="ac-real"><p class="label">In a real airplane</p><p class="small">${esc(L.real)}</p></div></div>
     </section>` : '';
   return `<main class="wrap stack fade">
-    <section class="ac-hero"><div><p class="label" style="color:inherit;opacity:.8">Flight Academy</p><h1>Learn to fly, one skill at a time</h1><p>Short lessons you fly in MSFS while Trade Winds watches and coaches. With the sim connected, each step ticks itself off when you actually do it. Every lesson pays $150 toward your career.</p></div>
+    <section class="ac-hero"><div><p class="label" style="color:inherit;opacity:.8">Flight Academy</p><h1>Learn to fly, one skill at a time</h1><p>Fourteen short lessons in the sim. $150 each.</p></div>
       <div class="ac-prog"><b>${done}/${LESSONS.length}</b><span>lessons complete</span><div class="meter"><i style="width:${done/LESSONS.length*100}%"></i></div></div></section>
     ${lessonPanel}
     <div class="ac-grid">${LESSONS.map((l,i)=>`<article class="ac-card ${A.done[l.id]?'done':''} ${A.cur===l.id?'cur':''}"><div class="ac-ic">${l.icon}</div><div style="min-width:0"><p class="label">Lesson ${i+1} · ${esc(l.lvl)}</p><h3>${esc(l.n)}</h3><p class="small muted">${esc(l.why.split('. ')[0].replace(/\.$/,''))}.</p><div class="row" style="margin-top:8px">${A.done[l.id]?'<span class="chip good">✓ Complete</span>':''}<span class="chip">${l.min} min</span><button class="btn sm ${A.cur===l.id?'':'primary'}" data-act="ac-start" data-id="${l.id}">${A.cur===l.id?'In progress':A.done[l.id]?'Fly again':'Start'}</button></div></div></article>`).join('')}</div>
@@ -4215,7 +4214,7 @@ function cupView(){
   const st=S.st, C=cupState(st); const R=S.cupResult; const cur=C.cur?CUP.find(x=>x.id===C.cur):null;
   const golds=Object.values(C.best).filter(b=>b.medal==='gold').length;
   return `<main class="wrap stack fade">
-    <section class="cup-hero"><div><p class="label" style="color:inherit;opacity:.8">The Butter Cup</p><h1>How soft can you land?</h1><p>Six famous Caribbean approaches. Set one up in MSFS, press Start, and land. Trade Winds reads your touchdown straight from the sim and ranks you against the islands' best pilots. The board resets every week.</p></div><div class="cup-medals"><b>${golds}</b><span>gold medals</span></div></section>
+    <section class="cup-hero"><div><p class="label" style="color:inherit;opacity:.8">The Butter Cup</p><h1>How soft can you land?</h1><p>Six of the hardest approaches in the islands. Land soft and your name goes on the board. New board every Monday.</p></div><div class="cup-medals"><b>${golds}</b><span>gold medals</span></div></section>
     ${R?(()=>{ const c=CUP.find(x=>x.id===R.id); return `<section class="panel cup-res ${R.medal||'none'}"><div class="cup-big">${R.medal?MEDAL[R.medal][0]:'✈'}</div><div><p class="label">${esc(c.n)}</p><h2>${R.fpm} fpm${R.medal?` · ${MEDAL[R.medal][1]}`:''}</h2><p>${R.g} G${R.b?` · ${R.b} bounce${R.b>1?'s':''}`:' · no bounces'}${R.better?' · personal best!':''}${R.firstMedal?' · medal bonus paid':''}</p></div><button class="btn sm ghost" data-act="cup-dismiss">OK</button></section>`; })():''}
     ${cur?`<section class="panel stack cup-live"><div class="row between"><div><p class="label">Attempt in progress</p><h3>${esc(cur.n)} · ${esc(cur.ap)} runway ${esc(cur.rw)}</h3></div><button class="btn sm ghost" data-act="cup-stop">Stop</button></div><p>${esc(cur.setup)}</p><p class="small muted">${C.recId?(S.simState==='live'?'● Recording. Land when ready.':'Waiting for MSFS…'):'MSFS isn\'t connected, so this attempt can\'t be scored. Connect the sim and start again.'}</p></section>`:''}
     <div class="cup-grid">${CUP.map(c=>{ const b=C.best[c.id]; return `<article class="cup-card"><div class="cup-art">${islandArt(c.ap, 1000, 600, 130, c.id==='teb'?'SF50':'C172')}${b&&b.medal?`<span class="cup-medal">${MEDAL[b.medal][0]}</span>`:''}</div>
@@ -5492,7 +5491,7 @@ function crBump(c, k, v){ c[k]=clamp(Math.round((c[k]||0)+v), k==='con'?-10:0, k
 function crimeChoiceHTMLBase(st){ const L=st.last; const j=L&&L.job; if(!j || j.kind!=='story' || !CRIME_IDS.has(j.story) || (L.res&&L.res.crash)) return null;
   const m=CRIME.find(x=>x.id===j.story); if(!m || !m.choice) return null; const c=crime(st); const picked=c.choice[m.id];
   if(picked!=null){ const o=m.choice.opts[picked]; return `<section class="panel choice made" style="--arc:${arcMeta(m.arc).col}"><p class="label">You chose: ${esc(o.t)}</p><p class="brief" style="margin:6px 0 0">${esc(o.out)}</p>${fxLine(o)}</section>`; }
-  return `<section class="panel choice" style="--arc:${arcMeta(m.arc).col}"><p class="label">Your call</p><p class="brief" style="margin:6px 0 12px">${esc(m.choice.q)}</p><div class="choice-btns">${m.choice.opts.map((o,i)=>`<button class="btn ${i===0?'primary':''}" data-act="crime-choose" data-i="${i}">${esc(o.t)}</button>`).join('')}</div><p class="tiny muted" style="margin-top:8px">This choice sticks, and the story remembers it.</p></section>`; }
+  return `<section class="panel choice" style="--arc:${arcMeta(m.arc).col}"><p class="label">Your call</p><p class="brief" style="margin:6px 0 12px">${esc(m.choice.q)}</p><div class="choice-btns">${m.choice.opts.map((o,i)=>`<button class="btn ${i===0?'primary':''}" data-act="crime-choose" data-i="${i}">${esc(o.t)}</button>`).join('')}</div><p class="tiny muted" style="margin-top:8px"></p></section>`; }
 function fxLine(o){ const b=[]; if(o.power) b.push(`Power ${o.power>0?'+':''}${o.power>=100?'max':o.power}`); if(o.heat) b.push(`Heat ${o.heat>0?'+':''}${o.heat<=-100?'cleared':o.heat}`); if(o.cash) b.push(`${o.cash>0?'+':'−'}${money(Math.abs(o.cash))}`); return b.length?`<p class="tiny muted" style="margin-top:8px">${b.join(' · ')}</p>`:''; }
 function choiceHTML(st){ const h=crimeChoiceHTML(st); return h!=null ? h : choiceHTMLBase(st); }
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="crime-choose"]'); if(!b || !S.st || !S.st.last) return; const st=S.st; const id=st.last.job.story; const m=CRIME.find(x=>x.id===id); const c=crime(st); if(!m || !m.choice || c.choice[id]!=null) return;
@@ -6452,7 +6451,7 @@ function volOf(ch){ const v=uiP().vol||{}; return (v[ch]==null?80:v[ch])/100; }
 S._title = !navigator.webdriver;
 function titleHTML(){ const st=S.st; const a=st&&st.active; let cont=''; if(st){ const MC=mainChapters(); const next=MC.find(m=>!st.story.done[m.id]); const n=next?MC.indexOf(next)+1:MC.length; cont = next ? `Chapter ${n} · ${next.title}` : 'Story complete'; }
   return `<div class="ts-bg">${typeof SCENES!=='undefined'?SCENES.ramp():''}</div><div class="ts-rain"></div><div class="ts-shade"></div>
-  <div class="ts-in"><div class="ts-logo"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="none" stroke="#c8962a" stroke-width="2"/><path d="M32 6 L36 28 L58 32 L36 36 L32 58 L28 36 L6 32 L28 28Z" fill="#c8962a"/></svg><div><h1>TRADE WINDS</h1><p>Every cargo has a price</p></div></div>
+  <div class="ts-in"><div class="ts-logo"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="none" stroke="#c8962a" stroke-width="2"/><path d="M32 6 L36 28 L58 32 L36 36 L32 58 L28 36 L6 32 L28 28Z" fill="#c8962a"/></svg><div><h1>TRADE WINDS</h1></div></div>
   <nav class="ts-menu" aria-label="Title menu">${st?`<button data-ts="continue" class="on"><b>${a?(a.started?'Resume flight':'Continue to your flight'):'Continue'}</b><span>${esc(st.pilot&&st.pilot.name||'')}${a?` · ${esc(a.job.from)} → ${esc(a.job.local?a.job.from:a.job.to)} · ${esc(a.job.title)}`:cont?` · ${esc(cont)}`:''}</span></button>`:''}
     <button data-ts="new"><b>New game</b><span>${st?'Start a new career (your current one is backed up)':'Start your career'}</span></button>
     ${st?'<button data-ts="settings"><b>Settings</b><span>Sound, units, cutscenes</span></button>':''}
@@ -6825,6 +6824,7 @@ WHATS_NEW.unshift(['0.62','Release prep: a damaged save repairs itself (or the n
 WHATS_NEW.unshift(['0.63','Fly the story: some story moments now give you an order to fly (climb away, stay low, slow down, a steep turn for Castillo, a low pass), judged live from MSFS. Any aircraft in your hangar that fits the role can fly a chapter, Twitch chat can vote on your choices, you can share your ending, and the in-sim panel lets you answer story moments without alt-tabbing.']);
 WHATS_NEW.unshift(['0.64','Smoother story flow: a cutscene never plays twice or stacks on another, "Previously on" follows one rule, painted scenes behind cutscenes and chapter banners, a redesigned start screen, a cleaner flight page with Start flight up top, book a checkride straight from the Story page, and the coach no longer nags during Castillo\'s steep turn.']);
 WHATS_NEW.unshift(['0.65','A new look: a glass-cockpit design across the whole app. Sharp edges, one amber color for the thing to do next, avionics-style readouts, a slim top bar instead of the sidebar, a full-scene chapter screen, a cleaner job board, flight strip and in-flight view, and equal-looking story choices.']);
+WHATS_NEW.unshift(['0.66','Less noise: plain labels instead of tiny capitals everywhere, about half the helper text gone, a shorter start screen, and a little film grain.']);
 /* ===================== RECORDED VOICE LINES =====================
    Story lines can be played from recorded audio instead of computer speech. Each spoken line has a stable id made
    from its words (voKey). Put recordings in art/voice/<id>.mp3 and list the ids in art/voice/index.json:
@@ -6857,7 +6857,7 @@ const ICON_SEARCH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
 const ICON_GEAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
 
 /* The "Right now" button in the top bar: the one thing to do next. Hidden on the Flight page, where it would repeat itself. */
-function nowHTML(st){ const r=rightNow(st); if(!r) return ''; return `<div class="now-pill" title="${esc(r.t)}"${(S.view==='flight'||S.view==='story')?' style="display: none;"':''}><span>${esc(r.t)}</span><button class="btn sm action" data-act="${r.act}" ${r.v?`data-v="${r.v}"`:''} ${r.id?`data-id="${r.id}"`:''}>${esc(r.b)}</button></div>`; }
+function nowHTML(st){ const r=rightNow(st); if(!r) return ''; return `<div class="now-pill" title="${esc(r.t)}"${(S.view==='flight'||S.view==='story'||S.view==='board')?' style="display: none;"':''}><span>${esc(r.t)}</span><button class="btn sm action" data-act="${r.act}" ${r.v?`data-v="${r.v}"`:''} ${r.id?`data-id="${r.id}"`:''}>${esc(r.b)}</button></div>`; }
 
 /* The status chips on the right of the top bar. */
 function hudHTMLTop(st){
@@ -7915,7 +7915,7 @@ function resultView(){
 /* ---------- pieces ---------- */
 
 /* "Skip flight (test)": only when Settings → Story → Testing shortcut is on */
-function testSkipBar(){ return uiP().testSkip ? `<div class="test-skip-bar">${SKIP_BTN}<span class="tiny muted">Testing shortcut</span></div>` : ''; }
+function testSkipBar(){ return uiP().testSkip ? `<div class="test-skip-bar">${SKIP_BTN}</div>` : ''; }
 
 /* The flight display at the top of flight mode: route, progress, live numbers, and the goal. */
 function hudHTML(a){
@@ -8276,7 +8276,7 @@ function boardView(){
     ${jobs.length>lim?`<button class="btn ghost calm-showmore" data-act="all-jobs">Show all ${jobs.length} jobs</button>`:''}
     <div class="b2-foot">
       <details class="panel b2-more"><summary>Travel as a passenger</summary><div class="stack" style="margin-top:10px"><label class="field"><span class="sr">Destination</span><select id="travel-to">${dests.map(k=>`<option value="${k}" ${k===tv?'selected':''}>${esc(AP[k].isl)} · ${k}</option>`).join('')}</select></label>${dh?`<p class="small mono">${dh.d} nm · ${dh.cost?money(dh.cost):'free'} · ~${durTxt(dh.min)}</p>`:''}<button class="btn" data-act="deadhead" data-to="${tv||''}" ${st.active||!dh||st.cash<dh.cost?'disabled':''}>Book the seat</button></div></details>
-      <details class="panel b2-more"><summary>Practice and testing</summary><div class="stack" style="margin-top:10px"><div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><button class="btn sm ${testing?'action':''}" data-act="test-session">${testing?'End test session · restore my real career':'Start a test session'}</button><span class="tiny muted">${testing?'Anything you do now is thrown away when you end the session.':'Backs up your career first, so you can skip and experiment freely.'}</span></div><button class="btn sm" data-act="practice" ${st.active?'disabled':''}>Practice landing (no pay, just a grade)</button><label class="row"><input type="checkbox" data-act="calm-test" ${testMode()?'checked':''}> Calm test mode <span class="tiny muted">(no sealed orders or urgent jobs)</span></label></div></details>
+      <details class="panel b2-more"><summary>Practice and testing</summary><div class="stack" style="margin-top:10px"><div class="row" style="gap:8px;flex-wrap:wrap;align-items:center"><button class="btn sm ${testing?'action':''}" data-act="test-session">${testing?'End test session · restore my real career':'Start a test session'}</button><span class="tiny muted">${testing?'Anything you do now is thrown away when you end the session.':''}</span></div><button class="btn sm" data-act="practice" ${st.active?'disabled':''}>Practice landing (no pay, just a grade)</button><label class="row"><input type="checkbox" data-act="calm-test" ${testMode()?'checked':''}> Calm test mode <span class="tiny muted">(no sealed orders or urgent jobs)</span></label></div></details>
     </div></main>`;
 }
 /* ===================== STORY PAGE =====================
@@ -8302,7 +8302,7 @@ function playAction(st, m, availSet, n){
     if(!st.active && crime(st).on && fedsWatching(st) && CRIME_IDS.has(m.id)) return {btn:`<button class="btn" data-act="nav" data-v="board">Lie low first</button>`, note:`Heat ${crime(st).heat}: the feds are watching. Get it under 80 to play.`};
     if(st.active) return {btn:`<button class="btn" data-act="nav" data-v="flight">Finish your current flight first</button>`, note:''};
     if(s.k==='ready') return {btn:`<button class="btn action big" data-act="accept-story" data-id="${m.id}">▶ Play chapter ${n}</button>`, note:''};
-    if(s.k==='travel'){ const d=deadheadCost(st,s.at); return {btn:`<button class="btn action big" data-act="story-go" data-id="${m.id}" ${st.cash<d.cost?'disabled':''}>▶ Play chapter ${n}</button>`, note: d.cost ? `Includes a ${money(d.cost)} seat to ${esc(s.at)}.` : `You'll be flown to ${esc(s.at)} for free first.`}; }
+    if(s.k==='travel'){ const d=deadheadCost(st,s.at); return {btn:`<button class="btn action big" data-act="story-go" data-id="${m.id}" ${st.cash<d.cost?'disabled':''}>▶ Play chapter ${n}</button>`, note: d.cost ? `Starts at ${esc(s.at)}. Seat over: ${money(d.cost)}.` : `Starts at ${esc(s.at)}. The ride over is free.`}; }
     if(s.k==='aircraft') return {btn:`<button class="btn" data-act="nav" data-v="hangar">Open the Hangar</button>`, note:`Written for the ${m.ac.map(k=>AC[k]?AC[k].n:k).join(', ')}. Any ${storyRoleName(m)} in your hangar with ${m.pax||1}+ seats works too, including payware and mods (Hangar → Bring your own aircraft).`};
     if(s.k==='locked'){ const need=((m.req||{}).ratings||[]).filter(r=>!st.ratings[r]); const btns=chapterAction(st, m, availSet, false);
       return {btn: btns || `<button class="btn" data-act="nav" data-v="pilot">Open Pilot</button>`, note: need.length ? `Needs your ${need.map(r=>RATINGS[r].n).join(' and ')} first.` : `Finish the previous chapter first.`}; }
@@ -8323,14 +8323,14 @@ function campaignCard(st){ const c=crime(st); const MC=mainChapters(); const ava
     const who=mm.chars.filter(k=>CAST[k]).map(k=>`<span class="sc-who"><span class="sc-avw">${avatar(k)}</span>${esc({reyes:'Reyes',castillo:'Castillo'}[k]||shortName(k))}</span>`).join('');
     let length=''; try{ const jj=storyJob(st,next,acN); length=`<span>~${durTxt(jj.est||plan(jj).est)}</span>`; }catch(_){}   // roughly how long the flight is
     body=`<div class="sc-next">
-      <p class="sc-k">Chapter ${n} of ${MC.length}</p><h2>${esc(next.title)}</h2><p class="sc-hook">${esc(next.hook||'')}</p>
+      <p class="sc-k">Chapter ${n}</p><h2>${esc(next.title)}</h2><p class="sc-hook">${esc(next.hook||'')}</p>
       <div class="sc-meta ro-strip"><div><small>Route</small><b class="mono">${esc(next.from)} → ${esc(next.to)}</b></div>${length?`<div><small>Flight</small><b class="mono">${length.replace(/<\/?span>/g,'')}</b></div>`:''}<div><small>Aircraft</small><b>${esc(AC[acN]?AC[acN].n:acN)}</b></div><div><small>Light</small><b>${esc({dawn:'Dawn',day:'Daytime',dusk:'Dusk',night:'Night'}[next.time]||'Any')}</b></div></div>
       ${who?`<div class="sc-whos"><small>With</small>${who}</div>`:''}
       <div class="sc-go">${pa.btn}${pa.note?`<span class="small muted">${pa.note}</span>`:''}</div></div>`; }
   else { const end={kingpin:'Kingpin',witness:'Witness',ghost:'Ghost'}[c.ending]||'The end'; body=`<div class="sc-next"><p class="sc-k">Story complete</p><h2>Ending: ${esc(end)}</h2><p class="sc-hook">Side jobs and the Starling story are still out there.</p></div>`; }
   const artK=['ramp','hangar','office','villa','cockpit'][Math.max(0,ai)]||'ramp'; const art=(typeof SCENES!=='undefined'&&SCENES[artK])?SCENES[artK]():'';
   return `<section class="panel campaign story-card fade" style="--arc:${act.col}"><div class="sc-art" aria-hidden="true">${art}</div>
-    <div class="sc-top"><p class="sc-act">Act ${ai+1} · ${esc(act.arc)}</p>${meters}</div>
+    <div class="sc-top"><p class="sc-act">Act ${ai+1}: ${esc(act.arc)}</p>${meters}</div>
     <div class="sc-bar">${bar}</div>
     ${last?`<p class="sc-prev"><span>Previously</span> ${esc(recapOf(st,last))}</p>`:''}
     ${body}
@@ -8363,7 +8363,7 @@ function storyView(){
   const time = done.length ? done.map(m=>{ const ch=m.choice&&c.choice[m.id]!=null?m.choice.opts[c.choice[m.id]].t:null; const col=arcMeta(m.arc).col;
       const head = m.arc!==lastArc ? `<li class="sh-act-h" style="--c:${col}">Act ${actNo(m.arc)} · ${esc(m.arc)}</li>` : ''; lastArc=m.arc;
       return `${head}<li style="--c:${col}"><span class="sh-n">${MC.indexOf(m)+1}</span><div><b>${esc(m.title)}</b><button class="sh-replay" data-act="replay-ch" data-id="${m.id}" title="Replay the opening scene">▶ Replay</button><p>${esc(m.recap||'')}</p>${ch?`<p class="sh-ch">You chose: ${esc(ch)}</p>`:''}</div></li>`; }).join('')
-    : `<li style="--c:var(--muted)"><span class="sh-n">·</span><div><b>Nothing yet</b><p>Your story starts with chapter 1, at the top of this page.</p></div></li>`;
+    : `<li style="--c:var(--muted)"><span class="sh-n">·</span><div><p>Nothing yet. Fly chapter 1.</p></div></li>`;
   /* the people you've met, with how much each trusts you */
   const people = metPeople(st).map(k=>{ const v=Math.round(st.rep[k]||0); return `<div class="sh-p">${avatar(k)}<div><b>${esc(CAST[k].n)}</b><span class="trust" title="Trust ${v}/100"><i style="width:${Math.min(100,v)}%"></i></span><p>${esc(personStatus(st,k))}</p></div></div>`; }).join('');
   const acts = CRIME_ACTS.map((a,i)=>{ const ch=MC.filter(m=>m.arc===a.arc); return `<div class="sh-act" style="--c:${a.col}"><p class="label">Act ${i+1} · ${ch.filter(m=>st.story.done[m.id]).length}/${ch.length}</p><h4>${esc(a.arc)}</h4><ol>${ch.map(m=>{ const isD=st.story.done[m.id], isN=m===next; const req=(m.req&&m.req.ratings||[]).filter(r=>!st.ratings[r]).map(r=>RATINGS[r]?RATINGS[r].n:r).join(', '); return `<li class="${isD?'d':isN?'n':''}">${isD?'✓':isN?'▶':'·'} ${esc(m.title)}${!isD&&req?` <small>${esc(req)}</small>`:''}</li>`; }).join('')}</ol></div>`; }).join('');
@@ -8381,7 +8381,7 @@ function storyView(){
       <section class="panel"><h3>The people</h3><div class="sh-people">${people||'<p class="small muted">You\'ll meet them soon.</p>'}</div></section>
     </div>
     ${operation}${operationHTML(st)||''}<section class="panel"><h3>The five acts</h3><div class="sh-acts">${acts}</div></section>
-    ${sNext?`<section class="panel sh-side"><p class="label">Side story · legit work</p><h3>Starling</h3><p class="small muted">${esc(sNext.title)}: a clean charter job flying private jets. Doesn't affect the main story.</p><div class="row" style="margin-top:8px">${chapterAction(st,sNext,availSet,true).replace(' &amp; start · $0',' &amp; start (free)')}</div></section>`:''}
+    ${sNext?`<section class="panel sh-side"><h3>Starling</h3><p class="small muted">${esc(sNext.title)}. Private jet charters, clean money, nothing to do with Castillo.</p><div class="row" style="margin-top:8px">${chapterAction(st,sNext,availSet,true).replace(' &amp; start · $0',' &amp; start (free)')}</div></section>`:''}
   </main>`;
 }
 /* ===================== MONEY PAGE =====================
@@ -8401,7 +8401,7 @@ function moneyView(){
   const H=HOUSING[F.housing]||HOUSING.bunk; const lim=creditLimit(st);
   // charts
   const hist = F.history.slice(-60); const W=600,Hh=160,P=28;
-  let nwChart = `<p class="small muted">Rest a few days to build up a history.</p>`;
+  let nwChart = `<p class="small muted">No history yet.</p>`;
   if(hist.length>=2){ const vals=hist.flatMap(h=>[h.net,h.cash]); const mn=Math.min(0,...vals), mx=Math.max(1,...vals); const x=i=>P+i*(W-2*P)/(hist.length-1), y=v=>Hh-P-(v-mn)/(mx-mn)*(Hh-2*P);
     const line=k=>hist.map((h,i)=>`${x(i).toFixed(1)},${y(h[k]).toFixed(1)}`).join(' ');
     nwChart = `<svg viewBox="0 0 ${W} ${Hh}" class="chart" role="img" aria-label="Net worth and cash over time"><line x1="${P}" x2="${W-P}" y1="${y(0)}" y2="${y(0)}" class="cg"/><text x="2" y="${y(mx)+4}" class="ct">${money(mx).replace('$','$')}</text><text x="2" y="${y(mn)+4}" class="ct">${money(mn)}</text><polyline points="${line('cash')}" class="cl2"/><polyline points="${line('net')}" class="cl"/><circle cx="${x(hist.length-1)}" cy="${y(hist[hist.length-1].net)}" r="4" class="cd gB"/></svg><div class="row small muted" style="gap:14px"><span><i class="lk sea"></i> Net worth</span><span><i class="lk sky"></i> Cash</span></div>`; }
@@ -8412,13 +8412,13 @@ function moneyView(){
           <dl class="kv small"><dt>Savings</dt><dd>${money(F.savings)} at 4.5% APY</dd><dt>Credit line</dt><dd>${money(F.credit)} used of ${money(lim)} at 19.9% APR</dd><dt>Credit score</dt><dd>${Math.round(F.score)} · aircraft loans at ${(loanRate(st)*100).toFixed(1)}% APR</dd>${F.bond>0?`<dt>Training bond</dt><dd>${money(F.bond)} owed to Coral Wing, repaid at 20% of each flight's pay</dd>`:''}</dl>
           <label class="field"><span>Amount</span><input id="fin-amt" type="number" min="0" step="100" value="1000"></label>
           <div class="row"><button class="btn sm" data-act="fin-dep">Deposit</button><button class="btn sm" data-act="fin-wd">Withdraw</button><button class="btn sm" data-act="fin-draw">Borrow</button><button class="btn sm" data-act="fin-repay">Repay credit</button>${F.bond>0?`<button class="btn sm" data-act="fin-bond">Repay bond</button>`:''}</div>
-          <p class="tiny muted">Paying debts on time raises your score. Overdrafts drop it. If your cash goes negative, the bank automatically draws on your credit line.</p></section>`;
+          <p class="tiny muted">Go negative and the bank pulls from your credit line.</p></section>`;
   return `<main class="wrap stack fade">${safeHTML(()=>operationHTML(st))}${safeHTML(()=>launderHTML(st))}
     <div class="tiles">
       <div class="tile"><span class="label">Cash</span><b class="mono">${money(st.cash)}</b><span class="tiny muted">${seasonName(st)} · charter demand ${demandIndex(st)>=1?'+':''}${Math.round((demandIndex(st)-1)*100)}%</span></div>
       <div class="tile"><span class="label">Savings</span><b class="mono">${money(F.savings)}</b><span class="tiny muted">4.5% APY</span></div>
       <div class="tile"><span class="label">Debt</span><b class="mono">${money(debtTotal(st))}</b><span class="tiny muted">Credit score ${Math.round(F.score)}</span></div>
-      <div class="tile"><span class="label">Net worth</span><b class="mono">${money(netWorth(st))}</b><span class="tiny muted">Cash + savings + aircraft equity − debt</span></div>
+      <div class="tile"><span class="label">Net worth</span><b class="mono">${money(netWorth(st))}</b></div>
     </div>
     <div class="grid-2">
       <section class="panel stack"><div class="row between"><h3>Net worth</h3><span class="small muted">${hist.length>=2?`Last ${hist.length} days`:""}</span></div>${nwChart}</section>
@@ -8434,11 +8434,11 @@ function moneyView(){
           <tr><td><b>Operating profit</b></td><td class="num"><b style="color:${opProfit<0?'var(--bad)':'var(--good)'}">${money(opProfit)}</b></td></tr>
           ${groups.inv.length||groups.fin.length?`<tr><th colspan="2">Investing & financing</th></tr>${[...groups.inv,...groups.fin].map(row).join('')}`:''}
         </tbody></table></div>
-        <p class="tiny muted">Operating profit excludes aircraft purchases and sales, loan principal and bond repayments, which change what you own and owe rather than what you earn.</p></section>
+        </section>
       <aside class="stack">
         <section class="panel stack"><h3>Where you live</h3><p class="small"><b>${esc(H.n)}</b> · ${money(H.rent)}/day</p><p class="small muted">${esc(H.blurb)}</p>
           <select id="fin-house" aria-label="Housing">${Object.entries(HOUSING).map(([k,h])=>`<option value="${k}" ${k===F.housing?'selected':''}>${esc(h.n)} · ${money(h.rent)}/day${h.rep?` · +${h.rep} rep/week`:''}</option>`).join('')}</select></section>
-        <section class="panel stack"><h3>Fuel today at ${esc(st.loc)}</h3><dl class="kv small"><dt>Avgas</dt><dd class="mono">$${fuelPrice(st,st.loc,'avgas').toFixed(2)}/gal</dd><dt>Jet-A</dt><dd class="mono">$${fuelPrice(st,st.loc,'jeta').toFixed(2)}/gal</dd><dt>Oil index</dt><dd class="mono">${F.oil.toFixed(2)}</dd></dl><p class="tiny muted">Small islands charge more. Fuel only costs you money on your own company's aircraft.</p></section>
+        <section class="panel stack"><h3>Fuel today at ${esc(st.loc)}</h3><dl class="kv small"><dt>Avgas</dt><dd class="mono">$${fuelPrice(st,st.loc,'avgas').toFixed(2)}/gal</dd><dt>Jet-A</dt><dd class="mono">$${fuelPrice(st,st.loc,'jeta').toFixed(2)}/gal</dd><dt>Oil index</dt><dd class="mono">${F.oil.toFixed(2)}</dd></dl><p class="tiny muted">You only pay for fuel on your own company's planes.</p></section>
       </aside>
     </div>
     <section class="panel"><div class="section-title"><h2>Transactions</h2><span class="small muted">Most recent first</span></div><div class="scroll-x" tabindex="0"><table><thead><tr><th>Day</th><th>Category</th><th>Details</th><th class="num">Amount</th></tr></thead><tbody>${F.ledger.slice(0,60).map(e=>`<tr><td class="mono">${e.d} · ${hhmm(e.t)}</td><td>${esc(e.c)}${e.transfer?' <span class="chip">transfer</span>':''}</td><td style="white-space:normal">${esc(e.m)}</td><td class="num" style="color:${e.a<0?'var(--bad)':'var(--good)'}">${money(e.a)}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">No transactions yet. Fly a job.</td></tr>'}</tbody></table></div></section>
@@ -8548,7 +8548,7 @@ function pilotBaseHTML(){
     ${licenseCard(st)}
     ${pilotExtras(st)}
     <div class="grid-2">
-      <section><div class="section-title"><h2>Ratings & qualifications</h2><span class="small muted">Earn each one with a checkride</span></div><div class="ladder">${rungs}</div></section>
+      <section><div class="section-title"><h2>Ratings & qualifications</h2></div><div class="ladder">${rungs}</div></section>
       <aside class="stack">
         <section class="panel stack"><h3>Landings</h3>${['butter','smooth','firm','hard','crash'].map(k=>`<div><div class="row between small"><span>${LANDING[k].n}</span><span class="mono">${s[k]||0}</span></div><div class="meter ${k==='hard'?'warn':k==='crash'?'bad':''}"><i style="width:${(s[k]||0)/landTot*100}%"></i></div></div>`).join('')}
         <p class="small muted">Diversions: ${s.diverts} · Emergencies handled by the book: ${s.scen}</p></section>
@@ -8577,7 +8577,7 @@ function pilotFold(h){ const t=tpl(h); const main=t.content.querySelector('main'
   return t.innerHTML; }
 /* the ratings the story needs, in order, with a Book button when one is ready */
 function storyLadderHTML(st){ const steps=LADDER.map(([r,u])=>{ const has=st.ratings[r]; const ready=!has && checkrideReady(st,r).ok; return `<div class="lad ${has?'has':ready?'ready':''}"><span class="lad-dot">${has?'✓':ready?'!':''}</span><b>${esc(RATINGS[r].n)}</b><small>${esc(u)}</small>${ready?(checkrideAircraft(st,r).length?`<button class="btn sm action" data-act="book-check" data-r="${r}">Book checkride · ${money(feeFor(st,r))}</button>`:`<a href="#" class="small" data-act="nav" data-v="hangar">Tick an aircraft for it in the Hangar</a>`):''}</div>`; }).join('<i class="lad-line"></i>');
-  return `<section class="panel ladder"><p class="label">Your path through the story</p><div class="lad-row">${steps}</div><p class="small muted" style="margin-top:8px">Other ratings (Commercial, Instrument, Multi-Engine…) open more side jobs but aren't needed for the story.</p></section>`; }
+  return `<section class="panel ladder"><p class="label">Your path through the story</p><div class="lad-row">${steps}</div><p class="small muted" style="margin-top:8px">The other ratings open up side work. The story doesn't need them.</p></section>`; }
 /* ===================== CUTSCENES =====================
    One engine plays every scene: prologues, aftermaths, decisions, recaps and endings.
      cutscene({shots, col, art, onEnd, rain})
@@ -9078,7 +9078,7 @@ html.ckp body.flying .cb-sub{display:none}
 `;
 (function(){ const s=document.createElement('style'); s.id='ck-theme'; s.textContent=CK_CSS; document.head.appendChild(s);
   // styles injected later by other modules must not outrank the theme: keep it last in <head>
-  new MutationObserver(()=>{ const t=document.getElementById('ck-theme'), p=document.getElementById('ck-pages'); if(!t||!p) return; const last=document.head.lastElementChild; if(last!==p && [...document.head.children].slice([...document.head.children].indexOf(p)+1).some(e=>e.tagName==='STYLE')){ document.head.appendChild(t); document.head.appendChild(p); } }).observe(document.head,{childList:true}); })();
+  new MutationObserver(()=>{ const t=document.getElementById('ck-theme'), p=document.getElementById('ck-pages'), h=document.getElementById('ck-human'); if(!t||!p||!h) return; if([...document.head.children].slice([...document.head.children].indexOf(h)+1).some(e=>e.tagName==='STYLE')){ document.head.appendChild(t); document.head.appendChild(p); document.head.appendChild(h); } }).observe(document.head,{childList:true}); })();
 
 /* ===================== PAGES ===================== */
 const CK_PAGES = `
@@ -9237,6 +9237,32 @@ html.ckp .setup2{border:0!important;outline:0!important}
 }
 `;
 (function(){ const s=document.createElement('style'); s.id='ck-pages'; s.textContent=CK_PAGES; document.getElementById('ck-theme').after(s); })();
+
+/* ===================== LESS TEMPLATE, MORE HAND-MADE (0.66) =====================
+   Tiny letter-spaced capitals on every label were the loudest "generated" tell. Labels, buttons and
+   readouts now read as plain sentence-case text; only the main tabs keep capitals, like a panel placard. */
+const CK_HUMAN = `
+html.ckp .label,html.ckp .section-title .small,html.ckp .mn-kicker,html.ckp .ch-kicker,html.ckp .sc-k,html.ckp .sc-act,
+html.ckp .ro-strip small,html.ckp .sh-stats span,html.ckp .pass-fields span,html.ckp .pass-stub .label,html.ckp .cb-ro small,html.ckp .field span,
+html.ckp .ch-tip span,html.ckp .sc-whos>small,html.ckp .sc-prev span,html.ckp .jl-head *,html.ckp .jr-k,html.ckp .cb-booked small,
+html.ckp .eyebrow,html.ckp .sh-act-h,html.ckp .cut .kicker,html.ckp [class*="kicker"],html.ckp .pass-route .city{
+  font-family:var(--f-body)!important;text-transform:none!important;letter-spacing:0!important;font-weight:500!important;font-size:12.5px!important}
+html.ckp .label,html.ckp .sc-k{color:var(--muted)!important}
+html.ckp .sc-act{color:var(--amb)!important;font-size:14px!important;font-weight:600!important}
+html.ckp .cb-ro small{font-size:10.5px!important;color:var(--dim)!important}
+html.ckp .btn,html.ckp .subtabs button,html.ckp .diff button,html.ckp .b2-tabs button,html.ckp .hg-tabs button,html.ckp .if-phases button,html.ckp .seg button,html.ckp .tabs button,html.ckp .calm-showmore,html.ckp .b2-more{
+  text-transform:none!important;letter-spacing:0!important;font-family:var(--f-body)!important;font-weight:600!important}
+html.ckp .btn{font-size:14px}html.ckp .btn.sm{font-size:13px}html.ckp .btn.big{font-size:16px}
+html.ckp .subtabs button,html.ckp .diff button,html.ckp .b2-tabs button,html.ckp .hg-tabs button{font-size:14px!important}
+html.ckp .chip,html.ckp .badge,html.ckp .jr-t em{text-transform:none!important;letter-spacing:0!important;font-family:var(--f-body)!important;font-size:12px!important}
+html.ckp .cbar .now-pill>span::before{content:"Next: ";font-family:var(--f-body);letter-spacing:0;font-size:12.5px}
+html.ckp .cb-sync{display:none}
+html.ckp .b2-tabs small{opacity:1!important;color:var(--muted)!important}
+html.ckp .ts-logo p,html.ckp .s2-feats,html.ckp .setup2 .eyebrow{display:none}
+`;
+(function(){ const s=document.createElement('style'); s.id='ck-human'; s.textContent=CK_HUMAN; document.getElementById('ck-pages').after(s); })();
+/* a little film grain over everything so flat surfaces don't look rendered */
+(function(){ const s=document.createElement('style'); s.textContent=`html.ckp body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:99999;opacity:.06;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}`; document.getElementById('ck-human').after(s); s.id='ck-grain'; })();
 /* ===================== START =====================
    Everything above only defines things. This starts the app. Keep this file last in order.txt. */
 boot();

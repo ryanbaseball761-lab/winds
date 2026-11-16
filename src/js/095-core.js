@@ -6,7 +6,7 @@ function volOf(ch){ const v=uiP().vol||{}; return (v[ch]==null?80:v[ch])/100; }
 S._title = !navigator.webdriver;
 function titleHTML(){ const st=S.st; const a=st&&st.active; let cont=''; if(st){ const MC=mainChapters(); const next=MC.find(m=>!st.story.done[m.id]); const n=next?MC.indexOf(next)+1:MC.length; cont = next ? `Chapter ${n} · ${next.title}` : 'Story complete'; }
   return `<div class="ts-bg">${typeof SCENES!=='undefined'?SCENES.ramp():''}</div><div class="ts-rain"></div><div class="ts-shade"></div>
-  <div class="ts-in"><div class="ts-logo"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="none" stroke="#c8962a" stroke-width="2"/><path d="M32 6 L36 28 L58 32 L36 36 L32 58 L28 36 L6 32 L28 28Z" fill="#c8962a"/></svg><div><h1>TRADE WINDS</h1><p>Every cargo has a price</p></div></div>
+  <div class="ts-in"><div class="ts-logo"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="none" stroke="#c8962a" stroke-width="2"/><path d="M32 6 L36 28 L58 32 L36 36 L32 58 L28 36 L6 32 L28 28Z" fill="#c8962a"/></svg><div><h1>TRADE WINDS</h1></div></div>
   <nav class="ts-menu" aria-label="Title menu">${st?`<button data-ts="continue" class="on"><b>${a?(a.started?'Resume flight':'Continue to your flight'):'Continue'}</b><span>${esc(st.pilot&&st.pilot.name||'')}${a?` · ${esc(a.job.from)} → ${esc(a.job.local?a.job.from:a.job.to)} · ${esc(a.job.title)}`:cont?` · ${esc(cont)}`:''}</span></button>`:''}
     <button data-ts="new"><b>New game</b><span>${st?'Start a new career (your current one is backed up)':'Start your career'}</span></button>
     ${st?'<button data-ts="settings"><b>Settings</b><span>Sound, units, cutscenes</span></button>':''}

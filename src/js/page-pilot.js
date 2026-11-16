@@ -24,7 +24,7 @@ function pilotBaseHTML(){
     ${licenseCard(st)}
     ${pilotExtras(st)}
     <div class="grid-2">
-      <section><div class="section-title"><h2>Ratings & qualifications</h2><span class="small muted">Earn each one with a checkride</span></div><div class="ladder">${rungs}</div></section>
+      <section><div class="section-title"><h2>Ratings & qualifications</h2></div><div class="ladder">${rungs}</div></section>
       <aside class="stack">
         <section class="panel stack"><h3>Landings</h3>${['butter','smooth','firm','hard','crash'].map(k=>`<div><div class="row between small"><span>${LANDING[k].n}</span><span class="mono">${s[k]||0}</span></div><div class="meter ${k==='hard'?'warn':k==='crash'?'bad':''}"><i style="width:${(s[k]||0)/landTot*100}%"></i></div></div>`).join('')}
         <p class="small muted">Diversions: ${s.diverts} · Emergencies handled by the book: ${s.scen}</p></section>
@@ -53,4 +53,4 @@ function pilotFold(h){ const t=tpl(h); const main=t.content.querySelector('main'
   return t.innerHTML; }
 /* the ratings the story needs, in order, with a Book button when one is ready */
 function storyLadderHTML(st){ const steps=LADDER.map(([r,u])=>{ const has=st.ratings[r]; const ready=!has && checkrideReady(st,r).ok; return `<div class="lad ${has?'has':ready?'ready':''}"><span class="lad-dot">${has?'✓':ready?'!':''}</span><b>${esc(RATINGS[r].n)}</b><small>${esc(u)}</small>${ready?(checkrideAircraft(st,r).length?`<button class="btn sm action" data-act="book-check" data-r="${r}">Book checkride · ${money(feeFor(st,r))}</button>`:`<a href="#" class="small" data-act="nav" data-v="hangar">Tick an aircraft for it in the Hangar</a>`):''}</div>`; }).join('<i class="lad-line"></i>');
-  return `<section class="panel ladder"><p class="label">Your path through the story</p><div class="lad-row">${steps}</div><p class="small muted" style="margin-top:8px">Other ratings (Commercial, Instrument, Multi-Engine…) open more side jobs but aren't needed for the story.</p></section>`; }
+  return `<section class="panel ladder"><p class="label">Your path through the story</p><div class="lad-row">${steps}</div><p class="small muted" style="margin-top:8px">The other ratings open up side work. The story doesn't need them.</p></section>`; }
