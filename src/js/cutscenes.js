@@ -66,6 +66,9 @@ function cutscene(opt){
 }
 
 /* The art behind a scene. */
+/* the opening background: a painting when they're loaded (the one the first line calls for, else `fallback`),
+   otherwise the drawn islands */
+function paintedArt(shots, fallback, code, dep, ac){ if(typeof ART!=='undefined' && ART.scenes && ART.scenes[fallback]){ const first=(shots||[]).find(x=>Array.isArray(x)); const k=(first&&sceneFor(first))||fallback; return SCENES[k](); } return sceneArt(code, dep, ac); }
 function sceneArt(code, dep, ac){ try{ return islandArt(code, dep, 1600, 900, ac); }catch(_){ return ''; } }
 
 /* ---------- a chapter's scenes ---------- */
@@ -112,7 +115,7 @@ function playPrologue(m, done){
   if(firstOfAct) shots.push({card:true, kicker:`Act ${ai+1} of ${CRIME_ACTS.length}`, title:act.arc, sub:`<p>${esc(act.tag)}</p><p class="cut-nerve"><span>Your nerve</span> ${esc(act.nerve)}</p>`});
   (proFor(m.id)||[]).forEach(s=>shots.push(s));
   shots.push({card:true, kicker:`Chapter ${MC.indexOf(m)+1} of ${MC.length}`, title:m.title, sub:`<p>${esc((CH_GOAL[m.id]||[])[0]||'')}</p>`, auto:2600});
-  cutscene({shots, col:act.col, art:sceneArt(m.from, m.dep, m.ac[0]), onEnd:done});
+  cutscene({shots, col:act.col, art:paintedArt(shots,'ramp',m.from, m.dep, m.ac[0]), onEnd:done});
 }
 
 /* After a chapter: the grade, what happened, your decision if the chapter has one, and what's next. */
@@ -135,5 +138,5 @@ function playAftermath(){
     shots.push({choice:true, q:m.choice.q, opts, pick:i=>{ const btn=document.createElement('button'); btn.dataset.act='crime-choose'; btn.dataset.i=i; btn.style.display='none'; document.body.appendChild(btn); btn.click(); btn.remove();
       const o=m.choice.opts[i]; const after=splitOut(o.out).map(t=>[here, null, t]); const fx=fxSub(o); if(fx) after.push({card:true, kicker:'Your choice', title:o.t, sub:`<p>${esc(fx)}</p>`, auto:2200}); return after.concat(nextCard()); }});
   } else nextCard().forEach(s=>shots.push(s));
-  cutscene({shots, col:act.col, art:sceneArt(job.to, Math.min(1439,(job.dep||600)+(job.est||60)), job.ac), onEnd:()=>{ S.keepScroll=false; render(); }});
+  cutscene({shots, col:act.col, art:paintedArt([], 'cockpit', job.to, Math.min(1439,(job.dep||600)+(job.est||60)), job.ac), onEnd:()=>{ S.keepScroll=false; render(); }});
 }

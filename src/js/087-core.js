@@ -29,7 +29,8 @@ const SCENES = {
 function sceneFor(shot, opt){ if(!shot || shot.card || shot.choice) return null; const [pl,k]=shot; const p=String(pl||'');
   if(/phone|text message|unknown number/i.test(p)) return 'phone'; if(/villa|terrace|mustique/i.test(p)) return 'villa'; if(/room|custody|interrog|office.*dea|station/i.test(p)) return 'room';
   if(/hangar/i.test(p)) return 'hangar'; if(/office|fbo|lounge|terminal|jet bridge|courthouse|table|dinner/i.test(p)) return 'office'; if(/cockpit|jump seat|cruise|flight deck/i.test(p)) return 'cockpit';
-  if(/ramp|cargo|apron|strip|across the airfield/i.test(p)) return 'ramp'; return null; }
+  if(/ramp|cargo|apron|strip|across the airfield/i.test(p)) return 'ramp';
+  return (typeof ART!=='undefined' && ART.scenes && ART.scenes.ramp) ? 'ramp' : null; }   // with the paintings loaded, anywhere outdoors is the ramp
 
 /* ---- 3. ambient sound: a tension bed, plus rain, jet idle and phone rings ---- */
 const AMB = {nodes:[], ring:null};

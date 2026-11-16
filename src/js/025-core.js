@@ -10,13 +10,13 @@ function skyFor(min){ const h=((min||600)/60)%24;
 function islandArt(code, min, w=600, h=140, plane=null){
   const id='a'+(++_artN); const R=rng(hashStr(code)); const [top,bot,sun,night]=skyFor(min); const sea=night?'#0a2a3a':'#118a92';
   const peaks=1+Math.floor(R()*3); let hill=`M0 ${h*0.72}`; const x0=w*(0.15+R()*0.3), x1=w*(0.55+R()*0.35); const base=h*0.72;
-  hill+=` L${x0.toFixed(0)} ${base}`; for(let i=0;i<peaks;i++){ const cx=x0+(x1-x0)*(i+0.5)/peaks, ph=h*(0.18+R()*0.35); hill+=` Q${(cx-(x1-x0)/peaks/2).toFixed(0)} ${(base-ph*0.4).toFixed(0)} ${cx.toFixed(0)} ${(base-ph).toFixed(0)} T${(x0+(x1-x0)*(i+1)/peaks).toFixed(0)} ${base}`; }
+  hill+=` L${x0.toFixed(0)} ${base}`; for(let i=0;i<peaks;i++){ const cx=x0+(x1-x0)*(i+0.5)/peaks, ph=Math.min(h*(0.18+R()*0.35), w*0.09); /* islands stay low and wide, even in a tall frame */ hill+=` Q${(cx-(x1-x0)/peaks/2).toFixed(0)} ${(base-ph*0.4).toFixed(0)} ${cx.toFixed(0)} ${(base-ph).toFixed(0)} T${(x0+(x1-x0)*(i+1)/peaks).toFixed(0)} ${base}`; }
   hill+=` L${w} ${base} L${w} ${h} L0 ${h}Z`;
   const sx=(w*(0.7+R()*0.2)).toFixed(0), sy=(h*(night?0.25:0.32)).toFixed(0);
   const palm=(px)=>`<g transform="translate(${px} ${base-2})" fill="${night?'#06141c':'#0b3b34'}"><path d="M0 0 C2 -14 4 -24 3 -34 L5 -34 C6 -24 4 -12 3 0Z"/><path d="M4 -34 C-6 -40 -14 -36 -18 -30 C-10 -34 -4 -34 4 -32Z"/><path d="M4 -34 C12 -42 22 -38 26 -31 C18 -35 10 -34 4 -32Z"/><path d="M4 -35 C2 -44 -4 -48 -10 -48 C-4 -45 0 -40 3 -34Z"/></g>`;
   const boat = R()>0.4 ? `<g transform="translate(${(w*(0.08+R()*0.2)).toFixed(0)} ${(base+h*0.12).toFixed(0)})"><path d="M-12 0 L12 0 L8 5 L-8 5Z" fill="#fff" opacity=".9"/><path d="M0 -1 L0 -22 L12 -2Z" fill="#fff" opacity=".85"/></g>` : '';
   const stars = night ? Array.from({length:14},()=>`<circle cx="${(R()*w).toFixed(0)}" cy="${(R()*h*0.5).toFixed(0)}" r="${(R()*1.2+0.3).toFixed(1)}" fill="#fff" opacity=".8"/>`).join('') : '';
-  const pl = plane ? `<g transform="translate(${(w*0.32).toFixed(0)} ${(h*0.16).toFixed(0)}) scale(${(h/140*0.9).toFixed(2)})" opacity=".95">${acSvgInner(plane, '#ffffff')}</g>` : '';
+  const pl = plane ? `<g transform="translate(${(w*0.32).toFixed(0)} ${(h*0.16).toFixed(0)}) scale(${(Math.min(h/140, w/600)*0.9).toFixed(2)})" opacity=".95">${acSvgInner(plane, '#ffffff')}</g>` : '';
   return `<svg class="art" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="${id}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${top}"/><stop offset="1" stop-color="${bot}"/></linearGradient><linearGradient id="${id}w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sea}"/><stop offset="1" stop-color="${night?'#04131b':'#0a5a62'}"/></linearGradient></defs>
     <rect width="${w}" height="${h}" fill="url(#${id}s)"/>${stars}<circle cx="${sx}" cy="${sy}" r="${night?10:16}" fill="${sun}" opacity=".95"/>
     <rect y="${base}" width="${w}" height="${h-base}" fill="url(#${id}w)"/>
