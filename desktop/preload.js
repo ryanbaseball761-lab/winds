@@ -15,6 +15,8 @@ contextBridge.exposeInMainWorld('twNative', {
   flightLog: (name, text) => ipcRenderer.invoke('flight-log', name, text),
   openFolder: (sub) => ipcRenderer.invoke('open-folder', sub),
   panelSetup: () => ipcRenderer.invoke('panel-setup'),
+  panelInstall: () => ipcRenderer.invoke('panel-install'),
+  panelStatus: () => ipcRenderer.invoke('panel-status'),
   tts: (text, voice, instr) => ipcRenderer.invoke('tts', text, voice, instr),
   ttsKeySet: (k) => ipcRenderer.invoke('tts-key-set', k),
   ttsKeyHas: () => ipcRenderer.invoke('tts-key-has'),
