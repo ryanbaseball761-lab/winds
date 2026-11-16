@@ -20,6 +20,11 @@ What has to be true before strangers can install and play Trade Winds. ✅ done,
   `tests/fuzz.js` (clicks every button), `tools/sim.js` (economy)
 - ✅ Phone layout checked at 400 px on every page
 - ✅ Older bridges fail politely (clear message instead of "Unknown tool")
+- ✅ Damaged saves repair themselves; unreadable saves are kept aside and the newest backup loads; storage-full is handled
+- ✅ Security check: player-entered text can't inject code
+- ✅ Accessibility: no serious axe-core issues on any page (`tests/a11y.js`)
+- ✅ Spelling checked across the story and every screen (US English)
+- ✅ CI: GitHub Actions runs every test on each push; `tools/ship.sh` refuses older versions
 - ⬜ Bush side missions (on hold until their story is written)
 
 ## Store and marketing (drafts in this folder)
