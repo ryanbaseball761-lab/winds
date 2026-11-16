@@ -127,7 +127,8 @@ function coachCalls(){
     if(x.warnings.stall && air) say('stall', pick(COACH.stall), 15000, true);
     if(x.warnings.overspeed && air) say('overspeed', pick(COACH.overspeed), 30000, true);
     if(air && Math.abs(x.attitude.bank) > 45){ if(!C.cc.bank || now-C.cc.bank>=45000){ if(job.pax) C.comfort=Math.max(0,C.comfort-6); } say('bank', pick(COACH.bank), 45000, false); }
-    if(air && Math.abs(x.attitude.bank) > 40 && Math.abs(x.controls.yokeX) < 0.06 && !x.autopilot) say('rollNoInput', pick(COACH.rollNoInput).replace('{b}', Math.abs(x.attitude.bank)), 60000, true);
+    /* a bank past 55° with the controls centered (but not during a steep-turn order, where centered ailerons are correct) */
+    if(air && Math.abs(x.attitude.bank) > 55 && Math.abs(x.controls.yokeX) < 0.06 && !x.autopilot && !(a.order && a.order.k==='steepturn' && a.order.state==='active')) say('rollNoInput', pick(COACH.rollNoInput).replace('{b}', Math.abs(x.attitude.bank)), 60000, true);
     if(final && x.gear.retractable && !x.gear.down && pos.aglFt < 800) say('gearUp', pick(COACH.gearUp), 20000, true);
     if(rec.takeoff && !C.cc.noLightChecked){ C.cc.noLightChecked=now; if(!x.lights.landing && now - rec.takeoff.t < 60000) say('noLight', pick(COACH.noLight), 0, false, true); }
   }

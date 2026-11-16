@@ -6,7 +6,7 @@
   "main": "main.js",
   "author": "Trade Winds",
   "license": "UNLICENSED",
-  "tradeWinds": { "feed": "" },
+  "tradeWinds": { "feed": "https://raw.githubusercontent.com/ryanbaseball761-lab/winds/main/" },
   "private": true,
   "scripts": {
     "game": "node -e \"require('fs').mkdirSync('game',{recursive:true});require('fs').copyFileSync('../index.html','game/index.html')\"",

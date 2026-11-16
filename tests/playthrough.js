@@ -37,5 +37,9 @@ const log=await p.evaluate(async(PICK)=>{ const W=ms=>new Promise(r=>setTimeout(
   const dups=Object.entries(bySig).filter(([k,v])=>v.length>1).map(([k,v])=>k+' ×'+v.length);
   const stacked=cuts.filter(c=>c.stacked>1).length;
   const toastDup=Object.entries(seenToasts).filter(([k,v])=>v>2).map(([k,v])=>k.slice(0,60)+' ×'+v);
-  const ignored=calls.filter(c=>!c.shown).map(c=>c.sig+' @'+c.view); return {issues:[...new Set(issues)].slice(0,30), ignored, steps:L, cuts:cuts.length, chapters:mainChapters().filter(m=>S.st.story.done[m.id]).length, dups, stacked, toastDup, flights:S.st.flights}; }, Number(process.argv[2]||0));
+  const ignored=calls.filter(c=>!c.shown).map(c=>c.sig+' @'+c.view);
+  const jt={}; (S.st.journal||[]).forEach(j=>{ const k=(j.t||j.title||'')+'|'+String(j.b||j.text||'').slice(0,40); jt[k]=(jt[k]||0)+1; }); const journalDup=Object.entries(jt).filter(([k,v])=>v>1).map(([k,v])=>k.slice(0,60)+' ×'+v);
+  const nt={}; (S.notifs||[]).forEach(n=>{ nt[n.m]=(nt[n.m]||0)+1; }); const notifDup=Object.entries(nt).filter(([k,v])=>v>1).map(([k,v])=>k.slice(0,60)+' ×'+v);
+  const led={}; fin(S.st).ledger.forEach(x=>{ const k=x.d+'|'+x.c+'|'+x.n+'|'+x.a; led[k]=(led[k]||0)+1; }); const ledgerDup=Object.entries(led).filter(([k,v])=>v>1 && !/Hangar|Fuel|Interest|parking|Crew|wages/i.test(k)).map(([k,v])=>k.slice(0,80)+' ×'+v);
+  return {journalDup:journalDup.slice(0,10), notifDup:notifDup.slice(0,10), ledgerDup:ledgerDup.slice(0,10),issues:[...new Set(issues)].slice(0,30), ignored, steps:L, cuts:cuts.length, chapters:mainChapters().filter(m=>S.st.story.done[m.id]).length, dups, stacked, toastDup, flights:S.st.flights}; }, Number(process.argv[2]||0));
 console.log(JSON.stringify(log,null,1)); console.log('ERRORS', [...new Set(errs)].slice(0,5)); await b.close();})();

@@ -92,6 +92,9 @@ button.on small{color:inherit!important}
 .setup2 .import-row{margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center;text-shadow:none}
 @media (max-width:900px){.setup2 .s2-grid{grid-template-columns:1fr;gap:28px}.setup2 .s2-feats{grid-template-columns:1fr}.setup2 .setup-hero{padding:32px 0}}
 .avatar.art-av{box-shadow:0 0 0 2px rgba(224,178,74,.55),0 2px 8px rgba(0,0,0,.4)}
+.chapter-hero .pro-replay{float:none!important;position:absolute!important;top:12px;right:12px;z-index:2}
+@media (max-width:600px){.chapter-hero .pro-replay{position:relative!important;top:auto;right:auto;margin:12px 0 0 18px}}
+@media (max-width:900px){.setup2 .s2-grid{display:flex;flex-direction:column;align-items:stretch}.setup2 .setup-copy{display:contents}.setup2 .s2-side{order:2}.setup2 .s2-feats{order:3}}
 .ac-hero{background:radial-gradient(120% 120% at 100% 0%,rgba(124,191,111,.18),transparent 55%),linear-gradient(135deg,#101413,#0b0b0d)!important;border:1px solid #23302b}
 .cup-hero{background:radial-gradient(120% 120% at 0% 0%,rgba(224,178,74,.22),transparent 55%),linear-gradient(135deg,#17130c,#0b0b0d)!important;border:1px solid #3a2f18}`; document.head.appendChild(s); })();
 WHATS_NEW.unshift(['0.50','Every story choice now comes back later, a fuller epilogue, Caribe Cargo becomes your own airline (Pilot → Airline), smuggling pays more and draws more Heat, and many fixes.']);
@@ -108,3 +111,4 @@ WHATS_NEW.unshift(['0.60','Hangar → MSFS connection explains how the Trade Win
 WHATS_NEW.unshift(['0.61','Airline: each route shows how many travelers it has and how many of your aircraft share them, and the DC-3 costs more to keep flying. Older MSFS Bridges now say "update to 1.5" instead of "Unknown tool". Audio code cleaned up.']);
 WHATS_NEW.unshift(['0.62','Release prep: a damaged save repairs itself (or the newest backup loads), a full disk no longer loses your progress silently, better contrast and keyboard access, and consistent US spelling (Licenses tab).']);
 WHATS_NEW.unshift(['0.63','Fly the story: some story moments now give you an order to fly (climb away, stay low, slow down, a steep turn for Castillo, a low pass), judged live from MSFS. Any aircraft in your hangar that fits the role can fly a chapter, Twitch chat can vote on your choices, you can share your ending, and the in-sim panel lets you answer story moments without alt-tabbing.']);
+WHATS_NEW.unshift(['0.64','Smoother story flow: a cutscene never plays twice or stacks on another, "Previously on" follows one rule, painted scenes behind cutscenes and chapter banners, a redesigned start screen, a cleaner flight page with Start flight up top, book a checkride straight from the Story page, and the coach no longer nags during Castillo\'s steep turn.']);
