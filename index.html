@@ -830,7 +830,7 @@ main.view-in{animation:viewIn .32s cubic-bezier(.2,.8,.2,1)}
 .lic-front{width:min(420px,88vw);padding:24px 26px;border-radius:18px;color:#08171c;background:linear-gradient(135deg,#fdf6e3,#f1e3bf 60%,#e7d3a1);box-shadow:0 30px 80px rgba(0,0,0,.5);animation:licFlip 1s cubic-bezier(.2,.8,.2,1);position:relative;overflow:hidden}
 .lic-front::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.65) 45%,transparent 60%);transform:translateX(-120%);animation:shine 1.6s .9s ease forwards}
 .lic-front .label{color:#6b5a33}.lic-front h2{font-size:28px;margin:2px 0 12px}
-.lic-top{display:flex;align-items:center;gap:8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:12px;margin-bottom:16px;color:#6b5a33}.lic-top .logo{width:28px;height:28px}
+.lic-top{display:flex;align-items:center;gap:8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:12px;margin-bottom:16px;color:#c9a75b;background:none;padding:10px 16px 0}.lic-top .logo{width:28px;height:28px}
 .lic-rating{display:flex;align-items:baseline;gap:10px;margin-bottom:8px}.lic-rating b{font-size:30px;color:#0b746f}.lic-rating span{font-weight:700}
 .lic-sig{margin-top:18px;border-top:1px dashed #b49a5e;padding-top:8px;display:flex;justify-content:space-between;font-family:"Segoe Script","Brush Script MT",cursive;font-size:18px}.lic-sig small{font-family:inherit;font-size:12px;color:#6b5a33;font-family:system-ui}
 @keyframes licFlip{from{transform:rotateY(-100deg) scale(.8);opacity:0}}
@@ -1328,7 +1328,7 @@ const STORY = [
  {id:'AB3',arc:`Going Abroad`,title:`Across the Pond`,chars:['mari'],req:{ratings:['ATP']},from:'TBPB',to:'EGKK',ac:['A333','B748','A321'],pax:280,cargo:6000,cargoLabel:`passenger bags and island rum`,airline:true,time:'night',dep:1320,wx:'trades',
   brief:[`Your first long-haul line flight: a Caribbean holiday airline's overnight service from Barbados to London Gatwick, about 3,700 nm across the Atlantic. British Airways' Concorde once flew from London to Barbados in about four hours.`,`You'll take about eight and a half. You need an oceanic clearance, a North Atlantic Track, position reports and careful fuel monitoring, plus around 300 sunburned passengers who all want to sleep.`],
   teach:[`Before entering the North Atlantic Tracks you receive a separate oceanic clearance: route, flight level and Mach number. Then you fly it exactly.`,`Check fuel against the plan at every waypoint. A growing deficit early in the crossing is a reason to reconsider, long before it becomes an emergency.`],
-  out:{good:`You land at Gatwick in a grey drizzle that feels like another planet after a year of sunshine. The senior purser calls it the smoothest crossing she's had in years.`,ok:`London on time. Somebody in 34C asks the purser whether it's always this cold here.`,bad:`A rough arrival in Gatwick's crosswind. The training captain makes a note, kindly.`},rep:{mari:3}},
+  out:{good:`You land at Gatwick in a gray drizzle that feels like another planet after a year of sunshine. The senior purser calls it the smoothest crossing she's had in years.`,ok:`London on time. Somebody in 34C asks the purser whether it's always this cold here.`,bad:`A rough arrival in Gatwick's crosswind. The training captain makes a note, kindly.`},rep:{mari:3}},
  {id:'OW1',arc:`Own Wings`,title:`Mari's Offer`,chars:['mari'],req:{ratings:['COMM'],hours:22},from:'TNCM',to:'TAPA',ac:['C208','G36','C172','DA40','DA62'],pax:1,cargo:20,cargoLabel:`a folder of bank forms`,time:'sunset',dep:1020,wx:'trades',
   brief:[`Mari asks you to fly her to Antigua for a meeting at the bank. She doesn't say what it's about until you're level at 4,500 ft with St. Kitts sliding past the right wing. "I'm going to sell Coral Wing someday, Rookie," she says. "Or give pieces of it to people I trust."`,`She wants you to start your own operation, under your own name, with Coral Wing as your first partner. Her offer: help with the paperwork, and a big discount on your first aircraft. "Just don't name it after Calloway."`],
   teach:[`Running a charter company takes an Air Operator Certificate from the country's civil aviation authority, plus insurance, a maintenance program and a lot of paperwork.`,`Buying the aircraft is the easy part. Insurance, hangar fees and loan payments arrive every day, whether you fly or not.`],
@@ -2121,8 +2121,36 @@ const app = document.getElementById('app');
 const VIEWS = [['board','Job board'],['map','Map'],['flight','Flight'],['cockpit','Cockpit'],['pilot','Pilot'],['story','Story'],['log','Logbook'],['money','Money'],['company','Company'],['hangar','Hangar']];
 
 /* ---------- persistence ---------- */
-function loadLocal(){ try{ const t=localStorage.getItem(KEY); return t?JSON.parse(t):null; }catch(e){ return null; } }
-function saveBase(){ const st=S.st; if(!st) return; st.savedAt=Date.now(); try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){}
+/* the saved career. A save that can't be read is set aside (never overwritten) and the newest backup is used instead. */
+function loadLocal(){ let t=null; try{ t=localStorage.getItem(KEY); }catch(e){ return null; } if(!t) return null;
+  let o=null; try{ o=JSON.parse(t); }catch(_){}
+  if(o && typeof o==='object' && !Array.isArray(o) && o.pilot) return o;
+  try{ localStorage.setItem(KEY+'.unreadable.'+Date.now(), t); }catch(_){}
+  const b=(typeof latestBackup==='function') ? latestBackup() : null;
+  if(b){ setTimeout(()=>toast("Your save couldn't be read, so the newest backup was loaded. The unreadable copy was kept."), 1500); return b; }
+  setTimeout(()=>toast("Your save couldn't be read and there's no backup. The unreadable copy was kept; a new career can start."), 1500);
+  return null; }
+/* fill in anything missing or broken in an older or damaged save, so every page can draw */
+const SAVE_KEYS=['pilot','day','clock','duty','loc','cash','minutes','flights','reputation','ratings','types','visited','cooldown','rep','hangar','jobs','log','journal','story','stats'];
+function repairSave(st){ const healthy = SAVE_KEYS.every(k=>st[k]!=null) && AP[st.loc] && isFinite(Number(st.cash)) && typeof st.story==='object' && st.story.done && st.story.flags;
+  if(healthy && (!st.active || (st.active.job && AP[st.active.job.from] && (st.active.job.local||AP[st.active.job.to]) && (!st.active.job.ac||AC[st.active.job.ac]))) && (!st.company||Array.isArray(st.company.fleet))) return st;   // nothing to fix (and no random numbers used)
+  const d=newState(st.pilot&&st.pilot.name, st.pilot&&st.pilot.call);
+  for(const k of Object.keys(d)) if(st[k]===undefined || st[k]===null && d[k]!==null) st[k]=d[k];
+  if(typeof st.pilot!=='object') st.pilot=d.pilot;
+  for(const k of ['day','clock','duty','cash','minutes','flights','reputation']){ const n=Number(st[k]); st[k]=isFinite(n)?n:d[k]; }
+  for(const k of ['ratings','types','visited','cooldown','rep','hangar','stats']) if(typeof st[k]!=='object'||Array.isArray(st[k])) st[k]=d[k];
+  if(!st.story || typeof st.story!=='object') st.story=d.story; st.story.done=st.story.done||{}; st.story.flags=st.story.flags||{};
+  if(!Array.isArray(st.log)) st.log=[]; if(!Array.isArray(st.journal)) st.journal=[]; if(!Array.isArray(st.jobs)) st.jobs=[];
+  if(!AP[st.loc]) st.loc = AP[(st.company&&st.company.base)]?st.company.base:'TNCM';
+  const a=st.active; if(a && (!a.job || !AP[a.job.from] || (!a.job.local && !AP[a.job.to]) || (a.job.ac && !AC[a.job.ac]))) st.active=null;
+  if(st.company && !Array.isArray(st.company.fleet)) st.company.fleet=[];
+  if(st.company) st.company.fleet=st.company.fleet.filter(f=>f && AC[f.ac]);
+  return st; }
+function saveBase(){ const st=S.st; if(!st) return; st.savedAt=Date.now(); const json=JSON.stringify(st);
+  try{ localStorage.setItem(KEY, json); }
+  catch(e){ // storage full: make room by keeping only the two newest backups and dropping set-aside unreadable saves, then try again
+    try{ const a=JSON.parse(localStorage.getItem('tw.backups')||'[]'); localStorage.setItem('tw.backups', JSON.stringify(a.slice(-2))); Object.keys(localStorage).filter(k=>k.startsWith(KEY+'.unreadable.')).forEach(k=>localStorage.removeItem(k)); localStorage.setItem(KEY, json); }
+    catch(_){ if(!S._saveWarned){ S._saveWarned=true; toast("Couldn't save: storage is full. Export your career (Hangar → Saves & help) to keep it safe."); } } }
   clearTimeout(S.saveTimer); S.saveTimer=setTimeout(flush, 1200); }
 async function flush(){ if(!S.db || !S.st) return; if(S.saving){ S.pending=true; return; } S.saving=true;
   try{ await S.db.doc(DB_DOC).set({ json: JSON.stringify(S.st), savedAt: S.st.savedAt }); S.sync='account'; }
@@ -2230,7 +2258,7 @@ function logView(){
   if(!st.log.length) return `<main class="wrap"><div class="empty fade"><h3>Your logbook is empty</h3><p>Fly your first job and it'll show up here.</p></div></main>`;
   const earned = st.log.reduce((s,l)=>s+(l.pay||0),0);
   return `<main class="wrap stack fade"><section class="panel"><div class="section-title"><h2>Logbook</h2><span class="small muted">${st.log.length} flights · ${fmtH(st.minutes)} · ${money(earned)} earned</span></div>
-    <div class="scroll-x"><table><thead><tr><th>Day</th><th>Route</th><th>Aircraft</th><th>Flight</th><th class="num">Block</th><th>Landing</th><th>Grade</th><th class="num">Net pay</th></tr></thead>
+    <div class="scroll-x" tabindex="0"><table><thead><tr><th>Day</th><th>Route</th><th>Aircraft</th><th>Flight</th><th class="num">Block</th><th>Landing</th><th>Grade</th><th class="num">Net pay</th></tr></thead>
     <tbody>${st.log.map(l=>`<tr><td class="mono">${l.day} · ${hhmm(l.dep)}</td><td class="mono">${esc(l.from)} → ${esc(l.to)}</td><td>${esc(AC[l.ac]?.n||l.ac)}</td><td>${esc(l.title)}</td><td class="num">${durTxt(l.min)}</td><td>${esc((LANDING[l.landing]?.n||'').split(' (')[0])}</td><td><b>${l.grade}</b>${l.verified?' <span class="chip sea" title="Recorded by MSFS">MSFS</span>':''}</td><td class="num">${money(l.pay)}</td></tr>`).join('')}</tbody></table></div></section></main>`;
 }
 
@@ -2331,7 +2359,7 @@ window.addEventListener('hashchange', ()=>{ const v=location.hash.slice(1); if(V
 
 /* ---------- boot ---------- */
 function boot(){
-  const local = loadLocal(); S.st = local ? migrate(local) : null;
+  const local = loadLocal(); S.st = local ? migrate(local) : null;   // migrate() starts with repairSave()
   const h = location.hash.slice(1); if(VIEWS.some(x=>x[0]===h)) S.view=h;
   render(); connect(); simInit();
   setInterval(()=>{ if(S.st && S.st.active && S.st.active.started && S.view==='flight' && !S.debrief && !S.showResult){ const el=document.querySelector('.chip.good'); if(el && /Block timer/.test(el.textContent)){ el.textContent = `Block timer running: ${durTxt(Math.round((Date.now()-S.st.active.started)/60000))}`; } } }, 30000);
@@ -2471,7 +2499,7 @@ function routeDay(st, f, noisy){
   const attract = (0.3 + hash01(base+to)*0.35 + (HUBS.includes(to)?0.1:0) + (festivalOn(st).some(x=>x.ap===to)?0.3:0)) * (f.refit?1.1:1) * (coUpg(st,'mkt')?1.12:1);
   const seats = a.pax; const fare = f.route.fare; const ref = refFare(d)*(coUpg(st,'lounge')?1.12:1);
   let pax = seats * attract * demandIndex(st) * Math.pow(ref/fare, 1.5);
-  // each route has a limited number of travellers a day, shared by your aircraft on it
+  // each route has a limited number of travelers a day, shared by your aircraft on it
   const share = Math.max(1, (st.company.fleet||[]).filter(x=>x.hired && x.route && x.route.to===to && baseOf(st,x)===base).length);
   const market = (50 + hash01('m'+base+to)*170 + (HUBS.includes(to)?180:0) + (HUBS.includes(base)?80:0)) * demandIndex(st) * (coUpg(st,'mkt')?1.12:1) * Math.min(1.6, Math.pow(ref/fare, 1.5));
   pax = Math.min(pax, market/share/legs);
@@ -2580,7 +2608,7 @@ function companyView(){
       routeHTML = `<div class="stack" style="gap:6px;border-top:1px dashed var(--line);padding-top:8px"><p class="label">Route for the hired pilot</p>
         <div class="row" style="gap:6px;flex-wrap:wrap"><select data-route-to="${f.fid}" style="width:auto;max-width:100%" aria-label="Route destination"><option value="">Charter pool (no fixed route)</option>${opts.map(k=>`<option value="${k}" ${f.route&&f.route.to===k?'selected':''}>${baseOf(st,f)} ⇄ ${k} · ${esc(AP[k].isl)} (${Math.round(distNm(AP[baseOf(st,f)],AP[k]))} nm)</option>`).join('')}</select><button class="btn sm" data-act="co-bestroute" data-f="${f.fid}" title="Tries every destination at its best fare and picks the most profitable">Find the best route</button></div>
         ${f.route?`<label class="field"><span>Fare per seat, each way: ${money(f.route.fare)} <span class="muted">(market rate ${money(refFare(r.d))})</span></span><input type="range" min="${Math.round(refFare(r.d)*0.4)}" max="${Math.round(refFare(r.d)*2.2)}" step="5" value="${f.route.fare}" data-route-fare="${f.fid}"></label>
-          <dl class="kv small"><dt>Schedule</dt><dd>${r.legs} legs/day · ${durTxt(r.block)} each</dd><dt>Load factor</dt><dd>${Math.round(r.lf*100)}% (${r.pax} of ${a.pax} seats)</dd><dt>Travellers</dt><dd title="People who fly this route each day at your fare. Every aircraft you put on it shares them.">~${r.market}/day${r.share>1?` · shared by ${r.share} of your aircraft`:''}</dd><dt>Revenue</dt><dd>${money(r.revenue)}/day</dd><dt>Costs</dt><dd>fuel ${money(r.fuel)}, maint ${money(r.maint)}, fees ${money(r.fees)}, pilot ${money(r.wage)}</dd><dt>Profit</dt><dd><b style="color:${r.profit<0?'var(--bad)':'var(--good)'}">${money(r.profit)}/day</b> before loan & insurance</dd></dl>
+          <dl class="kv small"><dt>Schedule</dt><dd>${r.legs} legs/day · ${durTxt(r.block)} each</dd><dt>Load factor</dt><dd>${Math.round(r.lf*100)}% (${r.pax} of ${a.pax} seats)</dd><dt>Travelers</dt><dd title="People who fly this route each day at your fare. Every aircraft you put on it shares them.">~${r.market}/day${r.share>1?` · shared by ${r.share} of your aircraft`:''}</dd><dt>Revenue</dt><dd>${money(r.revenue)}/day</dd><dt>Costs</dt><dd>fuel ${money(r.fuel)}, maint ${money(r.maint)}, fees ${money(r.fees)}, pilot ${money(r.wage)}</dd><dt>Profit</dt><dd><b style="color:${r.profit<0?'var(--bad)':'var(--good)'}">${money(r.profit)}/day</b> before loan & insurance</dd></dl>
           ${bf && Math.abs(bf.fare-f.route.fare)>10?`<p class="tiny muted">Your revenue manager thinks ${money(bf.fare)} would earn about ${money(bf.profit)}/day.</p>`:''}`:`<p class="tiny muted">Charter pool: the pilot takes whatever charters come up. Steady but unremarkable. Pick a route to set your own fares.</p>`}</div>`; }
     return `<div class="cell stack" style="gap:6px"><div class="row between"><h4 class="mono">${esc(f.reg)}</h4>${f.aog?'<span class="chip bad">AOG</span>':f.hired?'<span class="chip sky">Hired pilot</span>':'<span class="chip">With you</span>'}</div><p class="small">${esc(a.n)}${f.refit?' · <span class="chip good">Refitted cabin</span>':''}</p>
       ${(c.bases||[]).length?`<label class="row small" style="gap:6px">Based at <select data-co-base="${f.fid}" style="width:auto" aria-label="Base for ${esc(f.reg)}">${[c.base,...c.bases].map(k=>`<option value="${k}" ${baseOf(st,f)===k?'selected':''}>${k} · ${esc(AP[k].isl)}</option>`).join('')}</select></label>`:''}
@@ -2593,7 +2621,7 @@ function companyView(){
     <section class="panel"><div class="row between"><div><p class="label">Your company · based at ${esc(c.base)}</p><h1 style="font-size:32px">${esc(c.name)}</h1></div><div class="row" style="gap:22px"><div class="stat"><span class="label">Fleet</span><span class="mono" style="font-size:20px">${c.fleet.length}</span></div><div class="stat"><span class="label">Company value</span><span class="mono" style="font-size:20px" title="Aircraft equity plus facilities and bases at half their cost">${money(companyValue(st))}</span></div><div class="stat"><span class="label">Last day's profit</span><span class="mono" style="font-size:20px">${led[0]?money(led[0].net):'—'}</span></div><div class="stat"><span class="label">Demand</span><span class="mono" style="font-size:20px" title="Charter demand vs. normal (×${demandIndex(st).toFixed(2)})">${seasonName(st).replace(' season','')}</span></div></div></div>
       <p class="small muted" style="margin-top:8px">Aircraft "with you" show up as company jobs on the job board: you collect the full charter fare and pay fuel, maintenance and fees. Aircraft with a hired pilot fly a route or the charter pool every day you rest. Loan payments, insurance and hangar fees come out daily either way. Demand follows the seasons: busy December to April, slow in September and October.</p></section>
     ${c.fleet.length?`<section><div class="section-title"><h2>Fleet</h2></div><div class="cards">${fleet}</div></section>`:''}
-    ${led.length?`<section class="panel"><h3>Daily operations log</h3><div class="scroll-x"><table><thead><tr><th>Day</th><th class="num">Net</th><th>Notes</th></tr></thead><tbody>${led.map(l=>`<tr><td class="mono">${l.day}</td><td class="num">${money(l.net)}</td><td class="small" style="white-space:normal">${esc(l.lines.join(' · ')||'Loans, insurance and hangar fees')}</td></tr>`).join('')}</tbody></table></div></section>`:''}
+    ${led.length?`<section class="panel"><h3>Daily operations log</h3><div class="scroll-x" tabindex="0"><table><thead><tr><th>Day</th><th class="num">Net</th><th>Notes</th></tr></thead><tbody>${led.map(l=>`<tr><td class="mono">${l.day}</td><td class="num">${money(l.net)}</td><td class="small" style="white-space:normal">${esc(l.lines.join(' · ')||'Loans, insurance and hangar fees')}</td></tr>`).join('')}</tbody></table></div></section>`:''}
     ${coUpgHTML(st)}
     <section class="panel stack"><div class="row between"><h2>Buy an aircraft</h2><div class="row small"><label class="row" style="gap:6px">Down payment <select id="co-dp" style="width:auto">${[10,20,30,50,100].map(v=>`<option value="${v}" ${(S.downPct||20)===v?'selected':''}>${v===100?'Pay cash':v+'%'}</option>`).join('')}</select></label><label class="row" style="gap:6px">Term <select id="co-yrs" style="width:auto">${[3,5,7,10].map(v=>`<option value="${v}" ${(S.loanYrs||5)===v?'selected':''}>${v} years</option>`).join('')}</select></label></div></div>
       <p class="small muted">Your rate is ${(rate*100).toFixed(1)}% APR, based on a credit score of ${Math.round(F.score)}. Used listings refresh every 7 days (next refresh on day ${F.marketDay+7}). Buy below fair value and you start with equity.</p>
@@ -2608,7 +2636,7 @@ function coUpgHTML(st){ const c=st.company; const owned=CO_UPG.filter(u=>coUpg(s
   const upk=owned.reduce((t,u)=>t+u.day,0)+bases.length*BASE_DAY;
   return `<section class="panel stack"><div class="row between"><div><p class="label">Grow the company</p><h2>Facilities and bases</h2></div><span class="small muted">${owned.length}/${CO_UPG.length} built · ${bases.length} extra base${bases.length===1?'':'s'}${upk?` · upkeep ${money(upk)}/day`:''}</span></div>
     <div class="cards">${CO_UPG.map(u=>{ const has=coUpg(st,u.id); return `<div class="cell stack" style="gap:6px"><div class="row between"><h4>${esc(u.n)}</h4>${has?'<span class="chip good">Built</span>':''}</div><p class="small">${esc(u.d)}</p><p class="tiny muted">${money(u.cost)} · then ${money(u.day)}/day</p>${has?'':`<button class="btn sm primary" data-act="co-upg" data-v="${u.id}" ${st.cash<u.cost?'disabled':''}>Build · ${money(u.cost)}</button>`}</div>`; }).join('')}
-      <div class="cell stack" style="gap:6px"><h4>Open a new base</h4><p class="small">Station aircraft at another hub and fly routes from there. Bigger hubs have more travellers.</p><p class="tiny muted">${money(BASE_COST)} · then ${money(BASE_DAY)}/day${bases.length?` · yours: ${bases.join(', ')}`:''}</p>${free.length?`<div class="row" style="gap:6px"><select id="co-newbase" style="width:auto" aria-label="New base">${free.map(k=>`<option value="${k}">${k} · ${esc(AP[k].isl)}</option>`).join('')}</select><button class="btn sm primary" data-act="co-base" ${st.cash<BASE_COST?'disabled':''}>Open · ${money(BASE_COST)}</button></div>`:'<p class="small muted">You have a base at every hub.</p>'}</div></div></section>`; }
+      <div class="cell stack" style="gap:6px"><h4>Open a new base</h4><p class="small">Station aircraft at another hub and fly routes from there. Bigger hubs have more travelers.</p><p class="tiny muted">${money(BASE_COST)} · then ${money(BASE_DAY)}/day${bases.length?` · yours: ${bases.join(', ')}`:''}</p>${free.length?`<div class="row" style="gap:6px"><select id="co-newbase" style="width:auto" aria-label="New base">${free.map(k=>`<option value="${k}">${k} · ${esc(AP[k].isl)}</option>`).join('')}</select><button class="btn sm primary" data-act="co-base" ${st.cash<BASE_COST?'disabled':''}>Open · ${money(BASE_COST)}</button></div>`:'<p class="small muted">You have a base at every hub.</p>'}</div></div></section>`; }
 
 /* ---------- goals panel ---------- */
 function goalsHTML(st){
@@ -2693,7 +2721,7 @@ function skyClass(min){ const t=timeLabel(min); return t==='Night'?'night':t==='
 function setupView(){
   const feats=[['A story you fly','Twenty chapters in five acts. Every chapter is a real flight in MSFS, with scenes before and after, phone calls in the air, and a choice at the end that the story remembers.'],
     ['Power and Heat','Every run makes you stronger and more wanted. Push too hard and customs starts searching your plane.'],
-    ['Cessna to 747','Earn your licences with real checkrides as the story moves you from a borrowed Cessna to the Vision Jet, the CJ4, the 737 and the 747.'],
+    ['Cessna to 747','Earn your licenses with real checkrides as the story moves you from a borrowed Cessna to the Vision Jet, the CJ4, the 737 and the 747.'],
     ['Graded by the sim','Trade Winds follows your flight live and grades the touchdown, the centerline, the fuel and the airmanship by itself.']];
   return `<main class="setup-wrap">
     <section class="setup-hero noir">
@@ -2701,7 +2729,7 @@ function setupView(){
       <div class="wrap setup-copy">
         <p class="eyebrow">A crime story for Microsoft Flight Simulator</p>
         <h1>Trade Winds</h1>
-        <p class="lede">A fresh licence and a cheap job flying a Cessna in St. Martin. Then the mechanic asks you for a small favor. Five acts later you're flying a 747 full of contraband, and either running the Caribbean or running from it.</p>
+        <p class="lede">A fresh license and a cheap job flying a Cessna in St. Martin. Then the mechanic asks you for a small favor. Five acts later you're flying a 747 full of contraband, and either running the Caribbean or running from it.</p>
       </div>
     </section>
     <div class="wrap">
@@ -3725,7 +3753,7 @@ ALT_OUT.BO5 = st => st.story.flags.BO4==='a' ? {good:`De Vries closes his notebo
 /* Hartwell now follows The Buyout */
 (function(){ const h=STORY.find(m=>m.id==='HW1'); if(h && h.req) h.req.after='BO3'; })();
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.61.0';
+const TW_VERSION = '0.62.0';
 
 /* ---------- live map ---------- */
 function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
@@ -5336,7 +5364,7 @@ const CRIME = [
   recap:`Castillo gave you a Citation CJ4, two loaders of your own and the Jamaica route. You asked for more.`,
   brief:[`Castillo is promoting you. A Citation CJ4, a weekly run to Montego Bay, and two loaders, Tico and his cousin, who call you "boss".`,`Over the Mona Passage you do the math. The CJ4 carries 1,400 pounds. A cargo jet carries forty tons. You land already wanting more.`],
   teach:[`The CJ4 is fast and heavy. Program the FMS before taxi, climb to the high 30s, and plan your descent about 100 miles out.`],
-  out:{good:`The crates are off in twenty minutes. Back at the hotel, you tell Castillo you want bigger airplanes. He just smiles. "Get your airline licence. Then we'll talk."`,ok:`Montego Bay takes the crates without a hitch. You tell Castillo you want bigger airplanes. "Get your airline licence," he says.`,bad:`A rough arrival, and one crate splits on the ramp. Your loaders cover it before anyone sees. Castillo says you'll get bigger planes when you can fly this one.`},rep:{castillo:6}},
+  out:{good:`The crates are off in twenty minutes. Back at the hotel, you tell Castillo you want bigger airplanes. He just smiles. "Get your airline license. Then we'll talk."`,ok:`Montego Bay takes the crates without a hitch. You tell Castillo you want bigger airplanes. "Get your airline license," he says.`,bad:`A rough arrival, and one crate splits on the ramp. Your loaders cover it before anyone sees. Castillo says you'll get bigger planes when you can fly this one.`},rep:{castillo:6}},
  {id:'CRM',arc:'Bigger Wings',title:`The Medinas`,chars:['medina','tico'],req:{after:'CR10'},from:'MKJS',to:'MKJP',ac:BIZJ,pax:1,cargo:900,cargoLabel:`900 lb for Kingston`,time:'night',dep:1230,wx:'calm',
   hook:`A rival crew wants Castillo's routes, starting with yours.`,
   recap:`The Medina brothers, Castillo's rivals, shadowed your jet into Kingston and made you an offer.`,
@@ -5378,7 +5406,7 @@ const CRIME = [
  {id:'CR14',arc:'Heavy Metal',title:`Hartwell's Secret`,chars:['hartwell','castillo'],req:{after:'CR13',ratings:['ATP']},from:'TNCM',to:'MDSD',ac:LINER,pax:2,cargo:30000,cargoLabel:`15 tons of "machine parts"`,time:'day',dep:660,wx:'trades',
   hook:`Your first airliner, and a billionaire who wants out.`,
   recap:`You flew your first airliner load to Santo Domingo. Lionel Hartwell handed you the ledgers that hold Castillo's money.`,
-  brief:[`Your airline licence is still warm. Castillo has leased a tired 737 under a fake name, and you're flying fifteen tons to Santo Domingo. Lionel Hartwell, whose charity owns the Vision Jet on paper, is riding in the jump seat.`,`At cruise he finally speaks. His coral foundation has been washing Castillo's money for years, and he wants out. He puts a locked case on the console. "The ledgers. Every account. Whoever holds these holds Castillo."`],
+  brief:[`Your airline license is still warm. Castillo has leased a tired 737 under a fake name, and you're flying fifteen tons to Santo Domingo. Lionel Hartwell, whose charity owns the Vision Jet on paper, is riding in the jump seat.`,`At cruise he finally speaks. His coral foundation has been washing Castillo's money for years, and he wants out. He puts a locked case on the console. "The ledgers. Every account. Whoever holds these holds Castillo."`],
   teach:[`Your first airliner: brief the departure, use the autopilot and FMS, and fly a stabilized ILS at Santo Domingo. Autopilot off by 1,000 ft if you're feeling brave.`],
   out:{good:`You grease the 737 on at Santo Domingo. Hartwell nods slowly. "He was right about you."`,ok:`The 737 is on the ground in Santo Domingo, in one piece. Hartwell unclenches his hands.`,bad:`A heavy landing. Fifteen tons of "machine parts" shift in the hold. Hartwell is very quiet.`},rep:{hartwell:6},
   choice:{q:`The ledgers are in your hands. With them, every dollar Castillo moves would have to pass through you.`,opts:[
@@ -5428,7 +5456,7 @@ const CRIME = [
   out:{good:`Wheels down at Miami, smooth as glass.`,ok:`Wheels down at Miami.`,bad:`A hard landing at Miami jolts Castillo awake.`},rep:{},
   choice:{q:`Engines off on the Miami cargo ramp. Castillo is unbuckling in the jump seat. Three things can happen next, and only you decide.`,opts:[
     {t:`Take his place`,out:`You make one phone call. When the cargo door opens, it isn't Castillo's people on the ramp. It's yours. By morning, every route, every airline and every pilot in the Caribbean answers to you.`,power:100,ending:'kingpin'},
-    {t:`Hand him to Reyes`,out:`Agents swarm the 747. Castillo looks at you once and smiles, as if he always knew. You testify, lose your licences and your name, and start over on an island nobody has heard of.`,heat:-100,ending:'witness'},
+    {t:`Hand him to Reyes`,out:`Agents swarm the 747. Castillo looks at you once and smiles, as if he always knew. You testify, lose your licenses and your name, and start over on an island nobody has heard of.`,heat:-100,ending:'witness'},
     {t:`Take the money and vanish`,out:`While they argue on the ramp, you walk to a Citation you parked there yesterday, fueled and paid in cash. By sunrise you're over South America with ten million dollars in the back. Nobody ever sees you again.`,cash:250000,ending:'ghost'}]}}
 
 ];
@@ -5534,7 +5562,7 @@ THEME_LBL.auto='Theme: noir'; THEME_LBL.dark='Theme: noir'; THEME_LBL.light='The
 :root[data-noir] .label,:root[data-noir] .mn-kicker,:root[data-noir] .section-title .small{font-family:var(--f-mono);letter-spacing:.14em;text-transform:uppercase}
 :root[data-noir] .panel,:root[data-noir] section.panel{border-color:#232327;background:linear-gradient(180deg,#141417,#111113)}
 :root[data-noir] .btn.primary{background:#c8962a;border-color:#c8962a;color:#140f05}
-:root[data-noir] .btn.action{background:#b8321f;border-color:#b8321f;color:#fff}
+:root[data-noir] .btn.action{background:#b8321f;border-color:#b8321f;color:#fff!important}
 :root[data-noir] .btn.action:hover{background:#d23b2c}
 :root[data-noir] .today,:root[data-noir] .mn-art,:root[data-noir] .jcard > :first-child,:root[data-noir] .chapter-hero{filter:saturate(.5) brightness(.72) contrast(1.08)}
 :root[data-noir] .today h1,:root[data-noir] .today .big{letter-spacing:-.01em}
@@ -5708,7 +5736,7 @@ const PRO = {
  CR7:[[`Beef Island, Tortola · 10:45 AM`,null,`A man in a wrinkled suit is running across the ramp, clutching a sandwich bag to his chest.`],
       [`The ramp`,null,`"Philippe Arnaud. I'm Mr. Castillo's lawyer. The police are at my office at noon. Please, can we go?"`],
       [`Cockpit`,null,`He's sweating through his shirt. You start the engine before he's finished buckling in.`]],
- CR8:[[`San Juan · 3:30 PM`,null,`The sky to the east is a wall of grey. The Coast Guard helicopters are being towed into their hangar.`],
+ CR8:[[`San Juan · 3:30 PM`,null,`The sky to the east is a wall of gray. The Coast Guard helicopters are being towed into their hangar.`],
       [`Phone call`,'castillo',`Nobody else will fly today. That's the point. Name your price, and I'll double it.`],
       [`The ramp`,'tico',`You're the pilot? Tico. I load the bags. Someday I'm gonna fly one of these, boss. Watch.`]],
  CR9:[[`Punta Cana · 9:40 AM`,null,`A routine run. A sealed case, a contact on St. Croix. You've done twenty of these.`],
@@ -5727,7 +5755,7 @@ const PRO = {
       [`The ramp`,null,`The lawyer is already on board, reading Dez's file. She doesn't look up.`]],
  CR13:[[`Coral Wing hangar · 5:10 PM`,null,`Hangar three. A toolbox on the floor, lid open. Inside, under the trays, the money.`],
       [`The hangar`,'mari',`Don't. Don't explain. Just take me flying. Grand Case, like when you were new.`]],
- CR14:[[`Juliana · 10:30 AM`,null,`Your airline licence is three days old. The 737 on the cargo ramp is twenty-two years older.`],
+ CR14:[[`Juliana · 10:30 AM`,null,`Your airline license is three days old. The 737 on the cargo ramp is twenty-two years older.`],
       [`The jet bridge`,'hartwell',`I'll ride in the jump seat, if you don't mind. I have something to give you, and I don't trust phones.`],
       [`Cockpit`,null,`Fifteen tons in the hold. You've never felt calmer.`]],
  CR15:[[`Santo Domingo · 8:15 PM`,null,`A fresh coat of paint is drying on the tail: CARIBE CARGO. Your airline.`],
@@ -5990,7 +6018,7 @@ function rightNowBase(st){ if(!st) return null; const a=st.active; if(a) return 
 
 /* ---- 15. result screen: one summary card, everything else folded ---- */
 
-/* ---- 16. pilot page: the licence ladder says what each licence unlocks in the story ---- */
+/* ---- 16. pilot page: the license ladder says what each license unlocks in the story ---- */
 const LADDER = [['PPL','Act 1 · the Cessna'],['JET','Act 2 · the Vision Jet and the CJ4'],['ATP','Act 4 · airliners and the 747']];
 document.addEventListener('click', e=>{ const a=e.target.closest('[data-act="lad-go"]'); if(!a) return; e.preventDefault(); const el=document.querySelector(`[data-act="book-check"][data-r="${a.dataset.r}"]`); if(el) el.scrollIntoView({behavior:'smooth',block:'center'}); });
 
@@ -6027,7 +6055,7 @@ const NAV5 = [
   {v:'story', n:'Story', ico:'<path d="M4 5h7a3 3 0 0 1 3 3v11a2 2 0 0 0-2-2H4zM20 5h-6a3 3 0 0 0-3 3"/>'},
   {v:'board', n:'Jobs', ico:'<rect x="4" y="6" width="16" height="13" rx="2"/><path d="M9 6V4h6v2M4 11h16"/>', tabs:[['board','Jobs'],['map','Map']]},
   {v:'flight', n:'Flight', ico:'<path d="M3 13l18-7-7 18-2-8z"/>'},
-  {v:'pilot', n:'Pilot', ico:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>', tabs:[['pilot','Licences'],['profile','Profile'],['log','Logbook'],['money','Money'],['company','Airline'],['cup','Butter Cup'],['academy','Academy']]},
+  {v:'pilot', n:'Pilot', ico:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>', tabs:[['pilot','Licenses'],['profile','Profile'],['log','Logbook'],['money','Money'],['company','Airline'],['cup','Butter Cup'],['academy','Academy']]},
   {v:'hangar', n:'Hangar', ico:'<path d="M3 20V9l9-5 9 5v11M7 20v-6h10v6"/>'} ];
 function navGroup(v){ return NAV5.find(g=>g.v===v || (g.tabs||[]).some(t=>t[0]===v)) || NAV5.find(g=>g.v==='pilot' && ['profile','log','cockpit'].includes(v)) || null; }
 
@@ -6103,7 +6131,7 @@ body.flying #app > .side,body.flying .topbar .hud .now-pill{display:none}body.fl
 .jr-main{width:100%;text-align:left;border:0;background:transparent;color:var(--ink);font:inherit;padding:14px 150px 14px 18px;cursor:pointer}.jr-main:hover{background:rgba(255,255,255,.03)}
 .jrow.k-net{box-shadow:inset 3px 0 0 #c23a2b}.jrow.k-vip{box-shadow:inset 3px 0 0 #c8962a}
 .jr-k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}.k-net .jr-k{color:#e5533d}.k-vip .jr-k{color:#c8962a}
-.jr-rt{font-family:var(--f-mono);font-size:14px}.jr-t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.jr-t em{font-style:normal;font-size:11px;color:#e5533d;border:1px solid #6b2a20;border-radius:4px;padding:1px 6px;margin-left:6px}
+.jr-rt{font-family:var(--f-mono);font-size:14px}.jr-t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.jr-t em{font-style:normal;font-size:11px;color:#f06a54;border:1px solid #6b2a20;border-radius:4px;padding:1px 6px;margin-left:6px}
 .jr-m{font-size:13px;color:var(--muted)}.jr-p{font-family:var(--f-mono);font-weight:700;font-size:16px;text-align:right}
 .jr-go{position:absolute;right:16px;top:9px}.jr-go .btn{padding:8px 16px}
 .jr-card{padding:0 18px 18px}.jr-card .jcard{margin:0;max-width:640px}.jr-card .jc-art{display:none}.jr-card .jc-go{display:none}
@@ -6203,7 +6231,7 @@ function rightNow(st){ if(st && !st.active && crime(st).on && fedsWatching(st)) 
 
 /* ===================== B3. NEW GAME+ ===================== */
 function ngHTML(st){ const c=crime(st); if(!c.ending) return ''; const seen=Object.keys(c.endingsSeen||{}).concat([c.ending]); const left=['kingpin','witness','ghost'].filter(x=>!seen.includes(x));
-  return `<section class="panel ngp"><p class="label">New Game+</p><h3>Play the story again${c.ng?` (round ${c.ng+2})`:''}</h3><p class="small">Keep your licences, hours, achievements and aircraft. The story starts over with <b>bigger network pay (+50%)</b> and <b>Heat that builds 50% faster</b>.${left.length?` Endings you haven't seen: ${left.map(x=>({kingpin:'Kingpin',witness:'Witness',ghost:'Ghost'})[x]).join(', ')}.`:' You\'ve seen every ending.'}</p><button class="btn action" data-act="ng-start">Start New Game+</button></section>`; }
+  return `<section class="panel ngp"><p class="label">New Game+</p><h3>Play the story again${c.ng?` (round ${c.ng+2})`:''}</h3><p class="small">Keep your licenses, hours, achievements and aircraft. The story starts over with <b>bigger network pay (+50%)</b> and <b>Heat that builds 50% faster</b>.${left.length?` Endings you haven't seen: ${left.map(x=>({kingpin:'Kingpin',witness:'Witness',ghost:'Ghost'})[x]).join(', ')}.`:' You\'ve seen every ending.'}</p><button class="btn action" data-act="ng-start">Start New Game+</button></section>`; }
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="ng-start"]'); if(!b||!S.st) return; if(!b.dataset.ok){ b.dataset.ok=1; b.textContent='Click again to start over'; return; }
   const st=S.st; backupLabeled(st,'Before New Game+'); const c=crime(st); const seen=Object.assign({}, c.endingsSeen||{}); if(c.ending) seen[c.ending]=1; const ng=(c.ng||0)+1;
   CRIME.forEach(m=>{ delete st.story.done[m.id]; }); st.crime={power:0,heat:0,con:0,on:false,flags:{},choice:{},ng,endingsSeen:seen}; st.cash=Math.round(st.cash*0.25); st.active=null; st.loc='TNCM'; save();
@@ -6223,7 +6251,7 @@ S._title = !navigator.webdriver;
 function titleHTML(){ const st=S.st; const a=st&&st.active; let cont=''; if(st){ const MC=mainChapters(); const next=MC.find(m=>!st.story.done[m.id]); const n=next?MC.indexOf(next)+1:MC.length; cont = next ? `Chapter ${n} · ${next.title}` : 'Story complete'; }
   return `<div class="ts-bg">${typeof SCENES!=='undefined'?SCENES.ramp():''}</div><div class="ts-rain"></div><div class="ts-shade"></div>
   <div class="ts-in"><div class="ts-logo"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="none" stroke="#c8962a" stroke-width="2"/><path d="M32 6 L36 28 L58 32 L36 36 L32 58 L28 36 L6 32 L28 28Z" fill="#c8962a"/></svg><div><h1>TRADE WINDS</h1><p>Every cargo has a price</p></div></div>
-  <nav class="ts-menu">${st?`<button data-ts="continue" class="on"><b>${a?(a.started?'Resume flight':'Continue to your flight'):'Continue'}</b><span>${esc(st.pilot&&st.pilot.name||'')}${a?` · ${esc(a.job.from)} → ${esc(a.job.local?a.job.from:a.job.to)} · ${esc(a.job.title)}`:cont?` · ${esc(cont)}`:''}</span></button>`:''}
+  <nav class="ts-menu" aria-label="Title menu">${st?`<button data-ts="continue" class="on"><b>${a?(a.started?'Resume flight':'Continue to your flight'):'Continue'}</b><span>${esc(st.pilot&&st.pilot.name||'')}${a?` · ${esc(a.job.from)} → ${esc(a.job.local?a.job.from:a.job.to)} · ${esc(a.job.title)}`:cont?` · ${esc(cont)}`:''}</span></button>`:''}
     <button data-ts="new"><b>New game</b><span>${st?'Start a new career (your current one is backed up)':'Start your career'}</span></button>
     ${st?'<button data-ts="settings"><b>Settings</b><span>Sound, units, cutscenes</span></button>':''}
     ${window.twNative?'<button data-ts="quit"><b>Quit</b></button>':''}</nav>
@@ -6255,7 +6283,7 @@ function coldOpenShots(){ const st=S.st; if(!st || (st.flights||0)>0 || st.story
     ['Miami cargo ramp · 2:14 AM', null, `Rain on the windshield of a Boeing 747. A hundred tons in the hold. Blue lights circling the ramp.`],
     ['Phone call', 'reyes', `We're in position. Whatever you're planning, don't.`],
     ['The jump seat', 'castillo', `You always had calm hands. That's why I picked you.`],
-    {card:true,kicker:'Two years earlier',title:'Sint Maarten',sub:'<p>A fresh licence, a cheap job, and a Cessna with a cracked seat.</p>',auto:2600}]; }
+    {card:true,kicker:'Two years earlier',title:'Sint Maarten',sub:'<p>A fresh license, a cheap job, and a Cessna with a cracked seat.</p>',auto:2600}]; }
 
 
 /* ---- units: imperial or metric everywhere ---- */
@@ -6561,6 +6589,8 @@ WHATS_NEW.unshift(['0.43','50 fixes: the new-career screen fits the story, Heat 
 @keyframes heatp{50%{box-shadow:0 0 0 4px rgba(229,83,61,.18)}}.heat-chip.hot{animation:heatp 1.6s ease-in-out infinite}
 .jr-m{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:600px){.if-phases{flex-wrap:wrap;overflow:visible!important}}
+button.on small{color:inherit!important}
+.scroll-x:focus-visible{outline:2px solid var(--c,#e0b24a);outline-offset:2px}
 .ac-hero{background:radial-gradient(120% 120% at 100% 0%,rgba(124,191,111,.18),transparent 55%),linear-gradient(135deg,#101413,#0b0b0d)!important;border:1px solid #23302b}
 .cup-hero{background:radial-gradient(120% 120% at 0% 0%,rgba(224,178,74,.22),transparent 55%),linear-gradient(135deg,#17130c,#0b0b0d)!important;border:1px solid #3a2f18}`; document.head.appendChild(s); })();
 WHATS_NEW.unshift(['0.50','Every story choice now comes back later, a fuller epilogue, Caribe Cargo becomes your own airline (Pilot → Airline), smuggling pays more and draws more Heat, and many fixes.']);
@@ -6569,12 +6599,13 @@ WHATS_NEW.unshift(['0.52','A faster start: a new start screen, one setup screen,
 WHATS_NEW.unshift(['0.53','Money fixes: "Earned" matches everywhere, story pay and laundered cash count as income on the Money page, plainer Airline stats, and a "Launder it" shortcut on your story page.']);
 WHATS_NEW.unshift(['0.54','Your airline grows: buy airliners (ES-30, A320neo, 737 MAX, A321), build six facilities, open bases at other hubs, refit cabins, and track company value. Plus phone fixes for the job board and Pilot tabs.']);
 WHATS_NEW.unshift(['0.55','Behind the scenes: most of the game\'s code is now one clean definition per screen, which makes future fixes safer. The title screen shows your flight in progress properly, and new automatic checks cover the MSFS clock and the airline.']);
-WHATS_NEW.unshift(['0.56','Airline balance: every route has a limited number of travellers, passengers cost handling and taxes, and airliner crews cost what they should, so a big jet is a strong investment but not a money printer.']);
+WHATS_NEW.unshift(['0.56','Airline balance: every route has a limited number of travelers, passengers cost handling and taxes, and airliner crews cost what they should, so a big jet is a strong investment but not a money printer.']);
 WHATS_NEW.unshift(['0.57','Airline: "Find the best route" picks the most profitable destination and fare for a hired aircraft (or tells you the charter pool pays more). Fixed a crash when bringing on crew while you own an airline.']);
 WHATS_NEW.unshift(['0.58','Flight mode: the "course to" arrow now points where you need to turn (it was stuck pointing up), the checklist follows your flight phase on its own, duplicate numbers are gone from the phase panel, and the live weather line no longer shows "undefined".']);
 WHATS_NEW.unshift(['0.59','The flight timer no longer flickers between real time and sim time (it uses MSFS block time when the sim is recording), and the checklist tabs wrap on phones.']);
 WHATS_NEW.unshift(['0.60','Hangar → MSFS connection explains how the Trade Winds app connects (no Claude setup steps), and touchdown grading ignores the sign of the reading.']);
-WHATS_NEW.unshift(['0.61','Airline: each route shows how many travellers it has and how many of your aircraft share them, and the DC-3 costs more to keep flying. Older MSFS Bridges now say "update to 1.5" instead of "Unknown tool". Audio code cleaned up.']);
+WHATS_NEW.unshift(['0.61','Airline: each route shows how many travelers it has and how many of your aircraft share them, and the DC-3 costs more to keep flying. Older MSFS Bridges now say "update to 1.5" instead of "Unknown tool". Audio code cleaned up.']);
+WHATS_NEW.unshift(['0.62','Release prep: a damaged save repairs itself (or the newest backup loads), a full disk no longer loses your progress silently, better contrast and keyboard access, and consistent US spelling (Licenses tab).']);
 /* ===================== PAGE CHROME =====================
    The parts of the screen that surround every page: the side menu, the top bar with its
    status chips, and the phone-width menu. band() returns all of it as one piece of HTML. */
@@ -6618,7 +6649,7 @@ function band(){
         <div class="xp" title="${rk.next?`Next rank: ${rk.next} at ${rk.nextH} h`:'Top rank'}"><i style="width:${rk.pct.toFixed(0)}%"></i></div>
         <small>${fmtH(st.minutes)} logged${rk.next?` · ${esc(rk.next)} at ${rk.nextH} h`:''}</small></div>
     </div>
-    <nav class="side-nav">${NAV5.map(sideItem).join('')}</nav>
+    <nav class="side-nav" aria-label="Main menu">${NAV5.map(sideItem).join('')}</nav>
     <div class="side-foot"><span class="simdot ${live?'on':''}"></span><span id="sim-band">${live?'MSFS live':'Sim not connected'}</span><span class="sep">·</span><span id="sync">${syncText()}</span></div>
   </aside>
   <header class="topbar">
@@ -6626,7 +6657,7 @@ function band(){
       <div class="tb-title"><div class="tb-brand">${LOGO}<b>Trade Winds</b></div><h1>${esc(meta[0])}</h1><p>${esc(meta[1])}</p></div>
       ${hudHTMLTop(st)}
     </div>
-    <nav class="mrail" aria-label="Sections">${NAV5.map(railItem).join('')}</nav>
+    <nav class="mrail" aria-label="Main menu (phone)">${NAV5.map(railItem).join('')}</nav>
   ${urgent?`<div class="urgent-host">${urgent}</div>`:''}</header>${S.view==='board' && !S.showResult ? callHTML(st) : ''}`;
 }
 /* ===================== GAME FLOW =====================
@@ -7005,7 +7036,7 @@ function rest(st){
    Building the job board, the story and checkride flights, and the small helpers around them.
      genJobs(st)      -> a fresh list of jobs for where you are today
      ensureJobs(st)   -> makes sure st.jobs is current (new airport or new day = new list)
-     storyJob / checkrideJob -> the flight for a story chapter or a licence test
+     storyJob / checkrideJob -> the flight for a story chapter or a license test
    genJobs is a list of named steps that run in order. Add a step; don't wrap. */
 
 /* ---------- the job board ---------- */
@@ -7050,7 +7081,7 @@ const GEN_JOB_STEPS = [
   function retiredCabinRequests(st, L){ for(const j of L){ if(j.kind==='gen' && !j.checkout && !j.scen && Math.random()<0.35){ pick(ASKS.filter(x=>x.when(j))); } } },
   /* a calm test session has no emergencies */
   function calmTestSession(st, L){ if(st.ui && st.ui.calmTest) L.forEach(j=>{ j.scen=null; }); },
-  /* with a commercial licence: sometimes a one-off special charter from this airport */
+  /* with a commercial license: sometimes a one-off special charter from this airport */
   function specialCharter(st, L){ if(!hasRating(st,'COMM')) return; st.specialDone=st.specialDone||{};
     const opts=SPECIALS.filter(m=>m.from===st.loc && !st.specialDone[m.id] && !st.story.done[m.id] && ratingsOk(st,(m.req||{}).ratings||[]) && m.ac.some(k=>canFly(st,k) && apOk(st,m.to,k)));
     if(opts.length && Math.random()<0.6){ const m=pick(opts); const acId=m.ac.find(k=>canFly(st,k) && apOk(st,m.to,k)); const j=storyJob(st,m,acId);
@@ -7189,7 +7220,7 @@ function basicCheckride(st, rid, acId){
   if(R.examiner==='marchetti') job.paras = [`Capitaine Hélène Marchetti flew Twin Otters into St. Barth for twenty years. She looks at your airplane, then at you, and says only, "We go."`, `Pass, and you're cleared for one of the most famous approaches anywhere. ${R.unlocks}`];
   job.pay = 0; job.est = plan(job).est; return job;
 }
-/* The flight for a licence test. */
+/* The flight for a license test. */
 function checkrideJob(st, rid, acId){
   /* Seaplane: a short hop from Juliana to Simpson Bay Lagoon (you're flown to Juliana for free) */
   if(rid==='SEA'){
@@ -7203,7 +7234,7 @@ function checkrideJob(st, rid, acId){
   const pickF=(opts.find(x=>x.f[0]==='TJSJ')||opts[0]); if(!pickF) return j; const [code,rw,ils,rnav]=pickF.f;
   Object.assign(j, { to:code, local:false, tourNm:0, wx:genWx(st, code, 'trades', j.dep), ilsRwy:rw });
   j.tasks=[`Departure briefing and a clean takeoff from ${st.loc}`, `Autopilot and FMS from the climb to the approach`, `Fly the ${ils} to ${code} (the ${rnav} is your backup) and land in the touchdown zone`];
-  j.paras=[`${CAST.wilkins?CAST.wilkins.n:'The examiner'} meets you at the jet bridge with a clipboard.`, `"Today you'll take her to ${AP[code].n} and fly the ${ils}. Load the ${rnav} as the backup. Stabilized by a thousand feet, please." Pass, and you hold the Airline Transport Pilot licence.`];
+  j.paras=[`${CAST.wilkins?CAST.wilkins.n:'The examiner'} meets you at the jet bridge with a clipboard.`, `"Today you'll take her to ${AP[code].n} and fly the ${ils}. Load the ${rnav} as the backup. Stabilized by a thousand feet, please." Pass, and you hold the Airline Transport Pilot license.`];
   j.est=plan(j).est; return j;
 }
 
@@ -7211,7 +7242,8 @@ function checkrideJob(st, rid, acId){
 
 /* Brings an older save up to date. Runs every time a save is loaded. */
 function migrate(st){
-  registerCustomAc(st);
+  registerCustomAc(st);   // first, so custom aircraft count as known in the repair below
+  repairSave(st);
   st.celebs=st.celebs||{}; st.souvenirs=st.souvenirs||{}; st.gifts=st.gifts||{}; st.followups=st.followups||[]; st.ach=st.ach||{}; st.reviews=st.reviews||[]; if(!st.landedAt){ st.landedAt={}; (st.log||[]).forEach(l=>{ if(l.landing!=='crash') st.landedAt[l.to]=(st.landedAt[l.to]||0)+1; }); } if(!st.stats) st.stats={butter:0,smooth:0,firm:0,hard:0,crash:0,nm:0,diverts:0,scen:0}; if(!st.cooldown) st.cooldown={}; if(!st.visited) st.visited={}; Object.keys(AC).forEach(k=>{ if(st.hangar[k]===undefined) st.hangar[k]=true; }); Object.keys(CAST).forEach(k=>{ if(st.rep[k]===undefined) st.rep[k]=10; });
   st.ui=st.ui||{}; if(st.ui.testSkip===undefined && (st.flights||0)>0) st.ui.testSkip=true;   // careers that already used the testing shortcut keep it
   /* careers that finished chapter 4 before Castillo paid for the jet rating get the money once */
@@ -7530,7 +7562,7 @@ function prefillOwnAircraftForm(){
 function hangarView(){
   const st=S.st; const cur=S.hangarTab||'fleet';
   setTimeout(prefillOwnAircraftForm, 0);
-  const tabs=`<nav class="hg-tabs">${HG_TABS.map(([k,l])=>`<button class="${k===cur?'on':''}" data-act="hg-tab" data-v="${k}">${l}</button>`).join('')}</nav>`;
+  const tabs=`<nav class="hg-tabs" aria-label="Hangar sections">${HG_TABS.map(([k,l])=>`<button class="${k===cur?'on':''}" data-act="hg-tab" data-v="${k}">${l}</button>`).join('')}</nav>`;
   if(cur==='fleet') return `<main class="wrap stack fade">${tabs}${loadedNowCard(st)}${fleetCrewHTML(st)}
     ${airframeHealthSection(st)}${byoSection(st)}
     <section class="panel stack"><h2>Hangar</h2><p class="small muted">Untick any aircraft you don't have in your copy of MSFS (2020 or 2024) so the career never assigns it. Numbers are approximate planning figures; check each aircraft's own EFB for real limits.</p></section>
@@ -7569,7 +7601,7 @@ function resultNextBar(st){
   if(next){ const lead = upNext ? `Chapter ${n}: ` : 'Next: ';
     btn=chapterAction(st,next,availSet,false).replace('Fly this chapter',`${lead}${esc(next.title)}`).replace(/Fly in to (\w+) &amp; start · \$0/, (m,ap)=>`${lead}${esc(next.title)} (free flight to ${ap})`).replace(/Fly in to (\w+) &amp; start · (\$[\d,]+)/, (m,ap,cost)=>`${lead}${esc(next.title)} (seat to ${ap}, ${cost})`);
     if(upNext) btn=btn.replace('>Add an aircraft in the Hangar<', `>Chapter ${n} needs the ${esc(AC[upNext.ac[0]]?AC[upNext.ac[0]].n:upNext.ac[0])}: open Hangar<`); }
-  /* the next chapter is waiting on a licence: offer the checkride */
+  /* the next chapter is waiting on a license: offer the checkride */
   if(!btn && upNext){ const pa=playAction(st,upNext,availSet,n); btn=pa.btn.replace('btn action big','btn action'); }
   if(!btn && crime(st).ending) btn=`<button class="btn action" data-act="nav" data-v="story">Your ending, and New Game+</button>`;
   return `<div class="row next-bar">${btn}<button class="btn ${btn?'ghost':'primary'}" data-act="nav" data-v="board">Side jobs</button></div>`;
@@ -7941,7 +7973,7 @@ function jobRow(st, j){
     <span class="jr-go">${accept}</span>${open?`<div class="jr-card"><button class="btn sm ghost" data-act="job-map" data-id="${j.id}" style="margin:0 0 10px">Show route on the map</button>${stripHTML(st, j)}</div>`:''}</div>`;
 }
 
-/* "Checkride ready": the licences the story needs first, the optional ones folded into "+N optional". */
+/* "Checkride ready": the licenses the story needs first, the optional ones folded into "+N optional". */
 function checkrideReadyNote(st){
   const all=RATING_ORDER.filter(r=>r!=='CO' && !st.ratings[r] && checkrideReady(st,r).ok).map(r=>esc(RATINGS[r].n)); if(!all.length) return '';
   const storyNeeds=['Jet Type Rating','Airline Transport Pilot','Private Pilot']; const main=all.filter(n=>storyNeeds.some(k=>n.startsWith(k))); const rest=all.filter(n=>!main.includes(n)); const shown=main.length?main:all.slice(0,1); const more=all.length-shown.length;
@@ -8136,7 +8168,7 @@ function moneyView(){
     </div>
     <div class="grid-2">
       <section class="panel stack"><div class="row between"><h2>Income statement</h2><div class="row">${[[7,'7 days'],[30,'30 days'],['all','All time']].map(([v,l])=>`<button class="btn sm ${String(per)===String(v)?'primary':''}" data-act="fin-period" data-p="${v}">${l}</button>`).join('')}</div></div>
-        <div class="scroll-x"><table><tbody>
+        <div class="scroll-x" tabindex="0"><table><tbody>
           <tr><th colspan="2">Income</th></tr>${groups.in.map(row).join('')||'<tr><td class="muted">None yet</td><td></td></tr>'}
           <tr><td><b>Total income</b></td><td class="num"><b>${money(tot('in'))}</b></td></tr>
           <tr><th colspan="2">Operating expenses</th></tr>${groups.op.map(row).join('')||'<tr><td class="muted">None yet</td><td></td></tr>'}
@@ -8151,7 +8183,7 @@ function moneyView(){
         <section class="panel stack"><h3>Fuel today at ${esc(st.loc)}</h3><dl class="kv small"><dt>Avgas</dt><dd class="mono">$${fuelPrice(st,st.loc,'avgas').toFixed(2)}/gal</dd><dt>Jet-A</dt><dd class="mono">$${fuelPrice(st,st.loc,'jeta').toFixed(2)}/gal</dd><dt>Oil index</dt><dd class="mono">${F.oil.toFixed(2)}</dd></dl><p class="tiny muted">Small islands charge more. Fuel only costs you money on your own company's aircraft.</p></section>
       </aside>
     </div>
-    <section class="panel"><div class="section-title"><h2>Transactions</h2><span class="small muted">Most recent first</span></div><div class="scroll-x"><table><thead><tr><th>Day</th><th>Category</th><th>Details</th><th class="num">Amount</th></tr></thead><tbody>${F.ledger.slice(0,60).map(e=>`<tr><td class="mono">${e.d} · ${hhmm(e.t)}</td><td>${esc(e.c)}${e.transfer?' <span class="chip">transfer</span>':''}</td><td style="white-space:normal">${esc(e.m)}</td><td class="num" style="color:${e.a<0?'var(--bad)':'var(--good)'}">${money(e.a)}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">No transactions yet. Fly a job.</td></tr>'}</tbody></table></div></section>
+    <section class="panel"><div class="section-title"><h2>Transactions</h2><span class="small muted">Most recent first</span></div><div class="scroll-x" tabindex="0"><table><thead><tr><th>Day</th><th>Category</th><th>Details</th><th class="num">Amount</th></tr></thead><tbody>${F.ledger.slice(0,60).map(e=>`<tr><td class="mono">${e.d} · ${hhmm(e.t)}</td><td>${esc(e.c)}${e.transfer?' <span class="chip">transfer</span>':''}</td><td style="white-space:normal">${esc(e.m)}</td><td class="num" style="color:${e.a<0?'var(--bad)':'var(--good)'}">${money(e.a)}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">No transactions yet. Fly a job.</td></tr>'}</tbody></table></div></section>
     <details class="calm-more"><summary>Bank, savings, credit and housing</summary><div class="calm-more-in">${bank}</div></details>
   </main>`;
 }
@@ -8190,7 +8222,7 @@ function mapView(){
     <div class="section-title"><h2>Map</h2><div class="row"><button class="btn sm ${S.mapZoom!=='all'?'primary':''}" data-act="map-zoom" data-z="east">Eastern islands</button><button class="btn sm ${S.mapZoom==='all'?'primary':''}" data-act="map-zoom" data-z="all">Whole Caribbean</button></div></div>
     ${storm?`<div class="notice warn"><b>Hurricane ${esc(storm.name)}</b> (Category ${storm.cat}) is over the ${esc(REGIONS[storm.region].name)} until day ${storm.until}. Instrument-rated pilots only, and relief flights pay 30% more.</div>`:''}
     ${safeHTML(mapLiveBox)}<div class="grid-2">
-      <div class="panel" style="padding:8px"><div class="mapwrap"><svg viewBox="0 0 ${W} ${H}" class="map" role="img" aria-label="Map of airports">${g}${stormSvg}${routes}${dots}${safeHTML(()=>mapLiveSvg(X,Y))}${safeHTML(()=>mapStorySvg(st,X,Y))}${safeHTML(()=>mapJobSvg(st,X,Y))}</svg></div>
+      <div class="panel" style="padding:8px"><div class="mapwrap"><svg viewBox="0 0 ${W} ${H}" class="map" role="group" aria-label="Map of airports">${g}${stormSvg}${routes}${dots}${safeHTML(()=>mapLiveSvg(X,Y))}${safeHTML(()=>mapStorySvg(st,X,Y))}${safeHTML(()=>mapJobSvg(st,X,Y))}</svg></div>
         <div class="row small muted" style="padding:6px 8px;gap:14px"><span><i class="lg here"></i> You</span><span><i class="lg visited"></i> Landed there</span><span><i class="lg"></i> Not yet</span><span><i class="lg locked"></i> Locked region</span><span><i class="lg water"></i> Water landing</span><span><i class="lr"></i> Today's jobs</span></div>
         ${offmap.length?`<p class="small muted" style="padding:0 8px 8px">Off this map: ${offmap.filter(k=>regions.includes(AP[k].r)).map(k=>`${k} (${Math.round(distNm(here,AP[k])).toLocaleString()} nm)`).join(', ')||'more destinations unlock with your Instrument and Jet ratings'}.</p>`:''}
       </div>
@@ -8232,7 +8264,7 @@ function mapJobSvg(st,X,Y){ const j=mapRouteJob(st); if(!j) return ''; const a=A
   return `<g><line x1="${X(a.lon)}" y1="${Y(a.lat)}" x2="${X(b.lon)}" y2="${Y(b.lat)}" stroke="#c8962a" stroke-width="3"/><circle cx="${X(b.lon)}" cy="${Y(b.lat)}" r="7" fill="#c8962a"/><text x="${X(b.lon)+10}" y="${Y(b.lat)+18}" class="map-next">${esc(j.title)} · ${money(j.pay)}</text></g>`; }
 function mapJobBar(st){ const j=mapRouteJob(st); if(!j) return '';
   return `<div class="row" style="gap:8px;margin-bottom:10px"><button class="btn sm" data-act="map-back">← Back to jobs</button><button class="btn sm primary" data-act="accept" data-id="${j.id}">Accept · ${money(j.pay)}</button></div>`; }
-/* ===================== PILOT PAGE (Licences tab) ===================== */
+/* ===================== PILOT PAGE (Licenses tab) ===================== */
 
 function pilotBaseHTML(){
   const st=S.st; const s=st.stats;
@@ -8267,7 +8299,7 @@ function pilotBaseHTML(){
       </aside></div></main>`;
 }
 
-/* Licences tab: the story path, the licence card, ratings, and (folded) achievements, landings and records */
+/* Licenses tab: the story path, the license card, ratings, and (folded) achievements, landings and records */
 function pilotView(){ const st=S.st;
   let h = pilotBaseHTML().replace(/<\/main>\s*$/, recordsPanel(st)+'</main>');
   h = pilotFold(h);
@@ -8448,7 +8480,7 @@ setInterval(()=>{ if(TOAST_QUEUE.length && !document.querySelector('.cut,.title-
 /* Everything the search bar can jump to: pages, actions, checkrides, chapters, achievements, airports, people.
    Each item is {n: name, k: kind shown on the right, run()}. Things you used recently come first. */
 function cmdItems(){ const st=S.st; const L=[]; if(!st) return L; const pg=(n,v,k,run)=>L.push({n, k:k||'Page', run:run||(()=>go(v))});
-  pg('Main story','story'); pg('Jobs','board'); pg('Map','map'); pg('Flight','flight'); pg('Pilot & licences','pilot'); pg('Money','money'); pg('Airline (buy aircraft)','company'); pg('Hangar','hangar'); pg('Butter Cup','cup'); pg('Academy','academy'); pg('Logbook','log'); pg('Settings','hangar','Page · Hangar → Settings', ()=>{ S.hangarTab='settings'; go('hangar'); });
+  pg('Main story','story'); pg('Jobs','board'); pg('Map','map'); pg('Flight','flight'); pg('Pilot & licenses','pilot'); pg('Money','money'); pg('Airline (buy aircraft)','company'); pg('Hangar','hangar'); pg('Butter Cup','cup'); pg('Academy','academy'); pg('Logbook','log'); pg('Settings','hangar','Page · Hangar → Settings', ()=>{ S.hangarTab='settings'; go('hangar'); });
   const r=rightNow(st); if(r) L.push({n:`${r.b.replace('▶ ','')}: ${r.t}`, k:'Right now', run:()=>clickAct(r.act, r.v, r.id)});
   RATING_ORDER.filter(x=>!st.ratings[x] && checkrideReady(st,x).ok).forEach(x=>L.push({n:`Book checkride: ${RATINGS[x].n}`, k:'Pilot', run:()=>{ go('pilot'); setTimeout(()=>{ const b=document.querySelector(`[data-act="book-check"][data-r="${x}"]`); if(b) b.scrollIntoView({block:'center'}); },200); }}));
   if(crime(st).dirty) L.push({n:'Launder dirty cash', k:'Money', run:()=>go('money')});

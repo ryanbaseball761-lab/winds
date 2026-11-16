@@ -40,7 +40,7 @@ function moneyView(){
     </div>
     <div class="grid-2">
       <section class="panel stack"><div class="row between"><h2>Income statement</h2><div class="row">${[[7,'7 days'],[30,'30 days'],['all','All time']].map(([v,l])=>`<button class="btn sm ${String(per)===String(v)?'primary':''}" data-act="fin-period" data-p="${v}">${l}</button>`).join('')}</div></div>
-        <div class="scroll-x"><table><tbody>
+        <div class="scroll-x" tabindex="0"><table><tbody>
           <tr><th colspan="2">Income</th></tr>${groups.in.map(row).join('')||'<tr><td class="muted">None yet</td><td></td></tr>'}
           <tr><td><b>Total income</b></td><td class="num"><b>${money(tot('in'))}</b></td></tr>
           <tr><th colspan="2">Operating expenses</th></tr>${groups.op.map(row).join('')||'<tr><td class="muted">None yet</td><td></td></tr>'}
@@ -55,7 +55,7 @@ function moneyView(){
         <section class="panel stack"><h3>Fuel today at ${esc(st.loc)}</h3><dl class="kv small"><dt>Avgas</dt><dd class="mono">$${fuelPrice(st,st.loc,'avgas').toFixed(2)}/gal</dd><dt>Jet-A</dt><dd class="mono">$${fuelPrice(st,st.loc,'jeta').toFixed(2)}/gal</dd><dt>Oil index</dt><dd class="mono">${F.oil.toFixed(2)}</dd></dl><p class="tiny muted">Small islands charge more. Fuel only costs you money on your own company's aircraft.</p></section>
       </aside>
     </div>
-    <section class="panel"><div class="section-title"><h2>Transactions</h2><span class="small muted">Most recent first</span></div><div class="scroll-x"><table><thead><tr><th>Day</th><th>Category</th><th>Details</th><th class="num">Amount</th></tr></thead><tbody>${F.ledger.slice(0,60).map(e=>`<tr><td class="mono">${e.d} · ${hhmm(e.t)}</td><td>${esc(e.c)}${e.transfer?' <span class="chip">transfer</span>':''}</td><td style="white-space:normal">${esc(e.m)}</td><td class="num" style="color:${e.a<0?'var(--bad)':'var(--good)'}">${money(e.a)}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">No transactions yet. Fly a job.</td></tr>'}</tbody></table></div></section>
+    <section class="panel"><div class="section-title"><h2>Transactions</h2><span class="small muted">Most recent first</span></div><div class="scroll-x" tabindex="0"><table><thead><tr><th>Day</th><th>Category</th><th>Details</th><th class="num">Amount</th></tr></thead><tbody>${F.ledger.slice(0,60).map(e=>`<tr><td class="mono">${e.d} · ${hhmm(e.t)}</td><td>${esc(e.c)}${e.transfer?' <span class="chip">transfer</span>':''}</td><td style="white-space:normal">${esc(e.m)}</td><td class="num" style="color:${e.a<0?'var(--bad)':'var(--good)'}">${money(e.a)}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">No transactions yet. Fly a job.</td></tr>'}</tbody></table></div></section>
     <details class="calm-more"><summary>Bank, savings, credit and housing</summary><div class="calm-more-in">${bank}</div></details>
   </main>`;
 }

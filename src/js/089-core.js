@@ -5,7 +5,7 @@ const NAV5 = [
   {v:'story', n:'Story', ico:'<path d="M4 5h7a3 3 0 0 1 3 3v11a2 2 0 0 0-2-2H4zM20 5h-6a3 3 0 0 0-3 3"/>'},
   {v:'board', n:'Jobs', ico:'<rect x="4" y="6" width="16" height="13" rx="2"/><path d="M9 6V4h6v2M4 11h16"/>', tabs:[['board','Jobs'],['map','Map']]},
   {v:'flight', n:'Flight', ico:'<path d="M3 13l18-7-7 18-2-8z"/>'},
-  {v:'pilot', n:'Pilot', ico:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>', tabs:[['pilot','Licences'],['profile','Profile'],['log','Logbook'],['money','Money'],['company','Airline'],['cup','Butter Cup'],['academy','Academy']]},
+  {v:'pilot', n:'Pilot', ico:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>', tabs:[['pilot','Licenses'],['profile','Profile'],['log','Logbook'],['money','Money'],['company','Airline'],['cup','Butter Cup'],['academy','Academy']]},
   {v:'hangar', n:'Hangar', ico:'<path d="M3 20V9l9-5 9 5v11M7 20v-6h10v6"/>'} ];
 function navGroup(v){ return NAV5.find(g=>g.v===v || (g.tabs||[]).some(t=>t[0]===v)) || NAV5.find(g=>g.v==='pilot' && ['profile','log','cockpit'].includes(v)) || null; }
 
@@ -81,7 +81,7 @@ body.flying #app > .side,body.flying .topbar .hud .now-pill{display:none}body.fl
 .jr-main{width:100%;text-align:left;border:0;background:transparent;color:var(--ink);font:inherit;padding:14px 150px 14px 18px;cursor:pointer}.jr-main:hover{background:rgba(255,255,255,.03)}
 .jrow.k-net{box-shadow:inset 3px 0 0 #c23a2b}.jrow.k-vip{box-shadow:inset 3px 0 0 #c8962a}
 .jr-k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}.k-net .jr-k{color:#e5533d}.k-vip .jr-k{color:#c8962a}
-.jr-rt{font-family:var(--f-mono);font-size:14px}.jr-t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.jr-t em{font-style:normal;font-size:11px;color:#e5533d;border:1px solid #6b2a20;border-radius:4px;padding:1px 6px;margin-left:6px}
+.jr-rt{font-family:var(--f-mono);font-size:14px}.jr-t{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.jr-t em{font-style:normal;font-size:11px;color:#f06a54;border:1px solid #6b2a20;border-radius:4px;padding:1px 6px;margin-left:6px}
 .jr-m{font-size:13px;color:var(--muted)}.jr-p{font-family:var(--f-mono);font-weight:700;font-size:16px;text-align:right}
 .jr-go{position:absolute;right:16px;top:9px}.jr-go .btn{padding:8px 16px}
 .jr-card{padding:0 18px 18px}.jr-card .jcard{margin:0;max-width:640px}.jr-card .jc-art{display:none}.jr-card .jc-go{display:none}

@@ -1,0 +1,21 @@
+{
+  "name": "trade-winds",
+  "private": true,
+  "description": "Trade Winds: a story career for Microsoft Flight Simulator",
+  "scripts": {
+    "build": "bash tools/build.sh",
+    "test": "bash tools/build.sh && node tests/run.js",
+    "test:snapshots": "node tests/snapshot.js",
+    "test:flight": "node tests/simflight.js",
+    "test:fuzz": "node tests/fuzz.js",
+    "test:a11y": "node tests/a11y.js",
+    "test:all": "bash tools/build.sh && node tests/run.js && node tests/snapshot.js && node tests/simflight.js && node tests/a11y.js && node tests/fuzz.js",
+    "snapshots:save": "node tests/snapshot.js save",
+    "balance": "node tools/sim.js",
+    "ship": "bash tools/ship.sh"
+  },
+  "devDependencies": {
+    "axe-core": "4.10.2",
+    "playwright": "1.63.0"
+  }
+}

@@ -52,7 +52,7 @@ function jobRow(st, j){
     <span class="jr-go">${accept}</span>${open?`<div class="jr-card"><button class="btn sm ghost" data-act="job-map" data-id="${j.id}" style="margin:0 0 10px">Show route on the map</button>${stripHTML(st, j)}</div>`:''}</div>`;
 }
 
-/* "Checkride ready": the licences the story needs first, the optional ones folded into "+N optional". */
+/* "Checkride ready": the licenses the story needs first, the optional ones folded into "+N optional". */
 function checkrideReadyNote(st){
   const all=RATING_ORDER.filter(r=>r!=='CO' && !st.ratings[r] && checkrideReady(st,r).ok).map(r=>esc(RATINGS[r].n)); if(!all.length) return '';
   const storyNeeds=['Jet Type Rating','Airline Transport Pilot','Private Pilot']; const main=all.filter(n=>storyNeeds.some(k=>n.startsWith(k))); const rest=all.filter(n=>!main.includes(n)); const shown=main.length?main:all.slice(0,1); const more=all.length-shown.length;

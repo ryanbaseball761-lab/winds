@@ -1,4 +1,4 @@
-/* ===================== PILOT PAGE (Licences tab) ===================== */
+/* ===================== PILOT PAGE (Licenses tab) ===================== */
 
 function pilotBaseHTML(){
   const st=S.st; const s=st.stats;
@@ -33,7 +33,7 @@ function pilotBaseHTML(){
       </aside></div></main>`;
 }
 
-/* Licences tab: the story path, the licence card, ratings, and (folded) achievements, landings and records */
+/* Licenses tab: the story path, the license card, ratings, and (folded) achievements, landings and records */
 function pilotView(){ const st=S.st;
   let h = pilotBaseHTML().replace(/<\/main>\s*$/, recordsPanel(st)+'</main>');
   h = pilotFold(h);

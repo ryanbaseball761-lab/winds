@@ -29,7 +29,7 @@ function resultNextBar(st){
   if(next){ const lead = upNext ? `Chapter ${n}: ` : 'Next: ';
     btn=chapterAction(st,next,availSet,false).replace('Fly this chapter',`${lead}${esc(next.title)}`).replace(/Fly in to (\w+) &amp; start · \$0/, (m,ap)=>`${lead}${esc(next.title)} (free flight to ${ap})`).replace(/Fly in to (\w+) &amp; start · (\$[\d,]+)/, (m,ap,cost)=>`${lead}${esc(next.title)} (seat to ${ap}, ${cost})`);
     if(upNext) btn=btn.replace('>Add an aircraft in the Hangar<', `>Chapter ${n} needs the ${esc(AC[upNext.ac[0]]?AC[upNext.ac[0]].n:upNext.ac[0])}: open Hangar<`); }
-  /* the next chapter is waiting on a licence: offer the checkride */
+  /* the next chapter is waiting on a license: offer the checkride */
   if(!btn && upNext){ const pa=playAction(st,upNext,availSet,n); btn=pa.btn.replace('btn action big','btn action'); }
   if(!btn && crime(st).ending) btn=`<button class="btn action" data-act="nav" data-v="story">Your ending, and New Game+</button>`;
   return `<div class="row next-bar">${btn}<button class="btn ${btn?'ghost':'primary'}" data-act="nav" data-v="board">Side jobs</button></div>`;

@@ -25,4 +25,4 @@ const FREEZE=`(()=>{ let s=99; Math.random=()=>{ s=(s*1103515245+12345)%21474836
       const a=st.active; out.push(`step ${k} ${ph} f=${f}: started=${!!(a&&a.started)} view=${S.view} active=${!!a} cab=${a&&a.cab?a.cab.log.map(x=>x.who+':'+x.text).join(' | '):''}`); }
     const L=st.last; out.push('RESULT '+(L?JSON.stringify({grade:L.res.grade,score:L.res.score,notes:L.out.notes,pay:L.out.pay}):'none')); out.push('TOASTS '+toasts.join(' || ')); out.push('CASH '+st.cash+' REP '+st.reputation);
     return out; });
-  console.log(log.join('\n')); if(errs.length) console.log('ERRORS', errs.join(' | ')); await b.close(); })();
+  console.log(log.join('\n')); if(errs.length) console.log('ERRORS', errs.join(' | ')); const bad=errs.length || log.some(l=>/^THROW|RESULT none/.test(l)); await b.close(); process.exit(bad?1:0); })();

@@ -12,7 +12,7 @@ function rightNowBase(st){ if(!st) return null; const a=st.active; if(a) return 
 
 /* ---- 15. result screen: one summary card, everything else folded ---- */
 
-/* ---- 16. pilot page: the licence ladder says what each licence unlocks in the story ---- */
+/* ---- 16. pilot page: the license ladder says what each license unlocks in the story ---- */
 const LADDER = [['PPL','Act 1 · the Cessna'],['JET','Act 2 · the Vision Jet and the CJ4'],['ATP','Act 4 · airliners and the 747']];
 document.addEventListener('click', e=>{ const a=e.target.closest('[data-act="lad-go"]'); if(!a) return; e.preventDefault(); const el=document.querySelector(`[data-act="book-check"][data-r="${a.dataset.r}"]`); if(el) el.scrollIntoView({behavior:'smooth',block:'center'}); });
 

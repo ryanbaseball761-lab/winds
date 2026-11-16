@@ -12,4 +12,4 @@ for(const mode of ['early','mid']) for(const v of views){ const p=await b.newPag
       for(const x of btns.slice(0,40)){ const a=x.dataset.act||''; seen.add(x.outerHTML); if(/del|reset|wipe|new-career|ng-start|quit|bug-copy|export|import|open-logs|cancel-yes|co-sell/.test(a)) continue; try{ x.click(); clicks++; }catch(e){} await W(20); clean(); if(S.view!==v){ S.view=v; S.showResult=false; render(); await W(20); } } }
     return clicks; },[v,mode]);
   all.push(`${mode}/${v}: ${n} clicks${errs.length?'  ERRORS: '+[...new Set(errs)].slice(0,3).join(' | '):''}`); await p.close(); }
-console.log(all.join('\n')); await b.close();})();
+console.log(all.join('\n')); const bad=all.filter(l=>l.includes('ERRORS')).length; console.log(bad?`${bad} page(s) had script errors`:'FUZZ OK'); await b.close(); process.exit(bad?1:0);})();

@@ -33,9 +33,9 @@
 - When you hold dirty cash, your story page has a "Launder it" button.
 
 - **Bigger airline, more to spend on.** Your company can now buy the ES-30, A320neo, 737 MAX 8 and A321LR (hired crews fly them until you hold the ATP). Build six facilities (maintenance hangar, marketing office, revenue manager, pilot training center, premium lounge, VIP charter desk), open bases at other hubs, and refit cabins. The Airline page shows your company's value.
-- Each route now has a limited number of travellers a day, shared by your aircraft on it, so big jets need busy hub routes and smart fares.
+- Each route now has a limited number of travelers a day, shared by your aircraft on it, so big jets need busy hub routes and smart fares.
 - Four new airline achievements.
-- Each route shows its daily travellers and how many of your aircraft share them. The DC-3's maintenance is higher, so a $1.2M vintage plane no longer out-earns a $6.5M Twin Otter.
+- Each route shows its daily travelers and how many of your aircraft share them. The DC-3's maintenance is higher, so a $1.2M vintage plane no longer out-earns a $6.5M Twin Otter.
 - "Find the best route" on each hired aircraft tries every destination at its best fare and picks the winner, or keeps the charter pool if that pays more.
 - Fixed: bringing on crew from the story page crashed if you owned an airline (an old button handler was still listening).
 - Airline balance: passengers cost $14 plus 18% of the fare (handling, taxes, booking), airliner crews $22,000 a day, and cheap fares grow a route's market by at most 60%. An A320neo on its best route nets about $44,000 a day after its loan; business jets only pay in the charter pool.
@@ -48,6 +48,8 @@
 - Checkrides show the full flight details again (weather, weights, route), without repeating the task list.
 
 ## Interface
+- Better contrast on story buttons, the license card header and filter counts; tables that scroll sideways can be scrolled with the keyboard; menus are labelled for screen readers.
+- US spelling throughout: "Licenses", "travelers", "gray".
 - With an MSFS Bridge older than 1.5, the clock, fuel and move-to-gate buttons say the bridge needs updating instead of showing "Unknown tool".
 - Hangar → MSFS connection: in the Trade Winds app it now says how the app connects to MSFS, instead of the Claude-desktop setup steps meant for the web version.
 - Flight mode: the flight timer shows MSFS block time when the sim is recording (so sim rate counts) instead of switching between that and real time every few seconds.
@@ -69,6 +71,10 @@
 - The Butter Cup asks you to connect MSFS before starting an attempt it can't score.
 
 ## Under the hood
+- **Saves repair themselves.** A save with missing or broken parts (no story, an unknown airport, a missing cash value, a flight to an airport that no longer exists) is filled in when it loads instead of crashing pages. A save that can't be read at all is kept aside and the newest backup loads.
+- If storage is full, older backups are trimmed to make room; if it still can't save, you're told to export your career instead of losing progress silently.
+- Security check: names, company names, registrations and journal text can't inject code anywhere they're shown.
+- Developer setup: `package.json`, GitHub Actions running every test on each push, an accessibility test (`tests/a11y.js`), a rewritten README, and a safer `tools/ship.sh` (refuses older versions, saves the screen baseline).
 - The last patched-over audio functions (sound volume, character voices, the "Previously on" timer) are single definitions now.
 - The MSFS Bridge README says Trade Winds app players need no setup, lists every bridge tool, and describes auto-start and auto-finish.
 - `docs/launch/launch-checklist.md` lists what's left before strangers can install the game.

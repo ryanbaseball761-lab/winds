@@ -41,7 +41,7 @@ function band(){
         <div class="xp" title="${rk.next?`Next rank: ${rk.next} at ${rk.nextH} h`:'Top rank'}"><i style="width:${rk.pct.toFixed(0)}%"></i></div>
         <small>${fmtH(st.minutes)} logged${rk.next?` · ${esc(rk.next)} at ${rk.nextH} h`:''}</small></div>
     </div>
-    <nav class="side-nav">${NAV5.map(sideItem).join('')}</nav>
+    <nav class="side-nav" aria-label="Main menu">${NAV5.map(sideItem).join('')}</nav>
     <div class="side-foot"><span class="simdot ${live?'on':''}"></span><span id="sim-band">${live?'MSFS live':'Sim not connected'}</span><span class="sep">·</span><span id="sync">${syncText()}</span></div>
   </aside>
   <header class="topbar">
@@ -49,6 +49,6 @@ function band(){
       <div class="tb-title"><div class="tb-brand">${LOGO}<b>Trade Winds</b></div><h1>${esc(meta[0])}</h1><p>${esc(meta[1])}</p></div>
       ${hudHTMLTop(st)}
     </div>
-    <nav class="mrail" aria-label="Sections">${NAV5.map(railItem).join('')}</nav>
+    <nav class="mrail" aria-label="Main menu (phone)">${NAV5.map(railItem).join('')}</nav>
   ${urgent?`<div class="urgent-host">${urgent}</div>`:''}</header>${S.view==='board' && !S.showResult ? callHTML(st) : ''}`;
 }

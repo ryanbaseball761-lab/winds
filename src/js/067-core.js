@@ -99,7 +99,7 @@ const CRIME = [
   recap:`Castillo gave you a Citation CJ4, two loaders of your own and the Jamaica route. You asked for more.`,
   brief:[`Castillo is promoting you. A Citation CJ4, a weekly run to Montego Bay, and two loaders, Tico and his cousin, who call you "boss".`,`Over the Mona Passage you do the math. The CJ4 carries 1,400 pounds. A cargo jet carries forty tons. You land already wanting more.`],
   teach:[`The CJ4 is fast and heavy. Program the FMS before taxi, climb to the high 30s, and plan your descent about 100 miles out.`],
-  out:{good:`The crates are off in twenty minutes. Back at the hotel, you tell Castillo you want bigger airplanes. He just smiles. "Get your airline licence. Then we'll talk."`,ok:`Montego Bay takes the crates without a hitch. You tell Castillo you want bigger airplanes. "Get your airline licence," he says.`,bad:`A rough arrival, and one crate splits on the ramp. Your loaders cover it before anyone sees. Castillo says you'll get bigger planes when you can fly this one.`},rep:{castillo:6}},
+  out:{good:`The crates are off in twenty minutes. Back at the hotel, you tell Castillo you want bigger airplanes. He just smiles. "Get your airline license. Then we'll talk."`,ok:`Montego Bay takes the crates without a hitch. You tell Castillo you want bigger airplanes. "Get your airline license," he says.`,bad:`A rough arrival, and one crate splits on the ramp. Your loaders cover it before anyone sees. Castillo says you'll get bigger planes when you can fly this one.`},rep:{castillo:6}},
  {id:'CRM',arc:'Bigger Wings',title:`The Medinas`,chars:['medina','tico'],req:{after:'CR10'},from:'MKJS',to:'MKJP',ac:BIZJ,pax:1,cargo:900,cargoLabel:`900 lb for Kingston`,time:'night',dep:1230,wx:'calm',
   hook:`A rival crew wants Castillo's routes, starting with yours.`,
   recap:`The Medina brothers, Castillo's rivals, shadowed your jet into Kingston and made you an offer.`,
@@ -141,7 +141,7 @@ const CRIME = [
  {id:'CR14',arc:'Heavy Metal',title:`Hartwell's Secret`,chars:['hartwell','castillo'],req:{after:'CR13',ratings:['ATP']},from:'TNCM',to:'MDSD',ac:LINER,pax:2,cargo:30000,cargoLabel:`15 tons of "machine parts"`,time:'day',dep:660,wx:'trades',
   hook:`Your first airliner, and a billionaire who wants out.`,
   recap:`You flew your first airliner load to Santo Domingo. Lionel Hartwell handed you the ledgers that hold Castillo's money.`,
-  brief:[`Your airline licence is still warm. Castillo has leased a tired 737 under a fake name, and you're flying fifteen tons to Santo Domingo. Lionel Hartwell, whose charity owns the Vision Jet on paper, is riding in the jump seat.`,`At cruise he finally speaks. His coral foundation has been washing Castillo's money for years, and he wants out. He puts a locked case on the console. "The ledgers. Every account. Whoever holds these holds Castillo."`],
+  brief:[`Your airline license is still warm. Castillo has leased a tired 737 under a fake name, and you're flying fifteen tons to Santo Domingo. Lionel Hartwell, whose charity owns the Vision Jet on paper, is riding in the jump seat.`,`At cruise he finally speaks. His coral foundation has been washing Castillo's money for years, and he wants out. He puts a locked case on the console. "The ledgers. Every account. Whoever holds these holds Castillo."`],
   teach:[`Your first airliner: brief the departure, use the autopilot and FMS, and fly a stabilized ILS at Santo Domingo. Autopilot off by 1,000 ft if you're feeling brave.`],
   out:{good:`You grease the 737 on at Santo Domingo. Hartwell nods slowly. "He was right about you."`,ok:`The 737 is on the ground in Santo Domingo, in one piece. Hartwell unclenches his hands.`,bad:`A heavy landing. Fifteen tons of "machine parts" shift in the hold. Hartwell is very quiet.`},rep:{hartwell:6},
   choice:{q:`The ledgers are in your hands. With them, every dollar Castillo moves would have to pass through you.`,opts:[
@@ -191,7 +191,7 @@ const CRIME = [
   out:{good:`Wheels down at Miami, smooth as glass.`,ok:`Wheels down at Miami.`,bad:`A hard landing at Miami jolts Castillo awake.`},rep:{},
   choice:{q:`Engines off on the Miami cargo ramp. Castillo is unbuckling in the jump seat. Three things can happen next, and only you decide.`,opts:[
     {t:`Take his place`,out:`You make one phone call. When the cargo door opens, it isn't Castillo's people on the ramp. It's yours. By morning, every route, every airline and every pilot in the Caribbean answers to you.`,power:100,ending:'kingpin'},
-    {t:`Hand him to Reyes`,out:`Agents swarm the 747. Castillo looks at you once and smiles, as if he always knew. You testify, lose your licences and your name, and start over on an island nobody has heard of.`,heat:-100,ending:'witness'},
+    {t:`Hand him to Reyes`,out:`Agents swarm the 747. Castillo looks at you once and smiles, as if he always knew. You testify, lose your licenses and your name, and start over on an island nobody has heard of.`,heat:-100,ending:'witness'},
     {t:`Take the money and vanish`,out:`While they argue on the ramp, you walk to a Citation you parked there yesterday, fueled and paid in cash. By sunrise you're over South America with ten million dollars in the back. Nobody ever sees you again.`,cash:250000,ending:'ghost'}]}}
 
 ];

@@ -13,7 +13,7 @@ THEME_LBL.auto='Theme: noir'; THEME_LBL.dark='Theme: noir'; THEME_LBL.light='The
 :root[data-noir] .label,:root[data-noir] .mn-kicker,:root[data-noir] .section-title .small{font-family:var(--f-mono);letter-spacing:.14em;text-transform:uppercase}
 :root[data-noir] .panel,:root[data-noir] section.panel{border-color:#232327;background:linear-gradient(180deg,#141417,#111113)}
 :root[data-noir] .btn.primary{background:#c8962a;border-color:#c8962a;color:#140f05}
-:root[data-noir] .btn.action{background:#b8321f;border-color:#b8321f;color:#fff}
+:root[data-noir] .btn.action{background:#b8321f;border-color:#b8321f;color:#fff!important}
 :root[data-noir] .btn.action:hover{background:#d23b2c}
 :root[data-noir] .today,:root[data-noir] .mn-art,:root[data-noir] .jcard > :first-child,:root[data-noir] .chapter-hero{filter:saturate(.5) brightness(.72) contrast(1.08)}
 :root[data-noir] .today h1,:root[data-noir] .today .big{letter-spacing:-.01em}

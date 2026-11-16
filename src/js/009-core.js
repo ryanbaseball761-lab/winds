@@ -9,7 +9,7 @@ function skyClass(min){ const t=timeLabel(min); return t==='Night'?'night':t==='
 function setupView(){
   const feats=[['A story you fly','Twenty chapters in five acts. Every chapter is a real flight in MSFS, with scenes before and after, phone calls in the air, and a choice at the end that the story remembers.'],
     ['Power and Heat','Every run makes you stronger and more wanted. Push too hard and customs starts searching your plane.'],
-    ['Cessna to 747','Earn your licences with real checkrides as the story moves you from a borrowed Cessna to the Vision Jet, the CJ4, the 737 and the 747.'],
+    ['Cessna to 747','Earn your licenses with real checkrides as the story moves you from a borrowed Cessna to the Vision Jet, the CJ4, the 737 and the 747.'],
     ['Graded by the sim','Trade Winds follows your flight live and grades the touchdown, the centerline, the fuel and the airmanship by itself.']];
   return `<main class="setup-wrap">
     <section class="setup-hero noir">
@@ -17,7 +17,7 @@ function setupView(){
       <div class="wrap setup-copy">
         <p class="eyebrow">A crime story for Microsoft Flight Simulator</p>
         <h1>Trade Winds</h1>
-        <p class="lede">A fresh licence and a cheap job flying a Cessna in St. Martin. Then the mechanic asks you for a small favor. Five acts later you're flying a 747 full of contraband, and either running the Caribbean or running from it.</p>
+        <p class="lede">A fresh license and a cheap job flying a Cessna in St. Martin. Then the mechanic asks you for a small favor. Five acts later you're flying a 747 full of contraband, and either running the Caribbean or running from it.</p>
       </div>
     </section>
     <div class="wrap">

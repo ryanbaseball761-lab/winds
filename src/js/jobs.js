@@ -2,7 +2,7 @@
    Building the job board, the story and checkride flights, and the small helpers around them.
      genJobs(st)      -> a fresh list of jobs for where you are today
      ensureJobs(st)   -> makes sure st.jobs is current (new airport or new day = new list)
-     storyJob / checkrideJob -> the flight for a story chapter or a licence test
+     storyJob / checkrideJob -> the flight for a story chapter or a license test
    genJobs is a list of named steps that run in order. Add a step; don't wrap. */
 
 /* ---------- the job board ---------- */
@@ -47,7 +47,7 @@ const GEN_JOB_STEPS = [
   function retiredCabinRequests(st, L){ for(const j of L){ if(j.kind==='gen' && !j.checkout && !j.scen && Math.random()<0.35){ pick(ASKS.filter(x=>x.when(j))); } } },
   /* a calm test session has no emergencies */
   function calmTestSession(st, L){ if(st.ui && st.ui.calmTest) L.forEach(j=>{ j.scen=null; }); },
-  /* with a commercial licence: sometimes a one-off special charter from this airport */
+  /* with a commercial license: sometimes a one-off special charter from this airport */
   function specialCharter(st, L){ if(!hasRating(st,'COMM')) return; st.specialDone=st.specialDone||{};
     const opts=SPECIALS.filter(m=>m.from===st.loc && !st.specialDone[m.id] && !st.story.done[m.id] && ratingsOk(st,(m.req||{}).ratings||[]) && m.ac.some(k=>canFly(st,k) && apOk(st,m.to,k)));
     if(opts.length && Math.random()<0.6){ const m=pick(opts); const acId=m.ac.find(k=>canFly(st,k) && apOk(st,m.to,k)); const j=storyJob(st,m,acId);
@@ -186,7 +186,7 @@ function basicCheckride(st, rid, acId){
   if(R.examiner==='marchetti') job.paras = [`Capitaine Hélène Marchetti flew Twin Otters into St. Barth for twenty years. She looks at your airplane, then at you, and says only, "We go."`, `Pass, and you're cleared for one of the most famous approaches anywhere. ${R.unlocks}`];
   job.pay = 0; job.est = plan(job).est; return job;
 }
-/* The flight for a licence test. */
+/* The flight for a license test. */
 function checkrideJob(st, rid, acId){
   /* Seaplane: a short hop from Juliana to Simpson Bay Lagoon (you're flown to Juliana for free) */
   if(rid==='SEA'){
@@ -200,7 +200,7 @@ function checkrideJob(st, rid, acId){
   const pickF=(opts.find(x=>x.f[0]==='TJSJ')||opts[0]); if(!pickF) return j; const [code,rw,ils,rnav]=pickF.f;
   Object.assign(j, { to:code, local:false, tourNm:0, wx:genWx(st, code, 'trades', j.dep), ilsRwy:rw });
   j.tasks=[`Departure briefing and a clean takeoff from ${st.loc}`, `Autopilot and FMS from the climb to the approach`, `Fly the ${ils} to ${code} (the ${rnav} is your backup) and land in the touchdown zone`];
-  j.paras=[`${CAST.wilkins?CAST.wilkins.n:'The examiner'} meets you at the jet bridge with a clipboard.`, `"Today you'll take her to ${AP[code].n} and fly the ${ils}. Load the ${rnav} as the backup. Stabilized by a thousand feet, please." Pass, and you hold the Airline Transport Pilot licence.`];
+  j.paras=[`${CAST.wilkins?CAST.wilkins.n:'The examiner'} meets you at the jet bridge with a clipboard.`, `"Today you'll take her to ${AP[code].n} and fly the ${ils}. Load the ${rnav} as the backup. Stabilized by a thousand feet, please." Pass, and you hold the Airline Transport Pilot license.`];
   j.est=plan(j).est; return j;
 }
 
@@ -208,7 +208,8 @@ function checkrideJob(st, rid, acId){
 
 /* Brings an older save up to date. Runs every time a save is loaded. */
 function migrate(st){
-  registerCustomAc(st);
+  registerCustomAc(st);   // first, so custom aircraft count as known in the repair below
+  repairSave(st);
   st.celebs=st.celebs||{}; st.souvenirs=st.souvenirs||{}; st.gifts=st.gifts||{}; st.followups=st.followups||[]; st.ach=st.ach||{}; st.reviews=st.reviews||[]; if(!st.landedAt){ st.landedAt={}; (st.log||[]).forEach(l=>{ if(l.landing!=='crash') st.landedAt[l.to]=(st.landedAt[l.to]||0)+1; }); } if(!st.stats) st.stats={butter:0,smooth:0,firm:0,hard:0,crash:0,nm:0,diverts:0,scen:0}; if(!st.cooldown) st.cooldown={}; if(!st.visited) st.visited={}; Object.keys(AC).forEach(k=>{ if(st.hangar[k]===undefined) st.hangar[k]=true; }); Object.keys(CAST).forEach(k=>{ if(st.rep[k]===undefined) st.rep[k]=10; });
   st.ui=st.ui||{}; if(st.ui.testSkip===undefined && (st.flights||0)>0) st.ui.testSkip=true;   // careers that already used the testing shortcut keep it
   /* careers that finished chapter 4 before Castillo paid for the jet rating get the money once */

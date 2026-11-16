@@ -160,7 +160,7 @@ TNCM → TAPA · aircraft: C172, DA40, G36, DA62, C208 · 2 pax, 30 lb (two leat
 
 **Briefing**
 
-> A charter for two men in linen suits. The quiet one sits up front, asks good questions about flying, and seems to know a lot about you already: where you trained, where you live, how far behind Coral Wing is on its loans.
+> The quiet one sits up front, asks good questions about flying, and seems to know a lot about you already: where you trained, where you live, how far behind Coral Wing is on its loans.
 >
 > At the Antigua FBO, he buys you a coffee. "My name is Mateo Castillo. Dez works for me. Now and then, so does Coral Wing. I'd like you to work for me too. Not as a favor. As a career. I have a Vision Jet in San Juan with no pilot. Get your jet rating, and I'll pay for every hour of it."
 
@@ -172,9 +172,9 @@ TNCM → TAPA · aircraft: C172, DA40, G36, DA62, C208 · 2 pax, 30 lb (two leat
 
 **Outcome text by grade**
 
-- _good_: Castillo watched you fly the whole way. "Smooth," he says. "Calm hands. That's rare."
-- _ok_: "Good enough," Castillo says. "We'll make it better."
-- _bad_: Castillo straightens his cuffs after the landing. "We'll work on that."
+- _good_: Castillo watched you fly the whole way. "Smooth," he says. "Calm hands. That's rare." At the Antigua FBO he buys you a coffee. "My name is Mateo Castillo. Dez works for me. Now and then, so does Coral Wing. I'd like you to work for me too. Not as a favor. As a career." He lets that sit. "I have a Vision Jet in San Juan with no pilot. Get your jet rating, and I'll pay for every hour of it."
+- _ok_: "Good enough," Castillo says. "We'll make it better." At the Antigua FBO he buys you a coffee. "My name is Mateo Castillo. Dez works for me. I'd like you to work for me too. Not as a favor. As a career. I have a Vision Jet in San Juan with no pilot. Get your jet rating, and I'll pay for every hour of it."
+- _bad_: Castillo straightens his cuffs after the landing. "We'll work on that." Then, at the FBO, he buys you a coffee anyway. "My name is Mateo Castillo. Dez works for me. I'd like you to work for me too. I have a Vision Jet in San Juan with no pilot. Get your jet rating, and I'll pay for every hour of it."
 
 **After-flight decision:** Castillo slides an envelope across the table. "Ten thousand. A welcome. Fly for me, and one day you won't need me at all."
 
@@ -199,7 +199,7 @@ TJSJ → TNCM · aircraft: SF50, CJ4 · 0 pax, 300 lb (nine leather bags, about 
 
 - **(narration)** _[Private hangar · San Juan · 9:30 AM]_: The hangar door rolls up. A white Vision Jet sits under the lights, polished like jewelry.
 - **Lionel Hartwell** _[Hangar office]_: Lionel Hartwell. My foundation owns her, on paper. Mateo says you're the best he's found.
-- **Mateo Castillo** _[Phone call]_: Nine bags. Don't count them this time. Just fly.
+- **Mateo Castillo** _[Phone call]_: Nine bags. Don't count them this time. It's only money, and money isn't a crime until somebody asks where it came from.
 - **(narration)** _[Cockpit]_: You run your hand along the glareshield. Last month you were flying a Cessna with a cracked seat.
 
 **Briefing**
@@ -322,7 +322,7 @@ TJSJ → MDPC · aircraft: SF50, CJ4 · 0 pax, 600 lb (twenty duffel bags) · da
 **Prologue cutscene**
 
 - **(narration)** _[San Juan · 3:30 PM]_: The sky to the east is a wall of grey. The Coast Guard helicopters are being towed into their hangar.
-- **Mateo Castillo** _[Phone call]_: Nobody else will fly today. That's the point.
+- **Mateo Castillo** _[Phone call]_: Nobody else will fly today. That's the point. Name your price, and I'll double it.
 - **Tico Alvarez** _[The ramp]_: You're the pilot? Tico. I load the bags. Someday I'm gonna fly one of these, boss. Watch.
 
 **Briefing**
@@ -488,7 +488,7 @@ MKJS → MWCR · aircraft: SF50, CJ4 · 2 pax, 0 lb (two passengers) · night ·
 
 **Hook:** Someone in the crew is talking. Castillo wants you to fly him out.
 
-**Recap:** One of Castillo's men, Tico, was talking to the DEA. You were the one who flew him to Grand Cayman.
+**Recap:** Castillo decided Tico was the one talking to the DEA, and you flew him to Grand Cayman, where a car was waiting.
 
 **Prologue cutscene**
 
@@ -515,11 +515,11 @@ f=>{ const L=PRO.CR11.slice(0,2); if(f.informant) L.push([`The villa`,null,`You 
 
 **Outcome text by grade**
 
-- _good_: A smooth landing at Grand Cayman.
-- _ok_: A firm landing at Grand Cayman.
-- _bad_: A rough landing at Grand Cayman. Tico is shaking.
+- _good_: A smooth landing at Grand Cayman. At the far end of the ramp, a black car is waiting with its lights off.
+- _ok_: A firm landing at Grand Cayman. At the far end of the ramp, a black car is waiting with its lights off.
+- _bad_: A rough landing at Grand Cayman. Tico is shaking. At the far end of the ramp, a black car is waiting with its lights off.
 
-**After-flight decision:** Over the water, Castillo's driver falls asleep. Tico leans forward and whispers: "I talked to them once. Once. I have a daughter. Please."
+**After-flight decision:** Castillo's driver steps off the jet to call the men in the car. Tico grabs your sleeve and whispers: "I talked to them once. Once. I have a daughter. Please."
 
 - **Give Tico a chance to run** (Power -6) (Heat +8) [flag ticoRan]
   You park on the far ramp "for fuel". Tico is over the fence before the engines spool down. Castillo will ask questions you'll have to answer.
@@ -532,7 +532,7 @@ MWCR → TNCM · aircraft: SF50, CJ4 · 1 pax, 20 lb (a lawyer and her files) ·
 
 **Hook:** Dez was arrested at Juliana, and he's the one who got you into this.
 
-**Recap:** Dez was arrested at Juliana with a cooler that wasn't full of fish. You decided what happened to him.
+**Recap:** Dez was arrested at Juliana with a cooler that wasn't full of fish.
 
 **Prologue cutscene**
 
@@ -550,6 +550,7 @@ MWCR → TNCM · aircraft: SF50, CJ4 · 1 pax, 20 lb (a lawyer and her files) ·
 
 **In-flight beats**
 
+- _climb_ **(you, thinking)**: Castillo's lawyer finally looks up from Dez's file. "How much is Dez worth to you?"
 - undefined
 - _cruise_ **Mateo Castillo**: Dez knew the risks. Don't get sentimental. It's bad for business.
 - {"at":"cruise","who":"castillo","text":"The lawyer works for me, not for Dez. Remember that when she asks you questions.","opts":[{"t":"Tell the lawyer everything","reply":"She writes it all down. \"This helps Dez,\" she says. \"It doesn't help you.\"","heat":4,"flag":"toldLawyer"},{"t":"Say nothing","reply":"You fly. She reads. Nobody talks."}]}
@@ -561,9 +562,9 @@ MWCR → TNCM · aircraft: SF50, CJ4 · 1 pax, 20 lb (a lawyer and her files) ·
 
 **Outcome text by grade**
 
-- _good_: The lawyer walks into the courthouse two hours later.
-- _ok_: The lawyer walks into the courthouse two hours later.
-- _bad_: The lawyer walks into the courthouse two hours later, still pale from the landing.
+- _good_: Two hours after you land, the lawyer walks into the courthouse in Philipsburg. Dez's bail hearing is tomorrow morning.
+- _ok_: Two hours after you land, the lawyer is in the courthouse. Dez's bail hearing is tomorrow morning.
+- _bad_: The lawyer walks into the courthouse still pale from the landing. Dez's bail hearing is tomorrow morning.
 
 **After-flight decision:** The lawyer can get Dez out on bail, but someone has to pay, and Castillo won't.
 
@@ -578,16 +579,16 @@ TNCM → TFFG · aircraft: SF50, CJ4, C172, DA40, C152, G36, DA62 · 1 pax, 0 lb
 
 **Hook:** Mari found the money. She wants to go flying, just the two of you.
 
-**Recap:** Mari found out about everything. You decided whether she stayed or walked away.
+**Recap:** Mari found the money in hangar three, and you took her flying to Grand Case to give her an answer.
 
 **Prologue cutscene**
 
 - **(narration)** _[Coral Wing hangar · 5:10 PM]_: Hangar three. A toolbox on the floor, lid open. Inside, under the trays, the money.
-- **Captain Marisol "Mari" Vega** _[The hangar]_: Don't. Don't explain. Just take me flying. Like when you were new.
+- **Captain Marisol "Mari" Vega** _[The hangar]_: Don't. Don't explain. Just take me flying. Grand Case, like when you were new.
 
 _Prologue changes with earlier choices (PRO_DYN):_
 ```js
-f=>f.dezJail?[[`Coral Wing hangar · 5:10 PM`,null,`With Dez gone, the hangar is quiet. Mari has been going through his toolboxes.`],[`Hangar three`,null,`Under the trays, the money. All of it.`],[`The hangar`,'mari',`Don't. Don't explain. Just take me flying. Like when you were new.`]]:null
+f=>f.dezJail?[[`Coral Wing hangar · 5:10 PM`,null,`With Dez gone, the hangar is quiet. Mari has been going through his toolboxes.`],[`Hangar three`,null,`Under the trays, the money. All of it.`],[`The hangar`,'mari',`Don't. Don't explain. Just take me flying. Grand Case, like when you were new.`]]:null
 ```
 
 **Briefing**
@@ -649,7 +650,7 @@ TNCM → MDSD · aircraft: B38M, A320, A321 · 2 pax, 30000 lb (15 tons of "mach
 **In-flight beats**
 
 - _climb_ **(you, thinking)**: Your first airliner. A hundred and fifty thousand pounds, and every one of them feels like yours.
-- _cruise_ **Lionel Hartwell**: I built that foundation to save a reef. Then Castillo found it. Now I can't remember the last time I went diving.
+- _cruise_ **Lionel Hartwell**: My foundation has been washing Castillo's money for years. I built it to save a reef. I want out. / He sets a locked case on the console: the ledgers. Every account Castillo has.
 - {"at":"cruise","who":"hartwell","text":"If I give you the ledgers, Castillo will know it was me. I'd like a seat on a plane out, after.","opts":[{"t":"Promise him a seat out","reply":"Hartwell closes his eyes. \"Thank you.\"","flag":"hartwellSafe"},{"t":"Make no promises","reply":"\"I see,\" he says, and looks out of the window for the rest of the flight.","power":4}]}
 
 **Mid-flight decision** (_cruise_, Lionel Hartwell): If I give you the ledgers, Castillo will know it was me. I'd like a seat on a plane out, after.
@@ -686,7 +687,7 @@ MDSD → MPTO · aircraft: B38M, A320, A321 · 0 pax, 36000 lb (18 tons of "fres
 
 **Briefing**
 
-> With Hartwell's money you buy a struggling freight company and paint a new name on the tails: Caribe Cargo. On paper it flies flowers and fish. In reality it flies eighteen tons a night of whatever pays.
+> With the money you've made, you buy a struggling freight company and paint a new name on the tails: Caribe Cargo. On paper it flies flowers and fish. In reality it flies eighteen tons a night of whatever pays.
 >
 > Castillo comes to the hangar for the first flight. He walks around the 737 slowly, like he's pricing it. "Nice airline," he says. "I'll take half."
 
@@ -728,7 +729,7 @@ MPTO → MMUN · aircraft: B38M, A320, A321 · 0 pax, 34000 lb (17 tons for Cast
 
 **Hook:** Castillo booked this run himself. That should have been your first warning.
 
-**Recap:** Castillo sold you out to the Medinas at Cancún. Now it's war.
+**Recap:** Castillo sold you out to the Medinas at Cancún. Medina's men took the whole load.
 
 **Prologue cutscene**
 
@@ -913,11 +914,11 @@ f=>{ const L=PRO.CR17.slice(); if(f.war) L.push([`The radio`,null,`Two of Castil
 **After-flight decision:** Engines off on the Miami cargo ramp. Castillo is unbuckling in the jump seat. Three things can happen next, and only you decide.
 
 - **Take his place** [ENDING: kingpin] (Power +100)
-  You make one phone call. When the cargo door opens, it isn't Castillo's people on the ramp. It's yours. By morning, every route, every airline and every pilot in the Caribbean answers to you. ENDING: KINGPIN.
+  You make one phone call. When the cargo door opens, it isn't Castillo's people on the ramp. It's yours. By morning, every route, every airline and every pilot in the Caribbean answers to you.
 - **Hand him to Reyes** [ENDING: witness] (Heat -100)
-  Agents swarm the 747. Castillo looks at you once and smiles, as if he always knew. You testify, lose your licences and your name, and start over on an island nobody has heard of. ENDING: WITNESS.
+  Agents swarm the 747. Castillo looks at you once and smiles, as if he always knew. You testify, lose your licences and your name, and start over on an island nobody has heard of.
 - **Take the money and vanish** [ENDING: ghost] (Cash 250000)
-  While they argue on the ramp, you walk to a Citation you parked there yesterday, fueled and paid in cash. By sunrise you're over South America with ten million dollars in the back. Nobody ever sees you again. ENDING: GHOST.
+  While they argue on the ramp, you walk to a Citation you parked there yesterday, fueled and paid in cash. By sunrise you're over South America with ten million dollars in the back. Nobody ever sees you again.
 
 _This chapter changes with earlier choices (DYN):_
 ```js

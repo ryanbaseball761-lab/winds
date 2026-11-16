@@ -30,7 +30,7 @@ Best single route from TNCM for one hired aircraft at its best fare, vs. the dai
 | ES-30 | $9M | $15,333 | $3,262 | ~$12,000 |
 | A320neo | $42M | $59,151 | $15,224 | ~$44,000 |
 
-- Each route has a daily market (50–220 travellers, more to and from hubs) shared by every aircraft you put on it,
+- Each route has a daily market (50–220 travelers, more to and from hubs) shared by every aircraft you put on it,
   and cheap fares can grow it by up to 60%. Passengers cost $14 + 18% of the fare each (handling, taxes, booking).
 - Airliner crews cost $22,000/day, regional crews $4,500/day.
 - Business jets don't make money on scheduled routes; use the charter pool (VIP charter desk +30%).
@@ -38,7 +38,7 @@ Best single route from TNCM for one hired aircraft at its best fare, vs. the dai
 ### Airline playthrough check (0.61)
 A bot company starting with $1.5M, buying with 20% down and putting each plane on its best route, run for 120 days:
 - Two DC-3s on the same best route (Antigua) earn about $1,700/day each after loan payments, wear and repairs:
-  +$410k cash in 120 days on $480k down (one DC-3 alone: +$205k). The route has ~570 travellers a day, so two fit.
-- Stacking four aircraft on that route (two DC-3s, two Caravans) loses money because they share its travellers, so growth
-  needs new routes, bases or bigger hubs, not just more planes. The best-route finder and the new "Travellers" line show this.
+  +$410k cash in 120 days on $480k down (one DC-3 alone: +$205k). The route has ~570 travelers a day, so two fit.
+- Stacking four aircraft on that route (two DC-3s, two Caravans) loses money because they share its travelers, so growth
+  needs new routes, bases or bigger hubs, not just more planes. The best-route finder and the new "Travelers" line show this.
 - DC-3 maintenance raised (op cost 1,100 → 2,400/hr) so a $1.2M vintage plane no longer out-earns a $6.5M Twin Otter.

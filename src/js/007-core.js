@@ -4,8 +4,36 @@ const app = document.getElementById('app');
 const VIEWS = [['board','Job board'],['map','Map'],['flight','Flight'],['cockpit','Cockpit'],['pilot','Pilot'],['story','Story'],['log','Logbook'],['money','Money'],['company','Company'],['hangar','Hangar']];
 
 /* ---------- persistence ---------- */
-function loadLocal(){ try{ const t=localStorage.getItem(KEY); return t?JSON.parse(t):null; }catch(e){ return null; } }
-function saveBase(){ const st=S.st; if(!st) return; st.savedAt=Date.now(); try{ localStorage.setItem(KEY, JSON.stringify(st)); }catch(e){}
+/* the saved career. A save that can't be read is set aside (never overwritten) and the newest backup is used instead. */
+function loadLocal(){ let t=null; try{ t=localStorage.getItem(KEY); }catch(e){ return null; } if(!t) return null;
+  let o=null; try{ o=JSON.parse(t); }catch(_){}
+  if(o && typeof o==='object' && !Array.isArray(o) && o.pilot) return o;
+  try{ localStorage.setItem(KEY+'.unreadable.'+Date.now(), t); }catch(_){}
+  const b=(typeof latestBackup==='function') ? latestBackup() : null;
+  if(b){ setTimeout(()=>toast("Your save couldn't be read, so the newest backup was loaded. The unreadable copy was kept."), 1500); return b; }
+  setTimeout(()=>toast("Your save couldn't be read and there's no backup. The unreadable copy was kept; a new career can start."), 1500);
+  return null; }
+/* fill in anything missing or broken in an older or damaged save, so every page can draw */
+const SAVE_KEYS=['pilot','day','clock','duty','loc','cash','minutes','flights','reputation','ratings','types','visited','cooldown','rep','hangar','jobs','log','journal','story','stats'];
+function repairSave(st){ const healthy = SAVE_KEYS.every(k=>st[k]!=null) && AP[st.loc] && isFinite(Number(st.cash)) && typeof st.story==='object' && st.story.done && st.story.flags;
+  if(healthy && (!st.active || (st.active.job && AP[st.active.job.from] && (st.active.job.local||AP[st.active.job.to]) && (!st.active.job.ac||AC[st.active.job.ac]))) && (!st.company||Array.isArray(st.company.fleet))) return st;   // nothing to fix (and no random numbers used)
+  const d=newState(st.pilot&&st.pilot.name, st.pilot&&st.pilot.call);
+  for(const k of Object.keys(d)) if(st[k]===undefined || st[k]===null && d[k]!==null) st[k]=d[k];
+  if(typeof st.pilot!=='object') st.pilot=d.pilot;
+  for(const k of ['day','clock','duty','cash','minutes','flights','reputation']){ const n=Number(st[k]); st[k]=isFinite(n)?n:d[k]; }
+  for(const k of ['ratings','types','visited','cooldown','rep','hangar','stats']) if(typeof st[k]!=='object'||Array.isArray(st[k])) st[k]=d[k];
+  if(!st.story || typeof st.story!=='object') st.story=d.story; st.story.done=st.story.done||{}; st.story.flags=st.story.flags||{};
+  if(!Array.isArray(st.log)) st.log=[]; if(!Array.isArray(st.journal)) st.journal=[]; if(!Array.isArray(st.jobs)) st.jobs=[];
+  if(!AP[st.loc]) st.loc = AP[(st.company&&st.company.base)]?st.company.base:'TNCM';
+  const a=st.active; if(a && (!a.job || !AP[a.job.from] || (!a.job.local && !AP[a.job.to]) || (a.job.ac && !AC[a.job.ac]))) st.active=null;
+  if(st.company && !Array.isArray(st.company.fleet)) st.company.fleet=[];
+  if(st.company) st.company.fleet=st.company.fleet.filter(f=>f && AC[f.ac]);
+  return st; }
+function saveBase(){ const st=S.st; if(!st) return; st.savedAt=Date.now(); const json=JSON.stringify(st);
+  try{ localStorage.setItem(KEY, json); }
+  catch(e){ // storage full: make room by keeping only the two newest backups and dropping set-aside unreadable saves, then try again
+    try{ const a=JSON.parse(localStorage.getItem('tw.backups')||'[]'); localStorage.setItem('tw.backups', JSON.stringify(a.slice(-2))); Object.keys(localStorage).filter(k=>k.startsWith(KEY+'.unreadable.')).forEach(k=>localStorage.removeItem(k)); localStorage.setItem(KEY, json); }
+    catch(_){ if(!S._saveWarned){ S._saveWarned=true; toast("Couldn't save: storage is full. Export your career (Hangar → Saves & help) to keep it safe."); } } }
   clearTimeout(S.saveTimer); S.saveTimer=setTimeout(flush, 1200); }
 async function flush(){ if(!S.db || !S.st) return; if(S.saving){ S.pending=true; return; } S.saving=true;
   try{ await S.db.doc(DB_DOC).set({ json: JSON.stringify(S.st), savedAt: S.st.savedAt }); S.sync='account'; }
@@ -113,7 +141,7 @@ function logView(){
   if(!st.log.length) return `<main class="wrap"><div class="empty fade"><h3>Your logbook is empty</h3><p>Fly your first job and it'll show up here.</p></div></main>`;
   const earned = st.log.reduce((s,l)=>s+(l.pay||0),0);
   return `<main class="wrap stack fade"><section class="panel"><div class="section-title"><h2>Logbook</h2><span class="small muted">${st.log.length} flights · ${fmtH(st.minutes)} · ${money(earned)} earned</span></div>
-    <div class="scroll-x"><table><thead><tr><th>Day</th><th>Route</th><th>Aircraft</th><th>Flight</th><th class="num">Block</th><th>Landing</th><th>Grade</th><th class="num">Net pay</th></tr></thead>
+    <div class="scroll-x" tabindex="0"><table><thead><tr><th>Day</th><th>Route</th><th>Aircraft</th><th>Flight</th><th class="num">Block</th><th>Landing</th><th>Grade</th><th class="num">Net pay</th></tr></thead>
     <tbody>${st.log.map(l=>`<tr><td class="mono">${l.day} · ${hhmm(l.dep)}</td><td class="mono">${esc(l.from)} → ${esc(l.to)}</td><td>${esc(AC[l.ac]?.n||l.ac)}</td><td>${esc(l.title)}</td><td class="num">${durTxt(l.min)}</td><td>${esc((LANDING[l.landing]?.n||'').split(' (')[0])}</td><td><b>${l.grade}</b>${l.verified?' <span class="chip sea" title="Recorded by MSFS">MSFS</span>':''}</td><td class="num">${money(l.pay)}</td></tr>`).join('')}</tbody></table></div></section></main>`;
 }
 
@@ -214,7 +242,7 @@ window.addEventListener('hashchange', ()=>{ const v=location.hash.slice(1); if(V
 
 /* ---------- boot ---------- */
 function boot(){
-  const local = loadLocal(); S.st = local ? migrate(local) : null;
+  const local = loadLocal(); S.st = local ? migrate(local) : null;   // migrate() starts with repairSave()
   const h = location.hash.slice(1); if(VIEWS.some(x=>x[0]===h)) S.view=h;
   render(); connect(); simInit();
   setInterval(()=>{ if(S.st && S.st.active && S.st.active.started && S.view==='flight' && !S.debrief && !S.showResult){ const el=document.querySelector('.chip.good'); if(el && /Block timer/.test(el.textContent)){ el.textContent = `Block timer running: ${durTxt(Math.round((Date.now()-S.st.active.started)/60000))}`; } } }, 30000);

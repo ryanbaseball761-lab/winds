@@ -1,0 +1,30 @@
+name: Tests
+# Runs the full check on every push and pull request. `tools/ship.sh` also runs the regression suite before publishing.
+on:
+  push:
+    branches: [main, fable]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Build, and check the published index.html matches the source
+        run: bash tools/build.sh && git diff --exit-code -- index.html
+      - name: Regression suite
+        run: node tests/run.js
+      - name: Screen snapshots
+        run: node tests/snapshot.js
+      - name: Fake MSFS flight
+        run: node tests/simflight.js
+      - name: Accessibility
+        run: node tests/a11y.js
+      - name: Click every button
+        run: node tests/fuzz.js
