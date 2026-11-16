@@ -29,7 +29,13 @@
       comfort: a.job.pax && a.cab ? Math.round(a.cab.comfort) : null, feed: a.cab ? a.cab.log.slice(0,6).map(m=>({who:m.who,text:m.text})) : [],
       callout: (S.copilotLast && Date.now()-S.copilotLast.t<8000) ? {who:'Copilot', text:S.copilotLast.text} : (a.cab && a.cab.callout && Date.now()-a.cab.callout.t<20000 ? a.cab.callout : null),
       phase: (()=>{ try{ return a.started ? flightPhase(a).n : 'Before departure'; }catch(e){ return null; } })(),
-      orders: a.opened && a.scenPlan ? {title:a.scenPlan.title, text:a.scenPlan.text, sim:a.scenPlan.sim} : null }; }
+      orders: a.opened && a.scenPlan ? {title:a.scenPlan.title, text:a.scenPlan.text, sim:a.scenPlan.sim} : null,
+      beat: beatSnap(), order: a.order ? {label:a.order.label, state:a.order.state, chip:(document.querySelector('.fo-chip')||{}).textContent||a.order.label} : null,
+      vote: TWITCH.vote ? {left:Math.max(0,Math.ceil(TWITCH.vote.sec-(Date.now()-TWITCH.vote.t0)/1000)), tally:voteTally(TWITCH.vote)} : null }; }
+  /* the story moment on screen, so it can be answered from MSFS (toolbar panel) or a phone */
+  function beatSnap(){ const d=document.querySelector('.beat'); if(!d) return null; const k=(d.querySelector('.bt-k')||{}).textContent||'', t=(d.querySelector('.bt-t')||{}).textContent||'', r=(d.querySelector('.bt-r')||{}).textContent||'';
+    return { key:(k+t).slice(0,80), who:k, text:t, reply:r, opts:[...d.querySelectorAll('[data-act="beat-opt"]')].map(b=>b.textContent.replace(/^\d/,'').replace(/ \d+%$/,'').trim()) }; }
+  if(twNative.onCompanionBeat) twNative.onCompanionBeat(m=>{ const d=document.querySelector('.beat'); if(!d || !m) return; const now=beatSnap(); if(!now || now.key!==m.key) return; const b=d.querySelectorAll('[data-act="beat-opt"]')[Number(m.i)]; if(b) b.click(); });
   setInterval(()=>{ try{ twNative.pushState(JSON.stringify(snap())); }catch(e){} }, 1500);
   twNative.onCompanionCk(k=>{ const a=S.st&&S.st.active; if(!a) return; a.ck=a.ck||{p:0,done:{}}; a.ck.done[k]=!a.ck.done[k]; if(k.startsWith('4-') && !a.started){ a.started=Date.now(); simArm(); } save(); S.keepScroll=true; render(); });
   let info=null; twNative.companionInfo().then(i=>{ info=i; });

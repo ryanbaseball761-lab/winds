@@ -26,10 +26,15 @@ h1{font-size:17px;margin:2px 0 2px}
 .feed p{margin:4px 0;font-size:13px}.feed b{color:#ffb27a}
 .meter{height:6px;background:#22393c;border-radius:4px;margin-top:4px;overflow:hidden}.meter i{display:block;height:100%;background:#43d17f}
 .idle{color:#93aaa9;text-align:center;padding:30px 10px}
+.beat{background:#1c140d;border:1px solid #e0b24a;border-radius:10px;padding:10px;margin-top:8px}.beat .lbl{color:#e0b24a}.beat p{margin:6px 0}
+.beat button{display:block;width:100%;margin-top:6px;padding:9px;border-radius:8px;border:1px solid #e0b24a;background:#2a1d0e;color:#f1e9d8;font-size:14px;font-weight:bold;cursor:pointer;text-align:left}
+.beat button:first-of-type{background:#e0b24a;color:#1a1208}.beat .reply{color:#e0b24a;font-style:italic}
+.order{border-radius:10px;padding:9px 10px;margin-top:8px;border:1px solid #6b4e1a;background:#20180b}.order.ok{border-color:#2f5a2a;background:#0f1d0e}.order.fail{border-color:#6b2a20;background:#1f0d0b}
+.vote{color:#bf94ff;font-size:12px;margin-top:4px}
 </style></head>
 <body><div id="app"><div class="idle">Connecting to the Trade Winds app…</div></div>
 <script>
-var view = null, lastJson = '';
+var view = null, lastJson = '', beatKey = '';
 function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
 function get(url, cb){ var x=new XMLHttpRequest(); x.onreadystatechange=function(){ if(x.readyState===4){ if(x.status===200){ try{ cb(JSON.parse(x.responseText||'{}')); }catch(e){ cb(null); } } else cb(null); } }; x.open('GET', url, true); x.send(); }
 function post(url, body){ var x=new XMLHttpRequest(); x.open('POST', url, true); x.setRequestHeader('Content-Type','text/plain'); x.send(JSON.stringify(body)); }
@@ -41,6 +46,8 @@ function render(s){
   h+='<div class="lbl">'+esc(s.job.ac)+'</div><h1>'+esc(s.job.title)+'</h1><div class="route">'+esc(s.job.from)+'<b>&#8594;</b>'+esc(s.job.to)+'</div>';
   if(s.phase) h+='<span class="phase">'+esc(s.phase)+'</span>';
   if(s.live){ h+='<div class="strip"><div><span>IAS</span><b>'+s.live.ias+'</b></div><div><span>ALT</span><b>'+s.live.alt+'</b></div><div><span>V/S</span><b>'+s.live.vs+'</b></div><div><span>To go</span><b>'+s.live.togo+'</b></div></div>'; }
+  if(s.beat){ h+='<div class="beat"><div class="lbl">'+esc(s.beat.who||'Story')+'</div><p>'+esc(s.beat.text)+'</p>'; if(s.beat.reply) h+='<p class="reply">'+esc(s.beat.reply)+'</p>'; for(var bi=0;bi<(s.beat.opts||[]).length;bi++){ h+='<button data-b="'+bi+'">'+esc(s.beat.opts[bi])+(s.vote&&s.vote.tally?' &middot; '+(s.vote.tally[bi]||0):'')+'</button>'; } if(s.vote) h+='<div class="vote">Twitch chat is voting &middot; '+s.vote.left+'s</div>'; h+='</div>'; beatKey=s.beat.key; }
+  if(s.order){ h+='<div class="order '+(s.order.state==='ok'?'ok':s.order.state==='fail'?'fail':'')+'"><div class="lbl">'+(s.order.state==='active'?'Order':s.order.state==='ok'?'Done':'Missed')+'</div>'+esc(s.order.chip||s.order.label)+'</div>'; }
   if(s.orders){ h+='<div class="box orders"><div class="lbl">Sealed orders</div><b>'+esc(s.orders.title)+'</b><p style="margin:4px 0 0">'+esc(s.orders.text)+'</p>'+(s.orders.sim?'<p style="margin:4px 0 0;color:#ffb27a">'+esc(s.orders.sim)+'</p>':'')+'</div>'; }
   if(s.callout){ h+='<div class="box call"><div class="lbl">'+esc(s.callout.who||'Coach')+'</div>'+esc(s.callout.text)+'</div>'; }
   if(s.phases && s.phases.length){ if(view===null) view=s.cur||0; var p=s.phases[view]||s.phases[0];
@@ -50,6 +57,7 @@ function render(s){
   if(s.feed && s.feed.length){ h+='<div class="box feed"><div class="lbl">Cabin &amp; radio</div>'; for(var k=0;k<Math.min(4,s.feed.length);k++){ h+='<p><b>'+esc(s.feed[k].who)+'</b> '+esc(s.feed[k].text)+'</p>'; } h+='</div>'; }
   el.innerHTML=h;
 }
+document.addEventListener('click', function(e){ var bb=e.target; while(bb && bb!==document && !(bb.getAttribute && bb.getAttribute('data-b')!=null)) bb=bb.parentNode; if(bb===document) bb=null; if(bb){ post('/beat', {key:beatKey, i:Number(bb.getAttribute('data-b'))}); bb.disabled=true; return; } });
 document.addEventListener('click', function(e){ var t=e.target; while(t && t!==document && !(t.getAttribute && (t.getAttribute('data-k')||t.getAttribute('data-p')))) t=t.parentNode; if(!t||t===document) return;
   if(t.getAttribute('data-p')!=null){ view=Number(t.getAttribute('data-p')); lastJson=''; tick(); return; }
   post('/ck', {k:t.getAttribute('data-k')}); t.className = t.className.indexOf('done')>=0 ? '' : 'done'; });

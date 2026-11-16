@@ -6018,10 +6018,14 @@ function orderChipHTML(a){ const o=a&&a.order; if(!o) return ''; const el=Math.r
 function renderOrderChip(){ document.querySelectorAll('.fo-host').forEach(el=>{ el.innerHTML=orderChipHTML(S.st&&S.st.active); }); }
 
 (function(){ const s=document.createElement('style'); s.textContent=`
-.fo-host:empty{display:none}.fo-host{margin:8px 0}
+.fo-host:empty{display:none}.fo-host{margin:8px 0}.beat-castillo_seat .bt-in{border-left-color:#c23a2b}
 .fo-chip{display:flex;align-items:center;gap:10px;border:1px solid #6b4e1a;background:rgba(224,178,74,.1);border-radius:12px;padding:10px 14px;font-size:14px}
 .fo-chip b{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#e0b24a}.fo-chip span{flex:1}.fo-chip i{font-style:normal;color:#e0b24a}
 .fo-chip.done{border-color:#2f5a2a;background:rgba(124,191,111,.1)}.fo-chip.done b{color:#7cbf6f}.fo-chip.missed{border-color:#6b2a20;background:rgba(229,83,61,.1)}.fo-chip.missed b{color:#e5533d}`; document.head.appendChild(s); })();
+
+/* Castillo rides in your right seat in chapter 4, so that line isn't a phone call */
+WHO.castillo_seat = ['Castillo, in the right seat', ...WHO.castillo.slice(1)];
+setTimeout(()=>{ try{ if(typeof CHAR_VOICE!=='undefined' && CHAR_VOICE.castillo) CHAR_VOICE.castillo_seat=CHAR_VOICE.castillo; if(typeof PRO_VOICE!=='undefined') PRO_VOICE.castillo_seat=PRO_VOICE.castillo; }catch(_){} }, 0);
 
 /* ---- the orders in the story ---- */
 (function(){
@@ -6040,7 +6044,7 @@ function renderOrderChip(){ document.querySelectorAll('.fo-host').forEach(el=>{ 
   add('CR3',{at:'cruise',who:'dez',text:`Slow down, rookie. Customs changes shift at four. Land after that and the new guy waves us through.`,opts:[
     {t:'Pull the power back',reply:`You bring the power back and watch the clock.`, order:{k:'slow', pct:0.8, sec:180, within:120, label:'Fly 20% slower for 3 minutes', ok:{text:`You land at five past four. The new officer barely looks up.`, heat:-3}, fail:{text:`You land at ten to four. The old officer is still on, and he remembers your face.`, heat:2}}},
     {t:'Land on time',reply:`"Your call," Dez says. He doesn't sound happy.`, heat:2}]});
-  add('CR4',{at:'cruise',who:'castillo',text:`Show me what my money buys. A steep turn. Forty-five degrees of bank, all the way around.`,opts:[
+  add('CR4',{at:'cruise',who:'castillo_seat',text:`Show me what my money buys. A steep turn. Forty-five degrees of bank, all the way around.`,opts:[
     {t:'Roll into a steep turn',reply:`You roll in and pull.`, order:{k:'steepturn', bank:40, deg:330, within:180, label:'Steep turn: 40° of bank, all the way around', ok:{text:`You roll out on your heading. Castillo nods once. "Good."`, power:4}, fail:{text:`Castillo watches you wobble through it and says nothing.`, power:-1}}},
     {t:'"Not with passengers, sir."',reply:`Castillo smiles. "Careful. I like that."`, power:1}]});
 })();
@@ -8896,7 +8900,13 @@ boot();
       comfort: a.job.pax && a.cab ? Math.round(a.cab.comfort) : null, feed: a.cab ? a.cab.log.slice(0,6).map(m=>({who:m.who,text:m.text})) : [],
       callout: (S.copilotLast && Date.now()-S.copilotLast.t<8000) ? {who:'Copilot', text:S.copilotLast.text} : (a.cab && a.cab.callout && Date.now()-a.cab.callout.t<20000 ? a.cab.callout : null),
       phase: (()=>{ try{ return a.started ? flightPhase(a).n : 'Before departure'; }catch(e){ return null; } })(),
-      orders: a.opened && a.scenPlan ? {title:a.scenPlan.title, text:a.scenPlan.text, sim:a.scenPlan.sim} : null }; }
+      orders: a.opened && a.scenPlan ? {title:a.scenPlan.title, text:a.scenPlan.text, sim:a.scenPlan.sim} : null,
+      beat: beatSnap(), order: a.order ? {label:a.order.label, state:a.order.state, chip:(document.querySelector('.fo-chip')||{}).textContent||a.order.label} : null,
+      vote: TWITCH.vote ? {left:Math.max(0,Math.ceil(TWITCH.vote.sec-(Date.now()-TWITCH.vote.t0)/1000)), tally:voteTally(TWITCH.vote)} : null }; }
+  /* the story moment on screen, so it can be answered from MSFS (toolbar panel) or a phone */
+  function beatSnap(){ const d=document.querySelector('.beat'); if(!d) return null; const k=(d.querySelector('.bt-k')||{}).textContent||'', t=(d.querySelector('.bt-t')||{}).textContent||'', r=(d.querySelector('.bt-r')||{}).textContent||'';
+    return { key:(k+t).slice(0,80), who:k, text:t, reply:r, opts:[...d.querySelectorAll('[data-act="beat-opt"]')].map(b=>b.textContent.replace(/^\d/,'').replace(/ \d+%$/,'').trim()) }; }
+  if(twNative.onCompanionBeat) twNative.onCompanionBeat(m=>{ const d=document.querySelector('.beat'); if(!d || !m) return; const now=beatSnap(); if(!now || now.key!==m.key) return; const b=d.querySelectorAll('[data-act="beat-opt"]')[Number(m.i)]; if(b) b.click(); });
   setInterval(()=>{ try{ twNative.pushState(JSON.stringify(snap())); }catch(e){} }, 1500);
   twNative.onCompanionCk(k=>{ const a=S.st&&S.st.active; if(!a) return; a.ck=a.ck||{p:0,done:{}}; a.ck.done[k]=!a.ck.done[k]; if(k.startsWith('4-') && !a.started){ a.started=Date.now(); simArm(); } save(); S.keepScroll=true; render(); });
   let info=null; twNative.companionInfo().then(i=>{ info=i; });

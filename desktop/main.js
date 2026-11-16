@@ -100,6 +100,7 @@ function startCompanion(){
   http.createServer((req,res)=>{
     if(req.url.split('?')[0]==='/panel'){ res.writeHead(200,{'content-type':'text/html; charset=utf-8','cache-control':'no-store'}); return res.end(panelPage); }
     if(req.url.split('?')[0]==='/state'){ res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'}); return res.end(companionState); }
+    if(req.url==='/beat' && req.method==='POST'){ let b=''; req.on('data',c=>{ b+=c; if(b.length>1000) req.destroy(); }); req.on('end',()=>{ try{ const m=JSON.parse(b); if(typeof m.key==='string' && Number.isInteger(m.i) && m.i>=0 && m.i<6 && mainWin) mainWin.webContents.send('companion-beat', {key:m.key.slice(0,80), i:m.i}); }catch(e){} res.writeHead(204); res.end(); }); return; }
     if(req.url==='/ck' && req.method==='POST'){ let b=''; req.on('data',c=>{ b+=c; if(b.length>1000) req.destroy(); }); req.on('end',()=>{ try{ const k=JSON.parse(b).k; if(/^\d+-\d+$/.test(k) && mainWin) mainWin.webContents.send('companion-ck', k); }catch(e){} res.writeHead(204); res.end(); }); return; }
     res.writeHead(200,{'content-type':'text/html; charset=utf-8'}); res.end(page);
   }).on('error',()=>{}).listen(4747,'0.0.0.0');

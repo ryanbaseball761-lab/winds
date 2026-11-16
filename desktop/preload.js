@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('twNative', {
   storms: () => ipcRenderer.invoke('storms'),
   pushState: (j) => ipcRenderer.send('companion-state', j),
   onCompanionCk: (fn) => ipcRenderer.on('companion-ck', (_e,k) => fn(k)),
+  onCompanionBeat: (fn) => ipcRenderer.on('companion-beat', (_e,m) => fn(m)),
   companionInfo: () => ipcRenderer.invoke('companion-info'),
   flightLog: (name, text) => ipcRenderer.invoke('flight-log', name, text),
   openFolder: (sub) => ipcRenderer.invoke('open-folder', sub),

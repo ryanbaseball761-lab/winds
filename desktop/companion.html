@@ -23,12 +23,14 @@ function draw(){
   const P=S.phases||[]; const cur = ph==null ? S.cur : ph; const p=P[cur]||{items:[]};
   app.innerHTML=`<div><h1>${esc(S.job.from)} → ${esc(S.job.to)}</h1><p class="mut">${esc(S.job.title)} · ${esc(S.job.ac)}</p></div>
   ${S.callout?`<div class="callout">${esc(S.callout.who)}: ${esc(S.callout.text)}</div>`:''}
+  ${S.beat?`<div class="card beat"><div class="mut">${esc(S.beat.who||'Story')}</div><p>${esc(S.beat.text)}</p>${S.beat.reply?`<p class="mut"><i>${esc(S.beat.reply)}</i></p>`:''}${(S.beat.opts||[]).map((o,i)=>`<button class="ck" data-b="${i}">${esc(o)}${S.vote&&S.vote.tally?` · ${S.vote.tally[i]||0} votes`:''}</button>`).join('')}${S.vote?`<p class="mut">Twitch chat is voting · ${S.vote.left}s</p>`:''}</div>`:''}
+  ${S.order?`<div class="callout">${S.order.state==='active'?'Order':S.order.state==='ok'?'Done':'Missed'}: ${esc(S.order.chip||S.order.label)}</div>`:''}
   ${S.live?`<div class="inst"><div><b>${S.live.ias}</b><span>knots</span></div><div><b>${S.live.alt}</b><span>feet</span></div><div><b>${S.live.vs>0?'+':''}${S.live.vs}</b><span>fpm</span></div><div><b>${S.live.togo}</b><span>nm to go</span></div></div>`:'<p class="mut">MSFS not connected. Checklist still works.</p>'}
   <div class="card"><div class="phases">${P.map((x,i)=>`<button class="${i===cur?'on':''}" data-p="${i}">${x.all?'✓ ':''}${esc(x.n)}</button>`).join('')}</div>
    ${p.items.map((t,j)=>`<button class="ck ${p.done[j]?'on':''}" data-k="${cur}-${j}"><span class="bx">${p.done[j]?'✓':''}</span><span>${esc(t)}</span></button>`).join('')}</div>
   ${S.comfort!=null?`<div class="card"><div class="mut">Passenger comfort ${S.comfort}/100</div><div class="meter"><i style="width:${S.comfort}%"></i></div></div>`:''}
   ${S.feed&&S.feed.length?`<div class="card"><div class="mut">Cabin &amp; radio</div><ul class="feed">${S.feed.map(m=>`<li><b>${esc(m.who)}</b>${esc(m.text)}</li>`).join('')}</ul></div>`:''}`;
 }
-app.addEventListener('click', async e=>{ const p=e.target.closest('[data-p]'); if(p){ ph=Number(p.dataset.p); draw(); return; } const c=e.target.closest('[data-k]'); if(c){ await fetch('/ck',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({k:c.dataset.k})}); setTimeout(tick,250); } });
+app.addEventListener('click', async e=>{ const bb=e.target.closest('[data-b]'); if(bb && S.beat){ bb.disabled=true; await fetch('/beat',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({key:S.beat.key,i:Number(bb.dataset.b)})}); setTimeout(tick,250); return; } const p=e.target.closest('[data-p]'); if(p){ ph=Number(p.dataset.p); draw(); return; } const c=e.target.closest('[data-k]'); if(c){ await fetch('/ck',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({k:c.dataset.k})}); setTimeout(tick,250); } });
 setInterval(tick,2000); tick();
 </script></body></html>

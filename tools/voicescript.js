@@ -3,7 +3,7 @@
 // Record each line as art/voice/<id>.mp3 and add the id to art/voice/index.json ({"lines":[...]}).
 const {chromium}=require('playwright'),fs=require('fs'),path=require('path');
 (async()=>{ const b=await chromium.launch(); const p=await b.newPage(); await p.goto('file://'+path.join(__dirname,'..','index.html')); await p.waitForTimeout(900);
-const rows=await p.evaluate(()=>{ const out=new Map(); const nm=k=>CAST[k]?CAST[k].n:k==='self'?'You (thinking)':k==='radio'?'Radio / ATC':k;
+const rows=await p.evaluate(()=>{ const out=new Map(); const nm=k=>(k=String(k||'').replace(/_seat$/,''), CAST[k])?CAST[k].n:k==='self'?'You (thinking)':k==='radio'?'Radio / ATC':k;
   const add=(who,text,where,kind)=>{ if(!who||!text) return; text=String(text); const spoken=kind==='beat'?text.split('|')[0]:text; const id=voKey(spoken); if(!out.has(id)) out.set(id,{id,who:nm(who),line:spoken.replace(/"/g,''),where,kind}); };
   // every flag on, none on, and each flag alone: enough to reach every variant of the lines that change with earlier choices
   const FL=new Set(); Object.values(DYN||{}).concat(Object.values(PRO_DYN||{})).concat(Object.values(BEATS).flat()).forEach(f=>{ if(typeof f==='function') (f.toString().match(/f\.([a-zA-Z]+)/g)||[]).forEach(x=>FL.add(x.slice(2))); });
