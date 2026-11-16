@@ -154,9 +154,18 @@ function spawnUrgent(force){
 
 /* ---------- story and checkride flights ---------- */
 
-/* Which of a chapter's aircraft you can fly it in right now (the one loaded in MSFS first). */
+/* A chapter is written for certain aircraft, but any aircraft in your hangar that fills the same role works:
+   same class (a light single, a business jet, an airliner…), enough seats, and the range for the trip.
+   That includes payware and mods you've added in the Hangar ("Add an aircraft"). */
+function storyRoleClasses(m){ return [...new Set(m.ac.map(k=>AC[k]&&AC[k].cls).filter(Boolean))]; }
+function storyRoleFits(st, m, k){ const a=AC[k]; if(!a || m.ac.includes(k)) return false; if(!storyRoleClasses(m).includes(a.cls)) return false;
+  if((a.pax||0) < Math.min(m.pax||0, Math.max(...m.ac.map(x=>AC[x]?AC[x].pax:0)))) return false;
+  const d = m.local ? 0 : distNm(AP[m.from], AP[m.to]); return !a.range || a.range >= d; }
+function storyRoleName(m){ const n={ga:'light single',hp:'high-performance single',twin:'twin',turbo:'turboprop',jet:'business jet',regional:'regional airliner',airliner:'airliner',widebody:'widebody airliner',stol:'bush plane',bush:'utility plane',amph:'seaplane'}; return storyRoleClasses(m).map(c=>n[c]||c).join(' or '); }
+/* Which aircraft you can fly a chapter in right now (the one loaded in MSFS first, then the ones it was written for). */
 function storyAircraft(st, m){
-  const list = m.ac.filter(k=>(m.lend ? !!st.hangar[k] : canFly(st,k)) && apOk(st,m.to,k) && apOk(st,m.from,k)).filter(k=>!isGrounded(st,k));
+  const own = Object.keys(AC).filter(k=>st.hangar[k] && storyRoleFits(st,m,k));
+  const list = m.ac.concat(own).filter(k=>((m.lend && m.ac.includes(k)) ? !!st.hangar[k] : canFly(st,k)) && apOk(st,m.to,k) && apOk(st,m.from,k)).filter(k=>!isGrounded(st,k));
   const L=S.simState==='live'?loadedAircraft():{}; return (L.id && list.includes(L.id)) ? [L.id, ...list.filter(x=>x!==L.id)] : list; }
 
 /* The flight for a story chapter. Earlier choices can change the chapter (dynM). */

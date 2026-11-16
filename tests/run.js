@@ -94,5 +94,9 @@ const results=[]; const ok=(n,c,info)=>{ results.push([n,!!c,info||'']); };
       Date.now=realNow; S.simState='off'; st.active=null; return out; });
     ok('flight orders are judged from the sim (climb, stay low, steep turn)', r.climbOk==='ok'&&r.climbFail==='fail'&&r.lowOk==='ok'&&r.turnOk==='ok'&&r.turnShallow==='fail', JSON.stringify(r));
     ok('Act 1 has flyable story choices (CR2, CR3, CR4)', await q.evaluate(()=>['CR2','CR3','CR4'].every(id=>(BEATS[id]||[]).some(b=>b&&b.opts&&b.opts.some(o=>o.order))))); await q.close(); }
+  // 13. your own aircraft can fly story chapters written for the same role
+  { const q=await page(); const r=await q.evaluate(()=>{ const st=S.st; st.customAc={X_PC24:{n:'Pilatus PC-24',cls:'jet',pax:8,useful:4000,cruise:425,burn:900,fuel:'jeta',range:2000,rwy:3000,xw:25,op:1600,req:['JET'],custom:true}}; registerCustomAc(st); st.ratings.JET=true;
+      const jet=storyAircraft(st, mainChapters().find(x=>x.id==='CR6')), ga=storyAircraft(st, mainChapters().find(x=>x.id==='CR2')); return {jet:jet.includes('X_PC24'), ga:!ga.includes('X_PC24')}; });
+    ok('a custom business jet can fly the jet chapters (and not the Cessna ones)', r.jet&&r.ga, JSON.stringify(r)); await q.close(); }
   }catch(err){ ok('suite crashed', false, err.message); }
   await b.close(); let fail=0; for(const [n,good,info] of results){ console.log((good?'ok   ':'FAIL ')+n+(good?'':'  -> '+info)); if(!good) fail++; } console.log(fail?`${fail} FAILED`:'ALL PASSED'); process.exit(fail?1:0); })();

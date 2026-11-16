@@ -9,7 +9,8 @@ const CLS_TEMPLATE = {
   turbo:{pax:8, useful:3000, cruise:260, burn:450, fuel:'jeta',  range:1500, rwy:3000, xw:25, op:800,  req:['TURB','IR']},
   jet:  {pax:6, useful:4000, cruise:400, burn:900, fuel:'jeta',  range:1800, rwy:4000, xw:25, op:1600, req:['JET']},
   regional:{pax:70, useful:15000, cruise:300, burn:1500, fuel:'jeta', range:1200, rwy:4500, xw:30, op:3000, req:['ATP']},
-  airliner:{pax:160,useful:40000, cruise:450, burn:5400, fuel:'jeta', range:3000, rwy:6500, xw:33, op:6000, req:['ATP']}
+  airliner:{pax:160,useful:40000, cruise:450, burn:5400, fuel:'jeta', range:3000, rwy:6500, xw:33, op:6000, req:['ATP']},
+  widebody:{pax:350,useful:120000, cruise:490, burn:22000, fuel:'jeta', range:7000, rwy:9000, xw:33, op:16000, req:['ATP']}
 };
 function registerCustomAc(st){
   st.customAc = st.customAc || {};

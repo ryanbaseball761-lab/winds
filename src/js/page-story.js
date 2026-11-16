@@ -22,7 +22,7 @@ function playAction(st, m, availSet, n){
     if(st.active) return {btn:`<button class="btn" data-act="nav" data-v="flight">Finish your current flight first</button>`, note:''};
     if(s.k==='ready') return {btn:`<button class="btn action big" data-act="accept-story" data-id="${m.id}">▶ Play chapter ${n}</button>`, note:''};
     if(s.k==='travel'){ const d=deadheadCost(st,s.at); return {btn:`<button class="btn action big" data-act="story-go" data-id="${m.id}" ${st.cash<d.cost?'disabled':''}>▶ Play chapter ${n}</button>`, note: d.cost ? `Includes a ${money(d.cost)} seat to ${esc(s.at)}.` : `You'll be flown to ${esc(s.at)} for free first.`}; }
-    if(s.k==='aircraft') return {btn:`<button class="btn" data-act="nav" data-v="hangar">Open the Hangar</button>`, note:`Needs one of these in your MSFS hangar: ${m.ac.map(k=>AC[k]?AC[k].n:k).join(', ')}.`};
+    if(s.k==='aircraft') return {btn:`<button class="btn" data-act="nav" data-v="hangar">Open the Hangar</button>`, note:`Written for the ${m.ac.map(k=>AC[k]?AC[k].n:k).join(', ')}. Any ${storyRoleName(m)} in your hangar with ${m.pax||1}+ seats works too, including payware and mods (Hangar → Bring your own aircraft).`};
     if(s.k==='locked'){ const need=((m.req||{}).ratings||[]).filter(r=>!st.ratings[r]); const btns=chapterAction(st, m, availSet, false);
       return {btn: btns || `<button class="btn" data-act="nav" data-v="pilot">Open Pilot</button>`, note: need.length ? `Needs your ${need.map(r=>RATINGS[r].n).join(' and ')} first.` : `Finish the previous chapter first.`}; }
     return {btn:'', note:''}; })();
