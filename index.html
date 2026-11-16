@@ -3803,6 +3803,7 @@ window.addEventListener('error', e=>logErr(`${e.message} @ ${(e.filename||'').sp
 window.addEventListener('unhandledrejection', e=>logErr(`Promise: ${e.reason && (e.reason.message||e.reason.code||e.reason)}`));
 function buildReport(note){ const st=S.st||{}; return JSON.stringify({ app:'Trade Winds', version:TW_VERSION, standalone:!!window.TW_STANDALONE, at:new Date().toISOString(), note,
   sim:{state:S.simState, bridge:S.sim&&S.sim.version, connected:S.sim&&S.sim.connected, aircraft:S.sim&&S.sim.aircraft&&S.sim.aircraft.title},
+  feedback:(st.feedback||[]).slice(-30),
   career:{day:st.day, loc:st.loc, flights:st.flights, minutes:st.minutes, difficulty:st.difficulty, active:st.active?{title:st.active.job.title, ac:st.active.job.ac, from:st.active.job.from, to:st.active.job.to}:null},
   errors:errLog(), screen:`${innerWidth}x${innerHeight}`, ua:navigator.userAgent }, null, 2); }
 document.addEventListener('click', async e=>{
@@ -6138,6 +6139,24 @@ document.addEventListener('click', async e=>{ const b=e.target.closest('[data-ac
   const blob=await new Promise(r=>drawEndingCard(S.st).toBlob(r,'image/png')); const name=`trade-winds-ending-${crime(S.st).ending}.png`;
   if(b.dataset.v==='copy'){ try{ await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]); toast('Ending card copied. Paste it anywhere.'); }catch(_){ toast('Copy isn\'t allowed here. Use Save image instead.'); } return; }
   try{ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); }catch(_){ toast('Saving isn\'t available in this view.'); } });
+/* ===================== BETA FEEDBACK =====================
+   During the beta, every story chapter's result screen asks one quick question: how was that chapter?
+   Answers stay in the save and go into "Report a problem" exports, so testers can send everything at once.
+   BETA.links: where the Feedback buttons point (fill in the Discord invite / form when they exist).
+   Set BETA.on = false for the 1.0 release. */
+const BETA = { on:true, links:{ discord:'', form:'' } };
+
+function betaFeedbackHTML(st){ const L=st.last; if(!BETA.on || !L || !L.job || L.job.kind!=='story') return '';
+  const id=L.job.story, had=(st.feedback||[]).find(f=>f.ch===id && f.v===TW_VERSION);
+  if(had) return `<section class="panel row between beta-fb"><p class="small muted">Thanks: your note on this chapter is saved and goes with your next report.</p>${betaLinksHTML()}</section>`;
+  return `<section class="panel stack beta-fb"><div class="row between"><div><p class="label">Beta</p><h3>How was this chapter?</h3></div>${betaLinksHTML()}</div>
+    <div class="row" style="gap:6px;flex-wrap:wrap">${[['great','Loved it'],['ok','It was fine'],['confusing','Confusing'],['bad','Didn\'t like it']].map(([k,l])=>`<button class="btn sm" data-act="beta-fb" data-v="${k}">${l}</button>`).join('')}</div>
+    <label class="field"><span>Anything to add? (optional)</span><input id="beta-note" maxlength="400" placeholder="What confused you, what you loved, what broke…"></label></section>`; }
+function betaLinksHTML(){ const L=BETA.links; return (L.discord||L.form) ? `<div class="row" style="gap:6px">${L.discord?`<a class="btn sm" href="${esc(L.discord)}" target="_blank" rel="noopener">Beta Discord</a>`:''}${L.form?`<a class="btn sm" href="${esc(L.form)}" target="_blank" rel="noopener">Feedback form</a>`:''}</div>` : ''; }
+document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="beta-fb"]'); if(!b||!S.st||!S.st.last) return; const st=S.st, L=st.last;
+  const note=((document.getElementById('beta-note')||{}).value||'').trim().slice(0,400);
+  st.feedback=(st.feedback||[]).concat([{ch:L.job.story, title:L.job.title, r:b.dataset.v, note, grade:L.res&&L.res.grade, v:TW_VERSION, t:Date.now()}]).slice(-60);
+  save(); toast('Thanks! Saved with your career; it goes with your next report.'); S.keepScroll=true; render(); });
 /* ===================== CUTSCENES: illustrated backdrops, ambient sound, and a "previously on" recap ===================== */
 /* ---- 2. backdrops (1600x900 SVG, noir palette) ---- */
 const SCENES = {
@@ -7844,7 +7863,7 @@ function resultView(){
         <div class="row">${f && f.verified?`<span class="chip sea">Verified by MSFS · ${f.simFpm} fpm</span>`:''}${passFail}${out.pay?`<span class="chip good">+${money(out.pay)}</span>`:''}${out.costs?`<span class="chip bad">−${money(out.costs)}</span>`:''}<span class="chip">Reputation ${st.reputation}/100</span></div>
       </div></div>${crimeChips?`<div class="row" style="gap: 6px; margin-top: 8px; flex-wrap: wrap;">${crimeChips}</div>`:''}</section>
     ${resultDeltas(st)}${resultHeatWarning(st)}${resultNextBar(st)}
-    ${choice}
+    ${choice}${betaFeedbackHTML(st)}
     <details class="calm-more res-more"><summary>Flight details: score, passengers, notes and share card</summary><div class="calm-more-in">
       <div class="row" style="justify-content:flex-end">${NOTE_BTN}</div>
       ${debriefSummary(L)}

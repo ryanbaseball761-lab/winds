@@ -57,7 +57,7 @@ function resultView(){
         <div class="row">${f && f.verified?`<span class="chip sea">Verified by MSFS · ${f.simFpm} fpm</span>`:''}${passFail}${out.pay?`<span class="chip good">+${money(out.pay)}</span>`:''}${out.costs?`<span class="chip bad">−${money(out.costs)}</span>`:''}<span class="chip">Reputation ${st.reputation}/100</span></div>
       </div></div>${crimeChips?`<div class="row" style="gap: 6px; margin-top: 8px; flex-wrap: wrap;">${crimeChips}</div>`:''}</section>
     ${resultDeltas(st)}${resultHeatWarning(st)}${resultNextBar(st)}
-    ${choice}
+    ${choice}${betaFeedbackHTML(st)}
     <details class="calm-more res-more"><summary>Flight details: score, passengers, notes and share card</summary><div class="calm-more-in">
       <div class="row" style="justify-content:flex-end">${NOTE_BTN}</div>
       ${debriefSummary(L)}

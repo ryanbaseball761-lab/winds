@@ -48,6 +48,7 @@ window.addEventListener('error', e=>logErr(`${e.message} @ ${(e.filename||'').sp
 window.addEventListener('unhandledrejection', e=>logErr(`Promise: ${e.reason && (e.reason.message||e.reason.code||e.reason)}`));
 function buildReport(note){ const st=S.st||{}; return JSON.stringify({ app:'Trade Winds', version:TW_VERSION, standalone:!!window.TW_STANDALONE, at:new Date().toISOString(), note,
   sim:{state:S.simState, bridge:S.sim&&S.sim.version, connected:S.sim&&S.sim.connected, aircraft:S.sim&&S.sim.aircraft&&S.sim.aircraft.title},
+  feedback:(st.feedback||[]).slice(-30),
   career:{day:st.day, loc:st.loc, flights:st.flights, minutes:st.minutes, difficulty:st.difficulty, active:st.active?{title:st.active.job.title, ac:st.active.job.ac, from:st.active.job.from, to:st.active.job.to}:null},
   errors:errLog(), screen:`${innerWidth}x${innerHeight}`, ua:navigator.userAgent }, null, 2); }
 document.addEventListener('click', async e=>{
