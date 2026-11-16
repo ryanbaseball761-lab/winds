@@ -7,7 +7,7 @@ const ICON_SEARCH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
 const ICON_GEAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
 
 /* The "Right now" button in the top bar: the one thing to do next. Hidden on the Flight page, where it would repeat itself. */
-function nowHTML(st){ const r=rightNow(st); if(!r) return ''; return `<div class="now-pill" title="${esc(r.t)}"${S.view==='flight'?' style="display: none;"':''}><span>${esc(r.t)}</span><button class="btn sm action" data-act="${r.act}" ${r.v?`data-v="${r.v}"`:''} ${r.id?`data-id="${r.id}"`:''}>${esc(r.b)}</button></div>`; }
+function nowHTML(st){ const r=rightNow(st); if(!r) return ''; return `<div class="now-pill" title="${esc(r.t)}"${(S.view==='flight'||S.view==='story')?' style="display: none;"':''}><span>${esc(r.t)}</span><button class="btn sm action" data-act="${r.act}" ${r.v?`data-v="${r.v}"`:''} ${r.id?`data-id="${r.id}"`:''}>${esc(r.b)}</button></div>`; }
 
 /* The status chips on the right of the top bar. */
 function hudHTMLTop(st){
@@ -24,31 +24,30 @@ function hudHTMLTop(st){
 
 function band(){
   const st=S.st; const rk=rankOf(st); const c=crime(st); const live=S.simState==='live';
-  const emp = st.company ? esc(st.company.name) : 'Coral Wing Air';
-  const meta = VIEW_META[S.view] || [Object.fromEntries(VIEWS)[S.view]||'',''];
   const cur = navGroup(S.view); const isCur = g => !!(cur && cur.v===g.v);
   const ready = storyAvailable(st).filter(m=>MAIN_ORDER.includes(m.arc)).length;   // chapters you can play now
-  const urgent = urgentBanner();
-  /* under your name: your story rank once you work for Castillo, your airline rank before that */
-  const rankLine = c.on ? `${esc(crimeRank(c))} · Power ${c.power}` : `${esc(rk.name)} · ${emp}`;
-  const sideItem = (g,i) => `<button class="snav ${isCur(g)?'on':''}" data-act="nav" data-v="${g.v}" ${isCur(g)?'aria-current="page"':''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${g.ico}</svg><span class="lbl">${g.n}</span>${g.v==='story'&&ready?`<span class="nb" title="${ready} chapter${ready>1?'s':''} ready to play">${ready}</span>`:''}<kbd>${i+1}</kbd></button>`;
-  const railItem = g => `<button class="${isCur(g)?'on':''}" data-act="nav" data-v="${g.v}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">${g.ico}</svg><span>${g.n}</span></button>`;
-  return `<aside class="side" aria-label="Main menu">
-    <div class="side-brand">${LOGO}<div><b>Trade Winds</b><span>Every cargo has a price</span></div></div>
-    <div class="side-pilot">
-      <div class="pav">${esc(initials(st.pilot.name))}</div>
-      <div style="min-width:0"><b>${esc(st.pilot.name)}</b><span>${rankLine}</span>
-        <div class="xp" title="${rk.next?`Next rank: ${rk.next} at ${rk.nextH} h`:'Top rank'}"><i style="width:${rk.pct.toFixed(0)}%"></i></div>
-        <small>${fmtH(st.minutes)} logged${rk.next?` · ${esc(rk.next)} at ${rk.nextH}&nbsp;h`:''}</small></div>
+  const urgent = urgentBanner(); const unread=S.notifs.length-S.notifSeen;
+  const rankLine = c.on ? `${esc(crimeRank(c))} · Power ${c.power}` : `${esc(rk.name)}`;
+  const tab = (g,i) => `<button class="cb-tab ${isCur(g)?'on':''}" data-act="nav" data-v="${g.v}" ${isCur(g)?'aria-current="page"':''} title="${g.n} (${i+1})"><span>${g.n}</span>${g.v==='story'&&ready?`<i class="cb-nb" title="${ready} chapter${ready>1?'s':''} ready to play">${ready}</i>`:''}</button>`;
+  const ro = (k,v,cls='') => `<span class="cb-ro ${cls}"><small>${k}</small><b class="mono">${v}</b></span>`;
+  const a=st.active;
+  const meta = VIEW_META[S.view] || [Object.fromEntries(VIEWS)[S.view]||'',''];
+  return `<header class="topbar cbar"><h1 class="cb-h1">${esc(meta[0]||'Trade Winds')}</h1>
+    <div class="cb-row">
+      <button class="cb-brand" data-act="nav" data-v="story" aria-label="Trade Winds: Story">${LOGO}<b>Trade Winds</b></button>
+      <nav class="cb-tabs" aria-label="Main menu">${NAV5.map(tab).join('')}</nav>
+      <div class="hud cb-hud">
+        ${ro('Loc',esc(st.loc))}${ro('Day '+st.day,`${dateTxt(st.day)} ${hhmm(st.clock)}`,'cb-time')}${ro('Cash',money(st.cash),'cash')}
+        ${c.on?`<button class="cb-ro heat-chip ${c.heat>=80?'hot':c.heat>=60?'warm':'cool'}" data-act="nav" data-v="story" title="${esc(CX_TIPS.Heat)}"><small>Heat</small><b class="mono">${c.heat}</b></button>`:''}
+        ${c.dirty>0?`<button class="cb-ro dirty-chip" data-act="nav" data-v="money" title="Dirty cash from network runs. Launder it on the Money page."><small>Dirty</small><b class="mono">${money(c.dirty)}</b></button>`:''}
+        <span class="cb-ro cb-sim ${live?'on':''}" title="${live?'MSFS is connected':'MSFS is not connected'}"><small>Sim</small><b class="mono"><i class="simdot ${live?'on':''}"></i><span id="sim-band">${live?'MSFS live':'Sim not connected'}</span></b></span>
+        <button class="cb-ic bell" data-act="bell" title="Notifications" aria-label="Notifications">${ICON_BELL}<b${unread>0?'':' style="display:none"'}>${unread>9?'9+':unread}</b></button><button class="cb-ic cmd-btn" data-act="cmd" title="Search (Ctrl+K)" aria-label="Search">${ICON_SEARCH}</button><button class="cb-ic cmd-btn gear-btn" title="Settings" aria-label="Settings" data-act="open-settings">${ICON_GEAR}</button>
+      </div>
     </div>
-    <nav class="side-nav" aria-label="Main menu">${NAV5.map(sideItem).join('')}</nav>
-    <div class="side-foot"><span class="simdot ${live?'on':''}"></span><span id="sim-band">${live?'MSFS live':'Sim not connected'}</span><span class="sep">·</span><span id="sync">${syncText()}</span></div>
-  </aside>
-  <header class="topbar">
-    <div class="tb-in">
-      <div class="tb-title"><div class="tb-brand">${LOGO}<b>Trade Winds</b></div><h1>${esc(meta[0])}</h1><p>${esc(meta[1])}</p></div>
-      ${hudHTMLTop(st)}
+    <div class="cb-sub">
+      <span class="cb-pilot"><b>${esc(st.pilot.name)}</b><span>${rankLine}</span><span class="cb-xp" title="${rk.next?`Next rank: ${rk.next} at ${rk.nextH} h`:'Top rank'}"><i style="width:${rk.pct.toFixed(0)}%"></i></span><small class="mono">${fmtH(st.minutes)}${rk.next?` / ${rk.nextH}&nbsp;h`:''}</small></span>
+      ${a?`<button class="cb-booked" data-act="nav" data-v="flight"><small>Booked</small><b class="mono">${esc(a.job.from)} → ${esc(a.job.local?a.job.from:a.job.to)}</b></button>`:''}
+      ${nowHTML(st)}<span id="sync" class="cb-sync">${syncText()}</span>
     </div>
-    <nav class="mrail" aria-label="Main menu (phone)">${NAV5.map(railItem).join('')}</nav>
   ${urgent?`<div class="urgent-host">${urgent}</div>`:''}</header>${S.view==='board' && !S.showResult ? callHTML(st) : ''}`;
 }
