@@ -23,7 +23,7 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="lau
 function achPopBase(a){ const d=document.createElement('div'); d.className='achpop'; d.innerHTML=`<span>Achievement</span><b>${esc(a.n)}</b><small>${esc(a.d)}</small>`; document.body.appendChild(d); try{ chimeUp&&chimeUp(); }catch(_){} setTimeout(()=>{ d.classList.add('out'); setTimeout(()=>d.remove(),500); }, 3800); }
 
 /* ---- 4 + 5. story page: trust with each person, your numbers, and replay any chapter's scenes ---- */
-document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="replay-ch"]'); if(!b) return; const m=CRIME.find(x=>x.id===b.dataset.id); if(m) playPrologue(m, ()=>{}); });
+document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="replay-ch"]'); if(!b) return; const m=CRIME.find(x=>x.id===b.dataset.id); if(m){ S._cutReplay=true; playPrologue(m, ()=>{}); } });
 
 /* ---- 6. settings: everything in one place, in sections ---- */
 document.addEventListener('change', e=>{ const b=e.target.closest('[data-act="ui-tog"]'); if(!b||!S.st) return; S.st.ui=S.st.ui||{}; S.st.ui[b.dataset.k]=!b.checked; save(); });

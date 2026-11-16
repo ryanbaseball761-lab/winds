@@ -85,7 +85,7 @@ window.addEventListener('click', e=>{ const b=e.target.closest('[data-act="accep
   e.stopImmediatePropagation(); e.preventDefault(); c.proSeen[id]=1; save();
   playPrologue(m, ()=>{ S._proPass=true; const again=document.querySelector(`[data-act="${b.dataset.act}"][data-id="${id}"]`)||b; again.click(); S._proPass=false; S.keepScroll=false; try{ window.scrollTo(0,0); }catch(_){} }); }, true);
 /* replay from the flight screen */
-document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="pro-replay"]')||!S.st||!S.st.active) return; const m=CRIME.find(x=>x.id===S.st.active.job.story); if(m) playPrologue(m, ()=>{}); });
+document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="pro-replay"]')||!S.st||!S.st.active) return; const m=CRIME.find(x=>x.id===S.st.active.job.story); if(m){ S._cutReplay=true; playPrologue(m, ()=>{}); } });
 
 (function(){ const css=`
 .cut{position:fixed;inset:0;z-index:10000;background:#000;opacity:0;transition:opacity .6s;overflow:hidden;cursor:pointer;color:#ece6da}

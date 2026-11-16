@@ -29,23 +29,33 @@ function cutShot(s, el, i, opt){
 }
 function cutEnd(el, opt){ try{ ambStop(); }catch(_){} try{ MUSIC.stop(); }catch(_){} }
 
+/* Never show the same scene twice in a row by accident: if the same scene is already on screen, or finished in the
+   last 20 seconds, a second call is ignored (replay buttons pass opt.replay to force it). A different scene that
+   arrives while one is playing waits for it to finish instead of stacking on top. */
+const CUT_RECENT = {};
+function cutSig(shots){ return (shots||[]).slice(0,3).map(s=>Array.isArray(s)?s[2]:s&&s.title||'').join('|').slice(0,200); }
 function cutscene(opt){
+  const sig=cutSig(opt.shots);
+  const forced=opt.replay||S._cutReplay; S._cutReplay=false;
+  if(!forced){ if([...document.querySelectorAll('.cut')].some(c=>c.dataset.sig===sig)) return; if(CUT_RECENT[sig] && Date.now()-CUT_RECENT[sig]<20000) return; }
+  if(document.querySelector('.cut')){ const tries=(opt._wait||0)+1; if(tries<120){ setTimeout(()=>cutscene(Object.assign(opt,{_wait:tries})), 500); } return; }
+  CUT_RECENT[sig]=Date.now();
   try{ const a=S.st&&S.st.active, L=S.st&&S.st.last; const wx=(a&&a.job.wx)||(L&&L.job&&L.job.wx)||{}; if(/wave|storm|shower|rain/i.test(String(wx.k||wx.id||wx.type||wx.name||''))) opt.rain=true; }catch(_){}   // rain behind scenes on stormy flights
   const shots=opt.shots.slice(); const col=opt.col||'#c8962a';
-  const el=document.createElement('div'); el.className='cut'; el.style.setProperty('--arc', col);
+  const el=document.createElement('div'); el.className='cut'; el.dataset.sig=sig; el.style.setProperty('--arc', col);
   el.innerHTML=`<div class="cut-bg">${opt.art||''}</div><div class="cut-shade"></div><div class="cut-bar top"></div><div class="cut-bar bot"></div>
     <div class="cut-stage"></div><div class="cut-ctl"><span class="cut-hint">Click or press Space</span><button class="cut-skip">Skip</button></div>`;
   document.body.appendChild(el); requestAnimationFrame(()=>el.classList.add('on')); cutStart(el, opt);
   const stage=el.querySelector('.cut-stage'); let i=-1, typing=null, full='', txt=null, waiting=false, ended=false;
   const stopVoice=()=>{ try{ speechSynthesis.cancel(); }catch(_){} };
   const say=(k,t)=>{ if(!(typeof voiceOn==='function'&&voiceOn())||!window.speechSynthesis) return; const v=PRO_VOICE[k]||[false,0.95,0.9]; try{ stopVoice(); const u=new SpeechSynthesisUtterance(String(t).replace(/"/g,'')); const vv=pickVoice(v[0], k==='castillo'||k==='medina'?1:0); if(vv) u.voice=vv; u.rate=v[1]; u.pitch=v[2]; u.volume=voiceVol(); speechSynthesis.speak(u); }catch(_){} };
-  const end=()=>{ if(ended) return; ended=true; cutEnd(el, opt); clearInterval(typing); stopVoice(); document.removeEventListener('keydown', key, true); el.classList.remove('on'); setTimeout(()=>{ el.remove(); opt.onEnd&&opt.onEnd(); }, 600); };
+  const end=()=>{ if(ended) return; ended=true; CUT_RECENT[sig]=Date.now(); cutEnd(el, opt); clearInterval(typing); stopVoice(); document.removeEventListener('keydown', key, true); el.classList.remove('on'); setTimeout(()=>{ el.remove(); opt.onEnd&&opt.onEnd(); }, 600); };
   const bg=()=>{ el.querySelector('.cut-bg').style.transform=`scale(${1.06+Math.max(0,i)*0.025}) translate(${(i%2?-1:1)*1.2}%, ${Math.max(0,i)*0.35}%)`; };
   const show=()=>{ i++; waiting=false; el.classList.remove('choosing','carding'); if(i>=shots.length){ end(); return; } const s=shots[i]; bg(); cutShot(s, el, i, opt);
     if(s.card){ el.classList.add('carding'); stage.innerHTML=`<div class="cut-title"><p>${esc(s.kicker||'')}</p><h1>${esc(s.title||'')}</h1>${s.sub?`<div class="cut-sub">${s.sub}</div>`:''}</div>`; txt=null; full=''; try{ whoosh&&whoosh(); }catch(_){} if(s.auto) setTimeout(()=>{ if(shots[i]===s) show(); }, s.auto); return; }
     if(s.choice){ el.classList.add('choosing'); waiting=true; stage.innerHTML=`<p class="cut-place">Your call</p><p class="cut-text cut-q">${esc(s.q)}</p><div class="cut-opts">${s.opts.map((o,k)=>`<button class="cut-opt" data-k="${k}" ${o.why?'disabled':''}>${esc(o.t)}${o.why?`<small>${esc(o.why)}</small>`:''}</button>`).join('')}</div>`; txt=null; full=''; return; }
     const [pl,k,t]=s; stage.innerHTML=`<p class="cut-place">${esc(pl||'')}</p><div class="cut-line in">${k&&CAST[k]?`<div class="cut-who">${avatar(k)}<b>${esc(CAST[k].n)}</b></div>`:''}<p class="cut-text ${k?'':'nar'}"></p></div>`;
-    txt=stage.querySelector('.cut-text'); full=k?`“${t}”`:t; let n=0; clearInterval(typing); const me=s; typing=setInterval(()=>{ n+=2; txt.textContent=full.slice(0,n); if(n>=full.length){ clearInterval(typing); if(cutAuto()){ clearTimeout(el._auto); el._auto=setTimeout(()=>{ if(shots[i]===me && !waiting) show(); }, 1800+full.length*28); } } }, 22); if(k) say(k,t); };
+    txt=stage.querySelector('.cut-text'); full=k?`“${t}”`:t; let n=0; clearInterval(typing); const me=s, box=txt; typing=setInterval(()=>{ if(!box || !box.isConnected){ clearInterval(typing); return; } n+=2; box.textContent=full.slice(0,n); if(n>=full.length){ clearInterval(typing); if(cutAuto()){ clearTimeout(el._auto); el._auto=setTimeout(()=>{ if(shots[i]===me && !waiting) show(); }, 1800+full.length*28); } } }, 22); if(k) say(k,t); };
   const next=()=>{ if(waiting) return; if(txt && txt.textContent.length<full.length){ clearInterval(typing); txt.textContent=full; return; } show(); };
   const key=e=>{ if(e.key===' '||e.key==='Enter'||e.key==='ArrowRight'){ e.preventDefault(); e.stopPropagation(); next(); } else if(e.key==='ArrowLeft'){ e.preventDefault(); e.stopPropagation(); if(!waiting){ let j=i-1; while(j>=0 && shots[j].card) j--; if(j>=0 && !shots.slice(j,i+1).some(x=>x.choice)){ clearInterval(typing); i=j-1; show(); } } } else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); skip(); } };
   /* Skip jumps to the next decision (decisions can't be skipped), or to the end */

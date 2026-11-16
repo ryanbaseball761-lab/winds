@@ -215,7 +215,7 @@ document.addEventListener('click', e=>{
     case 'done-result': S.showResult=false; S.busy.journalDone=false; S.busy.journalErr=''; go('board'); return;
     case 'show-last': S.showResult=true; render(); return;
     case 'ai-brief': aiBrief(); return;
-    case 'book-check': { const rid=b.dataset.r; const sel=document.getElementById('cr-'+rid); const acId=sel?sel.value:null; if(!acId) return; st.active={job:checkrideJob(st,rid,acId), accepted:Date.now()}; save(); S.showResult=false; go('flight'); return; }
+    case 'book-check': { const rid=b.dataset.r; const sel=document.getElementById('cr-'+rid); const acId=sel?sel.value:(checkrideAircraft(st,rid)[0]||null); if(!acId) return; st.active={job:checkrideJob(st,rid,acId), accepted:Date.now()}; save(); S.showResult=false; go('flight'); return; }
     case 'sell': S.confirm='sell-'+b.dataset.f; S.keepScroll=true; render(); return;
     case 'copy-save': { const ta=document.getElementById('save-text'); const t=ta.value; if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(()=>toast('Copied.')).catch(()=>{ ta.select(); toast('Press Ctrl+C to copy.'); }); } else { ta.select(); toast('Press Ctrl+C to copy.'); } return; }
     case 'import-save': { try{ const obj=JSON.parse(document.getElementById('save-text').value); if(!obj || !obj.pilot || !obj.ratings) throw 0; S.st=migrate(obj); save(); toast('Career restored.'); go('board'); }catch(err){ toast(`That text isn't a valid save.`); } return; }

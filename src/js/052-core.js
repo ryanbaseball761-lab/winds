@@ -11,7 +11,7 @@ function chapterAction(st, m, availSet, small){
   if(s.k==='aircraft') return `<button class="btn ${sz}" data-act="nav" data-v="hangar">Add an aircraft in the Hangar</button>`;
   if(s.k==='locked'){ const btns=[]; for(const r of ((m.req||{}).ratings||[])){ if(st.ratings[r]) continue; const cr=checkrideReady(st,r);
       if(st.cooldown && st.cooldown[r]!=null) btns.push(`<button class="btn ${sz}" data-act="signoff" data-r="${r}">Get signed off for ${esc(RATINGS[r].code||r)} and continue</button>`);
-      if(cr.ok) btns.push(`<button class="btn action ${sz}" data-act="nav" data-v="pilot">Take the ${esc(RATINGS[r].n)} checkride</button>`); }
+      if(cr.ok) btns.push(checkrideAircraft(st,r).length ? `<button class="btn action ${sz}" data-act="book-check" data-r="${r}">Book the ${esc(RATINGS[r].n)} checkride · ${money(feeFor(st,r))}</button>` : `<button class="btn ${sz}" data-act="nav" data-v="hangar">Add an aircraft for the ${esc(RATINGS[r].n)} checkride</button>`); }
     return btns.join(' '); }
   return ''; }
 
