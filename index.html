@@ -3754,7 +3754,7 @@ ALT_OUT.BO5 = st => st.story.flags.BO4==='a' ? {good:`De Vries closes his notebo
 /* Hartwell now follows The Buyout */
 (function(){ const h=STORY.find(m=>m.id==='HW1'); if(h && h.req) h.req.after='BO3'; })();
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.62.0';
+const TW_VERSION = '0.63.0';
 
 /* ---------- live map ---------- */
 function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
@@ -6805,6 +6805,7 @@ WHATS_NEW.unshift(['0.59','The flight timer no longer flickers between real time
 WHATS_NEW.unshift(['0.60','Hangar → MSFS connection explains how the Trade Winds app connects (no Claude setup steps), and touchdown grading ignores the sign of the reading.']);
 WHATS_NEW.unshift(['0.61','Airline: each route shows how many travelers it has and how many of your aircraft share them, and the DC-3 costs more to keep flying. Older MSFS Bridges now say "update to 1.5" instead of "Unknown tool". Audio code cleaned up.']);
 WHATS_NEW.unshift(['0.62','Release prep: a damaged save repairs itself (or the newest backup loads), a full disk no longer loses your progress silently, better contrast and keyboard access, and consistent US spelling (Licenses tab).']);
+WHATS_NEW.unshift(['0.63','Fly the story: some story moments now give you an order to fly (climb away, stay low, slow down, a steep turn for Castillo, a low pass), judged live from MSFS. Any aircraft in your hangar that fits the role can fly a chapter, Twitch chat can vote on your choices, you can share your ending, and the in-sim panel lets you answer story moments without alt-tabbing.']);
 /* ===================== RECORDED VOICE LINES =====================
    Story lines can be played from recorded audio instead of computer speech. Each spoken line has a stable id made
    from its words (voKey). Put recordings in art/voice/<id>.mp3 and list the ids in art/voice/index.json:

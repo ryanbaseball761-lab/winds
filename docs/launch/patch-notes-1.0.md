@@ -1,5 +1,15 @@
 # Trade Winds 1.0: patch notes (draft)
 
+## Fly the story
+- **Flight orders.** Some story moments ask you to fly something, and MSFS decides whether you did: climb 3,000 ft away from a shadowing jet, stay under 1,000 ft to dodge a patrol, slow down so customs changes shift, a 40° steep turn all the way around for Castillo, a low pass under 300 ft for the Medinas, holding 15 minutes out of a storm, going dark under the Coast Guard's radar. The order shows on the flight display with a countdown; doing it (or not) changes Power, Heat and the story.
+- Act 1 now has three of these (chapters 2, 3 and 4), so new players meet them in the first hour.
+- **Bring your own aircraft to the story.** Chapters accept any aircraft in your hangar that fills the role: a business jet for the jet chapters, an airliner for the airline ones, a widebody for the 747 finale. Add payware and mods under Hangar → Bring your own aircraft.
+- **Streamer mode.** Hangar → Settings → Let Twitch chat vote. When a story choice comes up, chat types 1, 2 or 3; the winner is picked when the timer runs out, and you can overrule by clicking. Trade Winds only reads chat.
+- **Share your ending.** When the story ends, save or copy an ending card: your ending, what became of everyone, and your numbers.
+- **In the sim.** The MSFS toolbar panel and the phone companion show story moments you can answer, your current flight order and the chat vote.
+- **Recorded voices ready.** The game plays recorded lines when they exist (`docs/voice/`), falling back to speech.
+- **Beta:** every chapter's result screen asks "How was this chapter?"; answers go along with bug reports.
+
 ## The story
 - Every choice now comes back later. Giving the boy oxygen, copying Arnaud's drive, hiding the case on St. Croix, letting Tico sit up front, telling Castillo's lawyer everything, promising Hartwell a way out, and going to war (or waiting) after Cancún all change later scenes or the ending.
 - **The Rat**: if you made a deal with Reyes, you now know who the real rat is when Castillo blames Tico.

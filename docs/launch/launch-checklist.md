@@ -3,11 +3,12 @@
 What has to be true before strangers can install and play Trade Winds. ✅ done, ⬜ open.
 
 ## Needs Ryan's PC (can't be done from the repo)
-- ⬜ **Put the Electron app source in GitHub** (a `desktop/` folder or its own repo). Today it only exists on Ryan's PC,
-  so nobody else can build, fix or sign the installer.
-- ⬜ **Put MSFS Bridge 1.5 in the repo.** `tools/msfs-bridge/` is still 1.4.0: it lacks `set_time`, `parking_spots`
-  and `move_to`. The 1.5.0 copy is at `C:\Users\ryang\Downloads\msfs-bridge\msfs-bridge\server.js`.
-  (The game already copes with an older bridge: those three buttons say "update to 1.5".)
+- ✅ **Electron app source in GitHub** (`desktop/`, recovered from the 0.19.1 installer) with an installer build on GitHub Actions (tag `desktop-v*`).
+- ✅ **MSFS Bridge 1.5 in the repo** (`tools/msfs-bridge/`).
+- ⬜ **Build the in-sim panel once with the MSFS SDK** (`desktop/msfs-panel/build-and-install.bat`) and commit the resulting
+  `trade-winds-panel.spb` into `desktop/msfs-panel/trade-winds-panel/InGamePanels/`. After that the app installs the panel in one click, no SDK for players.
+- ⬜ **Public update feed**: the app only updates from a private repo with a token today. Set `tradeWinds.feed` in `desktop/package.json`
+  to a public URL (a public repo's raw folder, GitHub Pages or a CDN) before strangers install it.
 - ⬜ **Live test in MSFS 2024**: clock setting, touchdown grading, the course arrow, the auto-advancing checklist,
   auto-start and auto-finish, airliner company flights.
 - ⬜ **Installer**: a signed Windows installer (unsigned builds trigger SmartScreen warnings), with the bridge inside it.
