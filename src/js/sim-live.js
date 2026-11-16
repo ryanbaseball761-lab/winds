@@ -73,6 +73,8 @@ const SIM_TICK = [
   function approachCardLive(){ const a=S.st&&S.st.active; if(!a||!a.started||S.view!=='flight') return; const want=!!approachCard(a); const has=!!document.querySelector('.appr-card'); if(want!==has){ S.keepScroll=true; render(); } else if(has){ const t=tpl(approachCard(a)); document.querySelector('.appr-card').replaceWith(t.content.firstElementChild); } },
   function waterLandingGear(){ const a=S.st&&S.st.active, s=S.sim; if(!a||!a.started||!waterDest(a)||!s||!s.position||!s.motion||s.motion.onGround) return; const g=s.ext&&s.ext.gear; const dest=AP[a.job.local?a.job.from:a.job.to];
     if(g && g.retractable && g.down && distNm({lat:s.position.lat,lon:s.position.lon},dest)<4 && s.position.aglFt<1500) safeSay('watergear', `Gear is down. Gear up for a water landing!`, 30000); },
+  /* a flight order picked in a story moment (climb away, stay low, steep turn…): checked against the sim */
+  function flightOrders(){ orderTick(); },
   /* story moments during a chapter: at most one every 40 seconds, in order */
   function storyBeats(tick){ const a=S.st&&S.st.active; if(!a||!a.started||a.job.kind!=='story'||!BEATS[a.job.story]||!simRelevant(a)) return; if(tick.beatsHeld || Date.now()-BEAT.last<40000) return;
     const ph=beatPhase(a); if(!ph) return; a.beatsDone=a.beatsDone||{}; const list=beatsFor(a);

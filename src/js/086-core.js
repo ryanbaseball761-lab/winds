@@ -16,7 +16,7 @@ const MID = {
 };
 Object.keys(MID).forEach(id=>{ if(BEATS[id]) BEATS[id].push(MID[id]); else BEATS[id]=[MID[id]]; });
 /* echoes: the next prologue opens with what you did last time */
-function showBeat(a,b,idx){ const r=showBeatBase(a,b,idx); try{ const d=document.querySelector('.beat'); if(d && b.opts) d.addEventListener('click', e=>{ const btn=e.target.closest('[data-act="beat-opt"]'); if(!btn) return; const o=b.opts[Number(btn.dataset.i)]; const c=crime(); if(o.cash) txn(S.st,o.cash,'Story',a.job.title); if(o.echo){ c.echo={text:o.echo, from:a.job.story}; save(); } }); }catch(_){} return r; }
+function showBeat(a,b,idx){ const r=showBeatBase(a,b,idx); try{ const d=document.querySelector('.beat'); if(d && b.opts) d.addEventListener('click', e=>{ const btn=e.target.closest('[data-act="beat-opt"]'); if(!btn) return; const o=b.opts[Number(btn.dataset.i)]; const c=crime(); if(o.cash) txn(S.st,o.cash,'Story',a.job.title); if(o.order) startOrder(a,o.order); if(o.echo){ c.echo={text:o.echo, from:a.job.story}; save(); } }); }catch(_){} return r; }
 
 
 /* ---- 6 + 9 + 13. network runs: night drops at closed strips, hot airports, rank rewards ---- */

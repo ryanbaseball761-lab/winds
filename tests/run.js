@@ -85,5 +85,14 @@ const results=[]; const ok=(n,c,info)=>{ results.push([n,!!c,info||'']); };
     ok('damaged saves still load and draw every page', res.every(r=>!r.includes(':')), res.join(' | '));
     const q=await ctx.newPage(); await q.goto('file://'+ROOT+'/index.html'); await q.evaluate(fx=>{localStorage.clear();localStorage.setItem('tw.backups',JSON.stringify([{at:1,day:3,st:JSON.parse(fx)}]));localStorage.setItem('tradewinds.career.v1','{"pilot":{"na');},FIX); await q.reload(); await q.waitForTimeout(1500);
     const c=await q.evaluate(()=>({loaded:!!S.st, kept:Object.keys(localStorage).some(k=>/unreadable/.test(k))})); ok('an unreadable save loads the newest backup and is kept aside', c.loaded&&c.kept, JSON.stringify(c)); await q.close(); }
+  // 12. flight orders: story choices you have to fly, judged from (fake) MSFS data
+  { const q=await page(); const r=await q.evaluate(()=>{ const st=S.st; let T=Date.now(); const realNow=Date.now; Date.now=()=>T; const out={};
+      const mk=o=>({position:{lat:18,lon:-63.1,altFt:o.alt||5000,aglFt:o.agl||5000,hdg:o.hdg||90},motion:{ias:o.ias||150,gs:o.ias||150,vsFpm:0,onGround:false},ext:{attitude:{bank:o.bank||0}},recorder:{takeoff:{t:1}}});
+      const run=(name,ord,fn)=>{ st.jobs=genJobs(st); st.active={job:st.jobs.find(j=>!j.local),accepted:T,started:T}; S.simState='live'; S.sim=mk(fn(0)); startOrder(st.active,ord); for(let t=1;t<=400&&st.active.order.state==='active';t++){ T+=1000; S.sim=mk(fn(t)); orderTick(); } out[name]=st.active.order.state; document.querySelectorAll('.beat').forEach(e=>e.remove()); };
+      run('climbOk',{k:'climb',by:3000,sec:150,label:'c'},t=>({alt:5000+t*30})); run('climbFail',{k:'climb',by:3000,sec:150,label:'c'},t=>({alt:5000+t*5}));
+      run('lowOk',{k:'lowlevel',agl:1000,sec:120,within:240,label:'l'},t=>({agl:t<60?3000:800})); run('turnOk',{k:'steepturn',bank:40,deg:330,within:180,label:'t'},t=>({bank:45,hdg:(90+t*3)%360})); run('turnShallow',{k:'steepturn',bank:40,deg:330,within:180,label:'t'},t=>({bank:20,hdg:(90+t*3)%360}));
+      Date.now=realNow; S.simState='off'; st.active=null; return out; });
+    ok('flight orders are judged from the sim (climb, stay low, steep turn)', r.climbOk==='ok'&&r.climbFail==='fail'&&r.lowOk==='ok'&&r.turnOk==='ok'&&r.turnShallow==='fail', JSON.stringify(r));
+    ok('Act 1 has flyable story choices (CR2, CR3, CR4)', await q.evaluate(()=>['CR2','CR3','CR4'].every(id=>(BEATS[id]||[]).some(b=>b&&b.opts&&b.opts.some(o=>o.order))))); await q.close(); }
   }catch(err){ ok('suite crashed', false, err.message); }
   await b.close(); let fail=0; for(const [n,good,info] of results){ console.log((good?'ok   ':'FAIL ')+n+(good?'':'  -> '+info)); if(!good) fail++; } console.log(fail?`${fail} FAILED`:'ALL PASSED'); process.exit(fail?1:0); })();

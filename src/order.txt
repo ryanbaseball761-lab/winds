@@ -83,6 +83,7 @@
 084-core.js
 085-core.js
 086-core.js
+flight-orders.js
 087-core.js
 088-core.js
 089-core.js
