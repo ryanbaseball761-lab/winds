@@ -1,6 +1,6 @@
 {
   "name": "msfs-bridge",
-  "version": "1.0.0",
+  "version": "1.5.0",
   "description": "Local MCP server that connects the Trade Winds career page to Microsoft Flight Simulator 2024 through SimConnect.",
   "main": "server.js",
   "private": true,

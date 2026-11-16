@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<SimBase.Document Type="InGamePanels" version="1,0">
+  <Filename>trade-winds-panel.spb</Filename>
+  <InGamePanels.InGamePanelDefinition id="PANEL_TRADE_WINDS" Name="Trade Winds" url="html_UI/InGamePanels/TradeWindsPanel/TradeWindsPanel.html" resizeDirections="Both" minWidth="20" minHeight="25" defaultWidth="24" defaultHeight="46" defaultTop="20" defaultRight="2" icon="ICON_TOOLBAR_TRADE_WINDS" buttonVisible="true">
+  </InGamePanels.InGamePanelDefinition>
+</SimBase.Document>

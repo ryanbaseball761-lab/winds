@@ -1,0 +1,20 @@
+<AssetPackage Name="trade-winds-panel" Version="1.0.0">
+	<ItemSettings>
+		<ContentType>SPB</ContentType>
+		<Title>trade-winds-panel</Title>
+		<Manufacturer>Trade Winds</Manufacturer>
+		<Creator>Trade Winds</Creator>
+	</ItemSettings>
+	<Flags>
+		<VisibleInStore>false</VisibleInStore>
+		<CanBeReferenced>false</CanBeReferenced>
+	</Flags>
+	<AssetGroups>
+		<AssetGroup Name="trade-winds-panel">
+			<Type>SPB</Type>
+			<Flags><FSXCompatibility>false</FSXCompatibility></Flags>
+			<AssetDir>PackageSources\</AssetDir>
+			<OutputDir>Build\</OutputDir>
+		</AssetGroup>
+	</AssetGroups>
+</AssetPackage>

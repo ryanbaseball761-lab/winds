@@ -130,6 +130,7 @@ async function connectLoop(){
       add('SIM ON GROUND','bool',T.INT32); add('GENERAL ENG COMBUSTION:1','bool',T.INT32); add('BRAKE PARKING POSITION','bool',T.INT32);
       add('FUEL TOTAL QUANTITY WEIGHT','pounds'); add('FUEL TOTAL QUANTITY','gallons'); add('G FORCE','GForce');
       add('PLANE TOUCHDOWN NORMAL VELOCITY','feet per second'); add('LOCAL TIME','seconds');
+      handle.addToDataDefinition(9, 'ZULU TIME', 'seconds', T.FLOAT64); handle.requestDataOnSimObject(9, 9, C.OBJECT_ID_USER, P.SECOND, 0, 0, 0, 0); fac.defReady=false; writer.evMapped={};
       handle.addToDataDefinition(DEF_STR, 'TITLE', null, T.STRING256);
       handle.addToDataDefinition(DEF_STR, 'ATC ID', null, T.STRING256);
       // extended set (v1.1): flaps, gear, attitude, warnings, controls, lights, weather. All read as numbers.
@@ -150,9 +151,14 @@ async function connectLoop(){
               sim.lastData = Date.now(); onSample(); }
             else if(r.requestID === REQ_SPEC){ const d=r.data; const o={}; for(const [,,k] of SPEC_VARS) o[k]=d.readFloat64(); sim.spec=o; }
             else if(r.requestID === REQ_EXT){ const d=r.data; const o={}; for(const [n,,k] of EXT_VARS) o[k]=d.readFloat64(); sim.ext=o; sim.extAt=Date.now(); }
+            else if(r.requestID === 9){ sim.zuluSec = r.data.readFloat64(); }
             else if(r.requestID === REQ_STR){ sim.title = r.data.readString256().trim(); sim.atcId = r.data.readString256().trim(); }
           } catch(e){ log('read error', e.message); }
         });
+        handle.on('facilityData', r => { try{ const job=fac.pending.get(r.userRequestId); if(!job) return; const d=r.data;
+          if(r.type===0){ job.ap={ lat:d.readFloat64(), lon:d.readFloat64(), altM:d.readFloat64() }; }
+          else if(r.type===15){ const sp={ type:d.readInt32(), name:d.readInt32(), suffix:d.readInt32(), number:d.readUint32(), hdg:d.readFloat32(), radius:d.readFloat32(), bx:d.readFloat32(), bz:d.readFloat32() }; job.spots.push(sp); } }catch(e){ log('facility read', e.message); } });
+        handle.on('facilityDataEnd', r => { const job=fac.pending.get(r.userRequestId); if(job && job.done) job.done(); });
         handle.on('exception', e => log('SimConnect exception', e.exception));
         handle.on('quit', () => { log('Simulator quit'); resolve(); });
         handle.on('close', () => { log('Connection closed'); resolve(); });
@@ -191,6 +197,38 @@ function loadAircraft(fuelGal, payloadLb){
   return out;
 }
 
+/* ---------------- v1.5: parking spots, move to a spot, set the sim clock ---------------- */
+const fac = { pending:new Map(), nextReq:900, defReady:false };
+const DEF_PARK = 40;
+const PARK_TYPE = ['none','ramp_ga','ramp_ga_small','ramp_ga_medium','ramp_ga_large','ramp_cargo','ramp_mil_cargo','ramp_mil_combat','gate_small','gate_medium','gate_heavy','dock_ga','fuel','vehicle','ramp_ga_extra','gate_extra'];
+function parkName(n, num, suffix){ const base = n===0?'':n===1?'Parking':n>=2&&n<=9?(['N','NE','E','SE','S','SW','W','NW'][n-2]+' Parking'):n===10?'Gate':n===11?'Dock':(n>=12&&n<=37)?('Gate '+String.fromCharCode(65+n-12)):'Parking'; return (base+' '+num).trim(); }
+function parkingSpots(icao){
+  if(MOCK){ const ap={lat:18.0410,lon:-63.1089}; return Promise.resolve({ ok:true, icao, spots:[1,2,3,4].map(i=>({ name:'Parking '+i, type:i<3?'ramp_ga_small':'gate_medium', lat:ap.lat+0.002+i*0.0002, lon:ap.lon+0.004, hdg:180, radius:i<3?10:25 })) }); }
+  return new Promise(resolve => { const h=writer.handle; if(!h) return resolve({ ok:false, error:'MSFS is not connected' });
+    try{ if(!fac.defReady){ ['OPEN AIRPORT','LATITUDE','LONGITUDE','ALTITUDE','OPEN TAXI_PARKING','TYPE','NAME','SUFFIX','NUMBER','HEADING','RADIUS','BIAS_X','BIAS_Z','CLOSE TAXI_PARKING','CLOSE AIRPORT'].forEach(f=>h.addToFacilityDefinition(DEF_PARK, f)); fac.defReady=true; } }catch(e){ return resolve({ ok:false, error:'facility definition failed: '+e.message }); }
+    const id=fac.nextReq++; const job={ ap:null, spots:[] }; fac.pending.set(id, job);
+    const finish=()=>{ clearTimeout(timer); fac.pending.delete(id); if(!job.ap) return resolve({ ok:false, error:'no airport data for '+icao });
+      const k=Math.cos(job.ap.lat*Math.PI/180)*111320;
+      resolve({ ok:true, icao, elevFt:Math.round(job.ap.altM*3.28084), spots: job.spots.filter(s=>s.type>0 && s.type!==12 && s.type!==13).map(s=>({ name:parkName(s.name, s.number, s.suffix), type:PARK_TYPE[s.type]||'other', lat:job.ap.lat + s.bz/111320, lon:job.ap.lon + s.bx/k, hdg:Math.round(s.hdg), radius:Math.round(s.radius*10)/10 })) }); };
+    job.done=finish; const timer=setTimeout(finish, 8000);
+    try{ h.requestFacilityData(DEF_PARK, id, icao); }catch(e){ clearTimeout(timer); fac.pending.delete(id); resolve({ ok:false, error:e.message }); } });
+}
+function moveTo(lat, lon, hdg){
+  if(!(sim.onGround && (sim.gs||0) < 2)) return { ok:false, error:'Stop on the ground first (parked, engine off is safest).' };
+  if(MOCK){ sim.lat=lat; sim.lon=lon; sim.hdg=hdg; return { ok:true }; }
+  setVar('PLANE LATITUDE','degrees',lat); setVar('PLANE LONGITUDE','degrees',lon); if(hdg!=null) setVar('PLANE HEADING DEGREES TRUE','degrees',hdg);
+  ev(`Moved to parking ${lat.toFixed(5)}, ${lon.toFixed(5)}`); return { ok:true };
+}
+function setLocalTime(localMin){
+  const w=writer; if(MOCK){ sim.localTimeSec = localMin*60; return { ok:true }; } if(!w.handle) return { ok:false, error:'MSFS is not connected' };
+  if(sim.localTimeSec==null || sim.zuluSec==null) return { ok:false, error:'Waiting for the sim clock' };
+  const off = Math.round((sim.localTimeSec - sim.zuluSec)/60); const z = (((localMin - off) % 1440) + 1440) % 1440;
+  const map = name => { if(!w.evMapped[name]){ w.evMapped[name] = 700 + Object.keys(w.evMapped).length; w.handle.mapClientEventToSimEvent(w.evMapped[name], name); } return w.evMapped[name]; };
+  const send = (name, v) => w.handle.transmitClientEvent(w.C.OBJECT_ID_USER, map(name), v, 1, 16);
+  send('ZULU_HOURS_SET', Math.floor(z/60)); send('ZULU_MINUTES_SET', z%60);
+  ev(`Sim clock set to ${String(Math.floor(localMin/60)).padStart(2,'0')}:${String(localMin%60).padStart(2,'0')} local`); return { ok:true, zulu: z };
+}
+
 /* A scripted fake flight, for testing without the simulator. */
 function startMock(){
   sim.connected = true; sim.appName = 'Mock MSFS'; sim.title = 'Cessna 172 Skyhawk G1000 (mock)'; sim.atcId = 'N172TW';
@@ -221,7 +259,7 @@ function snapshot(){
   const r = rec;
   const blockMin = r.blockOut ? (r.blockOut.s != null ? Math.round(((r.blockIn ? r.blockIn.s : simAcc) - r.blockOut.s) / 60) : Math.round(((r.blockIn ? r.blockIn.t : now()) - r.blockOut.t) / 60000)) : null;
   return {
-    bridge: 'ok', version: '1.4.0', mock: MOCK,
+    bridge: 'ok', version: '1.5.0', mock: MOCK,
     connected: s.connected, receivingData: live, simulator: s.appName, note: s.connected ? (live ? null : 'Connected, waiting for flight data. Load into a flight.') : (s.error || 'Waiting for MSFS to start.'),
     aircraft: { title: s.title, atcId: s.atcId },
     position: live ? { lat: s.lat, lon: s.lon, altFt: Math.round(s.altFt), aglFt: Math.round(s.aglFt), hdg: Math.round(s.hdg) } : null,
@@ -244,7 +282,7 @@ function snapshot(){
       bounces: r.bounces, landings: r.landings, events: r.events.slice(-12), track: r.track.length > 300 ? r.track.filter((_,i)=>i % Math.ceil(r.track.length/300) === 0 || i===r.track.length-1) : r.track, approach: r.approach }
   };
 }
-const server = new McpServer({ name: 'msfs-bridge', version: '1.4.0' });
+const server = new McpServer({ name: 'msfs-bridge', version: '1.5.0' });
 server.registerTool('sim_status', {
   title: 'MSFS status and flight recorder',
   description: 'Live state of the user aircraft in Microsoft Flight Simulator (position, speeds, fuel, on-ground) plus the automatic flight recorder: block out, takeoff, touchdown rate in fpm, landing position, bounces, block in, fuel used. Read-only.',
@@ -264,6 +302,22 @@ server.registerTool('load_aircraft', {
   inputSchema: { fuelGal: z.number().min(0).max(100000).optional(), payloadLb: z.number().min(0).max(200000).optional() },
   annotations: { readOnlyHint: false, destructiveHint: false }
 }, async ({ fuelGal, payloadLb }) => { try{ return { content: [{ type:'text', text: JSON.stringify(loadAircraft(fuelGal, payloadLb)) }] }; }catch(e){ return { content: [{ type:'text', text: JSON.stringify({ ok:false, error: e.message }) }] }; } });
+
+server.registerTool('parking_spots', {
+  title: 'Parking spots at an airport',
+  description: 'Lists the parking spots and gates MSFS has at an airport (name as shown in the MSFS world map, type, position, heading, size).',
+  inputSchema: { icao: z.string().min(3).max(5) }, annotations: { readOnlyHint: true }
+}, async ({ icao }) => ({ content: [{ type:'text', text: JSON.stringify(await parkingSpots(icao.toUpperCase())) }] }));
+server.registerTool('move_to', {
+  title: 'Move the aircraft to a parking spot',
+  description: 'Moves the stopped, on-ground user aircraft to a position and heading. Only when the player asks.',
+  inputSchema: { lat: z.number(), lon: z.number(), hdg: z.number().optional() }, annotations: { readOnlyHint: false, destructiveHint: false }
+}, async ({ lat, lon, hdg }) => { try{ return { content: [{ type:'text', text: JSON.stringify(moveTo(lat, lon, hdg)) }] }; }catch(e){ return { content: [{ type:'text', text: JSON.stringify({ ok:false, error:e.message }) }] }; } });
+server.registerTool('set_time', {
+  title: 'Set the sim clock',
+  description: 'Sets the MSFS local time of day (minutes after midnight). Only when the player asks.',
+  inputSchema: { localMin: z.number().min(0).max(1439) }, annotations: { readOnlyHint: false, destructiveHint: false }
+}, async ({ localMin }) => { try{ return { content: [{ type:'text', text: JSON.stringify(setLocalTime(Math.round(localMin))) }] }; }catch(e){ return { content: [{ type:'text', text: JSON.stringify({ ok:false, error:e.message }) }] }; } });
 
 (async () => {
   await server.connect(new StdioServerTransport());

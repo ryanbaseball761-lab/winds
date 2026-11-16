@@ -1,0 +1,23 @@
+const { contextBridge, ipcRenderer } = require('electron');
+contextBridge.exposeInMainWorld('twNative', {
+  callTool: (tool, input) => ipcRenderer.invoke('sim', tool, input || {}),
+  saveFile: (name, bytes) => ipcRenderer.invoke('save', name, bytes),
+  openSave: () => ipcRenderer.invoke('open-save'),
+  autoSave: () => ipcRenderer.invoke('auto-save'),
+  writeSave: (t) => ipcRenderer.invoke('write-save', t),
+  readSave: () => ipcRenderer.invoke('read-save'),
+  saveDir: () => ipcRenderer.invoke('save-dir'),
+  storms: () => ipcRenderer.invoke('storms'),
+  pushState: (j) => ipcRenderer.send('companion-state', j),
+  onCompanionCk: (fn) => ipcRenderer.on('companion-ck', (_e,k) => fn(k)),
+  companionInfo: () => ipcRenderer.invoke('companion-info'),
+  flightLog: (name, text) => ipcRenderer.invoke('flight-log', name, text),
+  openFolder: (sub) => ipcRenderer.invoke('open-folder', sub),
+  panelSetup: () => ipcRenderer.invoke('panel-setup'),
+  tts: (text, voice, instr) => ipcRenderer.invoke('tts', text, voice, instr),
+  ttsKeySet: (k) => ipcRenderer.invoke('tts-key-set', k),
+  ttsKeyHas: () => ipcRenderer.invoke('tts-key-has'),
+  onGameUpdated: (fn) => ipcRenderer.on('game-updated', (_e,v) => fn(v)),
+  restartGame: () => ipcRenderer.invoke('restart-game'),
+  standalone: true
+});

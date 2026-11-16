@@ -1,0 +1,25 @@
+name: Desktop installer
+# Builds the Windows installer when a tag like desktop-v0.20.0 is pushed (or by hand from the Actions tab).
+on:
+  push:
+    tags: ['desktop-v*']
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run dist
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: TradeWinds-installer
+          path: desktop/dist/*.exe

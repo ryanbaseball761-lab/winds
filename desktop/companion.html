@@ -1,0 +1,34 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Trade Winds Cockpit</title>
+<style>
+:root{--bg:#071417;--s:#0f2327;--s2:#0b1d20;--ink:#e2eeed;--mut:#93aaa9;--line:#22393c;--sea:#43b8ad;--coral:#ff7a55;--good:#52c585}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{padding:max(14px,env(safe-area-inset-top)) 16px 40px;max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+h1{font-size:20px;margin:0}.mut{color:var(--mut);font-size:13px}
+.inst{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.inst div{background:var(--s);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}.inst b{display:block;font:600 22px ui-monospace,Consolas,monospace}.inst span{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+.card{background:var(--s);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.phases{display:flex;gap:6px;overflow-x:auto}.phases button{flex:none;border:1px solid var(--line);background:var(--s2);color:var(--mut);border-radius:999px;padding:6px 10px;font-weight:600}.phases button.on{background:var(--ink);color:var(--bg)}
+.ck{display:flex;gap:12px;align-items:center;width:100%;text-align:left;border:1px solid var(--line);background:var(--s2);color:var(--ink);border-radius:12px;padding:14px;font-size:16px}
+.ck .bx{width:26px;height:26px;border-radius:8px;border:2px solid var(--mut);flex:none;display:grid;place-items:center}.ck.on{opacity:.6}.ck.on .bx{background:var(--sea);border-color:var(--sea);color:#04201c}
+.callout{background:linear-gradient(135deg,#d9532f,#a3271b);border-radius:14px;padding:14px;font-size:18px;font-weight:600}
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.feed li{background:var(--s2);border-radius:10px;padding:8px 10px;font-size:14px}.feed b{color:var(--sea);font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-right:6px}
+.meter{height:8px;background:var(--line);border-radius:4px;overflow:hidden}.meter i{display:block;height:100%;background:var(--sea)}
+.off{text-align:center;padding:40px 10px}
+</style></head><body><div class="wrap" id="app"><p class="off mut">Connecting to Trade Winds…</p></div>
+<script>
+const app=document.getElementById('app'); let S=null, ph=null;
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+async function tick(){ try{ const r=await fetch('/state',{cache:'no-store'}); S=await r.json(); draw(); }catch(e){ app.innerHTML='<p class="off mut">Lost connection to the PC. Is Trade Winds open?</p>'; } }
+function draw(){
+  if(!S || !S.job){ app.innerHTML=`<h1>Trade Winds</h1><p class="off mut">No flight booked. Accept a job on the PC and your cockpit appears here.</p>`; return; }
+  const P=S.phases||[]; const cur = ph==null ? S.cur : ph; const p=P[cur]||{items:[]};
+  app.innerHTML=`<div><h1>${esc(S.job.from)} → ${esc(S.job.to)}</h1><p class="mut">${esc(S.job.title)} · ${esc(S.job.ac)}</p></div>
+  ${S.callout?`<div class="callout">${esc(S.callout.who)}: ${esc(S.callout.text)}</div>`:''}
+  ${S.live?`<div class="inst"><div><b>${S.live.ias}</b><span>knots</span></div><div><b>${S.live.alt}</b><span>feet</span></div><div><b>${S.live.vs>0?'+':''}${S.live.vs}</b><span>fpm</span></div><div><b>${S.live.togo}</b><span>nm to go</span></div></div>`:'<p class="mut">MSFS not connected. Checklist still works.</p>'}
+  <div class="card"><div class="phases">${P.map((x,i)=>`<button class="${i===cur?'on':''}" data-p="${i}">${x.all?'✓ ':''}${esc(x.n)}</button>`).join('')}</div>
+   ${p.items.map((t,j)=>`<button class="ck ${p.done[j]?'on':''}" data-k="${cur}-${j}"><span class="bx">${p.done[j]?'✓':''}</span><span>${esc(t)}</span></button>`).join('')}</div>
+  ${S.comfort!=null?`<div class="card"><div class="mut">Passenger comfort ${S.comfort}/100</div><div class="meter"><i style="width:${S.comfort}%"></i></div></div>`:''}
+  ${S.feed&&S.feed.length?`<div class="card"><div class="mut">Cabin &amp; radio</div><ul class="feed">${S.feed.map(m=>`<li><b>${esc(m.who)}</b>${esc(m.text)}</li>`).join('')}</ul></div>`:''}`;
+}
+app.addEventListener('click', async e=>{ const p=e.target.closest('[data-p]'); if(p){ ph=Number(p.dataset.p); draw(); return; } const c=e.target.closest('[data-k]'); if(c){ await fetch('/ck',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({k:c.dataset.k})}); setTimeout(tick,250); } });
+setInterval(tick,2000); tick();
+</script></body></html>
