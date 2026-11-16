@@ -98,5 +98,13 @@ const results=[]; const ok=(n,c,info)=>{ results.push([n,!!c,info||'']); };
   { const q=await page(); const r=await q.evaluate(()=>{ const st=S.st; st.customAc={X_PC24:{n:'Pilatus PC-24',cls:'jet',pax:8,useful:4000,cruise:425,burn:900,fuel:'jeta',range:2000,rwy:3000,xw:25,op:1600,req:['JET'],custom:true}}; registerCustomAc(st); st.ratings.JET=true;
       const jet=storyAircraft(st, mainChapters().find(x=>x.id==='CR6')), ga=storyAircraft(st, mainChapters().find(x=>x.id==='CR2')); return {jet:jet.includes('X_PC24'), ga:!ga.includes('X_PC24')}; });
     ok('a custom business jet can fly the jet chapters (and not the Cessna ones)', r.jet&&r.ga, JSON.stringify(r)); await q.close(); }
+  // 14. streamer mode: chat votes pick a story choice; the ending card draws
+  { const q=await page(); const r=await q.evaluate(async()=>{ const W=ms=>new Promise(r=>setTimeout(r,ms)); const st=S.st; uiP().streamer=true; uiP().twitchChannel='testchan'; uiP().voteSec=30; TWITCH.ws={close(){},send(){}}; TWITCH.state='live';
+      for(const m of mainChapters().slice(0,5)) st.story.done[m.id]=1; const m=mainChapters()[5]; st.loc=m.from; const job=storyJob(st,m,storyAircraft(st,m)[0]||m.ac[0]); st.active={job,accepted:Date.now(),started:Date.now()};
+      applyResult(st,job,{landing:'smooth',tasks:[],simFpm:150},{score:88,grade:'B',parts:[],crash:false,block:30}); S.showResult=true; S.view='flight'; render(); document.querySelectorAll('.cut').forEach(e=>e.remove()); await W(1300);
+      const started=!!TWITCH.vote; twitchMsg('a','2'); twitchMsg('b','2'); twitchMsg('c','1'); twitchMsg('d','9'); if(TWITCH.vote) TWITCH.vote.t0-=31000; await W(1300);
+      const picked=crime(st).choice[m.id]; uiP().streamer=false; TWITCH.ws=null; TWITCH.state='off';
+      for(const x of mainChapters()) st.story.done[x.id]=1; crime(st).ending='ghost'; const card=drawEndingCard(st).toDataURL().length>20000; return {started, picked, card}; });
+    ok('Twitch chat votes pick the story choice', r.started && r.picked===1, JSON.stringify(r)); ok('the ending card draws', r.card); await q.close(); }
   }catch(err){ ok('suite crashed', false, err.message); }
   await b.close(); let fail=0; for(const [n,good,info] of results){ console.log((good?'ok   ':'FAIL ')+n+(good?'':'  -> '+info)); if(!good) fail++; } console.log(fail?`${fail} FAILED`:'ALL PASSED'); process.exit(fail?1:0); })();

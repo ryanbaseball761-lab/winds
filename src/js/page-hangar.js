@@ -37,7 +37,8 @@ function hangarSettingsTab(st){
     <section class="panel stack"><h3>Voices &amp; copilot</h3><label class="row"><input type="checkbox" data-act="pro-flag" data-k="copilot" ${P.copilot!==false?'checked':''}> Copilot callouts: "Airspeed alive", "Rotate", "Positive rate", and 1000 / 500 / 100 / 50 / 30 / 10 on landing</label>${premiumVoiceHTML()}</section>
     <section class="panel stack"><h3>Match MSFS</h3><label class="row"><input type="checkbox" data-act="sync-wx" ${p.wx?'checked':''}> Use live MSFS weather in briefings when you're at the departure airport</label><label class="row"><input type="checkbox" data-act="sync-time" ${p.time?'checked':''}> Check that the MSFS clock matches the flight</label></section>
     <section class="panel row between"><div><h3>Urgent dispatch calls</h3><p class="small muted">Real-time 2× pay jobs pop up while the game is open. You get ${URG_ACCEPT_MIN} minutes to accept and ${URG_TAKEOFF_MIN} to get wheels up.</p></div><div class="row"><button class="btn sm" data-act="urg-toggle">${urgentOn()?'Turn off':'Turn on'}</button><button class="btn sm ghost" data-act="urg-test">Send one now</button></div></section>
-    ${voiceSettingsHTML()}`;
+    ${voiceSettingsHTML()}
+    ${streamerSettingsHTML()}`;
 }
 
 /* ---------- MSFS connection tab ---------- */

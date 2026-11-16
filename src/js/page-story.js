@@ -92,6 +92,7 @@ function storyView(){
   return `<main class="wrap story-home fade">${ngHTML(st)||''}${fedsHTML(st)||''}
     ${campaignCard(st)}
     ${epi.length?`<section class="panel"><h3>What became of everyone</h3><ul class="tight">${epi.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`:''}
+    ${endingCardHTML(st)}
     ${stats}<div class="sh-grid">
       <section class="panel"><h3>The story so far</h3><ol class="sh-time">${time}</ol></section>
       <section class="panel"><h3>The people</h3><div class="sh-people">${people||'<p class="small muted">You\'ll meet them soon.</p>'}</div></section>
