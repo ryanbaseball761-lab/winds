@@ -20,7 +20,7 @@
 })();
 /* phone companion: push cockpit state, accept checklist ticks, show the QR code on the Cockpit tab */
 (function(){ if(!window.TW_STANDALONE || !twNative.pushState) return;
-  function snap(){ const st=S.st; const a=st&&st.active; if(!a){ const sa=st&&typeof storyAvailable==='function'?storyAvailable(st):[]; return st?{next: sa[0]?sa[0].title:null}:{}; }
+  function snap(){ const st=S.st; const a=st&&st.active; if(!a){ const sa=st&&typeof storyAvailable==='function'?storyAvailable(st):[]; return st?{next: sa[0]?sa[0].title:null, phone:(typeof phoneLatest==='function'?phoneLatest():null)}:{}; }
     const ph=cockpitPhases(st,a.job); a.ck=a.ck||{p:0,done:{}}; const s=S.sim; const live = S.simState==='live' && s && s.motion ? s : null;
     const dest = a.job.local?AP[a.job.from]:AP[a.job.to];
     return { job:{title:a.job.title, from:a.job.from, to:a.job.local?a.job.from:a.job.to, ac:AC[a.job.ac].n}, cur:a.ck.p||0,
@@ -30,7 +30,7 @@
       callout: (S.copilotLast && Date.now()-S.copilotLast.t<8000) ? {who:'Copilot', text:S.copilotLast.text} : (a.cab && a.cab.callout && Date.now()-a.cab.callout.t<20000 ? a.cab.callout : null),
       phase: (()=>{ try{ return a.started ? flightPhase(a).n : 'Before departure'; }catch(e){ return null; } })(),
       orders: a.opened && a.scenPlan ? {title:a.scenPlan.title, text:a.scenPlan.text, sim:a.scenPlan.sim} : null,
-      beat: beatSnap(), order: a.order ? {label:a.order.label, state:a.order.state, chip:(document.querySelector('.fo-chip')||{}).textContent||a.order.label} : null,
+      phone:(typeof phoneLatest==='function'?phoneLatest():null), beat: beatSnap(), order: a.order ? {label:a.order.label, state:a.order.state, chip:(document.querySelector('.fo-chip')||{}).textContent||a.order.label} : null,
       vote: TWITCH.vote ? {left:Math.max(0,Math.ceil(TWITCH.vote.sec-(Date.now()-TWITCH.vote.t0)/1000)), tally:voteTally(TWITCH.vote)} : null }; }
   /* the story moment on screen, so it can be answered from MSFS (toolbar panel) or a phone */
   function beatSnap(){ const d=document.querySelector('.beat'); if(!d) return null; const k=(d.querySelector('.bt-k')||{}).textContent||'', t=(d.querySelector('.bt-t')||{}).textContent||'', r=(d.querySelector('.bt-r')||{}).textContent||'';

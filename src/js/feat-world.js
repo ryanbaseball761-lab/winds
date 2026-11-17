@@ -185,7 +185,7 @@ const PROPS = [
   {id:'office', n:'Hangar office', price:18000, inc:60, launder:0, home:'A desk, a kettle and a window onto the ramp.', note:'Your own desk at the airport. +1 reputation a week.'},
   {id:'dive', n:'Dive shop on Saba', price:45000, inc:180, launder:3000, front:true, home:'Wetsuits drying on the rail outside.', note:'Pays a little. Washes up to $3,000 of dirty cash a day, for 8%.'},
   {id:'bar', n:'Beach bar, Anguilla', price:90000, inc:320, launder:7000, front:true, home:'Your bar. Dez drinks there for free, which costs you more than you think.', note:'Washes up to $7,000 a day, for 8%. Busy bars draw a little attention.'},
-  {id:'villa', n:'Villa on Mustique', price:400000, inc:0, launder:0, home:'Pool, view, a guest room nobody uses.', note:'Where you live now. Cools Heat by 1 a day: nobody looks for pilots on Mustique.'},
+  {id:'desk', n:'Charter desk at Juliana', price:140000, inc:520, launder:0, home:'Your name on a desk in the terminal, between a car rental and a rum shop.', note:'Steady income, and island work pays a little more: +1 reputation every week.'},
   {id:'fbo', n:'FBO lounge, St. Barth', price:250000, inc:900, launder:20000, front:true, home:'Leather sofas, espresso, a guestbook full of famous names.', note:'Real money, and washes up to $20,000 a day, for 8%.'},
 ];
 function propOwned(id){ return !!twW().props[id]; }
@@ -194,7 +194,7 @@ DAY_HOOKS.push(st=>{ const w=twW(); const c=crime(st); let inc=0, washed=0, fee=
   for(const p of PROPS){ if(!w.props[p.id]) continue; inc+=p.inc;
     if(p.front && c.dirty>0){ const amt=Math.min(c.dirty, p.launder); const f=Math.round(amt*0.08); c.dirty-=amt; washed+=amt-f; fee+=f; if(p.id==='bar' && amt>3000) crBump(c,'heat',1); } }
   if(inc) txn(st, inc, 'Property', 'Property income'); if(washed) { txn(st, washed, 'Laundered', 'Through your businesses'); c.laundered=(c.laundered||0)+washed; }
-  if(w.props.villa && c.on) crBump(c,'heat',-1); if(w.props.office && st.day%7===0) st.reputation=Math.min(100,st.reputation+1);
+  if((w.props.office||w.props.desk) && st.day%7===0) st.reputation=Math.min(100,st.reputation+1);
   if(inc||washed) setTimeout(()=>toast(`Your properties: ${inc?money(inc)+' income':''}${inc&&washed?', ':''}${washed?money(washed)+' cleaned':''}.`),900); });
 
 /* =====================================================================

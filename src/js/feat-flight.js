@@ -67,9 +67,9 @@ SIM_TICK.push(function flightEvents(){ const a=S.st&&S.st.active; if(!a || !a.st
 
 /* ---------- Castillo's fuel lies and the weight of what you carry ---------- */
 const STORY_FUEL_LIE = new Set(['CR6','CR8','CR10','CRM','CR11','CRB']);
-GEN_JOB_STEPS.push(function contrabandWeight(st, L){ if(!L) return; for(const j of L){ if(j.network && !j.contraband && AC[j.ac]) j.contraband=Math.round(Math.min(1400, AC[j.ac].useful*0.22)/10)*10; if(j.network && j.night==null) j.night = j.dep>=1170 || j.dep<330; } return L; });
+GEN_JOB_STEPS.push(function contrabandWeight(st, L){ if(!L) return; for(const j of L){ if(j.network && !j.contraband && AC[j.ac]){ j.contraband=Math.round(Math.min(1400, AC[j.ac].useful*0.22)/10)*10; try{ const p=plan(j); const room=Math.round((AC[j.ac].useful-p.total-30)/10)*10; j.contraband=Math.max(0,Math.min(j.contraband,room)); if(!j.contraband) delete j.contraband; }catch(_){} } if(j.network && j.night==null) j.night = j.dep>=1170 || j.dep<330; } return L; });
 (function(){ const base=storyJob; storyJob=function(st, m, acId){ const j=base.apply(this, arguments); if(!j) return j;
-  if(crime(st).on && AC[j.ac]){ j.contraband=Math.round(Math.min(2000, AC[j.ac].useful*0.25)/10)*10; }
+  if(crime(st).on && AC[j.ac]){ j.contraband=Math.round(Math.min(2000, AC[j.ac].useful*0.25)/10)*10; try{ const p=plan(j); const room=Math.round((AC[j.ac].useful-p.total-30)/10)*10; j.contraband=Math.max(0,Math.min(j.contraband,room)); if(!j.contraband) delete j.contraband; }catch(_){} }
   if(STORY_FUEL_LIE.has(j.story) && fevHash(String(st.pilot&&st.pilot.name)+j.story)<0.5) j.fuelLie=true;
   return j; }; })();
 (function(){ const base=loadIntoSim; loadIntoSim=async function(job){ const a=S.st&&S.st.active;
