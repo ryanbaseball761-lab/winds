@@ -119,5 +119,6 @@ ui-render.js
 feat-world.js
 feat-flight.js
 feat-ui.js
+feat-story.js
 zz-cockpit.js
 zz-boot.js

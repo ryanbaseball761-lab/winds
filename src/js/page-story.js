@@ -46,7 +46,7 @@ function campaignCard(st){ const c=crime(st); const MC=mainChapters(); const ava
       <div class="sc-meta ro-strip"><div><small>Route</small><b class="mono">${esc(next.from)} → ${esc(next.to)}</b></div>${length?`<div><small>Flight</small><b class="mono">${length.replace(/<\/?span>/g,'')}</b></div>`:''}<div><small>Aircraft</small><b>${esc(AC[acN]?AC[acN].n:acN)}</b></div><div><small>Light</small><b>${esc({dawn:'Dawn',day:'Daytime',dusk:'Dusk',night:'Night'}[next.time]||'Any')}</b></div></div>
       ${who?`<div class="sc-whos"><small>With</small>${who}</div>`:''}
       <div class="sc-go">${pa.btn}${pa.note?`<span class="small muted">${pa.note}</span>`:''}</div></div>`; }
-  else { const end={kingpin:'Kingpin',witness:'Witness',ghost:'Ghost'}[c.ending]||'The end'; body=`<div class="sc-next"><p class="sc-k">Story complete</p><h2>Ending: ${esc(end)}</h2><p class="sc-hook">Side jobs and the Starling story are still out there.</p></div>`; }
+  else { const end={kingpin:'Kingpin',witness:'Witness',ghost:'Ghost',walk:'Walk Away',home:'Coming Home'}[c.ending]||'The end'; body=`<div class="sc-next"><p class="sc-k">Story complete</p><h2>Ending: ${esc(end)}</h2><p class="sc-hook">Side jobs and the Starling story are still out there.</p></div>`; }
   const artK=['ramp','hangar','office','villa','cockpit'][Math.max(0,ai)]||'ramp'; const art=(typeof SCENES!=='undefined'&&SCENES[artK])?SCENES[artK]():'';
   return `<section class="panel campaign story-card fade" style="--arc:${act.col}"><div class="sc-art" aria-hidden="true">${art}</div>
     <div class="sc-top"><p class="sc-act">Act ${ai+1}: ${esc(act.arc)}</p>${meters}</div>
