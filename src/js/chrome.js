@@ -37,7 +37,7 @@ function band(){
       <button class="cb-brand" data-act="nav" data-v="story" aria-label="Trade Winds: Story">${LOGO}<b>Trade Winds</b></button>
       <nav class="cb-tabs" aria-label="Main menu">${NAV5.map(tab).join('')}</nav>
       <div class="hud cb-hud">
-        ${ro('Loc',esc(st.loc))}${ro('Day '+st.day,`${dateTxt(st.day)} ${hhmm(st.clock)}`,'cb-time')}${ro('Cash',money(st.cash),'cash')}
+        ${ro('Loc',esc(st.loc))}${ro('Day '+st.day,`<span class="cb-date">${dateTxt(st.day)} </span>${hhmm(st.clock)}`,'cb-time')}${ro('Cash',money(st.cash),'cash')}
         ${c.on?`<button class="cb-ro heat-chip ${c.heat>=80?'hot':c.heat>=60?'warm':'cool'}" data-act="nav" data-v="story" title="${esc(CX_TIPS.Heat)}"><small>Heat</small><b class="mono">${c.heat}</b></button>`:''}
         ${c.dirty>0?`<button class="cb-ro dirty-chip" data-act="nav" data-v="money" title="Dirty cash from network runs. Launder it on the Money page."><small>Dirty</small><b class="mono">${money(c.dirty)}</b></button>`:''}
         <span class="cb-ro cb-sim ${live?'on':''}" title="${live?'MSFS is connected':'MSFS is not connected'}"><small>Sim</small><b class="mono"><i class="simdot ${live?'on':''}"></i><span id="sim-band">${live?'MSFS live':'Not connected'}</span></b></span>

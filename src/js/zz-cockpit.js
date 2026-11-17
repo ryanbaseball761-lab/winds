@@ -87,7 +87,7 @@ html.ckp .meter>i,html.ckp .meter>span,html.ckp .pf-bar>i,html.ckp .xp>i,html.ck
 /* ===================== TOP BAR ===================== */
 html.ckp #app{display:block!important}
 html.ckp .cbar{position:sticky;top:0;z-index:20;background:#07090b!important;border-bottom:1px solid var(--line);backdrop-filter:none!important;padding:0!important;color:var(--ink)}
-.cb-row{display:flex;align-items:stretch;height:52px;padding:0 16px;gap:18px;max-width:1440px;margin:0 auto}
+.cb-row{display:flex;align-items:stretch;height:52px;padding:0 16px;gap:18px;margin:0 auto}
 .cb-brand{display:flex;align-items:center;gap:9px;background:none;border:0;color:var(--ink);cursor:pointer;padding:0;flex:none}
 .cb-brand .logo{width:24px;height:24px;color:var(--amb)}
 .cb-brand b{font-family:var(--f-display);font-size:15px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
@@ -108,7 +108,7 @@ button.cb-ro{cursor:pointer}button.cb-ro:hover{background:#0f1215}
 .cb-ic{position:relative;display:grid;place-items:center;width:44px;height:100%;background:none;border:0;border-left:1px solid var(--line);color:var(--muted);cursor:pointer}
 .cb-ic:hover{color:var(--ink);background:#0f1215}.cb-ic svg{width:18px;height:18px}
 .cb-ic.bell b{position:absolute;top:10px;right:8px;min-width:15px;height:15px;padding:0 3px;background:var(--amb);color:var(--amb-ink);font:600 9.5px/15px var(--f-mono);text-align:center}
-.cb-sub{display:flex;align-items:center;gap:16px;height:36px;padding:0 16px;border-top:1px solid var(--line);max-width:1440px;margin:0 auto;font-size:12.5px;color:var(--muted)}
+.cb-sub{display:flex;align-items:center;gap:16px;height:36px;padding:0 16px;border-top:1px solid var(--line);margin:0 auto;font-size:12.5px;color:var(--muted)}
 .cb-pilot{display:flex;align-items:center;gap:10px;min-width:0}
 .cb-pilot b{color:var(--ink);font-weight:600;white-space:nowrap}
 .cb-pilot>span:not(.cb-xp){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -138,8 +138,10 @@ html.ckp .subtabs button.on{color:var(--ink)!important;border-bottom-color:var(-
 /* flying: just the content */
 html.ckp body.flying .cb-sub{display:none}
 
+@media (max-width:1560px){ .cb-date{display:none} .cb-sim #sim-band{display:none} .cb-tab{padding:0 11px} .cb-ro{padding:0 11px} }
+@media (max-width:1320px){ .cb-brand b{display:none} .cb-tabs{margin-left:0} .cb-ic{width:38px} }
 @media (max-width:1180px){ .cb-pilot>span:not(.cb-xp),.cb-sync,.cb-sim{display:none} }
-@media (max-width:980px){
+@media (max-width:1180px){
   .cb-row{flex-wrap:wrap;height:auto;padding:0 12px;gap:0}
   .cb-brand{height:44px}.cb-brand b{font-size:13px}
   .cb-hud{height:44px}
@@ -151,7 +153,7 @@ html.ckp body.flying .cb-sub{display:none}
   html.ckp main,html.ckp main.wrap{padding:16px 16px 72px!important}
   html.ckp main h1{font-size:28px}
 }
-@media (max-width:520px){ .cb-brand b{display:none}.cb-ro.cash{border-left:0}.cb-ro small{font-size:9px}.cb-ic{width:38px}.cb-ro{padding:0 8px}.cb-ro b{font-size:12.5px} .cb-pilot small{display:none} }
+@media (max-width:520px){ .cb-hud .cmd-btn:not(.gear-btn){display:none} .cb-hud>.cb-ro:first-child{display:none} .cb-brand b{display:none}.cb-ro.cash{border-left:0}.cb-ro small{font-size:9px}.cb-ic{width:38px}.cb-ro{padding:0 8px}.cb-ro b{font-size:12.5px} .cb-pilot small{display:none} }
 `;
 (function(){ const s=document.createElement('style'); s.id='ck-theme'; s.textContent=CK_CSS; document.head.appendChild(s);
   // styles injected later by other modules must not outrank the theme: keep it last in <head>

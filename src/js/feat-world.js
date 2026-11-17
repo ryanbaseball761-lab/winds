@@ -124,7 +124,7 @@ function mktRoll(st){ const w=twW(); if(mktNow()) return; if(w.mktNext && st.day
   const islands=[...new Set(Object.keys(AP).filter(k=>AP[k].r && ['LEE','WIN','VIR','ABC','GA'].includes(AP[k].r)).map(k=>AP[k].isl))].filter(Boolean);
   const isl=islands[Math.floor(r()*islands.length)]||'Antigua';
   const regName={LEE:'the Leeward Islands',WIN:'the Windward Islands',VIR:'the Virgin Islands'}[m.reg?m.reg[0]:'']||'';
-  w.mkt={id:m.id, isl:m.isl?isl:null, reg:m.reg?m.reg[0]:null, until:st.day+6, text:m.txt(m.isl?isl:regName)}; w.mktNext=st.day+9;
+  w.mkt={id:m.id, isl:m.isl?isl:null, reg:m.reg?m.reg[0]:null, until:st.day+6, text:m.txt(m.isl?String(isl).replace(/\s*\(.*?\)/,''):regName)}; w.mktNext=st.day+9;
   phonePush({from:m.from, text:w.mkt.text}); }
 function mktHit(job){ const e=mktNow(); if(!e) return null; const m=MKT.find(x=>x.id===e.id); const ap=AP[job.to]; if(!ap||!m) return null;
   const where = e.isl ? ap.isl===e.isl : ap.r===e.reg; if(!where) return null; if(m.cats && !m.cats.includes(job.cat) && !(m.cats.includes('vip')&&job.vip)) return null; return m; }
@@ -195,7 +195,8 @@ DAY_HOOKS.push(st=>{ const w=twW(); const c=crime(st); let inc=0, washed=0, fee=
     if(p.front && c.dirty>0){ const amt=Math.min(c.dirty, p.launder); const f=Math.round(amt*0.08); c.dirty-=amt; washed+=amt-f; fee+=f; if(p.id==='bar' && amt>3000) crBump(c,'heat',1); } }
   if(inc) txn(st, inc, 'Property', 'Property income'); if(washed) { txn(st, washed, 'Laundered', 'Through your businesses'); c.laundered=(c.laundered||0)+washed; }
   if((w.props.office||w.props.desk) && st.day%7===0) st.reputation=Math.min(100,st.reputation+1);
-  if(inc||washed) setTimeout(()=>toast(`Your properties: ${inc?money(inc)+' income':''}${inc&&washed?', ':''}${washed?money(washed)+' cleaned':''}.`),900); });
+  w.wk=w.wk||{inc:0,washed:0}; w.wk.inc+=inc; w.wk.washed+=washed;
+  if(st.day%7===0 && (w.wk.inc||w.wk.washed)){ phonePush({from:'bank', text:`Island Credit Union weekly summary: your businesses earned ${money(w.wk.inc)}${w.wk.washed?` and deposited ${money(w.wk.washed)} in "takings"`:''}.`}); w.wk={inc:0,washed:0}; } });
 
 /* =====================================================================
    AIRCRAFT HISTORY (and names)
