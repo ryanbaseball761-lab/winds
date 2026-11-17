@@ -116,5 +116,7 @@ page-pilot.js
 cutscenes.js
 ui.js
 ui-render.js
+feat-world.js
+feat-flight.js
 zz-cockpit.js
 zz-boot.js
