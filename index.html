@@ -1883,7 +1883,7 @@ STORY.push(
   teach:[`Culebra's runway sits in a bowl between hills. Departing, climb straight out over the water before you turn, and watch for downdrafts on the lee side of the ridge.`,`Cargo that must stay level wants gentle pitch changes, coordinated turns under 20° of bank, and a slow, steady descent.`],
   out:{good:`The cake arrives without a crumb out of place. The bride cries, Rosa cries, and you go home with a box of quesitos the size of a suitcase.`,ok:`One tier slid a few millimeters. The resort's pastry chef fixes it with a strategic hibiscus flower. Nobody ever knows.`,bad:`The top tier didn't survive the landing. Rosa drives the replacement herself on the afternoon ferry, and says nothing at all, which is worse than shouting.`},rep:{rosa:12,dez:2}},
  {id:'CL2',arc:`Calloway`,title:`Calloway's Comeback`,chars:['calloway','mari'],req:{after:'CL1',ratings:['IR']},from:'TNCM',to:'TBPB',ac:['G36','DA62','C208','PC12','TBM','KA350'],pax:1,cargo:30,cargoLabel:`Calloway's brand-new instrument flight bag`,time:'day',dep:540,wx:'showers',
-  brief:[`Jack Calloway is studying for his instrument rating, and he asked you, quietly, at the fuel truck, so nobody would hear, whether you'd fly a real IFR leg with him in the right seat.`,`He's nervous, which you've never seen before. "Talk me through it like I'm a student," he says. "Because I am one." Today you fly, he watches, and you explain every decision out loud.`],
+  brief:[`Jack Calloway is studying for his instrument rating, and he asked you at the fuel truck, where nobody could hear, whether you'd fly a real IFR leg with him in the right seat.`,`He's nervous, which you've never seen before. "Talk me through it like I'm a student," he says. "Because I am one." Today you fly, he watches, and you explain every decision out loud.`],
   teach:[`Teaching makes you a better pilot. Say every step out loud: clearance, the departure procedure, each altitude, each frequency change.`,`File IFR even on a good-weather day. It keeps you in the system, and ATC does the traffic separation.`],
   out:{good:`Over Barbados, Calloway flies the approach himself with you calling it out. On the ground he shakes your hand for a long time. "Coral Wing's lucky," he says. He means it.`,ok:`A good lesson. Calloway takes four pages of notes and only argues with you twice.`,bad:`A messy flight. Calloway is kind about it, which is how you know it went badly.`},rep:{calloway:15,mari:4}},
  {id:'DZ1',arc:`Dez`,title:`The Cricket Match`,chars:['dez','mari'],req:{ratings:['ME'],hours:16},from:'TAPA',to:'TBPB',ac:['DHC6','DC3','KA350','DA62'],pax:6,cargo:300,cargoLabel:`cricket kit, a cooler and a steel pan`,time:'day',dep:510,wx:'trades',
@@ -1916,7 +1916,7 @@ const CELEBS = {
   theo:{n:`Theo Blackwood`,what:`action movie star`,col:'#334155',gift:`the prop cutlass from "Blackwater Tide III"`,
     meet:[`The man in the back has jumped off a moving train in four different films. He is also gripping the armrests so hard his knuckles are white. "Don't tell anyone," whispers Theo Blackwood, the most famous action star in the world. "I'm terrified of small planes."`,
           `Theo is back, and he's been practicing breathing exercises. "My therapist says I should look out the window," he says, and then does not look out the window for forty minutes.`,
-          `Theo asks to sit in the right seat. He watches every move you make, and on short final he says, quietly, "I think I get it now. It's not scary when somebody knows what they're doing." Then he hands you a long wrapped package.`]},
+          `Theo asks to sit in the right seat. He watches every move you make, and on short final he says, "I think I get it now. It's not scary when somebody knows what they're doing." Then he hands you a long wrapped package.`]},
   kairo:{n:`DJ Kairo`,what:`superstar DJ`,col:'#7c3aed',gift:`a lifetime all-access pass to every festival he plays`,
     meet:[`Your passenger brought more speaker cases than clothes. DJ Kairo, who has headlined every major festival on three continents, wants to record "the sound of the propeller" for an intro track. He holds a microphone to the window for the whole flight.`,
           `Kairo's new single opens with your engine. It's number one in eleven countries. He wants you to fly him to his next gig "for luck."`,
@@ -3725,11 +3725,11 @@ CAST.preston = {n:`Preston Vale`,role:`CEO, Azure Caribbean Air`,col:'#2d4f9e',b
 ARC_META['The Buyout'] = {main:true, n:1.5, tag:`Someone wants Coral Wing, and they don't take no for an answer.`, col:'#2d4f9e'};
 STORY.push(
  {id:'BO1',arc:`The Buyout`,title:`An Offer on the Table`,chars:['mari','preston'],req:{after:'CW4'},from:'TNCM',to:'TAPA',ac:['C172','DA40','G36'],pax:1,cargo:20,cargoLabel:`a folder of bank papers`,time:'day',dep:540,wx:'trades',
-  brief:[`A glossy Azure Caribbean turboprop is parked next to Coral Wing's faded blue hangar this morning, and its owner is drinking coffee in Mari's office. Preston Vale has made an offer for Coral Wing: the airplanes, the hangar lease, the name. The pilots too, he says, if they're "a good fit."`,`Mari says no in front of everyone. Then she quietly asks you to fly her to Antigua for a meeting at the bank. On the ramp, Dez tells you what nobody says out loud: the hangar lease is behind, the Caravan needs an engine, and Vale knows it.`],
+  brief:[`A glossy Azure Caribbean turboprop is parked next to Coral Wing's faded blue hangar this morning, and its owner is drinking coffee in Mari's office. Preston Vale has made an offer for Coral Wing: the airplanes, the hangar lease, the name. The pilots too, he says, if they're "a good fit."`,`Mari says no in front of everyone. Afterward, she asks you to fly her to Antigua for a meeting at the bank. On the ramp, Dez tells you what nobody says out loud: the hangar lease is behind, the Caravan needs an engine, and Vale knows it.`],
   teach:[`Antigua's V.C. Bird International is a busy airport with airline traffic. Expect to follow an airliner on final, and keep your speed up until you're told otherwise.`,`Mari is a former Coast Guard pilot. She'll notice every sloppy radio call. Keep them short and correct.`],
   out:{good:`Mari walks out of the bank with a three-month extension and a look on her face you haven't seen before. "We fly our way out of this," she says. "Starting with you."`,ok:`The bank gives Mari a month. "Not enough," she mutters on the flight home. "But it's something."`,bad:`A rough arrival rattles Mari before the most important meeting of her year. The bank gives her two weeks.`},rep:{mari:6,preston:-2}},
  {id:'BO2',arc:`The Buyout`,title:`Sugar in the Tank`,chars:['dez','mari'],req:{after:'BO1'},from:'TNCM',to:'TFFR',ac:['C172','DA40','G36'],pax:0,cargo:140,cargoLabel:`fuel samples and a contaminated filter`,time:'dawn',dep:390,wx:'calm',
-  brief:[`The Caravan won't start. When Dez pulls the fuel filter, it's full of something sticky. "That's not water," he says, very quietly. "Somebody put something in my airplane."`,`The nearest lab that can test aviation fuel is in Guadeloupe. Mari wants the samples there today, before anyone can say Coral Wing just had a maintenance problem. Dez packs the sample jars like they're eggs.`],
+  brief:[`The Caravan won't start. When Dez pulls the fuel filter, it's full of something sticky. "That's not water," he says. "Somebody put something in my airplane."`,`The nearest lab that can test aviation fuel is in Guadeloupe. Mari wants the samples there today, before anyone can say Coral Wing just had a maintenance problem. Dez packs the sample jars like they're eggs.`],
   teach:[`Every real preflight includes draining a little fuel from each tank and checking it's clean, the right color, and free of water or debris. This is why.`,`Guadeloupe is French. Expect French accents on the radio and a long runway at Pointe-à-Pitre.`],
   out:{good:`The lab results come back the same afternoon: contaminated on purpose. The gendarmes open a file. Somebody is going to have a very bad week.`,ok:`The samples arrive safely. The lab promises results in a few days.`,bad:`One of the jars leaked in a bumpy descent. The lab can still test the others, but the evidence is weaker.`},rep:{dez:8,mari:3}},
  {id:'BO3',arc:`The Buyout`,title:`The Overloaded Turboprop`,chars:['devries','preston'],req:{after:'BO2',hours:4},from:'TNCM',to:'TNCE',ac:['C172','DA40','G36'],pax:1,cargo:30,cargoLabel:`an inspector's flight bag`,time:'day',dep:720,wx:'trades',
@@ -3881,7 +3881,7 @@ STORY.push(
 );
 CHOICES.CO1 = {q:`Both candidates want the job, and you can only afford one.`,
   a:{t:`Hire Kofi, Dez's nephew`, out:`Kofi nearly drops his logbook. Dez pretends he isn't proud, very badly. Kofi will be rough for a while, but he'll be yours.`, rep:{dez:10,mari:3}},
-  b:{t:`Hire Lena, the ex-Azure captain`, out:`Lena shakes your hand once, firmly. Over the next month she quietly fixes three things about your operation you didn't know were broken. She also knows where Azure buried its secrets.`, rep:{dez:-3}, reputation:4}};
+  b:{t:`Hire Lena, the ex-Azure captain`, out:`Lena shakes your hand once, firmly. Over the next month she fixes three things about your operation you didn't know were broken. She also knows where Azure buried its secrets.`, rep:{dez:-3}, reputation:4}};
 CHOICES.CO2 = {q:`Vale's offer is still on the table: cash for your Barbados and Grenadines routes. It's a lot of money.`,
   a:{t:`Refuse. Those routes aren't for sale`, out:`Vale shrugs. "You'll regret it." Mari, when you tell her, just nods once. That nod is worth more than the folder.`, rep:{mari:8,preston:-6}},
   b:{t:`Sell the routes to Vale`, out:`$60,000 lands in your account. The routes go to Vale's new airline. Mari doesn't say anything, which is worse than if she had.`, cash:60000, rep:{mari:-10}}};
@@ -4776,7 +4776,7 @@ STORY.push(
  {id:'CG4',arc:`Coast Watch`,title:`The Long Search`,chars:['ortiz'],req:{after:'CG3',hours:25},from:'TJBQ',to:'MYIG',ac:['PC12','KA350','C208','TBM'],pax:3,cargo:200,cargoLabel:`survival gear, spotters and a satellite phone`,time:'day',dep:450,wx:'wave',
   brief:[`A sailboat with a family of four hit its emergency beacon north of Hispaniola, then went silent. The Coast Guard's aircraft are spread across three searches, and Ortiz needs a long-range spotter platform with endurance.`,`You'll fly the trackline northwest along the boat's planned route to Great Inagua, with two spotters at the windows. A tropical wave is moving through. Plan your fuel like your life depends on it, because out there it does.`],
   teach:[`Long overwater legs: brief your ditching plan, wear the life vests, and know the nearest airport at every point of the flight.`,`Search at an altitude where spotters can see detail (1,000–1,500 ft), but climb for fuel efficiency on the transit legs.`],
-  out:{good:`Two hours into the trackline a spotter sees a flash of a mirror. The family is on a life raft, dehydrated but alive. Ortiz says, quietly, "Mari was right about you."`,ok:`You find the raft on the second pass, and a cutter is there by sundown. Ortiz writes Coral Wing a letter of thanks.`,bad:`It's a long, tense day, but a Coast Guard jet finds the raft first using your search reports. Everyone's safe. Ortiz says your notes helped.`},rep:{mari:4},reward:{bonus:3000,note:`The Coast Guard pays for the fuel, and the sailboat's family sends a box of Bahamian rum cake every Christmas.`}}
+  out:{good:`Two hours into the trackline a spotter sees a flash of a mirror. The family is on a life raft, dehydrated but alive. Ortiz says, "Mari was right about you."`,ok:`You find the raft on the second pass, and a cutter is there by sundown. Ortiz writes Coral Wing a letter of thanks.`,bad:`It's a long, tense day, but a Coast Guard jet finds the raft first using your search reports. Everyone's safe. Ortiz says your notes helped.`},rep:{mari:4},reward:{bonus:3000,note:`The Coast Guard pays for the fuel, and the sailboat's family sends a box of Bahamian rum cake every Christmas.`}}
 );
 
 /* ---- settings: voices, copilot, in-sim panel ---- */
@@ -4892,7 +4892,7 @@ STORY.push(
   out:{good:`A textbook crosswind landing. Nova's manager, who used to fly airlines, gives you a single, approving nod.`,ok:`A firm, crabbed arrival, but safe. Nova steps out into the wind and immediately gets back in.`,bad:`A rough landing in the gusts. Nova says she's fine. The keyboard is less sure.`},rep:{}},
  {id:'TR4',arc:`The Tour`,title:`New York, New York`,chars:['nova'],req:{after:'TR3'},from:'KORD',to:'KTEB',ac:['CJ4'],pax:5,cargo:400,cargoLabel:`the stage outfits for Madison Square Garden`,time:'night',dep:1170,wx:'calm',
   feature:`A night arrival into Teterboro with the Manhattan skyline off your left wing.`,
-  brief:[`The big one: Madison Square Garden. You're flying into Teterboro at night, the airport New York's private jets use, sitting under some of the busiest airspace in the world.`,`Somewhere over Pennsylvania, Nova comes up to the cockpit and sits on the jump seat, very quietly. "I used to dream about this," she says. "Not the show. Landing in New York."`],
+  brief:[`The big one: Madison Square Garden. You're flying into Teterboro at night, the airport New York's private jets use, sitting under some of the busiest airspace in the world.`,`Somewhere over Pennsylvania, Nova comes up to the cockpit and sits on the jump seat. "I used to dream about this," she says. "Not the show. Landing in New York."`],
   teach:[`Teterboro sits under the New York Class B. Altitudes on the arrival are strict and low. Fly them exactly.`,`Night arrival over a city: the lights hide the terrain and the runway. Trust the approach, not the view.`],
   out:{good:`The Manhattan skyline slides past the left wing, and you put it down gently at Teterboro. Nova doesn't say anything. She just squeezes your shoulder.`,ok:`A busy night arrival, but tidy. The Garden is sold out, and Nova dedicates a song to "my pilot."`,bad:`It's a long, hard night arrival, and the landing is firm. Nova still plays the best show of her life.`},rep:{}},
  {id:'TR5',arc:`The Tour`,title:`Homecoming`,chars:['nova','mari'],req:{after:'TR4'},from:'KTEB',to:'TNCM',ac:['CJ4'],pax:5,cargo:400,cargoLabel:`a Grammy-shaped box nobody is allowed to talk about`,time:'sunset',dep:1020,wx:'trades',reward:{bonus:8000,note:`Nova's label pays a homecoming bonus, and she insists the Coral Wing crew are her guests at her next island show.`},
@@ -5305,7 +5305,7 @@ const CRIME = [
  {id:'CR2',arc:'Clean Hands',title:`Cash Run`,chars:['dez'],req:{after:'CW1'},from:'TQPF',to:'TKPN',ac:['C172','DA40','C152','G36'],pax:0,cargo:30,cargoLabel:`a padlocked gym bag`,time:'day',dep:600,wx:'trades',
   hook:`Dez needs a bag delivered to Nevis. Don't open it.`,
   recap:`You opened the bag on the way to Nevis: $400,000 in hundreds. You delivered it anyway.`,
-  brief:[`Dez calls before breakfast. "Same friend. One bag, Anguilla to Nevis. Five hundred for you this time."`,`The gym bag is padlocked, but the zipper is split. Somewhere over St. Kitts you look. Bundles of hundred-dollar bills, packed tight. Around four hundred thousand dollars. You fly the rest of the way with your heart in your throat.`],
+  brief:[`Dez calls before breakfast. "Same friend. One bag, Anguilla to Nevis. Five hundred for you this time."`,`The gym bag is padlocked, but the zipper is split. Somewhere over St. Kitts you look. Bundles of hundred-dollar bills, packed tight. Around four hundred thousand dollars. You fly the rest of the way with sweaty hands on the yoke.`],
   teach:[`Nevis has a short runway under a big mountain. Expect bumpy air on the west side and a little extra crosswind.`],
   out:{good:`The yacht broker at Nevis counts it on the hood of his car. "Dez said you were clean," he says. "Good."`,ok:`The broker counts it twice. "Dez said you were clean."`,bad:`The broker counts it three times, sweating in the sun. "Rough ride," he says, not really asking.`},rep:{dez:4},
   choice:{q:`Before you hand over the bag, you count it: $400,000. Nobody would ever notice one bundle missing.`,opts:[
@@ -5636,28 +5636,28 @@ const NET_TITLES = [`Unmarked crates`,`Sealed cargo`,`"Medical supplies"`,`Cash 
 /* ================= 4. in-flight story moments: thoughts, phone calls, radio ================= */
 const WHO = { self:['Your thoughts',false,0.95,0.9], radio:['Radio',false,1.12,0.85], dez:['Phone · Dez',false,1.08,1], castillo:['Phone · Castillo',false,0.92,0.8], reyes:['Phone · Reyes',true,1,1], mari:['Phone · Mari',true,1,1.05], tico:['Phone · Unknown number',false,1.1,1.05], medina:['Phone · Medina',false,0.95,0.85], hartwell:['Hartwell',false,0.95,0.9] };
 const BEATS = {
-  CW1:[['climb','self',`You keep glancing back at the box. It's just a box. Probably nothing.`],['descent','dez',`Relax, rookie. Land normal, taxi normal, smile at the man. Easy.`]],
-  CR2:[['cruise','self',`Four hundred thousand dollars behind your seat. If anyone stops you, what do you even say?`],['descent','radio',`Nevis traffic, be advised, police vehicle on the apron.|Your mouth goes dry. It's a routine patrol. Probably.`]],
-  CR3:[['descent','radio',`Coral Wing, after landing, customs requests you park at the main apron.`],['final','dez',`Hangar first. Two minutes. Breathe.`]],
-  CR4:[['cruise','self',`Castillo hasn't stopped watching your hands on the yoke. You fly like your old instructor is in the right seat.`]],
-  CR5:[['climb','self',`Passing twenty thousand feet in a jet with a million dollars in the back. You wait for the fear. It doesn't come.`],['cruise','castillo',`How does she fly? Good. Get used to it. There's a lot more where that came from.`]],
-  CR6:[['cruise','self',`The boy's breathing is getting louder. Everyone in the back is staring at the back of your head.`]],
-  CR7:[['cruise','self',`Arnaud won't stop talking about his daughter. You turn the radio up.`],['descent','castillo',`Is my lawyer comfortable? Good. Make sure he gets where he's going.`]],
-  CR8:[['climb','radio',`Coast Guard six five zero four, San Juan, returning to base due to weather.|The only other aircraft out here just turned around.`],['cruise','castillo',`You're the only plane in the sky. That's why you're worth so much.`],['descent','self',`Rain hammering the windscreen, and you're grinning. When did that start?`]],
-  CR9:[['descent','self',`Routine run. You're already thinking about what to spend this one on.`]],
-  CR10:[['cruise','self',`Fourteen hundred pounds. A 737 freighter carries forty thousand. You do the math again.`],['descent',f=>f.informant?'reyes':'self',f=>f.informant?`Nice jet. Where's it going? Text me the tail number of every plane you see on that ramp.`:`A text from an unknown number: "We know who you are." You delete it, and then you check your mirrors all the way down.`]],
+  CW1:[['climb','self',`You keep looking back at the box. It's a box. Probably nothing. Probably.`],['descent','dez',`Unclench, man. You land, you taxi, you smile at the man. That's it.`]],
+  CR2:[['cruise','self',`Four hundred grand behind your seat. If somebody stops you, what's the story? You don't have a story.`],['descent','radio',`Nevis traffic, be advised, police vehicle on the apron.|Your mouth goes dry. It's a routine patrol. Probably.`]],
+  CR3:[['descent','radio',`Coral Wing, after landing, customs requests you park at the main apron.`],['final','dez',`Hangar first. Two minutes. Breathe, eh?`]],
+  CR4:[['cruise','self',`Castillo is watching your hands. Not the instruments. Your hands.`]],
+  CR5:[['climb','self',`Flight level two zero zero, a million dollars in the back. You keep waiting to feel scared.`],['cruise','castillo',`How does she fly? Good. Get used to it.`]],
+  CR6:[['cruise','self',`The boy's breathing is getting worse. You can feel them all looking at you.`]],
+  CR7:[['cruise','self',`Arnaud won't stop talking about his daughter. You turn the volume up.`],['descent','castillo',`Is my lawyer comfortable? Good. See that he arrives.`]],
+  CR8:[['climb','radio',`Coast Guard six five zero four, San Juan, returning to base due to weather.|The only other aircraft out here just turned around.`],['cruise','castillo',`Look around. Nobody else up there. That's why I pay you.`],['descent','self',`Rain hammering the windscreen and you're grinning like an idiot.`]],
+  CR9:[['descent','self',`Easy run. You're already spending the money in your head.`]],
+  CR10:[['cruise','self',`Fourteen hundred pounds a trip. A 737 freighter takes forty thousand. You run the numbers again. And again.`],['descent',f=>f.informant?'reyes':'self',f=>f.informant?`Nice jet. Text me every tail number on that ramp. Every one.`:`A text from an unknown number: "We know who you are." You delete it, and then you check your mirrors all the way down.`]],
   CRM:[{at:'cruise',who:'radio',text:`Traffic, two o'clock, same altitude, no transponder.|A dark jet is sliding in next to your wing.`,opts:[{t:'Climb and outrun them',reply:`You push the power up and climb. The other jet stays with you for a minute, then peels off toward the coast.`,power:2},{t:'Call Castillo',reply:`"Medinas," Castillo says. "Ignore them. Land and do your job."`}]}],
-  CR11:[['cruise','self',`Tico won't look at you. He rode with you through the storm. He wanted to be a pilot.`]],
-  CR12:[['climb','self',`Castillo's lawyer finally looks up from Dez's file. "How much is Dez worth to you?"`], f=>f.informant?{at:'climb',who:'reyes',text:`Dez won't talk to us. He's protecting someone. If it's you, now would be a good time to tell me.`}:null, ['cruise','castillo',`Dez knew the risks. Don't get sentimental. It's bad for business.`]],
-  CR13:[['climb','self',`Mari hasn't said a word since takeoff.`]],
-  CR14:[['climb','self',`Your first airliner. A hundred and fifty thousand pounds, and every one of them feels like yours.`],['cruise','hartwell',`My foundation has been washing Castillo's money for years. I built it to save a reef. I want out.|He sets a locked case on the console: the ledgers. Every account Castillo has.`]],
-  CR15:[f=>f.informant?{at:'climb',who:'reyes',text:`An airline. That's ambitious. Every invoice, every tail number. Send it all to me.`}:null, ['cruise','self',`Eighteen tons a night. Your airline. You can't stop smiling.`],['descent','castillo',`Half, my friend. We'll talk when you land.`]],
-  CRB:[['cruise','self',`Castillo hasn't been this friendly in months.`], f=>{ const who=f.dezFree?'dez':f.mari?'mari':f.ticoRan?'tico':f.informant?'reyes':null; if(!who) return {at:'descent',who:'self',text:`Something feels wrong about this one. You can't say what.`};
-      const line={dez:`Rookie, listen. Castillo sold you to the Medinas. They're waiting on the cargo ramp. Park at the passenger terminal and walk out with the tourists.`,mari:`Don't park on the cargo ramp. Castillo sold you to the Medinas. Passenger terminal, now.`,tico:`It's Tico. You let me run, so I owe you one. Castillo sold you to the Medinas. They're on the cargo ramp.`,reyes:`Our wiretap just lit up. Castillo sold you to the Medinas. Stay off the cargo ramp.`}[who];
+  CR11:[['cruise','self',`Tico won't look at you. He flew the storm with you. He wanted to be a pilot.`]],
+  CR12:[['climb','self',`Castillo's lawyer finally looks up from Dez's file. "How much is Dez worth to you?"`], f=>f.informant?{at:'climb',who:'reyes',text:`Dez won't talk. He's covering for someone. If it's you, this is your window.`}:null, ['cruise','castillo',`Thinking about Dez? Don't. Sentiment is expensive.`]],
+  CR13:[['climb','self',`Mari hasn't said anything since takeoff. She's looking at the water.`]],
+  CR14:[['climb','self',`Your first airliner. A hundred and fifty thousand pounds, and it does what you tell it.`],['cruise','hartwell',`My foundation has been laundering Mateo's money for years. I built it to save a reef, you know. A reef. I want out.|He sets a locked case on the console: the ledgers. Every account Castillo has.`]],
+  CR15:[f=>f.informant?{at:'climb',who:'reyes',text:`An airline. Ambitious. I want every invoice and every tail number.`}:null, ['cruise','self',`Eighteen tons a night, and your name on the tail.`],['descent','castillo',`Half. We'll talk on the ground.`]],
+  CRB:[['cruise','self',`Castillo hasn't been this nice to you in months. That's what bothers you.`], f=>{ const who=f.dezFree?'dez':f.mari?'mari':f.ticoRan?'tico':f.informant?'reyes':null; if(!who) return {at:'descent',who:'self',text:`Something's off about this run. You can't put your finger on it.`};
+      const line={dez:`Rookie. Rookie, it's me. Castillo sold you, man. Medinas on the cargo ramp. Park by the terminal and walk out with the tourists. Go.`,mari:`Listen to me. Not the cargo ramp. Castillo sold you to the Medinas. Park at the terminal and walk out with the tourists.`,tico:`It's Tico. You let me run, so now I owe you. Castillo sold you to the Medinas, boss. Cargo ramp. Don't go there.`,reyes:`Wiretap just lit up. Castillo sold you to the Medinas. Stay off the cargo ramp. I mean it.`}[who];
       return {at:'descent',who,text:line,opts:[{t:'Park at the passenger terminal',reply:`You ask ground for a stand at the passenger terminal. Your hands are steady. They shouldn't be.`,flag:'warned'},{t:'Ignore it',reply:`You land where Castillo told you to.`}]}; }],
-  CR16:[['climb','self',`Four engines. Eighty tons. Two years ago you were scared of a box in a Cessna.`],['descent',f=>f.mari?'mari':'castillo',f=>f.mari?`The trucks are in place. Bring her home, partner.`:`I hear you're flying a 747 now. Don't forget who taught you.`]],
-  CRT:[f=>f.informant?{at:'cruise',who:'reyes',text:`A table full of suppliers in Cancún. Tell me you're remembering every face.`}:null, ['descent','self',`Everyone at that table is looking at the sky right now.`]],
-  CR17:[['cruise',f=>f.informant||f.ledgers?'reyes':'self',f=>f.informant||f.ledgers?`We're in position at Miami. Whatever you're planning, don't.`:`Castillo is pretending to sleep in the jump seat. One hour to Miami. One hour to decide.`]]
+  CR16:[['climb','self',`Four engines, eighty tons. Two years ago a box in a Cessna made you sweat.`],['descent',f=>f.mari?'mari':'castillo',f=>f.mari?`Trucks are here. Rain's coming. Don't make me wait in it.`:`A 747. Look at you. Don't forget whose money taught you to fly.`]],
+  CRT:[f=>f.informant?{at:'cruise',who:'reyes',text:`A table of suppliers in Cancún. Remember the faces.`}:null, ['descent','self',`Somewhere down there, a table full of people is looking up.`]],
+  CR17:[['cruise',f=>f.informant||f.ledgers?'reyes':'self',f=>f.informant||f.ledgers?`Miami's ready for you. So are we. Don't be clever.`:`Castillo is pretending to sleep in the jump seat. An hour to Miami. An hour to make up your mind.`]]
 };
 function beatsFor(a){ const f=flagsOf(S.st); return (BEATS[a.job.story]||[]).map(b=>{ if(typeof b==='function') b=b(f); if(Array.isArray(b)) b={at:b[0],who:typeof b[1]==='function'?b[1](f):b[1],text:typeof b[2]==='function'?b[2](f):b[2]}; return b; }).filter(Boolean); }
 function beatPhase(a){ const s=S.sim; if(!s||!s.motion||!s.position||s.motion.onGround) return null; const rec=s.recorder; if(!rec||!rec.takeoff) return null;
@@ -5721,73 +5721,73 @@ VIEW_META.board = ['Side jobs','Legit work, network runs and checkrides'];
 /* each shot: [place caption, speaker key (null = narration), line] */
 const PRO = {
  CW1:[[`Coral Wing Air · Juliana · 7:40 AM`,null,`The hangar smells like avgas and burnt coffee. A stack of unpaid invoices sits on Mari's desk, weighed down by a wrench.`],
-      [`Mari's office`,'mari',`Fuel supplier wants cash up front now. Cash. Like we're a fruit stand.`],
-      [`The ramp`,'dez',`Morning, rookie. Easy one today. Anguilla and back. I'll ride along.`],
+      [`Mari's office`,'mari',`Fuel guy wants cash now. Up front. Cash. Twelve years I've paid that man on time.`],
+      [`The ramp`,'dez',`Mornin', rookie. Easy day. Anguilla and back, and I'm coming with you. Don't look at me like that.`],
       [`The ramp`,null,`He's carrying a box wrapped in brown tape. He doesn't put it in the cargo log.`]],
  CR2:[[`Anguilla · 9:15 AM`,null,`Your phone buzzes before you've finished breakfast.`],
-      [`Phone call`,'dez',`Same friend, one bag, Anguilla to Nevis. Five hundred for you. Don't open it.`],
+      [`Phone call`,'dez',`Same friend. One bag. Anguilla to Nevis, five hundred in your pocket. And rookie? Don't open it.`],
       [`Wallblake ramp`,null,`The bag is heavy. The padlock is new. The zipper is already split an inch.`]],
  CR3:[[`Nevis · 1:50 PM`,null,`Two coolers sit by the plane. The man loading them is sweating harder than the heat explains.`],
-      [`The ramp`,'dez',`Fish. Just fish. Bring them home and don't stop to chat with anybody.`],
+      [`The ramp`,'dez',`It's fish, man. Fish. Bring them home and don't go making friends.`],
       [`Cockpit`,null,`You strap in. Your hands are shaking a little. You tell yourself it's the coffee.`]],
  CR4:[[`Juliana · 4:45 PM`,null,`Two men in linen suits walk across the ramp like they own it. Maybe they do.`],
-      [`The ramp`,'castillo',`You must be the pilot Dez keeps telling me about. Calm hands, he says. I'd like to see that.`],
-      [`The ramp`,'dez',`Be nice to this one, rookie. Real nice.`]],
+      [`The ramp`,'castillo',`So you're Dez's pilot. He says you have calm hands. I'd like to see them.`],
+      [`The ramp`,'dez',`Be nice to this one. I mean it. Real nice.`]],
  CR5:[[`Private hangar · San Juan · 9:30 AM`,null,`The hangar door rolls up. A white Vision Jet sits under the lights, polished like jewelry.`],
-      [`Hangar office`,'hartwell',`Lionel Hartwell. My foundation owns her, on paper. Mateo says you're the best he's found.`],
-      [`Phone call`,'castillo',`Nine bags. Don't count them this time. It's only money, and money isn't a crime until somebody asks where it came from.`],
+      [`Hangar office`,'hartwell',`Lionel Hartwell. My foundation owns her. On paper, anyway. Mateo says you're the best he's found, and Mateo is very hard to please.`],
+      [`Phone call`,'castillo',`Nine bags. Don't count them. Money isn't a crime, my friend. Not until somebody asks where it came from.`],
       [`Cockpit`,null,`You run your hand along the glareshield. Last month you were flying a Cessna with a cracked seat.`]],
  CR6:[[`Juliana · 10:50 PM`,null,`A van pulls up to the jet with its lights off.`],
       [`The ramp`,null,`Four people climb out. A mother. Her brother. A young man. A boy, maybe ten, holding an inhaler like a toy.`],
-      [`Phone call`,'castillo',`No stops. No radio. They paid for a quiet flight.`]],
+      [`Phone call`,'castillo',`No stops. No radio. They paid for quiet.`]],
  CR7:[[`Beef Island, Tortola · 10:45 AM`,null,`A man in a wrinkled suit is running across the ramp, clutching a sandwich bag to his chest.`],
       [`The ramp`,null,`"Philippe Arnaud. I'm Mr. Castillo's lawyer. The police are at my office at noon. Please, can we go?"`],
       [`Cockpit`,null,`He's sweating through his shirt. You start the engine before he's finished buckling in.`]],
  CR8:[[`San Juan · 3:30 PM`,null,`The sky to the east is a wall of gray. The Coast Guard helicopters are being towed into their hangar.`],
-      [`Phone call`,'castillo',`Nobody else will fly today. That's the point. Name your price, and I'll double it.`],
-      [`The ramp`,'tico',`You're the pilot? Tico. I load the bags. Someday I'm gonna fly one of these, boss. Watch.`]],
+      [`Phone call`,'castillo',`Nobody will fly in this. That's the point. Name a number. I'll double it.`],
+      [`The ramp`,'tico',`You're the pilot? I'm Tico, I do the bags. One day I'm gonna fly one of these, boss, for real, you watch.`]],
  CR9:[[`Punta Cana · 9:40 AM`,null,`A routine run. A sealed case, a contact on St. Croix. You've done twenty of these.`],
       [`Cockpit`,null,`You don't notice the man in the terminal window, taking pictures of your tail number.`]],
  CR10:[[`St. Croix · 11:30 AM`,null,`A Citation CJ4 waits on the ramp. Your name is painted under the cockpit window.`],
-      [`Phone call`,'castillo',`You're not a courier anymore. You're part of the machine.`],
-      [`The ramp`,'tico',`Boss! I'm on your crew now! This is the best day of my whole life.`]],
+      [`Phone call`,'castillo',`You're not a delivery boy anymore. Welcome to the family business.`],
+      [`The ramp`,'tico',`Boss! Boss. They put me on your crew. Your crew! I called my mom already.`]],
  CRM:[[`Montego Bay · 8:20 PM`,null,`The trucks are late. Nobody is ever late on a Castillo run.`],
-      [`The ramp`,'tico',`Relax, boss. Nobody hits the jet. Who would even try?`],
+      [`The ramp`,'tico',`Relax, boss, nobody's gonna touch the jet. Who'd even try that?`],
       [`Across the airfield`,null,`A dark jet with no lights is sitting at the far end of the ramp. Its engines are running.`]],
- CR11:[[`Castillo's villa · Punta Cana · 7:00 PM`,'castillo',`Somebody on your crew talks to the DEA. I think it's Tico.`],
-      [`The villa`,'castillo',`Fly him to Grand Cayman. Someone will meet him there to talk. Just talk.`],
+ CR11:[[`Castillo's villa · Punta Cana · 7:00 PM`,'castillo',`Someone on your crew talks to the DEA. I think it's the boy. Tico.`],
+      [`The villa`,'castillo',`Fly him to Grand Cayman. Some friends will meet him. To talk. Only to talk.`],
       [`The ramp`,null,`Tico is waiting by the jet, smiling like it's any other night. Then he sees the driver getting in behind him.`]],
  CR12:[[`Grand Cayman · 8:30 AM`,null,`The news is on every TV in the terminal: "Coral Wing mechanic arrested at Juliana."`],
-      [`Phone call`,'castillo',`Dez knew the risks. My lawyer will ride with you. Don't get sentimental.`],
+      [`Phone call`,'castillo',`Dez knew what this was. My lawyer rides with you. And please, no tears in my airplane.`],
       [`The ramp`,null,`The lawyer is already on board, reading Dez's file. She doesn't look up.`]],
  CR13:[[`Coral Wing hangar · 5:10 PM`,null,`Hangar three. A toolbox on the floor, lid open. Inside, under the trays, the money.`],
-      [`The hangar`,'mari',`Don't. Don't explain. Just take me flying. Grand Case, like when you were new.`]],
+      [`The hangar`,'mari',`Don't. I don't want the speech. Take me up. Grand Case, the way you used to fly it when you were scared of everything.`]],
  CR14:[[`Juliana · 10:30 AM`,null,`Your airline license is three days old. The 737 on the cargo ramp is twenty-two years older.`],
-      [`The jet bridge`,'hartwell',`I'll ride in the jump seat, if you don't mind. I have something to give you, and I don't trust phones.`],
+      [`The jet bridge`,'hartwell',`I'll take the jump seat, if that's all right. I have something for you, and I've rather gone off telephones.`],
       [`Cockpit`,null,`Fifteen tons in the hold. You've never felt calmer.`]],
  CR15:[[`Santo Domingo · 8:15 PM`,null,`A fresh coat of paint is drying on the tail: CARIBE CARGO. Your airline.`],
-      [`The ramp`,'castillo',`Nice airline. I'll take half.`],
+      [`The ramp`,'castillo',`Lovely airline. I'll take half.`],
       [`The ramp`,null,`He says it with a smile. His driver doesn't smile at all.`]],
- CRB:[[`Panama City · 7:45 PM`,'castillo',`My friend! No hard feelings about the airline. I've booked you a run myself. Like old times.`],
+ CRB:[[`Panama City · 7:45 PM`,'castillo',`My friend! Forget the airline business. I booked you a run myself. Like the old days.`],
       [`The ramp`,null,`Seventeen tons for Cancún. Castillo shakes your hand for a long time.`],
       [`Cockpit`,null,`It's the nicest he's been in months. That's the part that bothers you.`]],
  CR16:[[`Tocumen cargo ramp · 9:30 PM`,null,`The 747-8 freighter is the biggest thing on the airfield. Eighty tons of "textiles" are going in through the nose.`],
       [`The ramp`,null,`Two years ago you were scared of a taped box in a Cessna. You stand under the wing and laugh out loud.`]],
  CRT:[[`Montego Bay · 11:00 AM`,null,`The suppliers want a meeting in Cancún. The same airport where Castillo sold you out.`],
-      [`Phone call`,'medina',`I'll save you a seat at the table, my friend. Bring the big airplane. They like big airplanes.`]],
+      [`Phone call`,'medina',`There's a seat at the table for you, amigo. Bring the big airplane. These people love a big airplane.`]],
  CR17:[[`Cancún · 8:30 PM`,null,`One hundred tons. Everything the network has, in one airplane.`],
-      [`The jump seat`,'castillo',`I'll ride along, if you don't mind. To make peace.`],
+      [`The jump seat`,'castillo',`I'll ride with you, if you don't mind. One last flight. To make peace.`],
       [`Cockpit`,null,`Nobody believes that. Least of all you. Somewhere in Miami, Reyes is waiting.`]]
 };
 /* continuity variants */
 const PRO_DYN = {
   /* The Rat: if you took Reyes's deal, you know who the real rat is; Tico remembers the right seat */
-  CR11:f=>{ const L=PRO.CR11.slice(0,2); if(f.informant) L.push([`The villa`,null,`You know exactly who's been talking to the DEA. It isn't Tico. Your burner phone feels very heavy in your pocket.`]); L.push(PRO.CR11[2]); if(f.ticoSeat) L.push([`The ramp`,'tico',`Boss. You let me sit up front once, remember? Best ten minutes of my life.`]); return L; },
-  CR13:f=>f.dezJail?[[`Coral Wing hangar · 5:10 PM`,null,`With Dez gone, the hangar is quiet. Mari has been going through his toolboxes.`],[`Hangar three`,null,`Under the trays, the money. All of it.`],[`The hangar`,'mari',`Don't. Don't explain. Just take me flying. Grand Case, like when you were new.`]]:null,
+  CR11:f=>{ const L=PRO.CR11.slice(0,2); if(f.informant) L.push([`The villa`,null,`You know exactly who's been talking to the DEA. It isn't Tico. Your burner phone feels very heavy in your pocket.`]); L.push(PRO.CR11[2]); if(f.ticoSeat) L.push([`The ramp`,'tico',`Boss. Remember when you let me sit up front? Ten minutes. Best ten minutes I ever had.`]); return L; },
+  CR13:f=>f.dezJail?[[`Coral Wing hangar · 5:10 PM`,null,`With Dez gone, the hangar is quiet. Mari has been going through his toolboxes.`],[`Hangar three`,null,`Under the trays, the money. All of it.`],[`The hangar`,'mari',`Don't. I don't want the speech. Take me up. Grand Case, the way you used to fly it when you were scared of everything.`]]:null,
   /* The Setup: Castillo heard what you told his lawyer */
-  CRB:f=>f.toldLawyer?[PRO.CRB[0],[`The ramp`,'castillo',`My lawyer tells me you had a lot to say about Dez. Never mind. We're friends.`]].concat(PRO.CRB.slice(1)):null,
+  CRB:f=>f.toldLawyer?[PRO.CRB[0],[`The ramp`,'castillo',`My lawyer says you had a lot to say about Dez. It doesn't matter. We're friends.`]].concat(PRO.CRB.slice(1)):null,
   /* Heavy: who's with you on the ramp, and what you've been doing since Cancún */
-  CR16:f=>{ const L=f.mari?[[`Tocumen cargo ramp · 9:30 PM`,null,`The 747-8 freighter is the biggest thing on the airfield. Eighty tons are going in through the nose.`],[`The ramp`,'mari',`Eighty tons, and I tracked every pallet. Bring her home, partner.`]]:[PRO.CR16[0]];
+  CR16:f=>{ const L=f.mari?[[`Tocumen cargo ramp · 9:30 PM`,null,`The 747-8 freighter is the biggest thing on the airfield. Eighty tons are going in through the nose.`],[`The ramp`,'mari',`Eighty tons. I counted every pallet twice. Bring her home, partner.`]]:[PRO.CR16[0]];
     if(f.war) L.push([`The ramp`,null,`Half of Castillo's pilots fly for you now. Tonight one of them is walking around your 747 with a flashlight, checking the tires for you.`]);
     if(f.patient) L.push([`The cockpit`,null,`Your notebook is forty pages long now. Dates, tail numbers, amounts. Castillo still thinks you're grateful.`]);
     L.push(f.mari?[`The ramp`,null,`Two years ago you were scared of a taped box in a Cessna. You stand under the wing and laugh out loud.`]:PRO.CR16[PRO.CR16.length-1]); return L; },
@@ -5935,13 +5935,13 @@ const MID = {
   CR6:{at:'descent',who:'self',text:`The boy is wheezing hard. There's an oxygen bottle in the emergency kit, and Castillo's rule is no stops, no favors.`,opts:[{t:'Pass the oxygen back',reply:`His mother holds the mask to his face. His breathing eases a little.`,flag:'oxygen'},{t:'Keep your eyes forward',reply:`You fly. You don't look back.`,power:2}]},
   CR7:{at:'cruise',who:'self',text:`Arnaud is asleep. His hard drive is sticking out of his jacket pocket.`,opts:[{t:'Copy the drive onto your phone',reply:`Ninety seconds. Every account, every name. Insurance.`,flag:'drivecopy',power:4,echo:`You still have a copy of Arnaud's hard drive on your phone.`},{t:'Leave it alone',reply:`Some things it's safer not to know.`}]},
   CR8:{at:'cruise',who:'radio',text:`Punta Cana is reporting a thunderstorm over the field.|Two of the twenty bags are soaking up water from a leak in the hold.`,opts:[{t:'Push through and land on time',reply:`You thread the cells. Castillo will hear about this.`,power:4,heat:2},{t:'Hold for twenty minutes',reply:`You circle in the bumps until the cell drifts off. Late, but in one piece.`,cash:-1500,echo:`You held over Punta Cana in the storm, and Castillo noticed you were late.`}]},
-  CR9:{at:'cruise',who:'self',text:`There's a sealed case behind your seat and a feeling in your stomach you haven't had since the Cessna days.`,opts:[{t:'Hide the case in the avionics bay',reply:`Two screws, one panel. If anyone looks, they'll have to look hard.`,flag:'hidcase',heat:-4},{t:'Leave it where it is',reply:`It's a routine run. Probably.`}]},
-  CR10:{at:'cruise',who:'tico',text:`Boss, can I sit up front? Just for a minute? I want to see what it looks like.`,opts:[{t:'Let Tico take the right seat',reply:`Tico doesn't say a word for ten minutes. He just stares out at the sky, grinning.`,flag:'ticoSeat'},{t:'Tell him to stay with the cargo',reply:`"Yes, boss." He sits back down. Quieter than usual.`,power:2}]},
-  CR12:{at:'cruise',who:'castillo',text:`The lawyer works for me, not for Dez. Remember that when she asks you questions.`,opts:[{t:'Tell the lawyer everything',reply:`She writes it all down. "This helps Dez," she says. "It doesn't help you."`,heat:4,flag:'toldLawyer'},{t:'Say nothing',reply:`You fly. She reads. Nobody talks.`}]},
-  CR14:{at:'cruise',who:'hartwell',text:`If I give you the ledgers, Castillo will know it was me. I'd like a seat on a plane out, after.`,opts:[{t:'Promise him a seat out',reply:`Hartwell closes his eyes. "Thank you."`,flag:'hartwellSafe'},{t:'Make no promises',reply:`"I see," he says, and looks out of the window for the rest of the flight.`,power:4}]},
+  CR9:{at:'cruise',who:'self',text:`Sealed case behind the seat. Your stomach hasn't felt like this since the Cessna.`,opts:[{t:'Hide the case in the avionics bay',reply:`Two screws, one panel. If anyone looks, they'll have to look hard.`,flag:'hidcase',heat:-4},{t:'Leave it where it is',reply:`It's a routine run. Probably.`}]},
+  CR10:{at:'cruise',who:'tico',text:`Boss, can I sit up front? One minute. I just wanna see it. I won't touch nothing.`,opts:[{t:'Let Tico take the right seat',reply:`Tico doesn't say a word for ten minutes. He just stares out at the sky, grinning.`,flag:'ticoSeat'},{t:'Tell him to stay with the cargo',reply:`"Yes, boss." He sits back down. Quieter than usual.`,power:2}]},
+  CR12:{at:'cruise',who:'castillo',text:`She works for me, not for Dez. Remember that when she starts asking questions.`,opts:[{t:'Tell the lawyer everything',reply:`She writes it all down. "This helps Dez," she says. "It doesn't help you."`,heat:4,flag:'toldLawyer'},{t:'Say nothing',reply:`You fly. She reads. Nobody talks.`}]},
+  CR14:{at:'cruise',who:'hartwell',text:`If I hand you the ledgers he'll know it was me. So I'd like a seat on a plane out. Somewhere with no extradition and decent tea.`,opts:[{t:'Promise him a seat out',reply:`Hartwell closes his eyes. "Thank you."`,flag:'hartwellSafe'},{t:'Make no promises',reply:`"I see," he says, and looks out of the window for the rest of the flight.`,power:4}]},
   CR15:{at:'descent',who:'radio',text:`Caribe one, Tocumen ground. Customs requests you taxi to remote stand seven.|Remote stand seven is where they search planes.`,opts:[{t:'Comply and stay calm',reply:`They open three pallets of flowers. They find flowers.`,heat:-4},{t:'Claim a hydraulic issue and taxi to your hangar',reply:`You buy fifteen minutes. That's all your loaders need.`,heat:6,power:3}]},
   CR16:{at:'cruise',who:'radio',text:`Heavy aircraft, unidentified, this is the U.S. Coast Guard on guard. Identify yourself.|You're over international water.`,opts:[{t:'Answer with your Caribe Cargo callsign',reply:`"Caribe four seven, freight to Montego Bay." Silence. Then: "Copy." They let you go.`},{t:'Ignore them',reply:`They follow you on radar for an hour, then give up.`,heat:8,power:4}]},
-  CRT:{at:'cruise',who:'medina',text:`Before you land: the suppliers want a show of strength. Do a low pass down the runway. Let them hear four engines.`,opts:[{t:'Do the low pass',reply:`The 747 roars down the runway at two hundred feet. Every phone at the table is pointed at you.`,power:6,heat:4},{t:'Land like a professional',reply:`A quiet, perfect arrival. Some people are impressed by that too.`}]}
+  CRT:{at:'cruise',who:'medina',text:`Before you land, give them a show. Low pass, right down the runway. I want them to feel four engines in their teeth.`,opts:[{t:'Do the low pass',reply:`The 747 roars down the runway at two hundred feet. Every phone at the table is pointed at you.`,power:6,heat:4},{t:'Land like a professional',reply:`A quiet, perfect arrival. Some people are impressed by that too.`}]}
 };
 Object.keys(MID).forEach(id=>{ if(BEATS[id]) BEATS[id].push(MID[id]); else BEATS[id]=[MID[id]]; });
 /* echoes: the next prologue opens with what you did last time */
@@ -6047,10 +6047,10 @@ setTimeout(()=>{ try{ if(typeof CHAR_VOICE!=='undefined' && CHAR_VOICE.castillo)
   add('CR2',{at:'cruise',who:'radio',text:`Coast Guard Dash 8, low level, crossing west of Saba.|It's heading straight across your track.`,opts:[
     {t:'Drop low and stay quiet',reply:`You ease the nose down toward the water.`, order:{k:'lowlevel', agl:1000, sec:120, within:240, label:'Stay under 1,000 ft for 2 minutes', ok:{text:`The Dash 8 passes high and never looks your way.`, heat:-2}, fail:{text:`You hesitated. The Dash 8 banks toward you for a closer look, then carries on.`, heat:3}}},
     {t:'Hold altitude and wave',reply:`Just another island hopper. The Dash 8 rocks its wings and carries on.`, heat:2}]});
-  add('CR3',{at:'cruise',who:'dez',text:`Slow down, rookie. Customs changes shift at four. Land after that and the new guy waves us through.`,opts:[
+  add('CR3',{at:'cruise',who:'dez',text:`Ease off, rookie. Customs swaps at four. Old man goes home, new boy waves us in. Kill some time.`,opts:[
     {t:'Pull the power back',reply:`You bring the power back and watch the clock.`, order:{k:'slow', pct:0.8, sec:180, within:120, label:'Fly 20% slower for 3 minutes', ok:{text:`You land at five past four. The new officer barely looks up.`, heat:-3}, fail:{text:`You land at ten to four. The old officer is still on, and he remembers your face.`, heat:2}}},
     {t:'Land on time',reply:`"Your call," Dez says. He doesn't sound happy.`, heat:2}]});
-  add('CR4',{at:'cruise',who:'castillo_seat',text:`Show me what my money buys. A steep turn. Forty-five degrees of bank, all the way around.`,opts:[
+  add('CR4',{at:'cruise',who:'castillo_seat',text:`Humor me. A steep turn. Forty-five degrees, all the way around. I like to know what I'm paying for.`,opts:[
     {t:'Roll into a steep turn',reply:`You roll in and pull.`, order:{k:'steepturn', bank:40, deg:330, within:180, label:'Steep turn: 40° of bank, all the way around', ok:{text:`You roll out on your heading. Castillo nods once. "Good."`, power:4}, fail:{text:`Castillo watches you wobble through it and says nothing.`, power:-1}}},
     {t:'"Not with passengers, sir."',reply:`Castillo smiles. "Careful. I like that."`, power:1}]});
 })();
@@ -6825,6 +6825,7 @@ WHATS_NEW.unshift(['0.63','Fly the story: some story moments now give you an ord
 WHATS_NEW.unshift(['0.64','Smoother story flow: a cutscene never plays twice or stacks on another, "Previously on" follows one rule, painted scenes behind cutscenes and chapter banners, a redesigned start screen, a cleaner flight page with Start flight up top, book a checkride straight from the Story page, and the coach no longer nags during Castillo\'s steep turn.']);
 WHATS_NEW.unshift(['0.65','A new look: a glass-cockpit design across the whole app. Sharp edges, one amber color for the thing to do next, avionics-style readouts, a slim top bar instead of the sidebar, a full-scene chapter screen, a cleaner job board, flight strip and in-flight view, and equal-looking story choices.']);
 WHATS_NEW.unshift(['0.66','Less noise: plain labels instead of tiny capitals everywhere, about half the helper text gone, a shorter start screen, and a little film grain.']);
+WHATS_NEW.unshift(['0.67','Every character sounds more like themselves: Dez loose and warm, Castillo smooth and cold, Tico talking too fast, Reyes clipped, Hartwell rambling. Two repeated lines fixed. The job board now reads like a departures board, and your license sits next to your story path.']);
 /* ===================== RECORDED VOICE LINES =====================
    Story lines can be played from recorded audio instead of computer speech. Each spoken line has a stable id made
    from its words (voKey). Put recordings in art/voice/<id>.mp3 and list the ids in art/voice/index.json:
@@ -8223,8 +8224,8 @@ function jobRow(st, j){
   const tag=j.drop?'Night drop':j.lowLevel?'Low level':j.hot?'Hot':j.bonus?'Bonus':'';
   const accept = canAcceptJob(st, j) ? `<button class="btn primary jc-go" data-act="accept" data-id="${j.id}">${j.network?'Take the run':'Accept'} ${ICO_PLANE}</button>` : '';
   return `<div class="jrow k-${kind} ${open?'open':''}"><button class="jr-main" data-act="job-open" data-id="${j.id}" aria-expanded="${open}">
-      <span class="jr-k">${esc(lbl)}</span><span class="jr-rt"><b>${esc(j.from)}</b> → <b>${esc(to==='????'?'????':to)}</b></span><span class="jr-t" title="${esc(j.title)}">${esc(j.title)}${tag?` <em>${tag}</em>`:''}</span>
-      <span class="jr-m" title="${esc((AC[j.ac]||{}).n||'')}">${j.dep<=st.clock?'Now':hhmm(j.dep)} · ${est?durTxt(est)+' · ':''}${esc(AC[j.ac]?AC[j.ac].n:j.ac)}</span><span class="jr-p">${money(j.pay)}${j.network?'<small class="dirty">dirty · Heat +5</small>':''}</span></button>
+      <span class="jr-dep mono">${j.dep<=st.clock?'Now':hhmm(j.dep)}</span><span class="jr-rt" title="${esc(j.from)} → ${esc(to)}"><b class="mono">${esc(to==='????'?'????':to)}</b><small>${esc(to!=='????'&&AP[to]?AP[to].city||AP[to].n||'':'Sealed')}</small></span><span class="jr-t" title="${esc(j.title)}"><span>${esc(j.title)}${tag?` <em>${tag}</em>`:''}</span><small class="jr-k">${esc(lbl)}</small></span>
+      <span class="jr-m jr-ac" title="${esc((AC[j.ac]||{}).n||'')}">${esc(AC[j.ac]?AC[j.ac].n:j.ac)}</span><span class="jr-blk mono">${est?durTxt(est):''}</span><span class="jr-p">${money(j.pay)}${j.network?'<small class="dirty">dirty · Heat +5</small>':''}</span></button>
     <span class="jr-go">${accept}</span>${open?`<div class="jr-card"><button class="btn sm ghost" data-act="job-map" data-id="${j.id}" style="margin:0 0 10px">Show route on the map</button>${stripHTML(st, j)}</div>`:''}</div>`;
 }
 
@@ -8262,7 +8263,7 @@ function boardView(){
   const tabs=[['all','All'],['network','Network runs'],['legit','Legit'],['special','Charters']].filter(([k])=>k==='all'||count(k)).map(([k,n])=>`<button class="${tab===k?'on':''}" data-act="job-tab" data-v="${k}">${n} <small>${count(k)}</small></button>`).join('');
   const rows=shown.filter(j=>canAcceptJob(st,j));
   /* rows you can accept; with a flight already booked, the jobs are shown as cards to browse */
-  const list = rows.length ? `<div class="jlist"><div class="jl-head"><span>Type</span><span>Route</span><span>Job</span><span>Departs · time · aircraft</span><span>Pay</span><span></span></div>${rows.map(j=>jobRow(st,j)).join('')}</div>`
+  const list = rows.length ? `<div class="jlist"><div class="jl-head"><span>Departs</span><span>To</span><span>Job</span><span>Aircraft</span><span>Time</span><span>Pay</span></div>${rows.map(j=>jobRow(st,j)).join('')}</div>`
     : `<div class="jgrid b2-grid">${shown.length ? shown.map(j=>stripHTML(st,j)).join('') : `<div class="empty"><h3>No jobs here right now</h3><p>Start a new day for fresh work, or travel to a busier airport.</p><div class="row" style="gap:8px;justify-content:center;margin-top:10px"><button class="btn sm" data-act="rest">New day</button><button class="btn sm" data-act="cmd">Find an airport</button></div></div>`}</div>`;
   /* travel as a passenger */
   const regions=allowedRegions(st); const dests=Object.keys(AP).filter(k=>k!==st.loc && !AP[k].water && regions.includes(AP[k].r)).sort((a,b)=>AP[a].isl.localeCompare(AP[b].isl)); const tv=S.travelTo&&dests.includes(S.travelTo)?S.travelTo:dests[0]; const dh=tv?deadheadCost(st,tv):null;
@@ -8704,13 +8705,13 @@ function playAftermath(){
   if(uiP().skipCuts) return;
   const st=S.st, L=st&&st.last; if(!L||!L.job) return; const job=L.job, m=CRIME.find(x=>x.id===job.story); if(!m) return; const c=crime(st); const MC=mainChapters(); const act=CRIME_ACTS.find(a=>a.arc===m.arc)||CRIME_ACTS[0];
   /* a failed chapter: a phone call, then try again */
-  if(L.failed){ const boss=c.on?'castillo':'dez'; cutscene({col:act.col, art:SCENES.ramp(), shots:[{card:true,kicker:m.title,title:'It went wrong',auto:1800},[`Phone call`, boss, boss==='castillo'?`I don't pay for wreckage. Get yourself together and do it again. Properly.`:`Rookie, what happened out there? Breathe. We'll try it again.`],{card:true,kicker:'Chapter failed',title:'Try again',sub:`<p>Power −5, Heat +8. Play the chapter again from the Main story page.</p>`}], onEnd:()=>render()}); return; }
+  if(L.failed){ const boss=c.on?'castillo':'dez'; cutscene({col:act.col, art:SCENES.ramp(), shots:[{card:true,kicker:m.title,title:'It went wrong',auto:1800},[`Phone call`, boss, boss==='castillo'?`I don't pay for wreckage. Pull yourself together and do it again. Properly this time.`:`Rookie, what happened out there? Breathe. We'll try it again.`],{card:true,kicker:'Chapter failed',title:'Try again',sub:`<p>Power −5, Heat +8. Play the chapter again from the Main story page.</p>`}], onEnd:()=>render()}); return; }
   const here=AP[job.to]?AP[job.to].n:''; const shots=[];
   shots.push({card:true, kicker:`${m.title} · ${here}`, title:`Grade ${L.res.grade}`, sub:`<p>${esc(L.out.pay?`You earned ${money(L.out.pay)}`:'')}</p>`, auto:1800});
   splitOut(L.out.story).forEach(t=>shots.push([here, null, t]));
   const nextCard=()=>{ const nx=MC.find(x=>!st.story.done[x.id]); const cc=crime(st); const out=[];
     if(cc.ending){ epilogue(st).forEach(t=>out.push(['Years later', null, t])); out.push({card:true, kicker:'The end', title:{kingpin:'Kingpin',witness:'Witness',ghost:'Ghost'}[cc.ending]||'The end', sub:`<p>Thank you for playing the main story. Side jobs and the Starling story are still out there.</p>`}); return out; }
-    if(m.id==='CR4' && st.jetPaid) out.push([`Text message`, 'castillo', `Your jet training is paid for. ${money(st.jetPaid)} is in your account. Book the checkride. Don't make me wait.`]);
+    if(m.id==='CR4' && st.jetPaid) out.push([`Text message`, 'castillo', `Your jet training is taken care of. ${money(st.jetPaid)} is in your account. Book the checkride. I don't like waiting.`]);
     if(m.id==='CR4') out.push({card:true, kicker:'New: you work for Castillo', title:'Power, Heat and dirty cash', sub:`<p><b>Power</b> grows with every chapter and hard choice, and unlocks rewards.</p><p><b>Heat</b> is how close the law is. Network runs raise it, legit jobs cool it. At 60 customs starts searching your plane; at 80 the feds are watching and the story waits until you cool off. It's always shown at the top of the screen.</p><p><b>Dirty cash</b> from network runs has to be laundered on the Money page before you can spend it.</p>`});
     out.push({card:true, kicker:'Chapter complete', title:m.title, sub:`${cc.on?`<p class="cut-meters"><span>Power ${cc.power}</span><span>Heat ${cc.heat}</span><span>${esc(crimeRank(cc))}</span></p>`:''}${nx?`<p>Next: <b>${esc(nx.title)}</b> · ${esc(nx.hook||'')}</p>`:''}`}); return out; };
   if(m.choice && c.choice[m.id]==null && !L.res.crash){
@@ -9217,6 +9218,40 @@ html.ckp .ck-item,html.ckp label.ck{background:transparent!important;border:0!im
 html.ckp .btn.primary,html.ckp .btn.action,html.ckp button.btn.primary.sm,html.ckp button.btn.action.sm,html.ckp .b2-story-go .btn.action,html.ckp main .btn.action[data-act]{color:var(--amb-ink)!important}
 html.ckp .sh-act small{color:var(--muted)!important;opacity:1!important}
 .cb-h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* job board: a departures board */
+html.ckp .jl-head,html.ckp .jr-main{grid-template-columns:76px 150px minmax(0,1fr) 190px 84px 90px!important;gap:16px!important}
+html.ckp .jl-head{padding:9px 150px 9px 18px!important}
+html.ckp .jr-main{padding:12px 150px 12px 18px!important;align-items:center}
+html.ckp .jr-dep{color:var(--amb);font-size:16px;font-weight:500;white-space:nowrap}
+html.ckp .jr-rt{display:flex!important;flex-direction:column;gap:1px;min-width:0}
+html.ckp .jr-rt b{font-size:18px;font-weight:500;letter-spacing:.04em}
+html.ckp .jr-rt small,html.ckp .jr-t small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.ckp .jr-t{display:flex!important;flex-direction:column;gap:2px;min-width:0;white-space:normal!important}
+html.ckp .jr-t>span{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.ckp .jr-t small.jr-k{font-family:var(--f-body)!important;font-size:12px!important;color:var(--muted)!important}
+html.ckp .jr-ac{color:var(--muted);font-size:13.5px}
+html.ckp .jr-blk{color:var(--ink);font-size:14px;white-space:nowrap}
+html.ckp .jr-rt small{font-family:var(--f-body)!important;letter-spacing:0}
+html.ckp .jr-p{text-align:right}
+@media (max-width:1000px){ html.ckp .jl-head{display:none!important} html.ckp .jr-main{grid-template-columns:60px minmax(0,1fr) auto!important;padding:12px 110px 12px 14px!important} html.ckp .jr-ac,html.ckp .jr-blk,html.ckp .jr-rt{display:none!important} html.ckp .jr-t small.jr-k::before{content:attr(data-x)} }
+@media (max-width:600px){ html.ckp .jr-main{grid-template-columns:64px minmax(0,1fr)!important;padding:12px 14px 54px!important;row-gap:4px!important} html.ckp .jr-dep{grid-column:1;grid-row:1;white-space:nowrap;font-size:14px} html.ckp .jr-t{grid-column:2;grid-row:1} html.ckp .jr-p{grid-column:2;grid-row:2;text-align:left} }
+/* Pilot: the license sits beside your path; ratings read as one ruled list */
+@media (min-width:1001px){
+  html.ckp main.stack:has(> .license){display:grid!important;grid-template-columns:minmax(0,460px) minmax(0,1fr);align-items:stretch}
+  html.ckp main.stack:has(> .license)>*{grid-column:1/-1}
+  html.ckp main.stack:has(> .license)>.license{grid-column:1;grid-row:2}
+  html.ckp main.stack:has(> .license)>.ladder{grid-column:2;grid-row:2}
+}
+html.ckp .license{background:linear-gradient(160deg,#16191c,#0e1113)!important;border:1px solid var(--line-2)!important;border-top:2px solid var(--amb)!important;padding:18px 22px!important}
+html.ckp .lic-top{color:var(--muted)!important;font-size:11.5px!important;letter-spacing:.06em!important;text-transform:none!important}
+html.ckp .lic-top .mono{color:var(--amb)!important}
+html.ckp .lic-photo{width:96px!important;height:118px!important;font-size:30px!important}
+html.ckp .rung{background:transparent!important;border:0!important;border-top:1px solid var(--line)!important;padding:14px 4px!important;margin:0!important}
+html.ckp .ladder>.rung:first-child{border-top:0!important}
+html.ckp .rung .badge{width:52px;text-align:center;color:var(--ink)!important}
+html.ckp .rung.earned .badge{border-color:rgba(92,201,122,.5)!important;color:var(--good)!important}
+html.ckp main .rung .btn.action[data-act],html.ckp main .rung .btn.primary[data-act],html.ckp main .rung .btn.action,html.ckp main .rung .btn.primary{background:transparent!important;border-color:rgba(240,165,58,.6)!important;color:var(--amb)!important}
+html.ckp .rung{gap:16px!important}
 /* one look now: the old theme switch goes away */
 html.ckp div:has(> [data-act="theme"]),html.ckp [data-act="theme"]{display:none!important}
 /* the "next" chip in the bar repeats the hero on the Story page */

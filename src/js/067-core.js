@@ -33,7 +33,7 @@ const CRIME = [
  {id:'CR2',arc:'Clean Hands',title:`Cash Run`,chars:['dez'],req:{after:'CW1'},from:'TQPF',to:'TKPN',ac:['C172','DA40','C152','G36'],pax:0,cargo:30,cargoLabel:`a padlocked gym bag`,time:'day',dep:600,wx:'trades',
   hook:`Dez needs a bag delivered to Nevis. Don't open it.`,
   recap:`You opened the bag on the way to Nevis: $400,000 in hundreds. You delivered it anyway.`,
-  brief:[`Dez calls before breakfast. "Same friend. One bag, Anguilla to Nevis. Five hundred for you this time."`,`The gym bag is padlocked, but the zipper is split. Somewhere over St. Kitts you look. Bundles of hundred-dollar bills, packed tight. Around four hundred thousand dollars. You fly the rest of the way with your heart in your throat.`],
+  brief:[`Dez calls before breakfast. "Same friend. One bag, Anguilla to Nevis. Five hundred for you this time."`,`The gym bag is padlocked, but the zipper is split. Somewhere over St. Kitts you look. Bundles of hundred-dollar bills, packed tight. Around four hundred thousand dollars. You fly the rest of the way with sweaty hands on the yoke.`],
   teach:[`Nevis has a short runway under a big mountain. Expect bumpy air on the west side and a little extra crosswind.`],
   out:{good:`The yacht broker at Nevis counts it on the hood of his car. "Dez said you were clean," he says. "Good."`,ok:`The broker counts it twice. "Dez said you were clean."`,bad:`The broker counts it three times, sweating in the sun. "Rough ride," he says, not really asking.`},rep:{dez:4},
   choice:{q:`Before you hand over the bag, you count it: $400,000. Nobody would ever notice one bundle missing.`,opts:[

@@ -8,7 +8,7 @@ const CELEBS = {
   theo:{n:`Theo Blackwood`,what:`action movie star`,col:'#334155',gift:`the prop cutlass from "Blackwater Tide III"`,
     meet:[`The man in the back has jumped off a moving train in four different films. He is also gripping the armrests so hard his knuckles are white. "Don't tell anyone," whispers Theo Blackwood, the most famous action star in the world. "I'm terrified of small planes."`,
           `Theo is back, and he's been practicing breathing exercises. "My therapist says I should look out the window," he says, and then does not look out the window for forty minutes.`,
-          `Theo asks to sit in the right seat. He watches every move you make, and on short final he says, quietly, "I think I get it now. It's not scary when somebody knows what they're doing." Then he hands you a long wrapped package.`]},
+          `Theo asks to sit in the right seat. He watches every move you make, and on short final he says, "I think I get it now. It's not scary when somebody knows what they're doing." Then he hands you a long wrapped package.`]},
   kairo:{n:`DJ Kairo`,what:`superstar DJ`,col:'#7c3aed',gift:`a lifetime all-access pass to every festival he plays`,
     meet:[`Your passenger brought more speaker cases than clothes. DJ Kairo, who has headlined every major festival on three continents, wants to record "the sound of the propeller" for an intro track. He holds a microphone to the window for the whole flight.`,
           `Kairo's new single opens with your engine. It's number one in eleven countries. He wants you to fly him to his next gig "for luck."`,

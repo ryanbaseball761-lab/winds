@@ -25,7 +25,7 @@ STORY.push(
 );
 CHOICES.CO1 = {q:`Both candidates want the job, and you can only afford one.`,
   a:{t:`Hire Kofi, Dez's nephew`, out:`Kofi nearly drops his logbook. Dez pretends he isn't proud, very badly. Kofi will be rough for a while, but he'll be yours.`, rep:{dez:10,mari:3}},
-  b:{t:`Hire Lena, the ex-Azure captain`, out:`Lena shakes your hand once, firmly. Over the next month she quietly fixes three things about your operation you didn't know were broken. She also knows where Azure buried its secrets.`, rep:{dez:-3}, reputation:4}};
+  b:{t:`Hire Lena, the ex-Azure captain`, out:`Lena shakes your hand once, firmly. Over the next month she fixes three things about your operation you didn't know were broken. She also knows where Azure buried its secrets.`, rep:{dez:-3}, reputation:4}};
 CHOICES.CO2 = {q:`Vale's offer is still on the table: cash for your Barbados and Grenadines routes. It's a lot of money.`,
   a:{t:`Refuse. Those routes aren't for sale`, out:`Vale shrugs. "You'll regret it." Mari, when you tell her, just nods once. That nod is worth more than the folder.`, rep:{mari:8,preston:-6}},
   b:{t:`Sell the routes to Vale`, out:`$60,000 lands in your account. The routes go to Vale's new airline. Mari doesn't say anything, which is worse than if she had.`, cash:60000, rep:{mari:-10}}};

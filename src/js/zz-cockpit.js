@@ -294,6 +294,40 @@ html.ckp .ck-item,html.ckp label.ck{background:transparent!important;border:0!im
 html.ckp .btn.primary,html.ckp .btn.action,html.ckp button.btn.primary.sm,html.ckp button.btn.action.sm,html.ckp .b2-story-go .btn.action,html.ckp main .btn.action[data-act]{color:var(--amb-ink)!important}
 html.ckp .sh-act small{color:var(--muted)!important;opacity:1!important}
 .cb-h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* job board: a departures board */
+html.ckp .jl-head,html.ckp .jr-main{grid-template-columns:76px 150px minmax(0,1fr) 190px 84px 90px!important;gap:16px!important}
+html.ckp .jl-head{padding:9px 150px 9px 18px!important}
+html.ckp .jr-main{padding:12px 150px 12px 18px!important;align-items:center}
+html.ckp .jr-dep{color:var(--amb);font-size:16px;font-weight:500;white-space:nowrap}
+html.ckp .jr-rt{display:flex!important;flex-direction:column;gap:1px;min-width:0}
+html.ckp .jr-rt b{font-size:18px;font-weight:500;letter-spacing:.04em}
+html.ckp .jr-rt small,html.ckp .jr-t small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.ckp .jr-t{display:flex!important;flex-direction:column;gap:2px;min-width:0;white-space:normal!important}
+html.ckp .jr-t>span{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.ckp .jr-t small.jr-k{font-family:var(--f-body)!important;font-size:12px!important;color:var(--muted)!important}
+html.ckp .jr-ac{color:var(--muted);font-size:13.5px}
+html.ckp .jr-blk{color:var(--ink);font-size:14px;white-space:nowrap}
+html.ckp .jr-rt small{font-family:var(--f-body)!important;letter-spacing:0}
+html.ckp .jr-p{text-align:right}
+@media (max-width:1000px){ html.ckp .jl-head{display:none!important} html.ckp .jr-main{grid-template-columns:60px minmax(0,1fr) auto!important;padding:12px 110px 12px 14px!important} html.ckp .jr-ac,html.ckp .jr-blk,html.ckp .jr-rt{display:none!important} html.ckp .jr-t small.jr-k::before{content:attr(data-x)} }
+@media (max-width:600px){ html.ckp .jr-main{grid-template-columns:64px minmax(0,1fr)!important;padding:12px 14px 54px!important;row-gap:4px!important} html.ckp .jr-dep{grid-column:1;grid-row:1;white-space:nowrap;font-size:14px} html.ckp .jr-t{grid-column:2;grid-row:1} html.ckp .jr-p{grid-column:2;grid-row:2;text-align:left} }
+/* Pilot: the license sits beside your path; ratings read as one ruled list */
+@media (min-width:1001px){
+  html.ckp main.stack:has(> .license){display:grid!important;grid-template-columns:minmax(0,460px) minmax(0,1fr);align-items:stretch}
+  html.ckp main.stack:has(> .license)>*{grid-column:1/-1}
+  html.ckp main.stack:has(> .license)>.license{grid-column:1;grid-row:2}
+  html.ckp main.stack:has(> .license)>.ladder{grid-column:2;grid-row:2}
+}
+html.ckp .license{background:linear-gradient(160deg,#16191c,#0e1113)!important;border:1px solid var(--line-2)!important;border-top:2px solid var(--amb)!important;padding:18px 22px!important}
+html.ckp .lic-top{color:var(--muted)!important;font-size:11.5px!important;letter-spacing:.06em!important;text-transform:none!important}
+html.ckp .lic-top .mono{color:var(--amb)!important}
+html.ckp .lic-photo{width:96px!important;height:118px!important;font-size:30px!important}
+html.ckp .rung{background:transparent!important;border:0!important;border-top:1px solid var(--line)!important;padding:14px 4px!important;margin:0!important}
+html.ckp .ladder>.rung:first-child{border-top:0!important}
+html.ckp .rung .badge{width:52px;text-align:center;color:var(--ink)!important}
+html.ckp .rung.earned .badge{border-color:rgba(92,201,122,.5)!important;color:var(--good)!important}
+html.ckp main .rung .btn.action[data-act],html.ckp main .rung .btn.primary[data-act],html.ckp main .rung .btn.action,html.ckp main .rung .btn.primary{background:transparent!important;border-color:rgba(240,165,58,.6)!important;color:var(--amb)!important}
+html.ckp .rung{gap:16px!important}
 /* one look now: the old theme switch goes away */
 html.ckp div:has(> [data-act="theme"]),html.ckp [data-act="theme"]{display:none!important}
 /* the "next" chip in the bar repeats the hero on the Story page */

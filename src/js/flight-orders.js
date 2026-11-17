@@ -80,10 +80,10 @@ setTimeout(()=>{ try{ if(typeof CHAR_VOICE!=='undefined' && CHAR_VOICE.castillo)
   add('CR2',{at:'cruise',who:'radio',text:`Coast Guard Dash 8, low level, crossing west of Saba.|It's heading straight across your track.`,opts:[
     {t:'Drop low and stay quiet',reply:`You ease the nose down toward the water.`, order:{k:'lowlevel', agl:1000, sec:120, within:240, label:'Stay under 1,000 ft for 2 minutes', ok:{text:`The Dash 8 passes high and never looks your way.`, heat:-2}, fail:{text:`You hesitated. The Dash 8 banks toward you for a closer look, then carries on.`, heat:3}}},
     {t:'Hold altitude and wave',reply:`Just another island hopper. The Dash 8 rocks its wings and carries on.`, heat:2}]});
-  add('CR3',{at:'cruise',who:'dez',text:`Slow down, rookie. Customs changes shift at four. Land after that and the new guy waves us through.`,opts:[
+  add('CR3',{at:'cruise',who:'dez',text:`Ease off, rookie. Customs swaps at four. Old man goes home, new boy waves us in. Kill some time.`,opts:[
     {t:'Pull the power back',reply:`You bring the power back and watch the clock.`, order:{k:'slow', pct:0.8, sec:180, within:120, label:'Fly 20% slower for 3 minutes', ok:{text:`You land at five past four. The new officer barely looks up.`, heat:-3}, fail:{text:`You land at ten to four. The old officer is still on, and he remembers your face.`, heat:2}}},
     {t:'Land on time',reply:`"Your call," Dez says. He doesn't sound happy.`, heat:2}]});
-  add('CR4',{at:'cruise',who:'castillo_seat',text:`Show me what my money buys. A steep turn. Forty-five degrees of bank, all the way around.`,opts:[
+  add('CR4',{at:'cruise',who:'castillo_seat',text:`Humor me. A steep turn. Forty-five degrees, all the way around. I like to know what I'm paying for.`,opts:[
     {t:'Roll into a steep turn',reply:`You roll in and pull.`, order:{k:'steepturn', bank:40, deg:330, within:180, label:'Steep turn: 40° of bank, all the way around', ok:{text:`You roll out on your heading. Castillo nods once. "Good."`, power:4}, fail:{text:`Castillo watches you wobble through it and says nothing.`, power:-1}}},
     {t:'"Not with passengers, sir."',reply:`Castillo smiles. "Careful. I like that."`, power:1}]});
 })();
