@@ -67,7 +67,11 @@ ipcMain.handle('open-save', async (e) => {
   if(r.canceled || !r.filePaths[0]) return null; return fs.readFileSync(r.filePaths[0], 'utf8');
 });
 ipcMain.handle('auto-save', () => { const dirs=[]; try{ dirs.push(app.getPath('downloads')); }catch(e){} dirs.push(path.join(require('os').homedir(),'Downloads'), path.join(require('os').homedir(),'Desktop')); for(const d of dirs){ try{ const f=path.join(d,'TradeWinds-save.json'); if(fs.existsSync(f)) return fs.readFileSync(f,'utf8'); }catch(e){} } return null; });
-const saveDir = () => path.join(app.getPath('documents'), 'Trade Winds');
+const syncCfgPath = () => path.join(app.getPath('userData'), 'save-folder.json');
+const saveDir = () => { try{ const j=JSON.parse(fs.readFileSync(syncCfgPath(),'utf8')); if(j && j.dir && fs.existsSync(j.dir)) return j.dir; }catch(e){} return path.join(app.getPath('documents'), 'Trade Winds'); };
+/* move the career to a folder of the player's choice (a OneDrive/Dropbox/iCloud folder follows them to another PC) */
+ipcMain.handle('choose-sync-dir', async () => { const r = await dialog.showOpenDialog(mainWin, { title:'Choose where Trade Winds keeps your career', properties:['openDirectory','createDirectory'] }); if(r.canceled || !r.filePaths[0]) return null;
+  const dir = path.join(r.filePaths[0], 'Trade Winds'); try{ fs.mkdirSync(dir, {recursive:true}); const old=path.join(saveDir(),'career.json'), now=path.join(dir,'career.json'); if(fs.existsSync(old) && !fs.existsSync(now)) fs.copyFileSync(old, now); fs.writeFileSync(syncCfgPath(), JSON.stringify({dir})); return dir; }catch(e){ return null; } });
 ipcMain.handle('write-save', (_e, text) => { try{ const d=saveDir(); fs.mkdirSync(d,{recursive:true}); const f=path.join(d,'career.json'); if(fs.existsSync(f)){ try{ fs.copyFileSync(f, path.join(d,'career.backup.json')); }catch(e){} } fs.writeFileSync(f+'.tmp', text); fs.renameSync(f+'.tmp', f); return true; }catch(e){ return false; } });
 ipcMain.handle('read-save', () => { try{ const f=path.join(saveDir(),'career.json'); return fs.existsSync(f) ? fs.readFileSync(f,'utf8') : null; }catch(e){ return null; } });
 ipcMain.handle('save-dir', () => saveDir());

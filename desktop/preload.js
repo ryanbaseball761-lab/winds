@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('twNative', {
   writeSave: (t) => ipcRenderer.invoke('write-save', t),
   readSave: () => ipcRenderer.invoke('read-save'),
   saveDir: () => ipcRenderer.invoke('save-dir'),
+  chooseSyncDir: () => ipcRenderer.invoke('choose-sync-dir'),
   storms: () => ipcRenderer.invoke('storms'),
   pushState: (j) => ipcRenderer.send('companion-state', j),
   onCompanionCk: (fn) => ipcRenderer.on('companion-ck', (_e,k) => fn(k)),

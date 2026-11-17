@@ -6829,6 +6829,7 @@ WHATS_NEW.unshift(['0.67','Every character sounds more like themselves: Dez loos
 WHATS_NEW.unshift(['0.68','A phone full of texts that want answers. Islands that remember you. Weekly events, a fixer on every island, bribes, Castillo\'s loans, properties that clean dirty money, named airplanes. In the air: ATC instructions, failures, Coast Guard intercepts, short fuel loads, contraband weight, graded approaches and customs scenes.']);
 WHATS_NEW.unshift(['0.69','Dispatch paperwork before every flight (weights, fuel, NOTAMs, the fuel slip). A live route strip and weather radar in the air. Your home and the case Reyes is building, on the Story page. Phone buzz and result stamp sounds, optional ramp ambience, number keys for every choice, a big-screen mode for a second monitor, and texts in the MSFS panel.']);
 WHATS_NEW.unshift(['0.70','The story remembers: later chapters mention what you did. Timed choices in the air. Two new endings (Walk Away, Coming Home). Halcón, Medina\'s pilot, races you. Reyes sits you down for an interview. A secret chapter for players who earned it. In New Game+, the leak is someone else. Save a picture card of every chapter.']);
+WHATS_NEW.unshift(['0.71','Butter Cup codes to race your friends, ten secret achievements, photo moments on famous approaches, Twitch tips, a guided first ten minutes, Heat that follows your difficulty, Spanish menus (beta), crash reports with the last 50 events, and a save folder you can point at OneDrive or Dropbox (desktop app).']);
 /* ===================== RECORDED VOICE LINES =====================
    Story lines can be played from recorded audio instead of computer speech. Each spoken line has a stable id made
    from its words (voKey). Put recordings in art/voice/<id>.mp3 and list the ids in art/voice/index.json:
@@ -9674,6 +9675,137 @@ PHONE_POOL.push({id:'ng1', from:'reyes', need:['CR11'], crime:true, gate:()=>!!(
 .chapter-hero .echo{margin:6px 0 10px!important}
 .bt-timer{height:3px;background:var(--line-2);margin:8px 0 2px;overflow:hidden}.bt-timer i{display:block;height:100%;background:var(--amb);animation:btT linear forwards}@keyframes btT{from{width:100%}to{width:0}}
 .sx1{border-left:2px solid #8a7a4a!important}
+`; document.head.appendChild(s); })();
+/* ===================== REPLAY, SHARING AND RELEASE (0.71) =====================
+   - Butter Cup share codes: every best landing makes a short code. Paste a friend's code and they show up on your board.
+   - Secret achievements: hidden until you earn them.
+   - Photo moments: famous approaches tell you when to hit the screenshot key.
+   - Twitch: chat can tip you (!tip). (Chat already votes on choices.)
+   - First flight: a short guided start for brand-new careers.
+   - Difficulty: Casual and Expert change how fast Heat builds.
+   - Language: Spanish for the menus and buttons (beta). All text goes through one table, ready for more.
+   - Crash reports: the last 50 things that happened go into "Report a problem", and the desktop app keeps a copy. */
+
+/* ---------- counters the other features feed ---------- */
+function twStats(){ const w=twW(); w.stats=w.stats||{atc:0,ph:0,fuel:0}; return w.stats; }
+(function(){ const base=phoneAnswer; phoneAnswer=function(){ const r=base.apply(this, arguments); twStats().ph++; return r; }; })();
+AFTER_RESULT.push(function metaCounters(st, job){ const a=S._lastActive; if(!a) return; const S2=twStats(); if(a.order && a.order.atc && a.order.state==='ok') S2.atc++; if(job.fuelLie && a.fuelChecked) S2.fuel++; checkAch(st); });
+
+/* =====================================================================
+   SECRET ACHIEVEMENTS
+   ===================================================================== */
+const SECRET_ACH = [
+  {id:'sx_box', n:`The First Box`, d:`Fly the secret chapter.`, t:s=>!!s.story.done.SX1},
+  {id:'sx_walk', n:`Clean Exit`, d:`Walk away from Castillo.`, t:s=>!!(s.crime&&s.crime.ending==='walk')},
+  {id:'sx_home', n:`Coming Home`, d:`Go back to Coral Wing.`, t:s=>!!(s.crime&&s.crime.ending==='home')},
+  {id:'sx_halcon', n:`Faster Than the Falcon`, d:`Beat Halcón three times.`, t:s=>!!(s.w&&s.w.halcon&&s.w.halcon.w>=3)},
+  {id:'sx_honest', n:`Nothing to Hide`, d:`Tell Reyes the truth, every time.`, t:s=>!!(s.crime&&s.crime.flags&&s.crime.flags.reyesTalked)},
+  {id:'sx_name', n:`She Has a Name`, d:`Name one of your airplanes.`, t:s=>!!(s.w&&s.w.ac&&Object.values(s.w.ac).some(h=>h.nick))},
+  {id:'sx_phone', n:`Always Answers`, d:`Reply to 10 texts.`, t:s=>!!(s.w&&s.w.stats&&s.w.stats.ph>=10)},
+  {id:'sx_islands', n:`Island Famous`, d:`Be welcomed on three islands.`, t:s=>!!(s.w&&s.w.isl&&Object.values(s.w.isl).filter(v=>v>=30).length>=3)},
+  {id:'sx_fuel', n:`Read the Slip`, d:`Catch a short fuel load before takeoff.`, t:s=>!!(s.w&&s.w.stats&&s.w.stats.fuel>=1)},
+  {id:'sx_atc', n:`Roger, Wilco`, d:`Follow five ATC instructions.`, t:s=>!!(s.w&&s.w.stats&&s.w.stats.atc>=5)},
+];
+SECRET_ACH.forEach(a=>{ a.secret=true; ACH.push(a); });
+AFTER_RENDER.push(function hideSecretAch(){ const names=new Set(SECRET_ACH.filter(a=>!(S.st&&S.st.ach&&S.st.ach[a.id])).map(a=>a.n));
+  document.querySelectorAll('.ach:not(.on)').forEach(el=>{ const b=el.querySelector('b'); if(b && names.has(b.textContent)){ b.textContent='Secret'; const s=el.querySelector('.small'); if(s) s.textContent='Keep playing. You\'ll know it when it happens.'; el.classList.add('ach-secret'); } }); });
+
+/* =====================================================================
+   BUTTER CUP SHARE CODES (and friends on your board)
+   ===================================================================== */
+function cupCode(cid, fpm, bounces){ const wk=isoWeek(); const raw=`${cid}.${Math.round(fpm)}.${bounces||0}.${wk}`; const chk=(hashStr(raw+'tw')%1296).toString(36).padStart(2,'0'); return `TW-${cid.toUpperCase()}-${Math.round(fpm)}-${bounces||0}-${String(wk).replace(/\W/g,'')}-${chk}`.toUpperCase(); }
+function cupDecode(code){ const m=String(code).trim().toUpperCase().match(/^TW-([A-Z0-9]+)-(\d+)-(\d+)-([A-Z0-9]+)-([A-Z0-9]{2})$/); if(!m) return null; const cid=m[1].toLowerCase(); if(!CUP.some(c=>c.id===cid)) return null;
+  const wk=isoWeek(); if(m[4]!==String(wk).replace(/\W/g,'').toUpperCase()) return {old:true}; const raw=`${cid}.${m[2]}.${m[3]}.${wk}`; const chk=(hashStr(raw+'tw')%1296).toString(36).padStart(2,'0').toUpperCase(); if(chk!==m[5]) return null;
+  return {cid, fpm:+m[2], b:+m[3]}; }
+(function(){ const base=cupBoard; cupBoard=function(st, c){ let h=base.apply(this, arguments); const fr=(cupState(st).friends||[]).filter(f=>f.cid===c.id && f.wk===isoWeek()); if(!fr.length||!h) return h;
+  return h + `<div class="cup-friends">${fr.map(f=>`<p class="small"><b>${esc(f.n)}</b> <span class="mono">${f.fpm} fpm</span>${f.b?` · ${f.b} bounce${f.b>1?'s':''}`:''}</p>`).join('')}</div>`; }; })();
+AFTER_RENDER.push(function cupShare(){ if(S.view!=='cup'||!S.st) return; const main=document.querySelector('main'); if(!main||main.querySelector('.cup-share')) return; const C=cupState(S.st);
+  const mine=CUP.filter(c=>C.best[c.id]).map(c=>`<li><span>${esc(c.n)}</span><code class="mono">${cupCode(c.id, C.best[c.id].fpm, C.best[c.id].bounces)}</code><button class="btn sm" data-act="cup-copy" data-c="${cupCode(c.id, C.best[c.id].fpm, C.best[c.id].bounces)}">Copy</button></li>`).join('');
+  const d=document.createElement('section'); d.className='panel cup-share'; d.innerHTML=`<div class="section-title"><h2>Race your friends</h2></div>${mine?`<p class="small muted">Your codes for this week. Send one to a friend.</p><ul class="cs-list">${mine}</ul>`:`<p class="small muted">Land on any Cup approach and you'll get a code to send.</p>`}
+    <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap"><input id="cup-friend-n" placeholder="Friend's name" maxlength="20" aria-label="Friend's name" style="width:160px"><input id="cup-friend-c" placeholder="TW-MAHO-84-0-…" maxlength="40" aria-label="Friend's code" style="width:240px"><button class="btn sm" data-act="cup-add">Add to my board</button></div>`;
+  main.appendChild(d); });
+document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="cup-copy"],[data-act="cup-add"]'); if(!b||!S.st) return;
+  if(b.dataset.act==='cup-copy'){ try{ navigator.clipboard.writeText(b.dataset.c); toast('Code copied.'); }catch(_){ toast(b.dataset.c); } return; }
+  const n=(document.getElementById('cup-friend-n').value||'Friend').trim().slice(0,20), r=cupDecode(document.getElementById('cup-friend-c').value);
+  if(!r){ toast('That code doesn\'t look right.'); return; } if(r.old){ toast('That code is from another week. The board resets every Monday.'); return; }
+  const C=cupState(S.st); C.friends=(C.friends||[]).filter(f=>!(f.n===n&&f.cid===r.cid)).concat([{n, cid:r.cid, fpm:r.fpm, b:r.b, wk:isoWeek()}]).slice(-30); save(); toast(`${n} is on your ${CUP.find(c=>c.id===r.cid).n} board.`); S.keepScroll=true; render(); });
+
+/* =====================================================================
+   PHOTO MOMENTS
+   ===================================================================== */
+const PHOTO_SPOTS = {TNCM:`Maho Beach on short final. The crowd on the sand is filming you.`, TFFJ:`Over the ridge into St. Barth. The road is right under your wheels.`, TNCS:`Saba's runway, cliffs on every side.`, TQPF:`Anguilla's water, that color.`, TFFR:`Guadeloupe's volcano off your wing.`, TBPB:`Barbados at golden hour.`};
+SIM_TICK.push(function photoMoment(){ const a=S.st&&S.st.active; if(!a||!a.started||a.photoSaid||S.simState!=='live') return; const s=S.sim; if(!s||!s.position||s.motion.onGround) return; const to=a.job.local?a.job.from:a.job.to; const t=PHOTO_SPOTS[to]; if(!t||!AP[to]) return;
+  const d=distNm({lat:s.position.lat,lon:s.position.lon},AP[to]); if(d>5 || (s.position.aglFt||0)>1800 || document.querySelector('.beat')) return; a.photoSaid=1; save();
+  showBeat(a,{who:'self', text:`${t}|Photo moment: hit your MSFS screenshot key now.`}, 'photo'); });
+
+/* =====================================================================
+   TWITCH: tips and chapter choices
+   ===================================================================== */
+(function(){ const base=twitchMsg; twitchMsg=function(user, text){ const m=String(text).match(/^!tip\b/i); if(m && S.st){ const T=TWITCH; T.tips=T.tips||{}; const day=S.st.day; const k=user+'|'+day; if(!T.tips[k] && Object.keys(T.tips).filter(x=>x.endsWith('|'+day)).length<20){ T.tips[k]=1; txn(S.st, 50, 'Tips & bonuses', `Tip from ${user} (Twitch)`); toast(`${user} tipped you $50 from chat.`); save(); } return; }
+  return base.apply(this, arguments); }; })();
+/* =====================================================================
+   FIRST FLIGHT (new careers)
+   ===================================================================== */
+function firstFlightHTML(st){ if(st.flights>0 || st.active) return ''; const live=S.simState==='live';
+  const step=(n,done,t,d,btn='')=>`<li class="${done?'done':''}"><span class="mono">${done?'✓':n}</span><div><b>${t}</b><p class="small muted">${d}</p>${btn}</div></li>`;
+  return `<section class="panel first-flight"><div class="section-title"><h2>Your first ten minutes</h2></div><ol class="ff">
+    ${step(1, live, 'Start MSFS and the Trade Winds bridge', live?'Connected.':'Open MSFS, load any airport, and the dot in the top bar turns green.')}
+    ${step(2, false, 'Fly one practice circuit', 'Take off, fly around the pattern and land. No pay, no logbook. Just to see how grading works.', `<button class="btn sm" data-act="practice">Fly a practice circuit</button>`)}
+    ${step(3, false, 'Play chapter 1', 'Ten minutes to Anguilla in a Cessna. The story starts here.')}</ol></section>`; }
+AFTER_RENDER.push(function firstFlight(){ if(S.view!=='story'||!S.st) return; const main=document.querySelector('main'); if(!main||main.querySelector('.first-flight')) return; const h=firstFlightHTML(S.st); if(!h) return;
+  const d=document.createElement('div'); d.innerHTML=h; const hero=main.querySelector('.story-card'); (hero||main.firstElementChild).after(d.firstElementChild); });
+
+/* =====================================================================
+   DIFFICULTY: how fast Heat builds
+   ===================================================================== */
+AFTER_RESULT.push(function difficultyHeat(st, job, f, res, was){ const c=crime(st); if(!c.on) return; const d=diff(); const gain=c.heat-was.heat; if(gain<=0) return;
+  if(d==='casual') crBump(c,'heat',-Math.round(gain*0.3)); else if(d==='expert') crBump(c,'heat',Math.round(gain*0.3)); });
+
+/* =====================================================================
+   LANGUAGE (menus and buttons; the story stays English for now)
+   ===================================================================== */
+const I18N = { es: {
+  'STORY':'HISTORIA','JOBS':'TRABAJOS','FLIGHT':'VUELO','PILOT':'PILOTO','HANGAR':'HANGAR','Story':'Historia','Jobs':'Trabajos','Flight':'Vuelo','Pilot':'Piloto','Hangar':'Hangar','Map':'Mapa',
+  'Licenses':'Licencias','Profile':'Perfil','Logbook':'Bitácora','Money':'Dinero','Airline':'Aerolínea','Butter Cup':'Copa Mantequilla','Academy':'Academia','Settings':'Ajustes','Fleet':'Flota',
+  'Accept':'Aceptar','Start flight':'Iniciar vuelo','Open cockpit checklist':'Abrir lista de cabina','Book checkride':'Reservar examen','Show':'Mostrar','Hide':'Ocultar','Close':'Cerrar','Buy':'Comprar','Save image':'Guardar imagen','Leave':'Salir','Copy':'Copiar',
+  'Route':'Ruta','Aircraft':'Avión','Light':'Luz','With':'Con','Daytime':'De día','Night':'Noche','Dawn':'Amanecer','Dusk':'Atardecer','Departs':'Sale','To':'A','Job':'Trabajo','Time':'Tiempo','Pay':'Pago',
+  'Chapters':'Capítulos','Flights':'Vuelos','Hours':'Horas','Earned':'Ganado','Best landing':'Mejor aterrizaje','Laundered':'Lavado','Cash':'Efectivo','Heat':'Calor','Power':'Poder','Sim':'Sim','Loc':'Lugar',
+  'The story so far':'La historia hasta ahora','The people':'La gente','The five acts':'Los cinco actos','Home':'Casa','Dispatch':'Despacho','Weight':'Peso','Fuel':'Combustible','NOTAMs':'NOTAMs','Islands':'Islas','Contacts':'Contactos','Property':'Propiedades','Phone':'Teléfono',
+  'Sim not connected':'Sim no conectado','MSFS live':'MSFS en vivo','Read the fuel slip':'Leer el recibo de combustible','Race your friends':'Compite con tus amigos','Your first ten minutes':'Tus primeros diez minutos','What they have on you':'Lo que tienen contra ti',
+}};
+function lang(){ return (S.st&&S.st.ui&&S.st.ui.lang)||'en'; }
+function tr(t){ const d=I18N[lang()]; return (d && d[t]) || t; }
+AFTER_RENDER.push(function translate(){ const L=lang(); document.documentElement.lang = L; if(L==='en') return; const d=I18N[L]; if(!d) return; const root=document.getElementById('app')||document.body;
+  const w=document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes=[]; while(w.nextNode()) nodes.push(w.currentNode);
+  for(const n of nodes){ const t=n.nodeValue.trim(); if(t && d[t]) n.nodeValue=n.nodeValue.replace(t, d[t]); } });
+AFTER_RENDER.push(function langSetting(){ if(S.view!=='hangar'||S.hangarTab!=='settings'||!S.st) return; const box=document.querySelector('.ui3-set'); if(!box||box.querySelector('[data-act="ui-lang"]')) return;
+  box.insertAdjacentHTML('beforeend', `<label class="field" style="margin-top:10px;max-width:280px"><span>Language (menus)</span><select data-act="ui-lang"><option value="en" ${lang()==='en'?'selected':''}>English</option><option value="es" ${lang()==='es'?'selected':''}>Español (beta)</option></select></label>`); });
+document.addEventListener('change', e=>{ const s=e.target.closest('[data-act="ui-lang"]'); if(!s||!S.st) return; S.st.ui=S.st.ui||{}; S.st.ui.lang=s.value; save(); render(); });
+
+/* =====================================================================
+   CRASH REPORTS
+   ===================================================================== */
+const TW_TRAIL=[]; function trail(k,v){ TW_TRAIL.push([new Date().toISOString().slice(11,19), k, String(v).slice(0,160)]); if(TW_TRAIL.length>50) TW_TRAIL.shift(); }
+(function(){ const bt=toast; toast=function(m){ trail('toast',m); return bt.apply(this, arguments); }; const bg=go; go=function(v){ trail('page',v); return bg.apply(this, arguments); }; })();
+window.addEventListener('error', e=>{ trail('error', `${e.message} @ ${(e.filename||'').split('/').pop()}:${e.lineno}`); crashCopy(); });
+window.addEventListener('unhandledrejection', e=>{ trail('error', 'Promise: '+(e.reason&&(e.reason.message||e.reason))); });
+let crashT=0; function crashCopy(){ if(Date.now()-crashT<60000) return; crashT=Date.now(); try{ if(window.twNative && twNative.flightLog) twNative.flightLog(`crash-${new Date().toISOString().replace(/[:.]/g,'-')}.json`, JSON.stringify({version:TW_VERSION, trail:TW_TRAIL}, null, 1)); }catch(_){} }
+(function(){ const base=buildReport; buildReport=function(note){ const r=base.apply(this, arguments); try{ const j=JSON.parse(r); j.trail=TW_TRAIL.slice(); return JSON.stringify(j); }catch(_){ return r; } }; })();
+
+/* =====================================================================
+   SAVE FOLDER (desktop): put your career in a synced folder (OneDrive, Dropbox, iCloud)
+   ===================================================================== */
+AFTER_RENDER.push(function syncFolder(){ if(S.view!=='hangar'||S.hangarTab!=='settings'||!window.twNative||!twNative.chooseSyncDir) return; const box=document.querySelector('.ui3-set'); if(!box||box.querySelector('[data-act="sync-dir"]')) return;
+  box.insertAdjacentHTML('beforeend', `<div style="margin-top:12px"><p class="small muted">Keep your career in a synced folder (OneDrive, Dropbox, iCloud Drive) and it follows you to another PC.</p><button class="btn sm" data-act="sync-dir">Choose save folder</button> <span class="small muted" id="sync-dir-now"></span></div>`);
+  try{ twNative.saveDir && twNative.saveDir().then(d=>{ const el=document.getElementById('sync-dir-now'); if(el) el.textContent=d||''; }); }catch(_){} });
+document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="sync-dir"]')) return; try{ const d=await twNative.chooseSyncDir(); if(d){ toast(`Saving to ${d} from now on.`); save(); const el=document.getElementById('sync-dir-now'); if(el) el.textContent=d; } }catch(_){ toast('Couldn\'t change the save folder.'); } });
+
+(function(){ const s=document.createElement('style'); s.textContent=`
+.ach-secret{opacity:.7}.ach-secret b{letter-spacing:.2em}
+.cs-list{list-style:none;padding:0;margin:8px 0 0}.cs-list li{display:flex;gap:12px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}.cs-list li span{flex:1}.cs-list code{color:var(--amb)}
+.cup-friends{border-top:1px dashed var(--line-2);margin-top:6px;padding-top:6px}.cup-friends b{color:var(--sky)}
+.first-flight{border-top:2px solid var(--amb)!important}.ff{list-style:none;padding:0;margin:0}.ff li{display:flex;gap:14px;padding:12px 0;border-top:1px solid var(--line)}.ff li:first-child{border-top:0}
+.ff li>span{width:26px;height:26px;display:grid;place-items:center;border:1px solid var(--line-2);flex:none}.ff li.done>span{border-color:var(--good);color:var(--good)}.ff p{margin:3px 0 8px}
 `; document.head.appendChild(s); })();
 /* ===================== GLASS COCKPIT THEME (0.65) =====================
    One visual system for the whole app, loaded last so it wins over the older layers:
