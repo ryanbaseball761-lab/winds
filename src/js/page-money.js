@@ -27,7 +27,8 @@ function moneyView(){
           <label class="field"><span>Amount</span><input id="fin-amt" type="number" min="0" step="100" value="1000"></label>
           <div class="row"><button class="btn sm" data-act="fin-dep">Deposit</button><button class="btn sm" data-act="fin-wd">Withdraw</button><button class="btn sm" data-act="fin-draw">Borrow</button><button class="btn sm" data-act="fin-repay">Repay credit</button>${F.bond>0?`<button class="btn sm" data-act="fin-bond">Repay bond</button>`:''}</div>
           <p class="tiny muted">Go negative and the bank pulls from your credit line.</p></section>`;
-  return `<main class="wrap stack fade">${safeHTML(()=>operationHTML(st))}${safeHTML(()=>launderHTML(st))}
+  const c=crime(st); const opGrid = !c.on ? '' : `<div class="sh-grid">${fleetCrewHTML(st)||''}<section class="panel"><h3>Rank rewards <span class="small muted">Power ${c.power}</span></h3><ul class="perks">${RANK_PERKS.map(([v,n,p])=>`<li class="${c.power>=v?'on':''}"><b>${n}</b> <span class="mono small">${v}+</span><p>${esc(p)}</p></li>`).join('')}</ul></section></div>`;
+  return `<main class="wrap stack fade">${safeHTML(()=>operationHTML(st))}${opGrid}${safeHTML(()=>launderHTML(st))}
     <div class="tiles">
       <div class="tile"><span class="label">Cash</span><b class="mono">${money(st.cash)}</b><span class="tiny muted">${seasonName(st)} · charter demand ${demandIndex(st)>=1?'+':''}${Math.round((demandIndex(st)-1)*100)}%</span></div>
       <div class="tile"><span class="label">Savings</span><b class="mono">${money(F.savings)}</b><span class="tiny muted">4.5% APY</span></div>

@@ -138,5 +138,5 @@ function playAftermath(){
     shots.push({choice:true, q:m.choice.q, opts, pick:i=>{ const btn=document.createElement('button'); btn.dataset.act='crime-choose'; btn.dataset.i=i; btn.style.display='none'; document.body.appendChild(btn); btn.click(); btn.remove();
       const o=m.choice.opts[i]; const after=splitOut(o.out).map(t=>[here, null, t]); const fx=fxSub(o); if(fx) after.push({card:true, kicker:'Your choice', title:o.t, sub:`<p>${esc(fx)}</p>`, auto:2200}); return after.concat(nextCard()); }});
   } else nextCard().forEach(s=>shots.push(s));
-  cutscene({shots, col:act.col, art:paintedArt([], 'cockpit', job.to, Math.min(1439,(job.dep||600)+(job.est||60)), job.ac), onEnd:()=>{ S.keepScroll=false; render(); }});
+  cutscene({shots, col:act.col, art:paintedArt([], (()=>{ const arr=Math.min(1439,(job.dep||600)+(job.est||60)); return (arr>=420 && arr<=1110) ? 'ramp' : 'cockpit'; })(), job.to, Math.min(1439,(job.dep||600)+(job.est||60)), job.ac), onEnd:()=>{ S.keepScroll=false; render(); }});
 }

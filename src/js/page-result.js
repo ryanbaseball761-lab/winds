@@ -54,7 +54,7 @@ function resultView(){
         <p class="label">Flight complete · score ${res.score}/100</p>
         <h1 style="font-size:28px">${esc(job.title)}</h1>
         <p class="muted">${esc(job.from)} → ${esc(st.log[0]?.to||job.to)} · ${esc(AC[job.ac].n)} · ${durTxt(res.block)}</p>
-        <div class="row">${f && f.verified?`<span class="chip sea">Verified by MSFS · ${f.simFpm} fpm</span>`:''}${passFail}${out.pay?`<span class="chip good">+${money(out.pay)}</span>`:''}${out.costs?`<span class="chip bad">−${money(out.costs)}</span>`:''}<span class="chip">Reputation ${st.reputation}/100</span></div>
+        <div class="row">${f && f.verified?`<span class="chip sea">Verified by MSFS · ${f.simFpm} fpm</span>`:''}${passFail}${out.pay?`<span class="chip good" title="Everything this flight paid">+${money(out.pay)}</span>${L.job&&L.job.pay&&out.pay-L.job.pay>=20?`<span class="small muted pay-split">${money(L.job.pay)} pay, ${money(out.pay-L.job.pay)} in bonuses and tips</span>`:''}`:''}${out.costs?`<span class="chip bad">−${money(out.costs)}</span>`:''}<span class="chip">Reputation ${st.reputation}/100</span></div>
       </div></div>${crimeChips?`<div class="row" style="gap: 6px; margin-top: 8px; flex-wrap: wrap;">${crimeChips}</div>`:''}</section>
     ${resultDeltas(st)}${resultHeatWarning(st)}${resultNextBar(st)}
     ${choice}${betaFeedbackHTML(st)}

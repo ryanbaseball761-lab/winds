@@ -74,8 +74,7 @@ function firstFlightHTML(st){ if(st.flights>0 || st.active) return ''; const liv
     ${step(1, live, 'Start MSFS and the Trade Winds bridge', live?'Connected.':'Open MSFS, load any airport, and the dot in the top bar turns green.')}
     ${step(2, false, 'Fly one practice circuit', 'Take off, fly around the pattern and land. No pay, no logbook. Just to see how grading works.', `<button class="btn sm" data-act="practice">Fly a practice circuit</button>`)}
     ${step(3, false, 'Play chapter 1', 'Ten minutes to Anguilla in a Cessna. The story starts here.')}</ol></section>`; }
-AFTER_RENDER.push(function firstFlight(){ if(S.view!=='story'||!S.st) return; const main=document.querySelector('main'); if(!main||main.querySelector('.first-flight')) return; const h=firstFlightHTML(S.st); if(!h) return;
-  const d=document.createElement('div'); d.innerHTML=h; const hero=main.querySelector('.story-card'); (hero||main.firstElementChild).after(d.firstElementChild); });
+/* (the setup wizard covers this now; the panel stays defined for reference) */
 
 /* =====================================================================
    DIFFICULTY: how fast Heat builds
@@ -156,3 +155,5 @@ AFTER_RESULT.push(function finalDelta(st, job, f, res, was){ const c=crime(st); 
   const fresh=checkAch(st); fresh.forEach((a,i)=>setTimeout(()=>achPop(a), 4000+i*2600)); });
 /* readable small print (contrast fixes found by the accessibility check) */
 (function(){ const s=document.createElement('style'); s.textContent=`.ff p,.ff .muted{color:var(--muted)!important;opacity:1!important}.perks li p{color:var(--muted)!important}.perks li{opacity:1!important}html.ckp .pass-stub .label{color:var(--muted)!important;opacity:1!important}`; document.head.appendChild(s); })();
+
+AFTER_RESULT.push(function tourOff(st){ if(!st.tourDone){ st.tourDone=true; } });

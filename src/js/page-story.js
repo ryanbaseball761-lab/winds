@@ -96,10 +96,10 @@ function storyView(){
     ${epi.length?`<section class="panel"><h3>What became of everyone</h3><ul class="tight">${epi.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`:''}
     ${endingCardHTML(st)}
     ${stats}<div class="sh-grid">
-      <section class="panel"><h3>The story so far</h3><ol class="sh-time">${time}</ol></section>
+      <section class="panel"><h3>The story so far</h3><ol class="sh-time ${done.length>4?'clip':''}">${time}</ol>${done.length>4?`<button class="btn sm ghost sh-more" data-act="sh-more">Show all ${done.length} chapters</button>`:''}</section>
       <section class="panel"><h3>The people</h3><div class="sh-people">${people||'<p class="small muted">You\'ll meet them soon.</p>'}</div></section>
     </div>
-    ${operation}${operationHTML(st)||''}<section class="panel"><h3>The five acts</h3><div class="sh-acts">${acts}</div></section>
+    <details class="panel sh-acts-d"><summary><h3>The five acts</h3><span class="small muted">${done.length} of ${MC.length} chapters</span></summary><div class="sh-acts">${acts}</div></details>
     ${sNext?`<section class="panel sh-side"><h3>Starling</h3><p class="small muted">${esc(sNext.title)}. Private jet charters, clean money, nothing to do with Castillo.</p><div class="row" style="margin-top:8px">${chapterAction(st,sNext,availSet,true).replace(' &amp; start · $0',' &amp; start (free)')}</div></section>`:''}
   </main>`;
 }

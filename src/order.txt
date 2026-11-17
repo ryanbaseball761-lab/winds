@@ -121,5 +121,6 @@ feat-flight.js
 feat-ui.js
 feat-story.js
 feat-meta.js
+feat-focus.js
 zz-cockpit.js
 zz-boot.js

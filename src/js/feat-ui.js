@@ -44,7 +44,8 @@ function dispatchHTML(st, a){ const j=a.job; const p=plan(j); const s=S.sim; con
   const slipGal = Math.ceil(Math.max(p.gal*1.3, p.gal+5));
   const fuelLine = j.fuelLie ? (a.fuelChecked ? `<p class="small">Topped off. The fuel man wouldn't look at you.</p>` : a.slipRead ? `<p class="small">The slip says ${slipGal} gal. The truck's meter says ${Math.ceil(p.gal*0.68)}. Someone shorted you.</p><button class="btn sm" data-act="ui-topoff">Make them top it off</button>` : `<button class="btn sm" data-act="ui-slip">Read the fuel slip</button>`) : '';
   const total=p.total+(j.contraband||0); const over=total-(AC[j.ac].useful||0);
-  return `<section class="panel dispatch"><div class="section-title"><h2>Dispatch</h2><span class="small muted">${esc(j.from)} → ${esc(j.local?j.from:j.to)} · ${esc(AC[j.ac].n)}</span></div>
+  const openD = (j.fuelLie && !a.fuelChecked) || over>0 || !!S._dspOpen;
+  return `<details class="panel dispatch" ${openD?'open':''}><summary class="section-title"><h2>Dispatch</h2><span class="small muted">${j.fuelLie&&!a.fuelChecked?'Check the fuel slip · ':''}Weights, fuel and NOTAMs</span></summary>
     <div class="dsp-grid">
       <div><h3>Weight</h3><table class="w-tab"><tbody>
         <tr><td>People, you included</td><td class="mono">${lb(p.payload-p.bagLb-(j.cargo||0))}</td></tr><tr><td>Bags and cargo</td><td class="mono">${lb(p.bagLb+(j.cargo||0))}</td></tr>
@@ -53,7 +54,7 @@ function dispatchHTML(st, a){ const j=a.job; const p=plan(j); const s=S.sim; con
         ${over>0?`<p class="small" style="color:var(--bad)">${lb(over)} over. Something stays on the ground, or you take less fuel.</p>`:''}</div>
       <div><h3>Fuel</h3><table class="w-tab"><tbody><tr><td>Trip</td><td class="mono">${lb(p.tripLb)}</td></tr>${p.contLb?`<tr><td>Contingency</td><td class="mono">${lb(p.contLb)}</td></tr>`:''}<tr><td>Reserve (${p.reserveMin} min)</td><td class="mono">${lb(p.resLb)}</td></tr>${p.altCode&&p.altLb?`<tr><td>Alternate ${esc(p.altCode)}</td><td class="mono">${lb(p.altLb||0)}</td></tr>`:''}${(()=>{ const x=p.fuelLb-p.tripLb-(p.contLb||0)-p.resLb-(p.altLb||0); return x>5?`<tr><td>Taxi, and rounding up</td><td class="mono">${lb(x)}</td></tr>`:''; })()}<tr><td><b>Planned</b></td><td class="mono"><b>${p.gal} gal</b></td></tr>${loadedGal!=null?`<tr><td>In the tanks now</td><td class="mono" style="${loadedGal<p.gal?'color:var(--bad)':''}">${loadedGal} gal</td></tr>`:''}</tbody></table>${fuelLine}</div>
       <div><h3>NOTAMs</h3><ul class="dsp-notam">${notamsFor(j).map(n=>`<li>${esc(n)}</li>`).join('')}</ul></div>
-    </div></section>`; }
+    </div></details>`; }
 AFTER_RENDER.push(function dispatchPanel(){ const st=S.st, a=st&&st.active; if(S.view!=='flight' || !a || a.started || S.showResult) return; const main=document.querySelector('main'); if(!main || main.querySelector('.dispatch')) return;
   const pass=main.querySelector('.pass'); if(!pass) return; const d=document.createElement('div'); d.innerHTML=dispatchHTML(st,a); pass.after(d.firstElementChild); });
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act]'); if(!b||!S.st) return; const a=S.st.active; const k=b.dataset.act;
@@ -173,3 +174,5 @@ html.bigscreen body.flying .rs b{font-size:28px}html.bigscreen .radar,html.bigsc
 html.bigscreen body.flying .beat .bt-t{font-size:26px}
 @media (max-width:900px){ .dispatch .dsp-grid{grid-template-columns:1fr} .rs-host{flex-direction:column;align-items:stretch} .radar{display:none} }
 `; document.head.appendChild(s); })();
+document.addEventListener('toggle', e=>{ if(e.target.classList && e.target.classList.contains('dispatch')) S._dspOpen=e.target.open; }, true);
+(function(){ const s=document.createElement('style'); s.textContent=`details.dispatch>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:12px;margin-bottom:0;border-bottom:0;padding-bottom:0}details.dispatch>summary::-webkit-details-marker{display:none}details.dispatch>summary::after{content:"Show";margin-left:auto;font-size:13px;color:var(--muted);border:1px solid var(--line-2);padding:3px 10px}details.dispatch[open]>summary::after{content:"Hide"}details.dispatch[open]>summary{margin-bottom:14px}`; document.head.appendChild(s); })();

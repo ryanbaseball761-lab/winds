@@ -43,6 +43,8 @@ const TOUR = [
   {t:`Log the landing honestly`, d:`After shutdown, press "Log the landing". Your grade sets your pay, your reputation and how the story turns. Get the free MSFS Bridge (Hangar tab) and the debrief fills itself in.`}
 ];
 function tourBase(st){
+  /* retired in 0.75: the setup wizard and the story itself teach the game now; the old tour described screens that no longer exist */
+  return '';
   if(!st || st.tourDone) return ''; const i=S.tourStep||0; const s=TOUR[i];
   return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="tour-t"><div class="tour panel">
     <div class="tour-dots">${TOUR.map((_,k)=>`<span class="${k===i?'on':''}"></span>`).join('')}</div>

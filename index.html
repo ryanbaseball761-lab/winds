@@ -2755,6 +2755,8 @@ const TOUR = [
   {t:`Log the landing honestly`, d:`After shutdown, press "Log the landing". Your grade sets your pay, your reputation and how the story turns. Get the free MSFS Bridge (Hangar tab) and the debrief fills itself in.`}
 ];
 function tourBase(st){
+  /* retired in 0.75: the setup wizard and the story itself teach the game now; the old tour described screens that no longer exist */
+  return '';
   if(!st || st.tourDone) return ''; const i=S.tourStep||0; const s=TOUR[i];
   return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="tour-t"><div class="tour panel">
     <div class="tour-dots">${TOUR.map((_,k)=>`<span class="${k===i?'on':''}"></span>`).join('')}</div>
@@ -6833,6 +6835,7 @@ WHATS_NEW.unshift(['0.71','Butter Cup codes to race your friends, ten secret ach
 WHATS_NEW.unshift(['0.72','Hull insurance (it pays 80% of a crash), accident investigators who ask about your cargo, and the story notices when you fly through real weather.']);
 WHATS_NEW.unshift(['0.73','Polish: the dispatch weights now add up (you count, and so does your cargo), the result screen\'s Heat change includes everything, achievements from the new systems pop, tables fit on phones, small print is readable, weekly events vary properly, Halcón no longer interrupts another instruction, and a few words fixed.']);
 WHATS_NEW.unshift(['0.74','The top bar fits every screen size (it ran off the edge on laptops once Heat and dirty cash appeared). Property income comes as a weekly bank text instead of a pile of pop-ups.']);
+WHATS_NEW.unshift(['0.75','Focus: the Story page shows what matters now (next chapter, your people, the last three chapters); the operation panels moved to Money. New systems appear one at a time, each introduced by a text. Dispatch folds away unless something needs you. The outdated welcome tour is gone. The result shows how your pay splits into base pay and bonuses. Daytime chapters end on the ramp, not a night cockpit. Customs is less predictable above 60 Heat, and above 75 only an A landing talks you out of a search.']);
 /* ===================== RECORDED VOICE LINES =====================
    Story lines can be played from recorded audio instead of computer speech. Each spoken line has a stable id made
    from its words (voKey). Put recordings in art/voice/<id>.mp3 and list the ids in art/voice/index.json:
@@ -7099,8 +7102,8 @@ const AFTER_RESULT = [
     if(job.network){ crBump(c,'heat',12); crBump(c,'power',1); }   // (a network run is also a 'gen' job, so the −2 above already ran: net +5)
     if((job.network || job.kind==='story') && o){
       if(c.heat>=90){ txn(st,-50000,'Payoffs',`Lawyers, ${job.to}`); crBump(c,'power',-10); c.heat=50; o.notes.push(`BUSTED at ${job.to}. Customs found the hidden compartment. The network's lawyers got you out for $50,000. Power −10, Heat down to 50.`); try{ setTimeout(()=>takeover({kind:'orders',kicker:'Busted',title:`Customs at ${job.to}`,text:`They found the hidden compartment. The network's lawyers got you out, for $50,000.`,ms:9000}),600); }catch(_){} }
-      else if(c.heat>=60){ if(res.grade==='A'||res.grade==='B'){ o.notes.push(`Customs came out to the plane, but a clean landing and calm answers got you waved through. Heat −5.`); crBump(c,'heat',-5); }
-        else { const cost=Math.round(c.heat*60/10)*10; txn(st,-cost,'Payoffs',`Customs at ${job.to}`); crBump(c,'heat',-15); o.notes.push(`Customs searched the plane at ${job.to}. Your people made it go away for ${money(cost)}. Heat −15. (A cleaner landing gets you waved through.)`); } } } },
+      else if(c.heat>=60 && Math.random() < Math.min(0.75, Math.max(0.15, (c.heat-50)/45))){ if(res.grade==='A' || (res.grade==='B' && c.heat<75)){ o.notes.push(`Customs came out to the plane, but a clean landing and calm answers got you waved through. Heat −5.`); crBump(c,'heat',-5); }
+        else { const cost=Math.round(c.heat*60/10)*10; txn(st,-cost,'Payoffs',`Customs at ${job.to}`); crBump(c,'heat',-15); o.notes.push(`Customs searched the plane at ${job.to}. Your people made it go away for ${money(cost)}. Heat −15. (${c.heat+15>=75?'Above 75 Heat, only an A landing gets you waved through.':'A cleaner landing gets you waved through.'})`); } } } },
   /* the outcome text follows the choices you made earlier */
   function storyOutcomeText(st, job, f, res){ if(job.kind==='story' && CRIME_IDS.has(job.story) && !res.crash){ const o=st.last&&st.last.out; const m=CRIME.find(x=>x.id===job.story); const mm=dynM(st,m); const outs=job.out||mm.out;
     const tone=toneOf(res); if(o && outs && outs[tone]) o.story=outs[tone]; } },
@@ -7888,7 +7891,7 @@ function resultView(){
         <p class="label">Flight complete · score ${res.score}/100</p>
         <h1 style="font-size:28px">${esc(job.title)}</h1>
         <p class="muted">${esc(job.from)} → ${esc(st.log[0]?.to||job.to)} · ${esc(AC[job.ac].n)} · ${durTxt(res.block)}</p>
-        <div class="row">${f && f.verified?`<span class="chip sea">Verified by MSFS · ${f.simFpm} fpm</span>`:''}${passFail}${out.pay?`<span class="chip good">+${money(out.pay)}</span>`:''}${out.costs?`<span class="chip bad">−${money(out.costs)}</span>`:''}<span class="chip">Reputation ${st.reputation}/100</span></div>
+        <div class="row">${f && f.verified?`<span class="chip sea">Verified by MSFS · ${f.simFpm} fpm</span>`:''}${passFail}${out.pay?`<span class="chip good" title="Everything this flight paid">+${money(out.pay)}</span>${L.job&&L.job.pay&&out.pay-L.job.pay>=20?`<span class="small muted pay-split">${money(L.job.pay)} pay, ${money(out.pay-L.job.pay)} in bonuses and tips</span>`:''}`:''}${out.costs?`<span class="chip bad">−${money(out.costs)}</span>`:''}<span class="chip">Reputation ${st.reputation}/100</span></div>
       </div></div>${crimeChips?`<div class="row" style="gap: 6px; margin-top: 8px; flex-wrap: wrap;">${crimeChips}</div>`:''}</section>
     ${resultDeltas(st)}${resultHeatWarning(st)}${resultNextBar(st)}
     ${choice}${betaFeedbackHTML(st)}
@@ -8385,10 +8388,10 @@ function storyView(){
     ${epi.length?`<section class="panel"><h3>What became of everyone</h3><ul class="tight">${epi.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`:''}
     ${endingCardHTML(st)}
     ${stats}<div class="sh-grid">
-      <section class="panel"><h3>The story so far</h3><ol class="sh-time">${time}</ol></section>
+      <section class="panel"><h3>The story so far</h3><ol class="sh-time ${done.length>4?'clip':''}">${time}</ol>${done.length>4?`<button class="btn sm ghost sh-more" data-act="sh-more">Show all ${done.length} chapters</button>`:''}</section>
       <section class="panel"><h3>The people</h3><div class="sh-people">${people||'<p class="small muted">You\'ll meet them soon.</p>'}</div></section>
     </div>
-    ${operation}${operationHTML(st)||''}<section class="panel"><h3>The five acts</h3><div class="sh-acts">${acts}</div></section>
+    <details class="panel sh-acts-d"><summary><h3>The five acts</h3><span class="small muted">${done.length} of ${MC.length} chapters</span></summary><div class="sh-acts">${acts}</div></details>
     ${sNext?`<section class="panel sh-side"><h3>Starling</h3><p class="small muted">${esc(sNext.title)}. Private jet charters, clean money, nothing to do with Castillo.</p><div class="row" style="margin-top:8px">${chapterAction(st,sNext,availSet,true).replace(' &amp; start · $0',' &amp; start (free)')}</div></section>`:''}
   </main>`;
 }
@@ -8421,7 +8424,8 @@ function moneyView(){
           <label class="field"><span>Amount</span><input id="fin-amt" type="number" min="0" step="100" value="1000"></label>
           <div class="row"><button class="btn sm" data-act="fin-dep">Deposit</button><button class="btn sm" data-act="fin-wd">Withdraw</button><button class="btn sm" data-act="fin-draw">Borrow</button><button class="btn sm" data-act="fin-repay">Repay credit</button>${F.bond>0?`<button class="btn sm" data-act="fin-bond">Repay bond</button>`:''}</div>
           <p class="tiny muted">Go negative and the bank pulls from your credit line.</p></section>`;
-  return `<main class="wrap stack fade">${safeHTML(()=>operationHTML(st))}${safeHTML(()=>launderHTML(st))}
+  const c=crime(st); const opGrid = !c.on ? '' : `<div class="sh-grid">${fleetCrewHTML(st)||''}<section class="panel"><h3>Rank rewards <span class="small muted">Power ${c.power}</span></h3><ul class="perks">${RANK_PERKS.map(([v,n,p])=>`<li class="${c.power>=v?'on':''}"><b>${n}</b> <span class="mono small">${v}+</span><p>${esc(p)}</p></li>`).join('')}</ul></section></div>`;
+  return `<main class="wrap stack fade">${safeHTML(()=>operationHTML(st))}${opGrid}${safeHTML(()=>launderHTML(st))}
     <div class="tiles">
       <div class="tile"><span class="label">Cash</span><b class="mono">${money(st.cash)}</b><span class="tiny muted">${seasonName(st)} · charter demand ${demandIndex(st)>=1?'+':''}${Math.round((demandIndex(st)-1)*100)}%</span></div>
       <div class="tile"><span class="label">Savings</span><b class="mono">${money(F.savings)}</b><span class="tiny muted">4.5% APY</span></div>
@@ -8726,7 +8730,7 @@ function playAftermath(){
     shots.push({choice:true, q:m.choice.q, opts, pick:i=>{ const btn=document.createElement('button'); btn.dataset.act='crime-choose'; btn.dataset.i=i; btn.style.display='none'; document.body.appendChild(btn); btn.click(); btn.remove();
       const o=m.choice.opts[i]; const after=splitOut(o.out).map(t=>[here, null, t]); const fx=fxSub(o); if(fx) after.push({card:true, kicker:'Your choice', title:o.t, sub:`<p>${esc(fx)}</p>`, auto:2200}); return after.concat(nextCard()); }});
   } else nextCard().forEach(s=>shots.push(s));
-  cutscene({shots, col:act.col, art:paintedArt([], 'cockpit', job.to, Math.min(1439,(job.dep||600)+(job.est||60)), job.ac), onEnd:()=>{ S.keepScroll=false; render(); }});
+  cutscene({shots, col:act.col, art:paintedArt([], (()=>{ const arr=Math.min(1439,(job.dep||600)+(job.est||60)); return (arr>=420 && arr<=1110) ? 'ramp' : 'cockpit'; })(), job.to, Math.min(1439,(job.dep||600)+(job.est||60)), job.ac), onEnd:()=>{ S.keepScroll=false; render(); }});
 }
 /* ===================== SMALL UI PIECES =====================
    Pop-up messages (toast) and the search bar's list of things you can jump to (cmdItems). */
@@ -9405,7 +9409,8 @@ function dispatchHTML(st, a){ const j=a.job; const p=plan(j); const s=S.sim; con
   const slipGal = Math.ceil(Math.max(p.gal*1.3, p.gal+5));
   const fuelLine = j.fuelLie ? (a.fuelChecked ? `<p class="small">Topped off. The fuel man wouldn't look at you.</p>` : a.slipRead ? `<p class="small">The slip says ${slipGal} gal. The truck's meter says ${Math.ceil(p.gal*0.68)}. Someone shorted you.</p><button class="btn sm" data-act="ui-topoff">Make them top it off</button>` : `<button class="btn sm" data-act="ui-slip">Read the fuel slip</button>`) : '';
   const total=p.total+(j.contraband||0); const over=total-(AC[j.ac].useful||0);
-  return `<section class="panel dispatch"><div class="section-title"><h2>Dispatch</h2><span class="small muted">${esc(j.from)} → ${esc(j.local?j.from:j.to)} · ${esc(AC[j.ac].n)}</span></div>
+  const openD = (j.fuelLie && !a.fuelChecked) || over>0 || !!S._dspOpen;
+  return `<details class="panel dispatch" ${openD?'open':''}><summary class="section-title"><h2>Dispatch</h2><span class="small muted">${j.fuelLie&&!a.fuelChecked?'Check the fuel slip · ':''}Weights, fuel and NOTAMs</span></summary>
     <div class="dsp-grid">
       <div><h3>Weight</h3><table class="w-tab"><tbody>
         <tr><td>People, you included</td><td class="mono">${lb(p.payload-p.bagLb-(j.cargo||0))}</td></tr><tr><td>Bags and cargo</td><td class="mono">${lb(p.bagLb+(j.cargo||0))}</td></tr>
@@ -9414,7 +9419,7 @@ function dispatchHTML(st, a){ const j=a.job; const p=plan(j); const s=S.sim; con
         ${over>0?`<p class="small" style="color:var(--bad)">${lb(over)} over. Something stays on the ground, or you take less fuel.</p>`:''}</div>
       <div><h3>Fuel</h3><table class="w-tab"><tbody><tr><td>Trip</td><td class="mono">${lb(p.tripLb)}</td></tr>${p.contLb?`<tr><td>Contingency</td><td class="mono">${lb(p.contLb)}</td></tr>`:''}<tr><td>Reserve (${p.reserveMin} min)</td><td class="mono">${lb(p.resLb)}</td></tr>${p.altCode&&p.altLb?`<tr><td>Alternate ${esc(p.altCode)}</td><td class="mono">${lb(p.altLb||0)}</td></tr>`:''}${(()=>{ const x=p.fuelLb-p.tripLb-(p.contLb||0)-p.resLb-(p.altLb||0); return x>5?`<tr><td>Taxi, and rounding up</td><td class="mono">${lb(x)}</td></tr>`:''; })()}<tr><td><b>Planned</b></td><td class="mono"><b>${p.gal} gal</b></td></tr>${loadedGal!=null?`<tr><td>In the tanks now</td><td class="mono" style="${loadedGal<p.gal?'color:var(--bad)':''}">${loadedGal} gal</td></tr>`:''}</tbody></table>${fuelLine}</div>
       <div><h3>NOTAMs</h3><ul class="dsp-notam">${notamsFor(j).map(n=>`<li>${esc(n)}</li>`).join('')}</ul></div>
-    </div></section>`; }
+    </div></details>`; }
 AFTER_RENDER.push(function dispatchPanel(){ const st=S.st, a=st&&st.active; if(S.view!=='flight' || !a || a.started || S.showResult) return; const main=document.querySelector('main'); if(!main || main.querySelector('.dispatch')) return;
   const pass=main.querySelector('.pass'); if(!pass) return; const d=document.createElement('div'); d.innerHTML=dispatchHTML(st,a); pass.after(d.firstElementChild); });
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act]'); if(!b||!S.st) return; const a=S.st.active; const k=b.dataset.act;
@@ -9534,6 +9539,8 @@ html.bigscreen body.flying .rs b{font-size:28px}html.bigscreen .radar,html.bigsc
 html.bigscreen body.flying .beat .bt-t{font-size:26px}
 @media (max-width:900px){ .dispatch .dsp-grid{grid-template-columns:1fr} .rs-host{flex-direction:column;align-items:stretch} .radar{display:none} }
 `; document.head.appendChild(s); })();
+document.addEventListener('toggle', e=>{ if(e.target.classList && e.target.classList.contains('dispatch')) S._dspOpen=e.target.open; }, true);
+(function(){ const s=document.createElement('style'); s.textContent=`details.dispatch>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:12px;margin-bottom:0;border-bottom:0;padding-bottom:0}details.dispatch>summary::-webkit-details-marker{display:none}details.dispatch>summary::after{content:"Show";margin-left:auto;font-size:13px;color:var(--muted);border:1px solid var(--line-2);padding:3px 10px}details.dispatch[open]>summary::after{content:"Hide"}details.dispatch[open]>summary{margin-bottom:14px}`; document.head.appendChild(s); })();
 /* ===================== STORY, ROUND 2 (0.70) =====================
    - Consequences you can see: later chapters mention what you did earlier, on the Story page and the flight banner.
    - Timed choices: some in-flight decisions have a clock. Wait too long and the default happens.
@@ -9757,8 +9764,7 @@ function firstFlightHTML(st){ if(st.flights>0 || st.active) return ''; const liv
     ${step(1, live, 'Start MSFS and the Trade Winds bridge', live?'Connected.':'Open MSFS, load any airport, and the dot in the top bar turns green.')}
     ${step(2, false, 'Fly one practice circuit', 'Take off, fly around the pattern and land. No pay, no logbook. Just to see how grading works.', `<button class="btn sm" data-act="practice">Fly a practice circuit</button>`)}
     ${step(3, false, 'Play chapter 1', 'Ten minutes to Anguilla in a Cessna. The story starts here.')}</ol></section>`; }
-AFTER_RENDER.push(function firstFlight(){ if(S.view!=='story'||!S.st) return; const main=document.querySelector('main'); if(!main||main.querySelector('.first-flight')) return; const h=firstFlightHTML(S.st); if(!h) return;
-  const d=document.createElement('div'); d.innerHTML=h; const hero=main.querySelector('.story-card'); (hero||main.firstElementChild).after(d.firstElementChild); });
+/* (the setup wizard covers this now; the panel stays defined for reference) */
 
 /* =====================================================================
    DIFFICULTY: how fast Heat builds
@@ -9839,6 +9845,73 @@ AFTER_RESULT.push(function finalDelta(st, job, f, res, was){ const c=crime(st); 
   const fresh=checkAch(st); fresh.forEach((a,i)=>setTimeout(()=>achPop(a), 4000+i*2600)); });
 /* readable small print (contrast fixes found by the accessibility check) */
 (function(){ const s=document.createElement('style'); s.textContent=`.ff p,.ff .muted{color:var(--muted)!important;opacity:1!important}.perks li p{color:var(--muted)!important}.perks li{opacity:1!important}html.ckp .pass-stub .label{color:var(--muted)!important;opacity:1!important}`; document.head.appendChild(s); })();
+
+AFTER_RESULT.push(function tourOff(st){ if(!st.tourDone){ st.tourDone=true; } });
+/* ===================== FOCUS (0.75) =====================
+   The game introduces one system at a time instead of showing everything on day one.
+   Each system appears when it starts to matter, usually with a text from someone explaining it in a sentence.
+     phone ............ after the first text arrives
+     home strip ....... after 3 flights
+     market events .... after 5 flights
+     insurance ........ after 5 flights, or once you own an aircraft
+     islands panel .... after 3 flights
+     properties ....... once you have $15,000 (or own one)
+     Castillo's loan .. after chapter 4 (The Offer)
+     bribes ........... once Heat reaches 40
+     case board ....... after chapter 4 */
+
+function unlocked(k){ const st=S.st; if(!st) return false; const c=crime(st), w=st.w||{}, d=st.story.done||{}, n=st.flights||0;
+  switch(k){
+    case 'phone': return !!(w.phone && w.phone.msgs.length);
+    case 'home': return n>=3;
+    case 'market': return n>=5;
+    case 'insurance': return n>=5 || Object.keys(st.hangar||{}).length>0 || !!w.ins;
+    case 'islands': return n>=3;
+    case 'props': return st.cash>=15000 || Object.keys(w.props||{}).length>0 || !!(w.seenUnlock&&w.seenUnlock.props);
+    case 'loan': return c.on && !!d.CR4;
+    case 'bribe': return c.on && ((c.heat||0)>=40 || Object.keys(w.bribes||{}).length>0 || !!(w.seenUnlock&&w.seenUnlock.bribe));
+    case 'caseboard': return c.on && !!d.CR4;
+  } return true; }
+
+/* the text that introduces each system, once */
+const UNLOCK_TEXT = {
+  props: st=> crime(st).on ? {from:'dez', text:`dive shop on saba is for sale. nice little earner. good for washing money too, if u know what i mean. money page`} : {from:'mari', text:`The office next to ours is for rent. You've got the money now. Have a look on the Money page.`},
+  insurance: ()=>({from:'mari', text:`Please tell me you've got hull insurance. Money page. I'm not asking twice.`}),
+  bribe: ()=>({from:'dez', text:`heat's getting up there rookie. i know a customs guy at most of these airports. money page. careful tho`}),
+  loan: ()=>({from:'castillo', text:`If you ever need money quickly, ask me. I'm a reasonable lender. Mostly.`}),
+  market: ()=>({from:'mari', text:`Keep an eye on the board. Every week something happens somewhere, and somebody pays extra for it.`}),
+};
+function unlockCheck(){ const st=S.st; if(!st) return; const w=twW(); w.seenUnlock=w.seenUnlock||{};
+  for(const k in UNLOCK_TEXT){ if(!w.seenUnlock[k] && unlocked(k)){ w.seenUnlock[k]=st.day; const m=UNLOCK_TEXT[k](st); if(m) phonePush(m); } } }
+DAY_HOOKS.push(unlockCheck);
+AFTER_RESULT.push(function unlockAfterFlight(){ setTimeout(unlockCheck, 500); });
+
+/* market events wait until you've flown a bit */
+(function(){ const i=DAY_HOOKS.indexOf(mktRoll); if(i>=0) DAY_HOOKS[i]=function(st){ if(unlocked('market')) mktRoll(st); }; })();
+
+/* take away what isn't unlocked yet */
+AFTER_RENDER.push(function focusGate(){ if(!S.st) return; const hide=(sel)=>document.querySelectorAll(sel).forEach(e=>e.remove());
+  if(!unlocked('phone')) hide('.cb-phone');
+  if(!unlocked('home')) hide('.home-strip');
+  if(!unlocked('caseboard')) hide('.case-board');
+  if(!unlocked('islands')) hide('.w-isl');
+  if(!unlocked('props')) hide('.w-props');
+  if(!unlocked('loan')) hide('.w-loan');
+  if(!unlocked('bribe')) hide('.w-bribe');
+  if(!unlocked('insurance')) hide('.w-ins'); });
+
+/* the story timeline shows the last three chapters (and their act heading) until you ask for all of them */
+AFTER_RENDER.push(function clipTimeline(){ const ol=document.querySelector('.sh-time.clip'); if(!ol) return; const items=[...ol.children]; const ch=items.filter(e=>!e.classList.contains('sh-act-h')); const keep=new Set(ch.slice(-3));
+  let headKeep=null; items.forEach(e=>{ if(e.classList.contains('sh-act-h')){ headKeep=e; e.classList.add('cl-h'); } else if(keep.has(e)){ e.classList.remove('cl-h'); if(headKeep) headKeep.classList.remove('cl-h'); } else e.classList.add('cl-h'); }); });
+document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="sh-more"]'); if(!b) return; const ol=b.previousElementSibling; if(ol){ ol.classList.toggle('clip'); b.textContent = ol.classList.contains('clip') ? b.textContent.replace('Show fewer','Show all') : 'Show fewer'; if(ol.classList.contains('clip')) b.textContent=`Show all ${ol.querySelectorAll('li').length} chapters`; } });
+
+(function(){ const s=document.createElement('style'); s.textContent=`
+.sh-time.clip>li.cl-h{display:none}
+.sh-more{margin-top:6px}
+.sh-acts-d>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:12px}.sh-acts-d>summary::-webkit-details-marker{display:none}
+.sh-acts-d>summary h3{margin:0}.sh-acts-d>summary::after{content:"Show";margin-left:auto;font-size:13px;color:var(--muted);border:1px solid var(--line-2);padding:3px 10px}
+.sh-acts-d[open]>summary::after{content:"Hide"}.sh-acts-d[open] .sh-acts{margin-top:14px}
+`; document.head.appendChild(s); })();
 /* ===================== GLASS COCKPIT THEME (0.65) =====================
    One visual system for the whole app, loaded last so it wins over the older layers:
    near-black, square corners, 1px lines, one amber accent for "do this", avionics-style numbers.
