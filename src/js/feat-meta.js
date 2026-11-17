@@ -129,3 +129,24 @@ document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="s
 .first-flight{border-top:2px solid var(--amb)!important}.ff{list-style:none;padding:0;margin:0}.ff li{display:flex;gap:14px;padding:12px 0;border-top:1px solid var(--line)}.ff li:first-child{border-top:0}
 .ff li>span{width:26px;height:26px;display:grid;place-items:center;border:1px solid var(--line-2);flex:none}.ff li.done>span{border-color:var(--good);color:var(--good)}.ff p{margin:3px 0 8px}
 `; document.head.appendChild(s); })();
+
+/* =====================================================================
+   INSURANCE AND ACCIDENT INVESTIGATIONS
+   A hull policy costs a little every day and pays 80% of what a crash costs you. Any crash brings an investigator;
+   one during a network run brings questions you can't answer.
+   ===================================================================== */
+function insOn(){ return !!(S.st && S.st.w && S.st.w.ins); }
+function insDaily(st){ const n=1+Object.keys(st.hangar||{}).length; return 25*n; }
+DAY_HOOKS.push(st=>{ if(st.w && st.w.ins){ txn(st, -insDaily(st), 'Insurance', 'Hull insurance'); } });
+AFTER_RESULT.push(function accident(st, job, f, res){ if(!res.crash || job.practice) return; const o=st.last&&st.last.out; if(!o) return; const c=crime(st);
+  const note=o.notes.find(n=>/^Accident investigation, insurance excess and repairs: /.test(n)); const cost=note ? Number(note.replace(/[^0-9]/g,'')) : 0;
+  if(insOn() && cost>0){ const back=Math.round(cost*0.8); txn(st, back, 'Insurance', 'Claim paid'); o.notes.push(`Your insurer paid ${money(back)} of it.`); }
+  if(c.on){ if(job.network){ crBump(c,'heat',15); const lost=Math.round((c.dirty||0)*0.5); c.dirty=Math.max(0,(c.dirty||0)-lost); o.notes.push(`The accident investigators found what was in the hold. Heat +15${lost?`, and ${money(lost)} in dirty cash is gone`:''}.`); phonePush({from:'reyes', text:`I read the accident report from ${job.to}. Interesting cargo.`}); }
+    else { crBump(c,'heat',4); o.notes.push('An accident investigator wants to see your logbook. Heat +4.'); } } });
+AFTER_RENDER.push(function insPanel(){ if(S.view!=='money'||!S.st) return; const host=document.querySelector('.w-added'); if(!host||host.querySelector('.w-ins')) return; const st=S.st;
+  host.insertAdjacentHTML('afterbegin', `<section class="panel w-ins row between" style="gap:12px;flex-wrap:wrap"><div><h3>Hull insurance</h3><p class="small muted">${money(insDaily(st))} a day. Pays 80% of what a crash costs you. It doesn't ask what you were carrying, but the investigators will.</p></div><button class="btn sm" data-act="w-ins">${insOn()?'Cancel the policy':'Buy the policy'}</button></section>`); });
+document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="w-ins"]')||!S.st) return; const w=twW(); w.ins=!w.ins; save(); toast(w.ins?'Insured. It starts tonight.':'Policy cancelled.'); S.keepScroll=true; render(); });
+
+/* the story notices the weather you flew through */
+AFTER_RESULT.push(function storyWeather(st, job){ if(job.kind!=='story') return; const o=st.last&&st.last.out; if(!o) return; const wx=o.notes.find(n=>/weather bonus/.test(n)); if(!wx) return;
+  const who = crime(st).on ? 'Castillo' : 'Mari'; o.notes.push(who==='Castillo' ? `Castillo heard about the weather you flew through. "Nobody else would have gone," he says. He sounds pleased.` : `Mari saw the weather on the radar. "You flew in that? Don't tell the insurance company."`); });
