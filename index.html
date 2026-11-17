@@ -2872,7 +2872,7 @@ STORY.push(
   out:{good:`Abe fills in "1 across" while you taxi in, which you'll later learn is the highest compliment he gives. Vivienne is already texting Mari about "borrowing" you again.`,ok:`A tidy first jet flight. Abe makes two notes on his kneeboard and shows you neither.`,bad:`Abe takes the controls for the last 500 ft without a word. Over lunch he explains the landing to you on a napkin, very kindly.`},rep:{vivienne:8,abe:6}},
  {id:'VJ2',arc:`Starling`,side:true,lend:true,fee:700,title:`Breakfast in Barbados`,chars:['vivienne','abe'],req:{after:'VJ1'},from:'TNCM',to:'TBPB',ac:['SF50'],pax:2,cargo:60,cargoLabel:`a trade-show booth in two cases`,time:'dawn',dep:375,wx:'calm',
   brief:[`Vivienne has a 9 a.m. meeting in Bridgetown with the island's biggest hotel group, which wants Saltwater in every room. "If I arrive by ferry I'll look like I need the deal," she says. "If I arrive by jet, I'll look like I don't."`,`It's 360 nm, the longest flight you've made so far, and the first one in the flight levels. Abe hands you a fuel log. "Cruise at FL250 or above, and you write down fuel every 20 minutes. Jets make you lazy if you let them."`],
-  teach:[`Above 18,000 ft, set the altimeter to standard (29.92 inHg or 1013 hPa) on the climb, and back to local pressure on the way down.`,`At FL250 the Vision Jet burns roughly half what it burns down low, so long legs are flown high.`,`Barbados sits alone about 100 nm east of the island chain. On the approach the trades usually favour runway 09.`],
+  teach:[`Above 18,000 ft, set the altimeter to standard (29.92 inHg or 1013 hPa) on the climb, and back to local pressure on the way down.`,`At FL250 the Vision Jet burns roughly half what it burns down low, so long legs are flown high.`,`Barbados sits alone about 100 nm east of the island chain. On the approach the trades usually favor runway 09.`],
   out:{good:`Vivienne walks into the meeting with ten minutes to spare and comes out with the contract. She orders mimosas for the ramp crew. Yours is orange juice, and you're flying anyway.`,ok:`On time, and the deal is signed. Abe says your fuel log "looks like an honest man wrote it."`,bad:`A rough descent leaves Vivienne's coffee on her blouse. She signs the deal in a borrowed hotel T-shirt and doesn't mention it again, though Abe does.`},rep:{vivienne:6,abe:4}},
  {id:'VJ3',arc:`Starling`,side:true,lend:true,fee:450,title:`Canouan, Quietly`,chars:['vivienne','abe'],req:{after:'VJ2'},from:'TBPB',to:'TVSC',ac:['SF50'],pax:3,cargo:80,cargoLabel:`luggage with no names on it`,time:'day',dep:690,wx:'showers',scen:'vip_change',
   brief:[`Vivienne has two guests for the hop to Canouan. One is a famous chef with three restaurants and a television show. The other wears sunglasses indoors and won't give a name. "No photos, no tweets, no telling Dez," Vivienne says. "Especially no telling Dez."`,`It's a short run down to the Grenadines, past Mustique, where the yachts are bigger than most of the houses. Showers are sliding through on the trades this afternoon.`],
@@ -6831,6 +6831,7 @@ WHATS_NEW.unshift(['0.69','Dispatch paperwork before every flight (weights, fuel
 WHATS_NEW.unshift(['0.70','The story remembers: later chapters mention what you did. Timed choices in the air. Two new endings (Walk Away, Coming Home). Halcón, Medina\'s pilot, races you. Reyes sits you down for an interview. A secret chapter for players who earned it. In New Game+, the leak is someone else. Save a picture card of every chapter.']);
 WHATS_NEW.unshift(['0.71','Butter Cup codes to race your friends, ten secret achievements, photo moments on famous approaches, Twitch tips, a guided first ten minutes, Heat that follows your difficulty, Spanish menus (beta), crash reports with the last 50 events, and a save folder you can point at OneDrive or Dropbox (desktop app).']);
 WHATS_NEW.unshift(['0.72','Hull insurance (it pays 80% of a crash), accident investigators who ask about your cargo, and the story notices when you fly through real weather.']);
+WHATS_NEW.unshift(['0.73','Polish: the dispatch weights now add up (you count, and so does your cargo), the result screen\'s Heat change includes everything, achievements from the new systems pop, tables fit on phones, small print is readable, weekly events vary properly, Halcón no longer interrupts another instruction, and a few words fixed.']);
 /* ===================== RECORDED VOICE LINES =====================
    Story lines can be played from recorded audio instead of computer speech. Each spoken line has a stable id made
    from its words (voKey). Put recordings in art/voice/<id>.mp3 and list the ids in art/voice/index.json:
@@ -6896,7 +6897,7 @@ function band(){
         ${ro('Loc',esc(st.loc))}${ro('Day '+st.day,`${dateTxt(st.day)} ${hhmm(st.clock)}`,'cb-time')}${ro('Cash',money(st.cash),'cash')}
         ${c.on?`<button class="cb-ro heat-chip ${c.heat>=80?'hot':c.heat>=60?'warm':'cool'}" data-act="nav" data-v="story" title="${esc(CX_TIPS.Heat)}"><small>Heat</small><b class="mono">${c.heat}</b></button>`:''}
         ${c.dirty>0?`<button class="cb-ro dirty-chip" data-act="nav" data-v="money" title="Dirty cash from network runs. Launder it on the Money page."><small>Dirty</small><b class="mono">${money(c.dirty)}</b></button>`:''}
-        <span class="cb-ro cb-sim ${live?'on':''}" title="${live?'MSFS is connected':'MSFS is not connected'}"><small>Sim</small><b class="mono"><i class="simdot ${live?'on':''}"></i><span id="sim-band">${live?'MSFS live':'Sim not connected'}</span></b></span>
+        <span class="cb-ro cb-sim ${live?'on':''}" title="${live?'MSFS is connected':'MSFS is not connected'}"><small>Sim</small><b class="mono"><i class="simdot ${live?'on':''}"></i><span id="sim-band">${live?'MSFS live':'Not connected'}</span></b></span>
         <button class="cb-ic bell" data-act="bell" title="Notifications" aria-label="Notifications">${ICON_BELL}<b${unread>0?'':' style="display:none"'}>${unread>9?'9+':unread}</b></button><button class="cb-ic cmd-btn" data-act="cmd" title="Search (Ctrl+K)" aria-label="Search">${ICON_SEARCH}</button><button class="cb-ic cmd-btn gear-btn" title="Settings" aria-label="Settings" data-act="open-settings">${ICON_GEAR}</button>
       </div>
     </div>
@@ -7531,7 +7532,7 @@ const SIM_TICK = [
     const el=document.getElementById('simpanel'); if(el) el.innerHTML = simPanelHTML();
     const h=document.getElementById('sim-hangar'); if(h) h.innerHTML = simHangarHTML();
     const d=document.getElementById('sim-debrief'); if(d && S.st && S.st.active) d.innerHTML = simDebriefHTML(S.st.active.job);
-    const b=document.getElementById('sim-band'); if(b) b.textContent = S.simState==='live' ? 'MSFS live' : 'Sim not connected';
+    const b=document.getElementById('sim-band'); if(b) b.textContent = S.simState==='live' ? 'MSFS live' : 'Not connected';
     const dot=document.querySelector('.simdot'); if(dot) dot.classList.toggle('on', S.simState==='live');
   },
   function cabin(){ try{ cabinTick(); }catch(e){} document.querySelectorAll('.cabin-host').forEach(el=>{ el.innerHTML = cabinInner(); }); },
@@ -8945,7 +8946,7 @@ function twW(){ const st=S.st; st.w=st.w||{}; const w=st.w; w.phone=w.phone||{ms
 function wDone(id){ const st=S.st; return !!(st && st.story && st.story.done && st.story.done[id]); }
 function wFlags(){ return (S.st && crime(S.st).flags) || {}; }
 function wRep(k,v){ const st=S.st; if(!st.rep) st.rep={}; st.rep[k]=clamp((st.rep[k]||10)+v,0,100); }
-function wSeed(n){ const st=S.st; return rng((st.day*7919 + (n||0)*104729 + String(st.pilot&&st.pilot.name||'').length*31) >>> 0); }
+function wSeed(n){ const st=S.st; return rng(hashStr(`${st.day}|${n||0}|${st.pilot&&st.pilot.name||''}|tw`)); }
 function islOf(code){ return (AP[code] && AP[code].isl) || code; }
 
 /* a panel that opens over the page (Esc or the button closes it) */
@@ -9041,10 +9042,10 @@ function islPayMul(code){ return 1 + clamp(islRep(islOf(code))/500, -0.1, 0.1); 
    ===================================================================== */
 const MKT = [
   {id:'storm', n:'Tropical storm', reg:['LEE','WIN','VIR'], cats:['cargo'], mul:1.6, txt:r=>`A tropical storm hit ${r}. Relief and cargo flights there pay 60% more this week.`, from:'mari'},
-  {id:'crack', n:'Customs crackdown', isl:true, mul:1, heat:6, txt:i=>`Customs is cracking down on ${i} this week. Network runs there add 6 more Heat.`, from:'dez', crime:true},
-  {id:'fest', n:'Film festival', isl:true, cats:['vip','pax'], mul:1.4, txt:i=>`Film festival on ${i}. Charters going there pay 40% more.`, from:'hartwell'},
-  {id:'regatta', n:'Regatta week', isl:true, cats:['pax'], mul:1.3, txt:i=>`Regatta week on ${i}: sailors everywhere and every seat sold. Passenger flights there pay 30% more.`, from:'mari'},
-  {id:'fuel', n:'Fuel strike', isl:true, cats:null, mul:1.25, txt:i=>`Fuel workers are on strike on ${i}. Anyone who flies there anyway gets paid 25% more.`, from:'dez'},
+  {id:'crack', n:'Customs crackdown', isl:true, mul:1, heat:6, txt:i=>`Customs is cracking down in ${i} this week. Network runs there add 6 more Heat.`, from:'dez', crime:true},
+  {id:'fest', n:'Film festival', isl:true, cats:['vip','pax'], mul:1.4, txt:i=>`Film festival in ${i}. Charters going there pay 40% more.`, from:'hartwell'},
+  {id:'regatta', n:'Regatta week', isl:true, cats:['pax'], mul:1.3, txt:i=>`Regatta week in ${i}: sailors everywhere and every seat sold. Passenger flights there pay 30% more.`, from:'mari'},
+  {id:'fuel', n:'Fuel strike', isl:true, cats:null, mul:1.25, txt:i=>`Fuel workers are on strike in ${i}. Anyone who flies there anyway gets paid 25% more.`, from:'dez'},
   {id:'cruise', n:'Cruise ship stranded', isl:true, cats:['pax'], mul:1.5, txt:i=>`A cruise ship broke down off ${i}. Six hundred tourists need flights home. Passenger work there pays 50% more.`, from:'mari'},
 ];
 function mktNow(){ const w=twW(); return (w.mkt && w.mkt.until>=S.st.day) ? w.mkt : null; }
@@ -9151,11 +9152,11 @@ AFTER_RESULT.push(function worldAfterFlight(st, job, f, res, was){ if(job.practi
   if(res.crash) islBump(isl,-6);
   else { const g=res.grade; islBump(isl, g==='A'?3:g==='B'?2:g==='C'?1:g==='F'?-2:0); if(job.network) islBump(isl,-4);
     if(o && o.notes.some(n=>/^Customs searched|^BUSTED/.test(n))) islBump(isl,-12); }
-  const v=islRep(isl), before=v-(res.crash?-6:0); if(o && Math.abs(v)>=12 && !st._islSaid?.[isl]){ st._islSaid=st._islSaid||{}; st._islSaid[isl]=1; o.notes.push(v>0?`${isl} knows you now. Work there pays a little better.`:`People on ${isl} have started watching you. Work there pays less.`); }
+  const v=islRep(isl), before=v-(res.crash?-6:0); if(o && Math.abs(v)>=12 && !st._islSaid?.[isl]){ st._islSaid=st._islSaid||{}; st._islSaid[isl]=1; o.notes.push(v>0?`${isl} knows you now. Work there pays a little better.`:`People in ${isl} have started watching you. Work there pays less.`); }
   // contacts
   if(job.contact){ const w=twW(); w.contacts[job.contact]=(w.contacts[job.contact]||0)+1; const k=CONTACTS.find(x=>x.id===job.contact); if(k && o) o.notes.push(`${k.n} will remember this.`); }
   // the market
-  const m=mktHit(job); if(m && m.heat && job.network && c.on){ crBump(c,'heat',m.heat); if(o) o.notes.push(`Customs crackdown on ${isl}: Heat +${m.heat}.`); }
+  const m=mktHit(job); if(m && m.heat && job.network && c.on){ crBump(c,'heat',m.heat); if(o) o.notes.push(`Customs crackdown in ${isl}: Heat +${m.heat}.`); }
   // aircraft history
   if(job.ac && !res.crash){ const h=acHist(job.ac); h.f++; h.m+=Math.round(res.block||job.est||0); const fpm=f&&f.simFpm; if(fpm!=null){ if(h.best==null||fpm<h.best) h.best=fpm; if(fpm>600) h.hard++; } }
   // first officer
@@ -9205,7 +9206,7 @@ function moneyWorldHTML(){ const st=S.st, w=twW(), c=crime(st), L=loanNow();
 
 /* Hangar: aircraft logbooks */
 function acHistHTML(){ const w=twW(); const ids=Object.keys(w.ac).filter(k=>AC[k]); if(!ids.length) return '';
-  return `<section class="panel w-achist"><div class="section-title"><h2>Aircraft logbooks</h2></div><table class="w-tab"><thead><tr><th>Aircraft</th><th>Name</th><th>Flights</th><th>Hours</th><th>Softest</th><th>Hard landings</th></tr></thead><tbody>${ids.sort((a,b)=>w.ac[b].f-w.ac[a].f).map(k=>{ const h=w.ac[k]; return `<tr><td>${esc(AC[k].n)}</td><td><input class="w-nick" data-id="${k}" value="${esc(h.nick||'')}" maxlength="24" placeholder="Give her a name" aria-label="Name for ${esc(AC[k].n)}"></td><td class="mono">${h.f}</td><td class="mono">${(h.m/60).toFixed(1)}</td><td class="mono">${h.best!=null?Math.round(h.best)+' fpm':'–'}</td><td class="mono">${h.hard}</td></tr>`; }).join('')}</tbody></table></section>`; }
+  return `<section class="panel w-achist"><div class="section-title"><h2>Aircraft logbooks</h2></div><table class="w-tab"><thead><tr><th>Aircraft</th><th>Name</th><th>Flights</th><th>Hours</th><th>Softest</th><th>Hard landings</th></tr></thead><tbody>${ids.sort((a,b)=>w.ac[b].f-w.ac[a].f).map(k=>{ const h=w.ac[k]; return `<tr><td>${esc(AC[k].n)}</td><td><input class="w-nick" data-id="${k}" value="${esc(h.nick||'')}" maxlength="24" placeholder="Give her a name" aria-label="Name for ${esc(AC[k].n)}"></td><td class="mono" data-l="Flights">${h.f}</td><td class="mono" data-l="Hours">${(h.m/60).toFixed(1)}</td><td class="mono" data-l="Softest">${h.best!=null?Math.round(h.best)+' fpm':'–'}</td><td class="mono" data-l="Hard landings">${h.hard}</td></tr>`; }).join('')}</tbody></table></section>`; }
 function foHTML(){ const t=foTrait(); if(!t) return ''; return `<section class="panel"><p class="label">Your first officer</p><h3>${esc(t.n)}</h3><p class="small muted">${esc(t.d)}</p></section>`; }
 
 AFTER_RENDER.push(function worldPanels(){ if(!S.st) return; const main=document.querySelector('main'); if(!main || main.querySelector('.w-added')) return;
@@ -9235,13 +9236,13 @@ document.addEventListener('change', e=>{ const i=e.target.closest('.w-nick'); if
 .ph-in{background:var(--surface-3);border:1px solid var(--line)}
 .ph-out{background:var(--amb-soft);border:1px solid rgba(240,165,58,.35);margin-left:auto}
 .ph-opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-.w-tab{width:100%;border-collapse:collapse;font-size:14px}.w-tab td,.w-tab th{padding:9px 10px 9px 0;border-top:1px solid var(--line);text-align:left;vertical-align:middle}.w-tab th{font-weight:500;color:var(--muted);font-size:12.5px;border-top:0}
+.w-tab{width:100%;border-collapse:collapse;font-size:14px}.w-tab td,.w-tab td span{white-space:normal!important}.w-tab td,.w-tab th{padding:9px 10px 9px 0;border-top:1px solid var(--line);text-align:left;vertical-align:middle}.w-tab th{font-weight:500;color:var(--muted);font-size:12.5px;border-top:0}
 .w-bar{position:relative;display:block;width:160px;height:4px;background:var(--line)}.w-bar i{position:absolute;top:0;height:100%;background:var(--good);max-width:50%}
 .w-contacts{list-style:none;padding:0;margin:8px 0 0}.w-contacts li{padding:8px 0;border-top:1px solid var(--line)}
 .w-nick{height:32px!important;padding:0 8px!important;font-size:13.5px!important;width:170px}
 .w-mkt{border-left:2px solid var(--amb)!important}
 .cb-phone b{position:absolute;top:10px;right:8px;min-width:15px;height:15px;padding:0 3px;background:var(--amb);color:var(--amb-ink);font:600 9.5px/15px var(--f-mono);text-align:center}
-@media (max-width:700px){ .w-bar{width:70px} .w-tab{font-size:13px} }
+@media (max-width:700px){ .w-bar{width:70px} .w-tab{font-size:13px} .w-props .w-tab,.w-props .w-tab tbody,.w-props .w-tab tr,.w-props .w-tab td,.w-achist .w-tab,.w-achist .w-tab tbody,.w-achist .w-tab tr,.w-achist .w-tab td{display:block;width:auto} .w-achist thead{display:none} .w-props tr,.w-achist tr{border-top:1px solid var(--line);padding:10px 0} .w-props td,.w-achist td{border:0!important;padding:3px 0!important} .w-achist td[data-l]{display:inline-block;margin-right:14px} .w-achist td[data-l]::before{content:attr(data-l) ' ';color:var(--muted);font-family:var(--f-body)} .w-nick{width:100%!important} }
 `; document.head.appendChild(s); })();
 /* ===================== THINGS THAT HAPPEN IN THE AIR (0.68) =====================
    All of these need MSFS live; without it nothing fires and nothing is lost.
@@ -9295,7 +9296,7 @@ function fevFire(a){ const s=S.sim, f=a.fev, cs=callsign(); f.done=true; save();
     showBeat(a,{who:'self', text}, 'fail');
     startOrder(a,{k:'landwithin', min:20, label:'Land within 20 minutes', fail2:kind, ok:{text: kind==='oil'?`The mechanic finds a cracked oil line. "Another ten minutes and you'd have been swimming."`:`On the ground with the battery at nine volts. The mechanic says it was the regulator.`}, fail:{text:`You stretched it. The engine is worse for it, and so is the bill.`}}); }
   else if(f.type==='intercept'){
-    showBeat(a,{who:'radio', text:`Aircraft ${a.job.tail||''} on frequency, this is the U.S. Coast Guard, off your left wing. Reduce speed and maintain your heading.|A white HC-144 is sitting off your wing.`, opts:[
+    showBeat(a,{who:'radio', text:`${callsign()}, this is the U.S. Coast Guard, off your left wing. Reduce speed and maintain your heading.|A white HC-144 is sitting off your wing.`, opts:[
       {t:`Comply`, reply:`You pull the power back and keep it straight.`, order:{k:'slow', pct:0.8, sec:120, within:60, label:'Coast Guard: slow down and hold your heading', ok:{text:`They photograph your tail, take their time, and peel away. They'll remember you.`, heat:3}, fail:{text:`You didn't slow down. They follow you all the way to the ground.`, heat:9}}},
       {t:`Run for it`, reply:`Full power. Nose up.`, order:{k:'climb', by:3000, sec:120, label:'Climb 3,000 ft and lose them', ok:{text:`Into the cloud tops and gone. They never got your registration.`, heat:2, power:2}, fail:{text:`A turboprop full of radar beat you. They have your tail number now.`, heat:12}}}]}, 'icpt'); }
 }
@@ -9405,11 +9406,11 @@ function dispatchHTML(st, a){ const j=a.job; const p=plan(j); const s=S.sim; con
   return `<section class="panel dispatch"><div class="section-title"><h2>Dispatch</h2><span class="small muted">${esc(j.from)} → ${esc(j.local?j.from:j.to)} · ${esc(AC[j.ac].n)}</span></div>
     <div class="dsp-grid">
       <div><h3>Weight</h3><table class="w-tab"><tbody>
-        <tr><td>People</td><td class="mono">${lb(p.paxLb)}</td></tr><tr><td>Bags and cargo</td><td class="mono">${lb(p.bagLb + (j.cargo||0)*0)}</td></tr>
+        <tr><td>People, you included</td><td class="mono">${lb(p.payload-p.bagLb-(j.cargo||0))}</td></tr><tr><td>Bags and cargo</td><td class="mono">${lb(p.bagLb+(j.cargo||0))}</td></tr>
         ${j.contraband?`<tr><td>Not on the manifest</td><td class="mono" style="color:var(--amb)">${lb(j.contraband)}</td></tr>`:''}
         <tr><td>Fuel</td><td class="mono">${lb(p.fuelLb)}</td></tr><tr><td><b>Total load</b></td><td class="mono"><b>${lb(total)}</b> of ${lb(AC[j.ac].useful)}</td></tr></tbody></table>
         ${over>0?`<p class="small" style="color:var(--bad)">${lb(over)} over. Something stays on the ground, or you take less fuel.</p>`:''}</div>
-      <div><h3>Fuel</h3><table class="w-tab"><tbody><tr><td>Trip</td><td class="mono">${lb(p.tripLb)}</td></tr><tr><td>Reserve (${p.reserveMin} min)</td><td class="mono">${lb(p.resLb)}</td></tr>${p.altCode?`<tr><td>Alternate ${esc(p.altCode)}</td><td class="mono">${lb(p.altLb||0)}</td></tr>`:''}<tr><td><b>Planned</b></td><td class="mono"><b>${p.gal} gal</b></td></tr>${loadedGal!=null?`<tr><td>In the tanks now</td><td class="mono" style="${loadedGal<p.gal?'color:var(--bad)':''}">${loadedGal} gal</td></tr>`:''}</tbody></table>${fuelLine}</div>
+      <div><h3>Fuel</h3><table class="w-tab"><tbody><tr><td>Trip</td><td class="mono">${lb(p.tripLb)}</td></tr>${p.contLb?`<tr><td>Contingency</td><td class="mono">${lb(p.contLb)}</td></tr>`:''}<tr><td>Reserve (${p.reserveMin} min)</td><td class="mono">${lb(p.resLb)}</td></tr>${p.altCode&&p.altLb?`<tr><td>Alternate ${esc(p.altCode)}</td><td class="mono">${lb(p.altLb||0)}</td></tr>`:''}${(()=>{ const x=p.fuelLb-p.tripLb-(p.contLb||0)-p.resLb-(p.altLb||0); return x>5?`<tr><td>Taxi, and rounding up</td><td class="mono">${lb(x)}</td></tr>`:''; })()}<tr><td><b>Planned</b></td><td class="mono"><b>${p.gal} gal</b></td></tr>${loadedGal!=null?`<tr><td>In the tanks now</td><td class="mono" style="${loadedGal<p.gal?'color:var(--bad)':''}">${loadedGal} gal</td></tr>`:''}</tbody></table>${fuelLine}</div>
       <div><h3>NOTAMs</h3><ul class="dsp-notam">${notamsFor(j).map(n=>`<li>${esc(n)}</li>`).join('')}</ul></div>
     </div></section>`; }
 AFTER_RENDER.push(function dispatchPanel(){ const st=S.st, a=st&&st.active; if(S.view!=='flight' || !a || a.started || S.showResult) return; const main=document.querySelector('main'); if(!main || main.querySelector('.dispatch')) return;
@@ -9523,6 +9524,7 @@ function phoneLatest(){ try{ const w=S.st&&S.st.w; const m=w&&w.phone&&w.phone.m
 .cb-pins li{background:#ece6da;color:#1b1712;padding:10px 12px;transform:rotate(-.6deg);display:flex;flex-direction:column;gap:3px;font-size:13px;position:relative}
 .cb-pins li:nth-child(2n){transform:rotate(.8deg)}.cb-pins li::before{content:"";position:absolute;top:-4px;left:50%;width:8px;height:8px;background:#c23a2b;border-radius:50%!important}
 .cb-pins li b{font-family:var(--f-mono);font-size:12px}.cb-pins li.hot{outline:2px solid #c23a2b}
+button:has(.tw-n) kbd.kh{display:none!important}
 kbd.kh{display:inline-grid;place-items:center;min-width:18px;height:18px;margin-right:8px;font:500 11px/1 var(--f-mono);border:1px solid var(--line-2);color:var(--muted);background:transparent}
 html.bigscreen body.flying main{max-width:none!important}
 html.bigscreen body.flying .fo-chip,html.bigscreen body.flying .rs{font-size:22px}
@@ -9618,7 +9620,7 @@ document.addEventListener('click', async e=>{ const b=e.target.closest('[data-ac
 function halcon(){ const w=twW(); w.halcon=w.halcon||{w:0,l:0}; return w.halcon; }
 GEN_JOB_STEPS.push(function halconRace(st, L){ if(!L) return; const c=crime(st); if(!c.on || !st.story.done.CRM || st.story.done.CRT) return L;
   const j=L.find(x=>x.network && !x.local && x.est>=20); if(j && fevHash(j.id+'|hal')<0.35){ j.rival=true; j.title=`Race Halcón: ${j.title}`; j.pay=Math.round(j.pay*1.2/10)*10; } return L; });
-SIM_TICK.push(function halconTick(){ const a=S.st&&S.st.active; if(!a || !a.job.rival || a.halconSaid || S.simState!=='live') return; const s=S.sim; const rec=s&&s.recorder; if(!rec||!rec.takeoff) return; if(document.querySelector('.beat')) return;
+SIM_TICK.push(function halconTick(){ const a=S.st&&S.st.active; if(!a || !a.job.rival || a.halconSaid || S.simState!=='live') return; if(a.order && a.order.state==='active') return; const s=S.sim; const rec=s&&s.recorder; if(!rec||!rec.takeoff) return; if(document.querySelector('.beat')) return;
   a.halconSaid=1; const min=Math.max(12, Math.round((a.job.est||30)*0.95)); save();
   showBeat(a,{who:'radio', text:`Hola, amigo. Halcón here, two minutes behind you. Same destination. Loser buys the drinks.|Medina's pilot. He's not joking about the race.`}, 'hal');
   startOrder(a,{k:'landwithin', min, label:`Beat Halcón: land within ${min} min`, race:true, ok:{text:`You're shut down before Halcón even calls final. He buys the drinks. Medina hears about it.`, power:3}, fail:{text:`Halcón is already on the ramp, leaning on his wing, when you taxi in.`, power:-2}}); });
@@ -9690,7 +9692,7 @@ PHONE_POOL.push({id:'ng1', from:'reyes', need:['CR11'], crime:true, gate:()=>!!(
 /* ---------- counters the other features feed ---------- */
 function twStats(){ const w=twW(); w.stats=w.stats||{atc:0,ph:0,fuel:0}; return w.stats; }
 (function(){ const base=phoneAnswer; phoneAnswer=function(){ const r=base.apply(this, arguments); twStats().ph++; return r; }; })();
-AFTER_RESULT.push(function metaCounters(st, job){ const a=S._lastActive; if(!a) return; const S2=twStats(); if(a.order && a.order.atc && a.order.state==='ok') S2.atc++; if(job.fuelLie && a.fuelChecked) S2.fuel++; checkAch(st); });
+AFTER_RESULT.push(function metaCounters(st, job){ const a=S._lastActive; if(!a) return; const S2=twStats(); if(a.order && a.order.atc && a.order.state==='ok') S2.atc++; if(job.fuelLie && a.fuelChecked) S2.fuel++; });
 
 /* =====================================================================
    SECRET ACHIEVEMENTS
@@ -9829,6 +9831,12 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="w-ins"]
 /* the story notices the weather you flew through */
 AFTER_RESULT.push(function storyWeather(st, job){ if(job.kind!=='story') return; const o=st.last&&st.last.out; if(!o) return; const wx=o.notes.find(n=>/weather bonus/.test(n)); if(!wx) return;
   const who = crime(st).on ? 'Castillo' : 'Mari'; o.notes.push(who==='Castillo' ? `Castillo heard about the weather you flew through. "Nobody else would have gone," he says. He sounds pleased.` : `Mari saw the weather on the radar. "You flew in that? Don't tell the insurance company."`); });
+
+/* runs last: the result screen's Power/Heat change includes everything above, and achievements earned by the newer steps pop too */
+AFTER_RESULT.push(function finalDelta(st, job, f, res, was){ const c=crime(st); if(st.last) st.last.delta={power:c.power-was.power, heat:c.heat-was.heat};
+  const fresh=checkAch(st); fresh.forEach((a,i)=>setTimeout(()=>achPop(a), 4000+i*2600)); });
+/* readable small print (contrast fixes found by the accessibility check) */
+(function(){ const s=document.createElement('style'); s.textContent=`.ff p,.ff .muted{color:var(--muted)!important;opacity:1!important}.perks li p{color:var(--muted)!important}.perks li{opacity:1!important}html.ckp .pass-stub .label{color:var(--muted)!important;opacity:1!important}`; document.head.appendChild(s); })();
 /* ===================== GLASS COCKPIT THEME (0.65) =====================
    One visual system for the whole app, loaded last so it wins over the older layers:
    near-black, square corners, 1px lines, one amber accent for "do this", avionics-style numbers.

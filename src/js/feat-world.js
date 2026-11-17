@@ -16,7 +16,7 @@ function twW(){ const st=S.st; st.w=st.w||{}; const w=st.w; w.phone=w.phone||{ms
 function wDone(id){ const st=S.st; return !!(st && st.story && st.story.done && st.story.done[id]); }
 function wFlags(){ return (S.st && crime(S.st).flags) || {}; }
 function wRep(k,v){ const st=S.st; if(!st.rep) st.rep={}; st.rep[k]=clamp((st.rep[k]||10)+v,0,100); }
-function wSeed(n){ const st=S.st; return rng((st.day*7919 + (n||0)*104729 + String(st.pilot&&st.pilot.name||'').length*31) >>> 0); }
+function wSeed(n){ const st=S.st; return rng(hashStr(`${st.day}|${n||0}|${st.pilot&&st.pilot.name||''}|tw`)); }
 function islOf(code){ return (AP[code] && AP[code].isl) || code; }
 
 /* a panel that opens over the page (Esc or the button closes it) */
@@ -112,10 +112,10 @@ function islPayMul(code){ return 1 + clamp(islRep(islOf(code))/500, -0.1, 0.1); 
    ===================================================================== */
 const MKT = [
   {id:'storm', n:'Tropical storm', reg:['LEE','WIN','VIR'], cats:['cargo'], mul:1.6, txt:r=>`A tropical storm hit ${r}. Relief and cargo flights there pay 60% more this week.`, from:'mari'},
-  {id:'crack', n:'Customs crackdown', isl:true, mul:1, heat:6, txt:i=>`Customs is cracking down on ${i} this week. Network runs there add 6 more Heat.`, from:'dez', crime:true},
-  {id:'fest', n:'Film festival', isl:true, cats:['vip','pax'], mul:1.4, txt:i=>`Film festival on ${i}. Charters going there pay 40% more.`, from:'hartwell'},
-  {id:'regatta', n:'Regatta week', isl:true, cats:['pax'], mul:1.3, txt:i=>`Regatta week on ${i}: sailors everywhere and every seat sold. Passenger flights there pay 30% more.`, from:'mari'},
-  {id:'fuel', n:'Fuel strike', isl:true, cats:null, mul:1.25, txt:i=>`Fuel workers are on strike on ${i}. Anyone who flies there anyway gets paid 25% more.`, from:'dez'},
+  {id:'crack', n:'Customs crackdown', isl:true, mul:1, heat:6, txt:i=>`Customs is cracking down in ${i} this week. Network runs there add 6 more Heat.`, from:'dez', crime:true},
+  {id:'fest', n:'Film festival', isl:true, cats:['vip','pax'], mul:1.4, txt:i=>`Film festival in ${i}. Charters going there pay 40% more.`, from:'hartwell'},
+  {id:'regatta', n:'Regatta week', isl:true, cats:['pax'], mul:1.3, txt:i=>`Regatta week in ${i}: sailors everywhere and every seat sold. Passenger flights there pay 30% more.`, from:'mari'},
+  {id:'fuel', n:'Fuel strike', isl:true, cats:null, mul:1.25, txt:i=>`Fuel workers are on strike in ${i}. Anyone who flies there anyway gets paid 25% more.`, from:'dez'},
   {id:'cruise', n:'Cruise ship stranded', isl:true, cats:['pax'], mul:1.5, txt:i=>`A cruise ship broke down off ${i}. Six hundred tourists need flights home. Passenger work there pays 50% more.`, from:'mari'},
 ];
 function mktNow(){ const w=twW(); return (w.mkt && w.mkt.until>=S.st.day) ? w.mkt : null; }
@@ -222,11 +222,11 @@ AFTER_RESULT.push(function worldAfterFlight(st, job, f, res, was){ if(job.practi
   if(res.crash) islBump(isl,-6);
   else { const g=res.grade; islBump(isl, g==='A'?3:g==='B'?2:g==='C'?1:g==='F'?-2:0); if(job.network) islBump(isl,-4);
     if(o && o.notes.some(n=>/^Customs searched|^BUSTED/.test(n))) islBump(isl,-12); }
-  const v=islRep(isl), before=v-(res.crash?-6:0); if(o && Math.abs(v)>=12 && !st._islSaid?.[isl]){ st._islSaid=st._islSaid||{}; st._islSaid[isl]=1; o.notes.push(v>0?`${isl} knows you now. Work there pays a little better.`:`People on ${isl} have started watching you. Work there pays less.`); }
+  const v=islRep(isl), before=v-(res.crash?-6:0); if(o && Math.abs(v)>=12 && !st._islSaid?.[isl]){ st._islSaid=st._islSaid||{}; st._islSaid[isl]=1; o.notes.push(v>0?`${isl} knows you now. Work there pays a little better.`:`People in ${isl} have started watching you. Work there pays less.`); }
   // contacts
   if(job.contact){ const w=twW(); w.contacts[job.contact]=(w.contacts[job.contact]||0)+1; const k=CONTACTS.find(x=>x.id===job.contact); if(k && o) o.notes.push(`${k.n} will remember this.`); }
   // the market
-  const m=mktHit(job); if(m && m.heat && job.network && c.on){ crBump(c,'heat',m.heat); if(o) o.notes.push(`Customs crackdown on ${isl}: Heat +${m.heat}.`); }
+  const m=mktHit(job); if(m && m.heat && job.network && c.on){ crBump(c,'heat',m.heat); if(o) o.notes.push(`Customs crackdown in ${isl}: Heat +${m.heat}.`); }
   // aircraft history
   if(job.ac && !res.crash){ const h=acHist(job.ac); h.f++; h.m+=Math.round(res.block||job.est||0); const fpm=f&&f.simFpm; if(fpm!=null){ if(h.best==null||fpm<h.best) h.best=fpm; if(fpm>600) h.hard++; } }
   // first officer
@@ -276,7 +276,7 @@ function moneyWorldHTML(){ const st=S.st, w=twW(), c=crime(st), L=loanNow();
 
 /* Hangar: aircraft logbooks */
 function acHistHTML(){ const w=twW(); const ids=Object.keys(w.ac).filter(k=>AC[k]); if(!ids.length) return '';
-  return `<section class="panel w-achist"><div class="section-title"><h2>Aircraft logbooks</h2></div><table class="w-tab"><thead><tr><th>Aircraft</th><th>Name</th><th>Flights</th><th>Hours</th><th>Softest</th><th>Hard landings</th></tr></thead><tbody>${ids.sort((a,b)=>w.ac[b].f-w.ac[a].f).map(k=>{ const h=w.ac[k]; return `<tr><td>${esc(AC[k].n)}</td><td><input class="w-nick" data-id="${k}" value="${esc(h.nick||'')}" maxlength="24" placeholder="Give her a name" aria-label="Name for ${esc(AC[k].n)}"></td><td class="mono">${h.f}</td><td class="mono">${(h.m/60).toFixed(1)}</td><td class="mono">${h.best!=null?Math.round(h.best)+' fpm':'–'}</td><td class="mono">${h.hard}</td></tr>`; }).join('')}</tbody></table></section>`; }
+  return `<section class="panel w-achist"><div class="section-title"><h2>Aircraft logbooks</h2></div><table class="w-tab"><thead><tr><th>Aircraft</th><th>Name</th><th>Flights</th><th>Hours</th><th>Softest</th><th>Hard landings</th></tr></thead><tbody>${ids.sort((a,b)=>w.ac[b].f-w.ac[a].f).map(k=>{ const h=w.ac[k]; return `<tr><td>${esc(AC[k].n)}</td><td><input class="w-nick" data-id="${k}" value="${esc(h.nick||'')}" maxlength="24" placeholder="Give her a name" aria-label="Name for ${esc(AC[k].n)}"></td><td class="mono" data-l="Flights">${h.f}</td><td class="mono" data-l="Hours">${(h.m/60).toFixed(1)}</td><td class="mono" data-l="Softest">${h.best!=null?Math.round(h.best)+' fpm':'–'}</td><td class="mono" data-l="Hard landings">${h.hard}</td></tr>`; }).join('')}</tbody></table></section>`; }
 function foHTML(){ const t=foTrait(); if(!t) return ''; return `<section class="panel"><p class="label">Your first officer</p><h3>${esc(t.n)}</h3><p class="small muted">${esc(t.d)}</p></section>`; }
 
 AFTER_RENDER.push(function worldPanels(){ if(!S.st) return; const main=document.querySelector('main'); if(!main || main.querySelector('.w-added')) return;
@@ -306,11 +306,11 @@ document.addEventListener('change', e=>{ const i=e.target.closest('.w-nick'); if
 .ph-in{background:var(--surface-3);border:1px solid var(--line)}
 .ph-out{background:var(--amb-soft);border:1px solid rgba(240,165,58,.35);margin-left:auto}
 .ph-opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-.w-tab{width:100%;border-collapse:collapse;font-size:14px}.w-tab td,.w-tab th{padding:9px 10px 9px 0;border-top:1px solid var(--line);text-align:left;vertical-align:middle}.w-tab th{font-weight:500;color:var(--muted);font-size:12.5px;border-top:0}
+.w-tab{width:100%;border-collapse:collapse;font-size:14px}.w-tab td,.w-tab td span{white-space:normal!important}.w-tab td,.w-tab th{padding:9px 10px 9px 0;border-top:1px solid var(--line);text-align:left;vertical-align:middle}.w-tab th{font-weight:500;color:var(--muted);font-size:12.5px;border-top:0}
 .w-bar{position:relative;display:block;width:160px;height:4px;background:var(--line)}.w-bar i{position:absolute;top:0;height:100%;background:var(--good);max-width:50%}
 .w-contacts{list-style:none;padding:0;margin:8px 0 0}.w-contacts li{padding:8px 0;border-top:1px solid var(--line)}
 .w-nick{height:32px!important;padding:0 8px!important;font-size:13.5px!important;width:170px}
 .w-mkt{border-left:2px solid var(--amb)!important}
 .cb-phone b{position:absolute;top:10px;right:8px;min-width:15px;height:15px;padding:0 3px;background:var(--amb);color:var(--amb-ink);font:600 9.5px/15px var(--f-mono);text-align:center}
-@media (max-width:700px){ .w-bar{width:70px} .w-tab{font-size:13px} }
+@media (max-width:700px){ .w-bar{width:70px} .w-tab{font-size:13px} .w-props .w-tab,.w-props .w-tab tbody,.w-props .w-tab tr,.w-props .w-tab td,.w-achist .w-tab,.w-achist .w-tab tbody,.w-achist .w-tab tr,.w-achist .w-tab td{display:block;width:auto} .w-achist thead{display:none} .w-props tr,.w-achist tr{border-top:1px solid var(--line);padding:10px 0} .w-props td,.w-achist td{border:0!important;padding:3px 0!important} .w-achist td[data-l]{display:inline-block;margin-right:14px} .w-achist td[data-l]::before{content:attr(data-l) ' ';color:var(--muted);font-family:var(--f-body)} .w-nick{width:100%!important} }
 `; document.head.appendChild(s); })();

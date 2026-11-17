@@ -16,7 +16,7 @@ What has to be true before strangers can install and play Trade Winds. ✅ done,
 ## Game (done in the repo)
 - ✅ 20-chapter story, endings, New Game+, epilogue
 - ✅ Airline: airliners, facilities, bases, refits, best-route finder, balance table in `docs/BALANCE.md`
-- ✅ Automatic tests: `tests/run.js` (flows), `tests/snapshot.js` (289 screens), `tests/simflight.js` (fake MSFS flight),
+- ✅ Automatic tests: `tests/soak.js` (90-day stress run), `tests/simevents.js` (in-flight events), `tests/playthrough.js` (every ending), `tests/run.js` (flows), `tests/snapshot.js` (289 screens), `tests/simflight.js` (fake MSFS flight),
   `tests/fuzz.js` (clicks every button), `tools/sim.js` (economy)
 - ✅ Phone layout checked at 400 px on every page
 - ✅ Older bridges fail politely (clear message instead of "Unknown tool")

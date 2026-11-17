@@ -11,7 +11,7 @@
 /* ---------- counters the other features feed ---------- */
 function twStats(){ const w=twW(); w.stats=w.stats||{atc:0,ph:0,fuel:0}; return w.stats; }
 (function(){ const base=phoneAnswer; phoneAnswer=function(){ const r=base.apply(this, arguments); twStats().ph++; return r; }; })();
-AFTER_RESULT.push(function metaCounters(st, job){ const a=S._lastActive; if(!a) return; const S2=twStats(); if(a.order && a.order.atc && a.order.state==='ok') S2.atc++; if(job.fuelLie && a.fuelChecked) S2.fuel++; checkAch(st); });
+AFTER_RESULT.push(function metaCounters(st, job){ const a=S._lastActive; if(!a) return; const S2=twStats(); if(a.order && a.order.atc && a.order.state==='ok') S2.atc++; if(job.fuelLie && a.fuelChecked) S2.fuel++; });
 
 /* =====================================================================
    SECRET ACHIEVEMENTS
@@ -150,3 +150,9 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="w-ins"]
 /* the story notices the weather you flew through */
 AFTER_RESULT.push(function storyWeather(st, job){ if(job.kind!=='story') return; const o=st.last&&st.last.out; if(!o) return; const wx=o.notes.find(n=>/weather bonus/.test(n)); if(!wx) return;
   const who = crime(st).on ? 'Castillo' : 'Mari'; o.notes.push(who==='Castillo' ? `Castillo heard about the weather you flew through. "Nobody else would have gone," he says. He sounds pleased.` : `Mari saw the weather on the radar. "You flew in that? Don't tell the insurance company."`); });
+
+/* runs last: the result screen's Power/Heat change includes everything above, and achievements earned by the newer steps pop too */
+AFTER_RESULT.push(function finalDelta(st, job, f, res, was){ const c=crime(st); if(st.last) st.last.delta={power:c.power-was.power, heat:c.heat-was.heat};
+  const fresh=checkAch(st); fresh.forEach((a,i)=>setTimeout(()=>achPop(a), 4000+i*2600)); });
+/* readable small print (contrast fixes found by the accessibility check) */
+(function(){ const s=document.createElement('style'); s.textContent=`.ff p,.ff .muted{color:var(--muted)!important;opacity:1!important}.perks li p{color:var(--muted)!important}.perks li{opacity:1!important}html.ckp .pass-stub .label{color:var(--muted)!important;opacity:1!important}`; document.head.appendChild(s); })();

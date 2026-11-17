@@ -47,11 +47,11 @@ function dispatchHTML(st, a){ const j=a.job; const p=plan(j); const s=S.sim; con
   return `<section class="panel dispatch"><div class="section-title"><h2>Dispatch</h2><span class="small muted">${esc(j.from)} → ${esc(j.local?j.from:j.to)} · ${esc(AC[j.ac].n)}</span></div>
     <div class="dsp-grid">
       <div><h3>Weight</h3><table class="w-tab"><tbody>
-        <tr><td>People</td><td class="mono">${lb(p.paxLb)}</td></tr><tr><td>Bags and cargo</td><td class="mono">${lb(p.bagLb + (j.cargo||0)*0)}</td></tr>
+        <tr><td>People, you included</td><td class="mono">${lb(p.payload-p.bagLb-(j.cargo||0))}</td></tr><tr><td>Bags and cargo</td><td class="mono">${lb(p.bagLb+(j.cargo||0))}</td></tr>
         ${j.contraband?`<tr><td>Not on the manifest</td><td class="mono" style="color:var(--amb)">${lb(j.contraband)}</td></tr>`:''}
         <tr><td>Fuel</td><td class="mono">${lb(p.fuelLb)}</td></tr><tr><td><b>Total load</b></td><td class="mono"><b>${lb(total)}</b> of ${lb(AC[j.ac].useful)}</td></tr></tbody></table>
         ${over>0?`<p class="small" style="color:var(--bad)">${lb(over)} over. Something stays on the ground, or you take less fuel.</p>`:''}</div>
-      <div><h3>Fuel</h3><table class="w-tab"><tbody><tr><td>Trip</td><td class="mono">${lb(p.tripLb)}</td></tr><tr><td>Reserve (${p.reserveMin} min)</td><td class="mono">${lb(p.resLb)}</td></tr>${p.altCode?`<tr><td>Alternate ${esc(p.altCode)}</td><td class="mono">${lb(p.altLb||0)}</td></tr>`:''}<tr><td><b>Planned</b></td><td class="mono"><b>${p.gal} gal</b></td></tr>${loadedGal!=null?`<tr><td>In the tanks now</td><td class="mono" style="${loadedGal<p.gal?'color:var(--bad)':''}">${loadedGal} gal</td></tr>`:''}</tbody></table>${fuelLine}</div>
+      <div><h3>Fuel</h3><table class="w-tab"><tbody><tr><td>Trip</td><td class="mono">${lb(p.tripLb)}</td></tr>${p.contLb?`<tr><td>Contingency</td><td class="mono">${lb(p.contLb)}</td></tr>`:''}<tr><td>Reserve (${p.reserveMin} min)</td><td class="mono">${lb(p.resLb)}</td></tr>${p.altCode&&p.altLb?`<tr><td>Alternate ${esc(p.altCode)}</td><td class="mono">${lb(p.altLb||0)}</td></tr>`:''}${(()=>{ const x=p.fuelLb-p.tripLb-(p.contLb||0)-p.resLb-(p.altLb||0); return x>5?`<tr><td>Taxi, and rounding up</td><td class="mono">${lb(x)}</td></tr>`:''; })()}<tr><td><b>Planned</b></td><td class="mono"><b>${p.gal} gal</b></td></tr>${loadedGal!=null?`<tr><td>In the tanks now</td><td class="mono" style="${loadedGal<p.gal?'color:var(--bad)':''}">${loadedGal} gal</td></tr>`:''}</tbody></table>${fuelLine}</div>
       <div><h3>NOTAMs</h3><ul class="dsp-notam">${notamsFor(j).map(n=>`<li>${esc(n)}</li>`).join('')}</ul></div>
     </div></section>`; }
 AFTER_RENDER.push(function dispatchPanel(){ const st=S.st, a=st&&st.active; if(S.view!=='flight' || !a || a.started || S.showResult) return; const main=document.querySelector('main'); if(!main || main.querySelector('.dispatch')) return;
@@ -165,6 +165,7 @@ function phoneLatest(){ try{ const w=S.st&&S.st.w; const m=w&&w.phone&&w.phone.m
 .cb-pins li{background:#ece6da;color:#1b1712;padding:10px 12px;transform:rotate(-.6deg);display:flex;flex-direction:column;gap:3px;font-size:13px;position:relative}
 .cb-pins li:nth-child(2n){transform:rotate(.8deg)}.cb-pins li::before{content:"";position:absolute;top:-4px;left:50%;width:8px;height:8px;background:#c23a2b;border-radius:50%!important}
 .cb-pins li b{font-family:var(--f-mono);font-size:12px}.cb-pins li.hot{outline:2px solid #c23a2b}
+button:has(.tw-n) kbd.kh{display:none!important}
 kbd.kh{display:inline-grid;place-items:center;min-width:18px;height:18px;margin-right:8px;font:500 11px/1 var(--f-mono);border:1px solid var(--line-2);color:var(--muted);background:transparent}
 html.bigscreen body.flying main{max-width:none!important}
 html.bigscreen body.flying .fo-chip,html.bigscreen body.flying .rs{font-size:22px}

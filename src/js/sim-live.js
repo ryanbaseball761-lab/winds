@@ -21,7 +21,7 @@ const SIM_TICK = [
     const el=document.getElementById('simpanel'); if(el) el.innerHTML = simPanelHTML();
     const h=document.getElementById('sim-hangar'); if(h) h.innerHTML = simHangarHTML();
     const d=document.getElementById('sim-debrief'); if(d && S.st && S.st.active) d.innerHTML = simDebriefHTML(S.st.active.job);
-    const b=document.getElementById('sim-band'); if(b) b.textContent = S.simState==='live' ? 'MSFS live' : 'Sim not connected';
+    const b=document.getElementById('sim-band'); if(b) b.textContent = S.simState==='live' ? 'MSFS live' : 'Not connected';
     const dot=document.querySelector('.simdot'); if(dot) dot.classList.toggle('on', S.simState==='live');
   },
   function cabin(){ try{ cabinTick(); }catch(e){} document.querySelectorAll('.cabin-host').forEach(el=>{ el.innerHTML = cabinInner(); }); },

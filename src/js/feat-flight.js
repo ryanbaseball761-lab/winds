@@ -50,7 +50,7 @@ function fevFire(a){ const s=S.sim, f=a.fev, cs=callsign(); f.done=true; save();
     showBeat(a,{who:'self', text}, 'fail');
     startOrder(a,{k:'landwithin', min:20, label:'Land within 20 minutes', fail2:kind, ok:{text: kind==='oil'?`The mechanic finds a cracked oil line. "Another ten minutes and you'd have been swimming."`:`On the ground with the battery at nine volts. The mechanic says it was the regulator.`}, fail:{text:`You stretched it. The engine is worse for it, and so is the bill.`}}); }
   else if(f.type==='intercept'){
-    showBeat(a,{who:'radio', text:`Aircraft ${a.job.tail||''} on frequency, this is the U.S. Coast Guard, off your left wing. Reduce speed and maintain your heading.|A white HC-144 is sitting off your wing.`, opts:[
+    showBeat(a,{who:'radio', text:`${callsign()}, this is the U.S. Coast Guard, off your left wing. Reduce speed and maintain your heading.|A white HC-144 is sitting off your wing.`, opts:[
       {t:`Comply`, reply:`You pull the power back and keep it straight.`, order:{k:'slow', pct:0.8, sec:120, within:60, label:'Coast Guard: slow down and hold your heading', ok:{text:`They photograph your tail, take their time, and peel away. They'll remember you.`, heat:3}, fail:{text:`You didn't slow down. They follow you all the way to the ground.`, heat:9}}},
       {t:`Run for it`, reply:`Full power. Nose up.`, order:{k:'climb', by:3000, sec:120, label:'Climb 3,000 ft and lose them', ok:{text:`Into the cloud tops and gone. They never got your registration.`, heat:2, power:2}, fail:{text:`A turboprop full of radar beat you. They have your tail number now.`, heat:12}}}]}, 'icpt'); }
 }

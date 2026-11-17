@@ -86,7 +86,7 @@ document.addEventListener('click', async e=>{ const b=e.target.closest('[data-ac
 function halcon(){ const w=twW(); w.halcon=w.halcon||{w:0,l:0}; return w.halcon; }
 GEN_JOB_STEPS.push(function halconRace(st, L){ if(!L) return; const c=crime(st); if(!c.on || !st.story.done.CRM || st.story.done.CRT) return L;
   const j=L.find(x=>x.network && !x.local && x.est>=20); if(j && fevHash(j.id+'|hal')<0.35){ j.rival=true; j.title=`Race Halcón: ${j.title}`; j.pay=Math.round(j.pay*1.2/10)*10; } return L; });
-SIM_TICK.push(function halconTick(){ const a=S.st&&S.st.active; if(!a || !a.job.rival || a.halconSaid || S.simState!=='live') return; const s=S.sim; const rec=s&&s.recorder; if(!rec||!rec.takeoff) return; if(document.querySelector('.beat')) return;
+SIM_TICK.push(function halconTick(){ const a=S.st&&S.st.active; if(!a || !a.job.rival || a.halconSaid || S.simState!=='live') return; if(a.order && a.order.state==='active') return; const s=S.sim; const rec=s&&s.recorder; if(!rec||!rec.takeoff) return; if(document.querySelector('.beat')) return;
   a.halconSaid=1; const min=Math.max(12, Math.round((a.job.est||30)*0.95)); save();
   showBeat(a,{who:'radio', text:`Hola, amigo. Halcón here, two minutes behind you. Same destination. Loser buys the drinks.|Medina's pilot. He's not joking about the race.`}, 'hal');
   startOrder(a,{k:'landwithin', min, label:`Beat Halcón: land within ${min} min`, race:true, ok:{text:`You're shut down before Halcón even calls final. He buys the drinks. Medina hears about it.`, power:3}, fail:{text:`Halcón is already on the ramp, leaning on his wing, when you taxi in.`, power:-2}}); });
