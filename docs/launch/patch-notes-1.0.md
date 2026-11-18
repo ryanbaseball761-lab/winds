@@ -91,6 +91,8 @@
 - The plane on the flight ticket is no longer clipped at the top, collapsed sections like Dispatch sit tidy, and the Airline demand label matches the other stats.
 - Phones and tablets: every job on the board shows where it goes, the aircraft and the flight time again, right under its title.
 - Phones: the flight ticket's art no longer sits on the airline name, its pilot, seat and date line up in three columns, and the story card has no empty band above the chapter title.
+- Flight Academy lessons are numbered in the cockpit's own type instead of emoji that looked different on every system, and finished ones show a green tick.
+- Saves & help: the backups panel lines up with the panels above it.
 
 ## Under the hood
 - **Saves repair themselves.** A save with missing or broken parts (no story, an unknown airport, a missing cash value, a flight to an airport that no longer exists) is filled in when it loads instead of crashing pages. A save that can't be read at all is kept aside and the newest backup loads.

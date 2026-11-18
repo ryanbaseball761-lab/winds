@@ -154,7 +154,7 @@ function academyView(){
   const st=S.st; const A=acad(st); const done=LESSONS.filter(l=>A.done[l.id]).length; const live=S.simState==='live';
   const L = A.cur ? LESSONS.find(l=>l.id===A.cur) : null;
   const lessonPanel = L ? `<section class="panel stack lesson">
-      <div class="row between"><div><p class="label">${esc(L.lvl)} · about ${L.min} min</p><h2>${L.icon} ${esc(L.n)}</h2></div><div class="row"><span class="chip ${live?'sea':''}">${live?'● MSFS live: steps check themselves':'Sim offline: tick steps yourself'}</span><button class="btn sm ghost" data-act="ac-stop">Leave lesson</button></div></div>
+      <div class="row between"><div><p class="label">${esc(L.lvl)} · about ${L.min} min</p><h2>${esc(L.n)}</h2></div><div class="row"><span class="chip ${live?'sea':''}">${live?'● MSFS live: steps check themselves':'Sim offline: tick steps yourself'}</span><button class="btn sm ghost" data-act="ac-stop">Leave lesson</button></div></div>
       <p class="brief">${esc(L.why)}</p>
       <div class="ac-setup"><b>Set up in MSFS</b><span>${esc(L.setup)}</span></div>
       <ol class="ac-steps">${L.steps.map((s,i)=>{ const state = i<A.step?'done':i===A.step?'now':''; return `<li class="${state}"><span class="n">${i<A.step?'✓':i+1}</span><div><p>${esc(s.t)}</p>${i===A.step?`<div class="row" style="margin-top:8px">${s.check&&live?`<span class="chip sea">Watching MSFS…</span>`:''}<button class="btn sm ${s.check&&live?'ghost':'primary'}" data-act="ac-next">${s.check&&live?'Skip':'Done'}</button></div>`:''}</div></li>`; }).join('')}</ol>
@@ -164,7 +164,7 @@ function academyView(){
     <section class="ac-hero"><div><p class="label" style="color:inherit;opacity:.8">Flight Academy</p><h1>Learn to fly, one skill at a time</h1><p>Fourteen short lessons in the sim. $150 each.</p></div>
       <div class="ac-prog"><b>${done}/${LESSONS.length}</b><span>lessons complete</span><div class="meter"><i style="width:${done/LESSONS.length*100}%"></i></div></div></section>
     ${lessonPanel}
-    <div class="ac-grid">${LESSONS.map((l,i)=>`<article class="ac-card ${A.done[l.id]?'done':''} ${A.cur===l.id?'cur':''}"><div class="ac-ic">${l.icon}</div><div style="min-width:0"><p class="label">Lesson ${i+1} · ${esc(l.lvl)}</p><h3>${esc(l.n)}</h3><p class="small muted">${esc(l.why.split('. ')[0].replace(/\.$/,''))}.</p><div class="row" style="margin-top:8px">${A.done[l.id]?'<span class="chip good">✓ Complete</span>':''}<span class="chip">${l.min} min</span><button class="btn sm ${A.cur===l.id?'':'primary'}" data-act="ac-start" data-id="${l.id}">${A.cur===l.id?'In progress':A.done[l.id]?'Fly again':'Start'}</button></div></div></article>`).join('')}</div>
+    <div class="ac-grid">${LESSONS.map((l,i)=>`<article class="ac-card ${A.done[l.id]?'done':''} ${A.cur===l.id?'cur':''}"><div class="ac-ic" aria-hidden="true">${A.done[l.id]?'✓':String(i+1).padStart(2,'0')}</div><div style="min-width:0"><p class="label">Lesson ${i+1} · ${esc(l.lvl)}</p><h3>${esc(l.n)}</h3><p class="small muted">${esc(l.why.split('. ')[0].replace(/\.$/,''))}.</p><div class="row" style="margin-top:8px">${A.done[l.id]?'<span class="chip good">✓ Complete</span>':''}<span class="chip">${l.min} min</span><button class="btn sm ${A.cur===l.id?'':'primary'}" data-act="ac-start" data-id="${l.id}">${A.cur===l.id?'In progress':A.done[l.id]?'Fly again':'Start'}</button></div></div></article>`).join('')}</div>
   </main>`;
 }
 document.addEventListener('click', e=>{

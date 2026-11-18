@@ -127,3 +127,4 @@ WHATS_NEW.unshift(['0.76','Polish: the Airline page says how much more you need 
 WHATS_NEW.unshift(['0.77','Polish: readable Buy and Start the story buttons, plain logbook columns, tidy Hours by aircraft rows, used aircraft say how much more the down payment needs, a steadier income chart, and centred achievement pop-ups.']);
 WHATS_NEW.unshift(['0.78','Polish: no more empty portrait boxes while the painted portraits load, the flight ticket plane is no longer clipped, and tidier collapsed sections.']);
 WHATS_NEW.unshift(['0.79','Phones and tablets: the job board shows each job\'s destination, aircraft and flight time again. Tidier flight ticket and story card on phones.']);
+WHATS_NEW.unshift(['0.80','Polish: Flight Academy lessons are numbered instead of using emoji, and the Saves page lines up. The whole 20-chapter story was played through by clicks at desktop and phone width with no errors.']);

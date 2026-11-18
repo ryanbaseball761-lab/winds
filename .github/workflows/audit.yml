@@ -32,8 +32,9 @@ jobs:
           { node tests/a11y.js; echo "a11y.js exit $?"; } > out/a11y.txt 2>&1
           { node tests/fuzz.js; echo "fuzz.js exit $?"; } > out/fuzz.txt 2>&1
           { W=400 node tests/fuzz.js; echo "fuzz400 exit $?"; } > out/fuzz400.txt 2>&1
-          #{ node tests/soak.js; echo "soak.js exit $?"; } > out/soak.txt 2>&1
-          #{ node tests/playthrough.js; echo "playthrough.js exit $?"; } > out/playthrough.txt 2>&1
+          { node tests/soak.js; echo "soak.js exit $?"; } > out/soak.txt 2>&1
+          { node tests/playthrough.js; echo "playthrough.js exit $?"; } > out/playthrough.txt 2>&1
+          { W=400 node tests/playthrough.js; echo "playthrough400 exit $?"; } > out/playthrough400.txt 2>&1
           cp tests/snapshots/baseline.json out/old-baseline.json
           { node tests/snapshot.js save; echo "save exit $?"; } > out/save.txt 2>&1
           cp tests/snapshots/baseline.json out/new-baseline.json

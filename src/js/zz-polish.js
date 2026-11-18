@@ -13,6 +13,11 @@ const POLISH_CSS = `
 body .achpop{left:0;right:0;margin:0 auto;transform:none;width:max-content;max-width:calc(100vw - 32px);text-align:center}
 /* a collapsed section (Dispatch on the flight page) has no rule and gap under its title */
 html.ckp body details:not([open])>summary.section-title{border-bottom:0;padding-bottom:0;margin-bottom:0}
+/* Saves & help: the backups panel matches the width of the save and report panels above it */
+.bk-list{max-width:760px}
+/* Academy: lesson numbers in the cockpit's mono type instead of emoji, which drew differently on every system */
+.ac-ic{font-family:var(--f-mono);font-size:17px!important;font-weight:500;color:var(--amb);border-radius:0!important;border:1px solid var(--line-2)}
+.ac-card.done .ac-ic{color:var(--good)}
 /* Buy an aircraft: Down payment and Term labels sit level with their dropdowns */
 .co-terms{flex-wrap:wrap;gap:8px 16px;align-items:center}
 .panel .co-terms>label.row{align-items:center;white-space:nowrap}
