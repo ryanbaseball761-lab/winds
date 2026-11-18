@@ -126,3 +126,4 @@ WHATS_NEW.unshift(['0.75','Focus: the Story page shows what matters now (next ch
 WHATS_NEW.unshift(['0.76','Polish: the Airline page says how much more you need for a facility instead of showing empty buttons, phone layouts fixed on the result screen, the story path, flight tickets and money rows, and no more failed voice-file request at startup.']);
 WHATS_NEW.unshift(['0.77','Polish: readable Buy and Start the story buttons, plain logbook columns, tidy Hours by aircraft rows, used aircraft say how much more the down payment needs, a steadier income chart, and centred achievement pop-ups.']);
 WHATS_NEW.unshift(['0.78','Polish: no more empty portrait boxes while the painted portraits load, the flight ticket plane is no longer clipped, and tidier collapsed sections.']);
+WHATS_NEW.unshift(['0.79','Phones and tablets: the job board shows each job\'s destination, aircraft and flight time again. Tidier flight ticket and story card on phones.']);

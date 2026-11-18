@@ -31,7 +31,14 @@ html.ckp body .pf-bar>span{grid-column:1;grid-row:1;min-width:0;overflow:hidden;
 html.ckp body .pf-bar>b{grid-column:2;grid-row:1}
 html.ckp body .pf-bar>div{grid-column:1 / -1;grid-row:2;height:4px;border-radius:0;background:var(--line)!important}
 .sh-time li.sh-empty{display:block}
+/* job board on phones and tablets: the destination, aircraft and flight time come back under the job title
+   (the columns that hold them are hidden below 1000px) */
+@media (max-width:1000px){ html.ckp body .jr-t small.jr-k{white-space:normal;overflow:visible} }
 @media (max-width:600px){
+  /* flight ticket: the plane in the header art sat on top of the airline name, and the stub's three facts wrapped mid-pair */
+  .pass-art .art-plane{display:none}
+  html.ckp body .pass-stub{display:grid!important;grid-auto-flow:column;grid-template-rows:auto auto;justify-content:start;gap:2px 28px;border-left:0!important;border-top:1px dashed var(--line-2)!important}
+  html.ckp body .pass-stub .barcode{display:none}
   /* chart labels are drawn in a 600-wide viewBox; at phone width they shrank to about 6px */
   .chart .ct{font-size:19px}
   /* result: the grade ring sits above the title on a phone, so the title gets the full width */
@@ -50,6 +57,8 @@ html.ckp body .pf-bar>div{grid-column:1 / -1;grid-row:2;height:4px;border-radius
   html.ckp .pass-fields>div:nth-child(odd){padding-left:0}
   html.ckp .pass-fields>div:nth-child(even){border-right:0}
   /* story card: less empty space above the chapter title when "Previously" already fills it */
+  /* story card on a phone: the scene art behind it is almost fully shaded there, so the tall gap above the chapter title read as empty */
+  html.ckp body .sc-next{padding-top:56px!important}
   html.ckp .sc-prev+.sc-next{padding-top:44px!important}
 }`;
 (function(){ const s=document.createElement('style'); s.id='tw-polish'; s.textContent=POLISH_CSS; document.head.appendChild(s); })();

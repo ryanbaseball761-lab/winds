@@ -3695,7 +3695,7 @@ function islandArt(code, min, w=600, h=140, plane=null){
   const palm=(px)=>`<g transform="translate(${px} ${base-2})" fill="${night?'#06141c':'#0b3b34'}"><path d="M0 0 C2 -14 4 -24 3 -34 L5 -34 C6 -24 4 -12 3 0Z"/><path d="M4 -34 C-6 -40 -14 -36 -18 -30 C-10 -34 -4 -34 4 -32Z"/><path d="M4 -34 C12 -42 22 -38 26 -31 C18 -35 10 -34 4 -32Z"/><path d="M4 -35 C2 -44 -4 -48 -10 -48 C-4 -45 0 -40 3 -34Z"/></g>`;
   const boat = R()>0.4 ? `<g transform="translate(${(w*(0.08+R()*0.2)).toFixed(0)} ${(base+h*0.12).toFixed(0)})"><path d="M-12 0 L12 0 L8 5 L-8 5Z" fill="#fff" opacity=".9"/><path d="M0 -1 L0 -22 L12 -2Z" fill="#fff" opacity=".85"/></g>` : '';
   const stars = night ? Array.from({length:14},()=>`<circle cx="${(R()*w).toFixed(0)}" cy="${(R()*h*0.5).toFixed(0)}" r="${(R()*1.2+0.3).toFixed(1)}" fill="#fff" opacity=".8"/>`).join('') : '';
-  const pl = plane ? `<g transform="translate(${(w*0.32).toFixed(0)} ${(h*0.16).toFixed(0)}) scale(${(Math.min(h/140, w/600)*0.9).toFixed(2)})" opacity=".95">${acSvgInner(plane, '#ffffff')}</g>` : '';
+  const pl = plane ? `<g class="art-plane" transform="translate(${(w*0.32).toFixed(0)} ${(h*0.16).toFixed(0)}) scale(${(Math.min(h/140, w/600)*0.9).toFixed(2)})" opacity=".95">${acSvgInner(plane, '#ffffff')}</g>` : '';
   return `<svg class="art" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><defs><linearGradient id="${id}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${top}"/><stop offset="1" stop-color="${bot}"/></linearGradient><linearGradient id="${id}w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sea}"/><stop offset="1" stop-color="${night?'#04131b':'#0a5a62'}"/></linearGradient></defs>
     <rect width="${w}" height="${h}" fill="url(#${id}s)"/>${stars}<circle cx="${sx}" cy="${sy}" r="${night?10:16}" fill="${sun}" opacity=".95"/>
     <rect y="${base}" width="${w}" height="${h-base}" fill="url(#${id}w)"/>
@@ -3757,7 +3757,7 @@ ALT_OUT.BO5 = st => st.story.flags.BO4==='a' ? {good:`De Vries closes his notebo
 /* Hartwell now follows The Buyout */
 (function(){ const h=STORY.find(m=>m.id==='HW1'); if(h && h.req) h.req.after='BO3'; })();
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.78.0';
+const TW_VERSION = '0.79.0';
 
 /* ---------- live map ---------- */
 function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
@@ -6842,6 +6842,7 @@ WHATS_NEW.unshift(['0.75','Focus: the Story page shows what matters now (next ch
 WHATS_NEW.unshift(['0.76','Polish: the Airline page says how much more you need for a facility instead of showing empty buttons, phone layouts fixed on the result screen, the story path, flight tickets and money rows, and no more failed voice-file request at startup.']);
 WHATS_NEW.unshift(['0.77','Polish: readable Buy and Start the story buttons, plain logbook columns, tidy Hours by aircraft rows, used aircraft say how much more the down payment needs, a steadier income chart, and centred achievement pop-ups.']);
 WHATS_NEW.unshift(['0.78','Polish: no more empty portrait boxes while the painted portraits load, the flight ticket plane is no longer clipped, and tidier collapsed sections.']);
+WHATS_NEW.unshift(['0.79','Phones and tablets: the job board shows each job\'s destination, aircraft and flight time again. Tidier flight ticket and story card on phones.']);
 /* ===================== RECORDED VOICE LINES =====================
    Story lines can be played from recorded audio instead of computer speech. Each spoken line has a stable id made
    from its words (voKey). Put recordings in art/voice/<id>.mp3 and list the ids in art/voice/index.json:
@@ -8240,7 +8241,7 @@ function jobRow(st, j){
   const tag=j.drop?'Night drop':j.lowLevel?'Low level':j.hot?'Hot':j.bonus?'Bonus':'';
   const accept = canAcceptJob(st, j) ? `<button class="btn primary jc-go" data-act="accept" data-id="${j.id}">${j.network?'Take the run':'Accept'} ${ICO_PLANE}</button>` : '';
   return `<div class="jrow k-${kind} ${open?'open':''}"><button class="jr-main" data-act="job-open" data-id="${j.id}" aria-expanded="${open}">
-      <span class="jr-dep mono">${j.dep<=st.clock?'Now':hhmm(j.dep)}</span><span class="jr-rt" title="${esc(j.from)} → ${esc(to)}"><b class="mono">${esc(to==='????'?'????':to)}</b><small>${esc(to!=='????'&&AP[to]?AP[to].city||AP[to].n||'':'Sealed')}</small></span><span class="jr-t" title="${esc(j.title)}"><span>${esc(j.title)}${tag?` <em>${tag}</em>`:''}</span><small class="jr-k">${esc(lbl)}</small></span>
+      <span class="jr-dep mono">${j.dep<=st.clock?'Now':hhmm(j.dep)}</span><span class="jr-rt" title="${esc(j.from)} → ${esc(to)}"><b class="mono">${esc(to==='????'?'????':to)}</b><small>${esc(to!=='????'&&AP[to]?AP[to].city||AP[to].n||'':'Sealed')}</small></span><span class="jr-t" title="${esc(j.title)}"><span>${esc(j.title)}${tag?` <em>${tag}</em>`:''}</span><small class="jr-k" data-x="${esc(`${to==='????'?'Sealed':to} · ${AC[j.ac]?AC[j.ac].n:j.ac}${est?' · '+durTxt(est):''} · `)}">${esc(lbl)}</small></span>
       <span class="jr-m jr-ac" title="${esc((AC[j.ac]||{}).n||'')}">${esc(AC[j.ac]?AC[j.ac].n:j.ac)}</span><span class="jr-blk mono">${est?durTxt(est):''}</span><span class="jr-p">${money(j.pay)}${j.network?'<small class="dirty">dirty · Heat +5</small>':''}</span></button>
     <span class="jr-go">${accept}</span>${open?`<div class="jr-card"><button class="btn sm ghost" data-act="job-map" data-id="${j.id}" style="margin:0 0 10px">Show route on the map</button>${stripHTML(st, j)}</div>`:''}</div>`;
 }
@@ -10329,7 +10330,14 @@ html.ckp body .pf-bar>span{grid-column:1;grid-row:1;min-width:0;overflow:hidden;
 html.ckp body .pf-bar>b{grid-column:2;grid-row:1}
 html.ckp body .pf-bar>div{grid-column:1 / -1;grid-row:2;height:4px;border-radius:0;background:var(--line)!important}
 .sh-time li.sh-empty{display:block}
+/* job board on phones and tablets: the destination, aircraft and flight time come back under the job title
+   (the columns that hold them are hidden below 1000px) */
+@media (max-width:1000px){ html.ckp body .jr-t small.jr-k{white-space:normal;overflow:visible} }
 @media (max-width:600px){
+  /* flight ticket: the plane in the header art sat on top of the airline name, and the stub's three facts wrapped mid-pair */
+  .pass-art .art-plane{display:none}
+  html.ckp body .pass-stub{display:grid!important;grid-auto-flow:column;grid-template-rows:auto auto;justify-content:start;gap:2px 28px;border-left:0!important;border-top:1px dashed var(--line-2)!important}
+  html.ckp body .pass-stub .barcode{display:none}
   /* chart labels are drawn in a 600-wide viewBox; at phone width they shrank to about 6px */
   .chart .ct{font-size:19px}
   /* result: the grade ring sits above the title on a phone, so the title gets the full width */
@@ -10348,6 +10356,8 @@ html.ckp body .pf-bar>div{grid-column:1 / -1;grid-row:2;height:4px;border-radius
   html.ckp .pass-fields>div:nth-child(odd){padding-left:0}
   html.ckp .pass-fields>div:nth-child(even){border-right:0}
   /* story card: less empty space above the chapter title when "Previously" already fills it */
+  /* story card on a phone: the scene art behind it is almost fully shaded there, so the tall gap above the chapter title read as empty */
+  html.ckp body .sc-next{padding-top:56px!important}
   html.ckp .sc-prev+.sc-next{padding-top:44px!important}
 }`;
 (function(){ const s=document.createElement('style'); s.id='tw-polish'; s.textContent=POLISH_CSS; document.head.appendChild(s); })();

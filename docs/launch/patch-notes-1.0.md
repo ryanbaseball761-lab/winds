@@ -89,6 +89,8 @@
 - Money: the income chart always shows 14 days, its labels are readable on a phone, and achievement pop-ups sit centred at full width.
 - Character portraits never show as empty boxes while the painted ones download (or offline); the drawn portrait stays until the picture is ready.
 - The plane on the flight ticket is no longer clipped at the top, collapsed sections like Dispatch sit tidy, and the Airline demand label matches the other stats.
+- Phones and tablets: every job on the board shows where it goes, the aircraft and the flight time again, right under its title.
+- Phones: the flight ticket's art no longer sits on the airline name, its pilot, seat and date line up in three columns, and the story card has no empty band above the chapter title.
 
 ## Under the hood
 - **Saves repair themselves.** A save with missing or broken parts (no story, an unknown airport, a missing cash value, a flight to an airport that no longer exists) is filled in when it loads instead of crashing pages. A save that can't be read at all is kept aside and the newest backup loads.
