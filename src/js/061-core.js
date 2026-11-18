@@ -4,13 +4,14 @@
 /* setup tiles in the order you do them, numbered; parking first */
 const STEP_ORDER = [['Parking spot','Spawn here'],['Fuel & cargo','Fuel & weight'],['Time of day','Time of day'],['Runways','Runways'],['Weather','Weather']];
 /* fuel and weights are locked once you're rolling or airborne; and only fuel is loaded, so the plane can't tip over */
-async function loadIntoSim(job){ if(!S.mcp){ toast('MSFS isn\'t connected.'); return; } const s=S.sim; const rec=s&&s.recorder;
+async function loadIntoSim(job){ if(!S.mcp){ toast('MSFS isn\'t connected.'); return; } if(await loadFuelLie(job)) return; const s=S.sim; const rec=s&&s.recorder;
   if(s && s.motion && (!s.motion.onGround || s.motion.gs>2) || (rec && rec.takeoff && S.st.active && S.st.active.started)){ toast('Fuel is locked once you\'re moving.'); return; }
   const p=plan(job); const fuelGal=Math.ceil(Math.max(p.gal*1.3, p.gal+5)); S.loading=true; renderPreflight();
   try{ const r=await S.mcp.callTool(SIM_SERVER,'load_aircraft',{fuelGal},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} }
     toast(o && o.ok ? `Loaded ${o.fuel!=null?o.fuel+' gal of fuel':'fuel'}. Set passengers and bags (${Math.max(0,p.payload-170)} lb) in the MSFS weight menu.` : `Couldn't load fuel${o&&o.error?': '+bridgeErr(o.error):''}.`); }
   catch(e){ toast('Couldn\'t reach MSFS to load fuel.'); }
-  S.loading=false; setTimeout(()=>simPoll(true), 800); renderPreflight(); };
+  S.loading=false; setTimeout(()=>simPoll(true), 800); renderPreflight();
+  if(job.contraband) setTimeout(()=>toast(`Add ${job.contraband.toLocaleString()} lb for what's in the hold. It isn't on any manifest, but it weighs what it weighs.`), 2600); };
 
 /* ---- 2. fuel warning: plan with cruise speed, not the slow takeoff groundspeed, and wait until you're established ---- */
 /* (replaces the check inside the safety calls by giving it honest inputs) */

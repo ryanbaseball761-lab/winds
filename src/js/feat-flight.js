@@ -10,18 +10,19 @@
    - A customs search plays out as a short scene. */
 
 /* ---------- new order types: heading, altitude, land within N minutes ---------- */
-(function(){ const base=judgeOrder; judgeOrder=function(a){ const o=a.order, s=orderSim(); if(!o || o.state!=='active' || !s) return base.apply(this, arguments);
-  if(!['heading','altitude','landwithin'].includes(o.k)) return base.apply(this, arguments);
+/* judgeOrder (flight-orders.js) hands these three kinds here */
+function judgeOrderMore(a, o, s){
   const now=Date.now(), el=(now-o.t0)/1000, rec=simRecFor(a), landed=!!(rec && rec.touchdown && rec.touchdown.t>o.t0) || s.motion.onGround;
   const hold=(cond, need)=>{ if(cond){ o.okSince=o.okSince||now; if((now-o.okSince)/1000>=need) return 'ok'; } else o.okSince=null; return null; };
   if(o.k==='heading'){ if(landed) return 'fail'; const d=Math.abs(((s.position.hdg-o.hdg+540)%360)-180); const r=hold(d<=(o.tol||15), o.sec||90); if(r) return r; return (!o.okSince && el>(o.within||75)) || el>ORDER_LIMIT_SEC ? 'fail' : null; }
   if(o.k==='altitude'){ if(landed) return 'fail'; const d=Math.abs((s.position.altFt||0)-o.alt); const r=hold(d<=(o.tol||200), o.sec||45); if(r) return r; return (!o.okSince && el>(o.within||180)) || el>ORDER_LIMIT_SEC ? 'fail' : null; }
   if(o.k==='landwithin'){ if(landed) return el/60<=o.min ? 'ok' : 'fail'; return el/60>o.min+0.5 ? 'fail' : null; }
-  return null; }; })();
-(function(){ const base=orderChipHTML; orderChipHTML=function(a){ const o=a&&a.order; let h=base.apply(this, arguments); if(!o||o.state!=='active') return h;
+  return null; }
+/* the live readout on the order chip for those kinds (orderChipHTML calls this) */
+function orderChipExtra(o){ if(o.state!=='active') return '';
   let extra=''; const s=S.sim; if(o.k==='heading' && s&&s.position) extra=` · now ${String(Math.round(s.position.hdg)).padStart(3,'0')}°`; if(o.k==='altitude' && s&&s.position) extra=` · now ${Math.round(s.position.altFt||0).toLocaleString()} ft`;
   if(o.k==='landwithin'){ const left=Math.max(0, Math.round(o.min*60-(Date.now()-o.t0)/1000)); extra=` · ${Math.floor(left/60)}:${String(left%60).padStart(2,'0')} left`; }
-  return extra ? h.replace('</span>', esc(extra)+'</span>') : h; }; })();
+  return extra; }
 
 /* ---------- what each flight might throw at you ---------- */
 function fevHash(id){ let h=2166136261; for(const ch of String(id)) { h^=ch.charCodeAt(0); h=Math.imul(h,16777619)>>>0; } return h/4294967296; }
@@ -69,13 +70,15 @@ SIM_TICK.push(function flightEvents(){ const a=S.st&&S.st.active; if(!a || !a.st
 /* ---------- Castillo's fuel lies and the weight of what you carry ---------- */
 const STORY_FUEL_LIE = new Set(['CR6','CR8','CR10','CRM','CR11','CRB']);
 GEN_JOB_STEPS.push(function contrabandWeight(st, L){ if(!L) return; for(const j of L){ if(j.network && !j.contraband && AC[j.ac]){ j.contraband=Math.round(Math.min(1400, AC[j.ac].useful*0.22)/10)*10; try{ const p=plan(j); const room=Math.round((AC[j.ac].useful-p.total-30)/10)*10; j.contraband=Math.max(0,Math.min(j.contraband,room)); if(!j.contraband) delete j.contraband; }catch(_){} } if(j.network && j.night==null) j.night = j.dep>=1170 || j.dep<330; } return L; });
-(function(){ const base=storyJob; storyJob=function(st, m, acId){ const j=base.apply(this, arguments); if(!j) return j;
+/* contraband weight and the short-fuel trick on story flights (storyJob in jobs.js calls this) */
+function storyJobExtras(st, j){
   if(crime(st).on && AC[j.ac]){ j.contraband=Math.round(Math.min(2000, AC[j.ac].useful*0.25)/10)*10; try{ const p=plan(j); const room=Math.round((AC[j.ac].useful-p.total-30)/10)*10; j.contraband=Math.max(0,Math.min(j.contraband,room)); if(!j.contraband) delete j.contraband; }catch(_){} }
   if(STORY_FUEL_LIE.has(j.story) && fevHash(String(st.pilot&&st.pilot.name)+j.story)<0.5) j.fuelLie=true;
-  return j; }; })();
-(function(){ const base=loadIntoSim; loadIntoSim=async function(job){ const a=S.st&&S.st.active;
-  if(a && job.fuelLie && !a.fuelChecked && S.mcp){ const p=plan(job); const gal=Math.ceil(p.gal*0.68); try{ const r=await S.mcp.callTool(SIM_SERVER,'load_aircraft',{fuelGal:gal},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} } toast(o&&o.ok?`The fuel truck has been and gone. ${o.fuel!=null?o.fuel+' gal':''} on board, says the slip.`:'Couldn\'t load fuel.'); }catch(_){ toast('Couldn\'t reach MSFS to load fuel.'); } setTimeout(()=>simPoll(true),800); renderPreflight(); return; }
-  const r=await base.apply(this, arguments); if(job.contraband) setTimeout(()=>toast(`Add ${job.contraband.toLocaleString()} lb for what's in the hold. It isn't on any manifest, but it weighs what it weighs.`), 2600); return r; }; })();
+}
+/* the fuel truck shorts you on some story flights (loadIntoSim in 061-core.js calls this first) */
+async function loadFuelLie(job){ const a=S.st&&S.st.active;
+  if(a && job.fuelLie && !a.fuelChecked && S.mcp){ const p=plan(job); const gal=Math.ceil(p.gal*0.68); try{ const r=await S.mcp.callTool(SIM_SERVER,'load_aircraft',{fuelGal:gal},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} } toast(o&&o.ok?`The fuel truck has been and gone. ${o.fuel!=null?o.fuel+' gal':''} on board, says the slip.`:'Couldn\'t load fuel.'); }catch(_){ toast('Couldn\'t reach MSFS to load fuel.'); } setTimeout(()=>simPoll(true),800); renderPreflight(); return true; }
+  return false; }
 
 /* ---------- after the flight ---------- */
 function approachVerdict(R){ const A=R&&R.approach; if(!A || A.length<20) return null; const low=A.filter(x=>x[1]<=500 && x[1]>20); if(low.length<8) return null;

@@ -22,6 +22,7 @@ function startOrder(a, ord){ const s=orderSim(); if(!s){ return; }
 
 /* evaluate the order against the latest sim data: 'ok', 'fail' or null (still going) */
 function judgeOrder(a){ const o=a.order, s=orderSim(); if(!o || o.state!=='active' || !s) return null;
+  if(o.k==='heading'||o.k==='altitude'||o.k==='landwithin') return judgeOrderMore(a, o, s);   // feat-flight.js
   const now=Date.now(), el=(now-o.t0)/1000, rec=simRecFor(a), landed=!!(rec && rec.touchdown && rec.touchdown.t>o.t0) || s.motion.onGround;
   const agl=s.position.aglFt||0, alt=s.position.altFt||0, spd=s.motion.ias||s.motion.gs||0;
   const hold=(cond, need)=>{ if(cond){ o.okSince=o.okSince||now; if((now-o.okSince)/1000>=need) return 'ok'; } else o.okSince=null; return null; };
@@ -54,7 +55,7 @@ function orderChipHTML(a){ const o=a&&a.order; if(!o) return ''; const el=Math.r
   const left = o.k==='climb'?o.sec-el : o.k==='steepturn'?(o.within||180)-el : (o.k==='lowlevel'||o.k==='slow') ? (o.okSince ? o.sec-Math.round((Date.now()-o.okSince)/1000) : (o.within||120)-el) : null;
   const prog = o.k==='steepturn' ? ` · ${Math.min(o.deg||330,Math.round(o.turned))}°/${o.deg||330}°` : o.k==='climb' ? ` · +${Math.max(0,Math.round(((S.sim&&S.sim.position&&S.sim.position.altFt)||o.alt0)-o.alt0)).toLocaleString()} ft` : o.k==='airborne' ? ` · ${Math.floor(el/60)} of ${o.min} min` : '';
   const st = o.state==='ok'?'done':o.state==='fail'?'missed':'';
-  return `<div class="fo-chip ${st}" role="status"><b>${o.state==='active'?'Order':o.state==='ok'?'Done':'Missed'}</b><span>${esc(o.label)}${o.state==='active'?prog:''}</span>${o.state==='active'&&left!=null?`<i class="mono">${Math.max(0,left)}s</i>`:''}</div>`; }
+  return `<div class="fo-chip ${st}" role="status"><b>${o.state==='active'?'Order':o.state==='ok'?'Done':'Missed'}</b><span>${esc(o.label)}${o.state==='active'?prog+esc(orderChipExtra(o)):''}</span>${o.state==='active'&&left!=null?`<i class="mono">${Math.max(0,left)}s</i>`:''}</div>`; }
 function renderOrderChip(){ document.querySelectorAll('.fo-host').forEach(el=>{ el.innerHTML=orderChipHTML(S.st&&S.st.active); }); }
 
 (function(){ const s=document.createElement('style'); s.textContent=`

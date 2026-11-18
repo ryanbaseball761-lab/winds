@@ -177,6 +177,7 @@ function storyJob(st, chapter, acId){
   job.pay = payFor(st, job); job.est = plan(job).est;
   if(m.lend){ job.lend = true; job.pay = m.fee || job.pay; job.tail = acId==='CJ4'?'N52VL':STARLING_TAIL; }
   const ch = arcChapters(chapter.arc); job.label = CRIME_IDS.has(chapter.id) ? `${chapter.arc} · Chapter ${mainChapters().indexOf(chapter)+1} of ${mainChapters().length}` : `${chapter.arc} · Ch ${ch.indexOf(chapter)+1}/${ch.length}`;
+  storyJobExtras(st, job);   // feat-flight.js
   return job;
 }
 
