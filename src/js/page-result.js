@@ -48,7 +48,7 @@ function resultView(){
   const failedCheckride = job.kind==='check' && !out.pass && !st.ratings[job.rating];
   return `<main class="wrap stack fade">
     ${isChapter?`<div class="row" style="justify-content:flex-end;margin-bottom:8px"><button class="btn sm ghost" data-act="after-replay">▶ Replay scene</button></div>`:''}
-    <section class="panel"><div class="row" style="gap:24px;align-items:center">
+    <section class="panel"><div class="row res-head" style="gap:24px;align-items:center">
       ${scoreRing(res)}
       <div class="stack" style="gap:4px;min-width:0;flex:1">
         <p class="label">Flight complete · score ${res.score}/100</p>

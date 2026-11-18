@@ -2635,8 +2635,8 @@ function coUpgHTML(st){ const c=st.company; const owned=CO_UPG.filter(u=>coUpg(s
   const free=HUBS.filter(k=>AP[k] && k!==c.base && !bases.includes(k));
   const upk=owned.reduce((t,u)=>t+u.day,0)+bases.length*BASE_DAY;
   return `<section class="panel stack"><div class="row between"><div><p class="label">Grow the company</p><h2>Facilities and bases</h2></div><span class="small muted">${owned.length}/${CO_UPG.length} built · ${bases.length} extra base${bases.length===1?'':'s'}${upk?` · upkeep ${money(upk)}/day`:''}</span></div>
-    <div class="cards">${CO_UPG.map(u=>{ const has=coUpg(st,u.id); return `<div class="cell stack" style="gap:6px"><div class="row between"><h4>${esc(u.n)}</h4>${has?'<span class="chip good">Built</span>':''}</div><p class="small">${esc(u.d)}</p><p class="tiny muted">${money(u.cost)} · then ${money(u.day)}/day</p>${has?'':`<button class="btn sm primary" data-act="co-upg" data-v="${u.id}" ${st.cash<u.cost?'disabled':''}>Build · ${money(u.cost)}</button>`}</div>`; }).join('')}
-      <div class="cell stack" style="gap:6px"><h4>Open a new base</h4><p class="small">Station aircraft at another hub and fly routes from there. Bigger hubs have more travelers.</p><p class="tiny muted">${money(BASE_COST)} · then ${money(BASE_DAY)}/day${bases.length?` · yours: ${bases.join(', ')}`:''}</p>${free.length?`<div class="row" style="gap:6px"><select id="co-newbase" style="width:auto" aria-label="New base">${free.map(k=>`<option value="${k}">${k} · ${esc(AP[k].isl)}</option>`).join('')}</select><button class="btn sm primary" data-act="co-base" ${st.cash<BASE_COST?'disabled':''}>Open · ${money(BASE_COST)}</button></div>`:'<p class="small muted">You have a base at every hub.</p>'}</div></div></section>`; }
+    <div class="cards">${CO_UPG.map(u=>{ const has=coUpg(st,u.id); return `<div class="cell stack" style="gap:6px"><div class="row between"><h4>${esc(u.n)}</h4>${has?'<span class="chip good">Built</span>':''}</div><p class="small">${esc(u.d)}</p><p class="tiny muted">${money(u.cost)} · then ${money(u.day)}/day</p>${has?'':st.cash<u.cost?`<p class="small muted co-short">You need ${money(u.cost-st.cash)} more to build it.</p>`:`<button class="btn sm primary" data-act="co-upg" data-v="${u.id}">Build · ${money(u.cost)}</button>`}</div>`; }).join('')}
+      <div class="cell stack" style="gap:6px"><h4>Open a new base</h4><p class="small">Station aircraft at another hub and fly routes from there. Bigger hubs have more travelers.</p><p class="tiny muted">${money(BASE_COST)} · then ${money(BASE_DAY)}/day${bases.length?` · yours: ${bases.join(', ')}`:''}</p>${free.length?`<div class="row" style="gap:6px"><select id="co-newbase" style="width:auto" aria-label="New base">${free.map(k=>`<option value="${k}">${k} · ${esc(AP[k].isl)}</option>`).join('')}</select>${st.cash<BASE_COST?'':`<button class="btn sm primary" data-act="co-base">Open · ${money(BASE_COST)}</button>`}</div>${st.cash<BASE_COST?`<p class="small muted co-short">You need ${money(BASE_COST-st.cash)} more to open one.</p>`:''}`:'<p class="small muted">You have a base at every hub.</p>'}</div></div></section>`; }
 
 /* ---------- goals panel ---------- */
 function goalsHTML(st){
@@ -3757,7 +3757,7 @@ ALT_OUT.BO5 = st => st.story.flags.BO4==='a' ? {good:`De Vries closes his notebo
 /* Hartwell now follows The Buyout */
 (function(){ const h=STORY.find(m=>m.id==='HW1'); if(h && h.req) h.req.after='BO3'; })();
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.75.0';
+const TW_VERSION = '0.76.0';
 
 /* ---------- live map ---------- */
 function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
@@ -6836,6 +6836,7 @@ WHATS_NEW.unshift(['0.72','Hull insurance (it pays 80% of a crash), accident inv
 WHATS_NEW.unshift(['0.73','Polish: the dispatch weights now add up (you count, and so does your cargo), the result screen\'s Heat change includes everything, achievements from the new systems pop, tables fit on phones, small print is readable, weekly events vary properly, Halcón no longer interrupts another instruction, and a few words fixed.']);
 WHATS_NEW.unshift(['0.74','The top bar fits every screen size (it ran off the edge on laptops once Heat and dirty cash appeared). Property income comes as a weekly bank text instead of a pile of pop-ups.']);
 WHATS_NEW.unshift(['0.75','Focus: the Story page shows what matters now (next chapter, your people, the last three chapters); the operation panels moved to Money. New systems appear one at a time, each introduced by a text. Dispatch folds away unless something needs you. The outdated welcome tour is gone. The result shows how your pay splits into base pay and bonuses. Daytime chapters end on the ramp, not a night cockpit. Customs is less predictable above 60 Heat, and above 75 only an A landing talks you out of a search.']);
+WHATS_NEW.unshift(['0.76','Polish: the Airline page says how much more you need for a facility instead of showing empty buttons, phone layouts fixed on the result screen, the story path, flight tickets and money rows, and no more failed voice-file request at startup.']);
 /* ===================== RECORDED VOICE LINES =====================
    Story lines can be played from recorded audio instead of computer speech. Each spoken line has a stable id made
    from its words (voKey). Put recordings in art/voice/<id>.mp3 and list the ids in art/voice/index.json:
@@ -7885,7 +7886,7 @@ function resultView(){
   const failedCheckride = job.kind==='check' && !out.pass && !st.ratings[job.rating];
   return `<main class="wrap stack fade">
     ${isChapter?`<div class="row" style="justify-content:flex-end;margin-bottom:8px"><button class="btn sm ghost" data-act="after-replay">▶ Replay scene</button></div>`:''}
-    <section class="panel"><div class="row" style="gap:24px;align-items:center">
+    <section class="panel"><div class="row res-head" style="gap:24px;align-items:center">
       ${scoreRing(res)}
       <div class="stack" style="gap:4px;min-width:0;flex:1">
         <p class="label">Flight complete · score ${res.score}/100</p>
@@ -8374,7 +8375,7 @@ function storyView(){
   const time = done.length ? done.map(m=>{ const ch=m.choice&&c.choice[m.id]!=null?m.choice.opts[c.choice[m.id]].t:null; const col=arcMeta(m.arc).col;
       const head = m.arc!==lastArc ? `<li class="sh-act-h" style="--c:${col}">Act ${actNo(m.arc)} · ${esc(m.arc)}</li>` : ''; lastArc=m.arc;
       return `${head}<li style="--c:${col}"><span class="sh-n">${MC.indexOf(m)+1}</span><div><b>${esc(m.title)}</b><button class="sh-replay" data-act="replay-ch" data-id="${m.id}" title="Replay the opening scene">▶ Replay</button><p>${esc(m.recap||'')}</p>${ch?`<p class="sh-ch">You chose: ${esc(ch)}</p>`:''}</div></li>`; }).join('')
-    : `<li style="--c:var(--muted)"><span class="sh-n">·</span><div><p>Nothing yet. Fly chapter 1.</p></div></li>`;
+    : `<li class="sh-empty" style="--c:var(--muted)"><div><p class="muted">Nothing yet. Each chapter you fly lands here with what you chose.</p></div></li>`;
   /* the people you've met, with how much each trusts you */
   const people = metPeople(st).map(k=>{ const v=Math.round(st.rep[k]||0); return `<div class="sh-p">${avatar(k)}<div><b>${esc(CAST[k].n)}</b><span class="trust" title="Trust ${v}/100"><i style="width:${Math.min(100,v)}%"></i></span><p>${esc(personStatus(st,k))}</p></div></div>`; }).join('');
   const acts = CRIME_ACTS.map((a,i)=>{ const ch=MC.filter(m=>m.arc===a.arc); return `<div class="sh-act" style="--c:${a.col}"><p class="label">Act ${i+1} · ${ch.filter(m=>st.story.done[m.id]).length}/${ch.length}</p><h4>${esc(a.arc)}</h4><ol>${ch.map(m=>{ const isD=st.story.done[m.id], isN=m===next; const req=(m.req&&m.req.ratings||[]).filter(r=>!st.ratings[r]).map(r=>RATINGS[r]?RATINGS[r].n:r).join(', '); return `<li class="${isD?'d':isN?'n':''}">${isD?'✓':isN?'▶':'·'} ${esc(m.title)}${!isD&&req?` <small>${esc(req)}</small>`:''}</li>`; }).join('')}</ol></div>`; }).join('');
@@ -10290,6 +10291,36 @@ html.ckp .ts-logo p,html.ckp .s2-feats,html.ckp .setup2 .eyebrow{display:none}
 (function(){ const s=document.createElement('style'); s.id='ck-human'; s.textContent=CK_HUMAN; document.getElementById('ck-pages').after(s); })();
 /* a little film grain over everything so flat surfaces don't look rendered */
 (function(){ const s=document.createElement('style'); s.textContent=`html.ckp body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:99999;opacity:.06;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}`; document.getElementById('ck-human').after(s); s.id='ck-grain'; })();
+/* ===================== POLISH (0.76) =====================
+   Small layout fixes found by the screenshot audit (tests/shots.js). Loaded after the cockpit theme so it wins. */
+const POLISH_CSS = `
+/* job board: the "dirty · Heat +5" note under a network run's pay stays on one line */
+.jr-p small.dirty{white-space:nowrap}
+/* money page rows: the button keeps its label on one line instead of stacking word by word */
+.fc-row>.btn{flex-shrink:0;white-space:nowrap}
+/* airline: what's missing for a facility you can't afford yet */
+.co-short{margin:2px 0 0}
+.sh-time li.sh-empty{display:block}
+@media (max-width:600px){
+  /* result: the grade ring sits above the title on a phone, so the title gets the full width */
+  .res-head{flex-wrap:wrap;gap:12px!important}
+  .res-head>.stack{flex:1 1 100%!important}
+  .res-head h1{font-size:22px!important;line-height:1.2}
+  /* pilot: the story path becomes a vertical list, dot beside each rating */
+  .lad-row{flex-direction:column;align-items:stretch;flex-wrap:nowrap}
+  .lad{grid-template-columns:26px minmax(0,1fr);column-gap:12px;min-width:0}
+  .lad>.lad-dot{grid-row:1 / span 2;margin:0}
+  .lad>b,.lad>small,.lad>.btn,.lad>a{grid-column:2}
+  .lad>.btn,.lad>a{justify-self:start;margin-top:4px}
+  .lad-line{flex:none;width:2px;height:12px;min-width:0;margin:2px 0 2px 12px}
+  /* flight ticket: two even columns, each row starting flush left */
+  html.ckp .pass-fields{grid-template-columns:1fr 1fr!important}
+  html.ckp .pass-fields>div:nth-child(odd){padding-left:0}
+  html.ckp .pass-fields>div:nth-child(even){border-right:0}
+  /* story card: less empty space above the chapter title when "Previously" already fills it */
+  html.ckp .sc-prev+.sc-next{padding-top:44px!important}
+}`;
+(function(){ const s=document.createElement('style'); s.id='tw-polish'; s.textContent=POLISH_CSS; document.head.appendChild(s); })();
 /* ===================== START =====================
    Everything above only defines things. This starts the app. Keep this file last in order.txt. */
 boot();

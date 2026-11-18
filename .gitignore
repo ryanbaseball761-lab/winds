@@ -1,3 +1,4 @@
 node_modules/
 *.new
 .DS_Store
+shots/

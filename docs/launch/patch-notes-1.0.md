@@ -80,6 +80,10 @@
 - Academy and Butter Cup headers match the rest of the game, and so does the launch splash.
 - The Butter Cup asks you to connect MSFS before starting an attempt it can't score.
 
+- Airline: a facility or new base you can't afford yet says how much more you need, instead of an empty button.
+- Phones: the result screen puts the grade above the flight title, the story path on the Pilot page is a tidy list, the flight ticket's details line up in two columns, and Money-page buttons keep their label on one line.
+- Job board: a network run's "dirty · Heat +5" note no longer breaks over two lines.
+
 ## Under the hood
 - **Saves repair themselves.** A save with missing or broken parts (no story, an unknown airport, a missing cash value, a flight to an airport that no longer exists) is filled in when it loads instead of crashing pages. A save that can't be read at all is kept aside and the newest backup loads.
 - If storage is full, older backups are trimmed to make room; if it still can't save, you're told to export your career instead of losing progress silently.

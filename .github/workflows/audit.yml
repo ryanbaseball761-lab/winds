@@ -1,0 +1,46 @@
+name: Visual audit
+# Screenshots of every screen at desktop and phone width, the full test suite, and a fresh snapshot baseline,
+# uploaded as artifacts. Runs on pushes to claude/* branches and by hand. Never publishes anything to players.
+on:
+  push:
+    branches: ['claude/**']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: bash tools/build.sh
+      - name: Screenshots
+        run: mkdir -p shots && node tests/shots.js shots | tee shots/summary.txt
+      - name: Tests
+        continue-on-error: true
+        run: |
+          set +e; mkdir -p out
+          { node tests/run.js; echo "run.js exit $?"; } > out/run.txt 2>&1
+          { node tests/snapshot.js; echo "snapshot.js exit $?"; } > out/snapshot.txt 2>&1
+          { node tests/simflight.js; echo "simflight.js exit $?"; } > out/simflight.txt 2>&1
+          { node tests/a11y.js; echo "a11y.js exit $?"; } > out/a11y.txt 2>&1
+          { node tests/fuzz.js; echo "fuzz.js exit $?"; } > out/fuzz.txt 2>&1
+          { W=400 node tests/fuzz.js; echo "fuzz400 exit $?"; } > out/fuzz400.txt 2>&1
+          #{ node tests/soak.js; echo "soak.js exit $?"; } > out/soak.txt 2>&1
+          #{ node tests/playthrough.js; echo "playthrough.js exit $?"; } > out/playthrough.txt 2>&1
+          cp tests/snapshots/baseline.json out/old-baseline.json
+          { node tests/snapshot.js save; echo "save exit $?"; } > out/save.txt 2>&1
+          cp tests/snapshots/baseline.json out/new-baseline.json
+          tail -n 3 out/*.txt
+      - name: Publish results to the audit-out branch (replaced on every run)
+        run: |
+          mkdir -p /tmp/res && cp -r shots out /tmp/res/ && cd /tmp/res
+          git init -q -b audit-out && git add -A
+          git -c user.name=audit -c user.email=audit@users.noreply.github.com commit -qm "audit ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" audit-out

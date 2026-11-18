@@ -123,4 +123,5 @@ feat-story.js
 feat-meta.js
 feat-focus.js
 zz-cockpit.js
+zz-polish.js
 zz-boot.js

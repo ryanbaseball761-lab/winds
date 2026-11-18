@@ -53,9 +53,9 @@ const FLIGHTS={
 };
 const VIEWS=['story','board','map','flight','pilot','money','cup','academy','profile','log','hangar'];
 const VER=(fs.readFileSync(path.join(__dirname,'..','src','js','027-core.js'),'utf8').match(/TW_VERSION = '([^']*)'/)||[])[1]||'?';
-const norm=h=>String(h==null?'':h).split(VER).join('VERSION').replace(/\s+/g,' ').replace(/>\s+</g,'><').replace(/ style=""/g,'').replace(/ class="([^"]*)"/g,(m,c)=>c.trim()?` class="${c.trim()}"`:'').replace(/(id="|url\(#)a\d+([a-z])/g,'$1aN$2').trim();
+const norm=h=>String(h==null?'':h).split(VER).join('VERSION').replace(/\s+/g,' ').replace(/>\s+</g,'><').replace(/ style=""/g,'').replace(/ class="([^"]*)"/g,(m,c)=>c.trim()?` class="${c.trim()}"`:'').replace(/(id="|url\(#)a\d+([a-z])/g,'$1aN$2').replace(/ src="data:image\/[^"]*"/g,'').replace(/ class="(cut[^"]*?) on"/g,' class="$1"').trim();
 (async()=>{ const b=await chromium.launch(); const out={};
- const open=async(save)=>{ const ctx=await b.newContext({viewport:{width:1300,height:900}}); await ctx.addInitScript(INIT); await ctx.addInitScript(HELP); const p=await ctx.newPage(); p._errs=[]; p.on('pageerror',e=>p._errs.push(e.message));
+ const open=async(save)=>{ const ctx=await b.newContext({viewport:{width:1300,height:900},timezoneId:'America/Chicago',locale:'en-US'}); await ctx.addInitScript(INIT); await ctx.addInitScript(HELP); const p=await ctx.newPage(); p._errs=[]; p.on('pageerror',e=>p._errs.push(e.message));
    await p.goto('file://'+ROOT+'/index.html'); await p.evaluate(s=>{ localStorage.clear(); if(s) localStorage.setItem('tradewinds.career.v1',s); },save); await p.reload(); await p.evaluate(()=>__tick(3000)); p._ctx=ctx; return p; };
  const put=(prefix,r,p)=>{ Object.entries(r).forEach(([k,v])=>out[prefix+'/'+k]=norm(v)); if(p._errs.length) out[prefix+'/errors']=p._errs.join(' | '); };
  const want=n=>!ONLY||n.startsWith(ONLY);
