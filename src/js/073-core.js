@@ -8,7 +8,9 @@ const DYN = {
   CR17:f=>({chars:['castillo','reyes'].concat(f.mari?['mari']:[])}),
   CR13:f=>f.dezJail?{brief:[`Mari found the cash in hangar three. All of it. With Dez in prison, she went looking for answers herself.`,`She doesn't yell. She asks if you'll take her flying, just the two of you, over to Grand Case like when you were new. She doesn't say a word until you're on final.`]}:{}
 };
-function dynM(st, m){ const d=DYN[m.id]; return d ? Object.assign({}, m, d(flagsOf(st))) : m; }
+function dynM(st, m){ const d=DYN[m.id]; let r=d ? Object.assign({}, m, d(flagsOf(st))) : m;
+  const c=crime(st); if(c.ng && typeof NG_TWIST!=='undefined' && NG_TWIST[m.id] && r && Array.isArray(r.brief)) r=Object.assign({}, r, {brief:[NG_TWIST[m.id]].concat(r.brief)});   // New Game+: someone else is the leak
+  return r; }
 
 /* endings: you only get the ones you earned */
 const ENDING_REQ = { kingpin:c=>c.power>=50 ? null : `Needs Power 50+ (you have ${c.power})`, witness:c=>(c.flags.informant||c.flags.ledgers||c.flags.medinaBurned||c.flags.drivecopy||c.flags.patient) ? null : `You have nothing to give Reyes`, ghost:()=>null };
@@ -27,5 +29,6 @@ function epilogue(st){ const f=flagsOf(st), L=[]; const end=crime(st).ending;
   if(end==='ghost') L.push(`Castillo spent two years looking for you. Then he stopped. You're not sure which is worse.`);
   if(end==='witness') L.push(`Reyes got her promotion. She calls on your birthday, from a different number every year.`); else if(end==='kingpin' && (f.informant||f.ledgers)) L.push(`Reyes never forgave you. Her last text was one word: "Liar."`); else if(end==='kingpin') L.push(`Reyes is still out there, chasing planes. Now they're yours.`);
   if(end==='ghost' && f.drivecopy) L.push(`Arnaud's drive sits on an old phone, in a safe, in a country with no extradition treaty. Insurance.`);
+  if(typeof epilogueExtra==='function') epilogueExtra(st, L);   // feat-story.js
   return L; }
 

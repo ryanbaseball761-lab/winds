@@ -209,7 +209,7 @@ const CRIME_IDS = new Set(CRIME.map(m=>m.id));
 /* ---- state ---- */
 function crime(st){ st=st||S.st; if(!st) return {power:0,heat:0,con:0,on:false,flags:{},choice:{}}; st.crime = st.crime || {power:0,heat:0,con:0,on:false,flags:{},choice:{}}; st.crime.flags=st.crime.flags||{}; st.crime.choice=st.crime.choice||{}; return st.crime; }
 const CR_RANKS = [[0,'Pilot'],[12,'Courier'],[28,'Runner'],[45,'Lieutenant'],[65,'Partner'],[85,'Boss']];
-function crimeRank(c){ if(c.ending==='kingpin') return 'Kingpin'; if(c.ending==='witness') return 'Witness'; if(c.ending==='ghost') return 'Ghost'; let r='Pilot'; CR_RANKS.forEach(([v,n])=>{ if(c.power>=v) r=n; }); return r; }
+function crimeRank(c){ if(c.ending==='walk') return 'Retired'; if(c.ending==='home') return 'Line pilot'; if(c.ending==='kingpin') return 'Kingpin'; if(c.ending==='witness') return 'Witness'; if(c.ending==='ghost') return 'Ghost'; let r='Pilot'; CR_RANKS.forEach(([v,n])=>{ if(c.power>=v) r=n; }); return r; }
 function crBump(c, k, v){ c[k]=clamp(Math.round((c[k]||0)+v), k==='con'?-10:0, k==='con'?10:100); }
 
 

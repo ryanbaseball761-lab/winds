@@ -3,7 +3,7 @@
    the story so far, the people, your operation (fleet, crew, safehouse, rank rewards) and the five acts. */
 
 /* Who you work for, as shown under your name. */
-function storyRole(st){ const c=crime(st);
+function storyRole(st){ const c=crime(st); if(c.ending==='walk') return 'Out of the business'; if(c.ending==='home') return 'Coral Wing Air, again';
   if(c.ending==='kingpin') return 'Kingpin'; if(c.ending==='witness') return 'New name, new island'; if(c.ending==='ghost') return 'Whereabouts unknown';
   if(st.story.done.CR15) return 'Caribe Cargo'; if(c.on) return "Castillo's crew"; return 'Coral Wing Air'; }
 

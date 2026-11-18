@@ -46,13 +46,12 @@ const TIMED_SEC = 30;
     {t:`Go home`, out:`You switch off the engines, hand Castillo his bag, and tell him you're done. Outside the fence, someone is waiting with Dez's old truck. Three weeks later you're flying the 7 a.m. mail run to Anguilla again, on a trainee's wage. It's the best job you've ever had.`, heat:-20, power:-50, ending:'home'});
   if(typeof ENDING_REQ!=='undefined'){ ENDING_REQ.walk=c=>c.heat<40 ? null : `Needs Heat under 40 (you have ${c.heat})`; ENDING_REQ.home=c=>(c.flags.mari||c.flags.dezFree) ? null : `Nobody's waiting for you`; } })();
 const END_NAMES={kingpin:'Kingpin',witness:'Witness',ghost:'Ghost',walk:'Walk Away',home:'Coming Home'};
-(function(){ const base=crimeRank; crimeRank=function(c){ if(c.ending==='walk') return 'Retired'; if(c.ending==='home') return 'Line pilot'; return base.apply(this, arguments); }; })();
-(function(){ const base=storyRole; storyRole=function(st){ const c=crime(st); if(c.ending==='walk') return 'Out of the business'; if(c.ending==='home') return 'Coral Wing Air, again'; return base.apply(this, arguments); }; })();
+
+
 if(typeof ENDING_TITLE!=='undefined'){ ENDING_TITLE.walk='Walk Away'; ENDING_TITLE.home='Coming Home'; }
-(function(){ const base=ngHTML; ngHTML=function(st){ let h=base.apply(this, arguments); const c=crime(st); if(!h) return h; const seen=Object.keys(c.endingsSeen||{}).concat([c.ending]); const left=['walk','home'].filter(x=>!seen.includes(x)).map(x=>END_NAMES[x]);
-  if(left.length) h=h.replace(/You've seen every ending\.|Endings you haven't seen: ([^.]*)\./, (m0,g)=>`Endings you haven't seen: ${[g].filter(Boolean).concat(left).join(', ')}.`); return h; }; })();
-/* the end card in the closing scene, for the new endings */
-(function(){ const base=epilogue; epilogue=function(st){ const L=base.apply(this, arguments); const c=crime(st), f=flagsOf(st), w=st.w||{};
+
+/* more "years later" lines; epilogue() (073-core.js) calls this */
+function epilogueExtra(st, L){ const c=crime(st), f=flagsOf(st), w=st.w||{};
   if(c.ending==='walk') L.push(`Castillo was arrested two years later for something else entirely. Your name never came up.`, `You still fly. Mostly sunsets over Saba, for honeymooners who think you're just a pilot.`);
   if(c.ending==='home') L.push(`Coral Wing Air has two Cessnas now and a third on order. Mari says it's your fault.`, `Castillo sent one message, the day you quit: "A waste." You had it framed.`);
   // Halcón
@@ -61,9 +60,8 @@ if(typeof ENDING_TITLE!=='undefined'){ ENDING_TITLE.walk='Walk Away'; ENDING_TIT
   const best=Object.entries(w.isl||{}).sort((a,b)=>b[1]-a[1])[0]; if(best && best[1]>=20) L.push(`On ${best[0]}, they still tell stories about the pilot who always landed soft.`);
   if(w.props && w.props.bar) L.push(`The beach bar on Anguilla is still open. Dez still drinks for free.`);
   if(f.reyesTalked && c.ending!=='witness') L.push(`Reyes kept your interview tape. She has never played it for anyone.`);
-  return L; }; })();
-/* patch the hard-coded ending names */
-(function(){ const s=document.createElement('style'); s.textContent=''; document.head.appendChild(s); })();
+  }
+
 
 /* ---------- 5. chapter cards ---------- */
 try{ document.fonts && document.fonts.load('600 84px "IBM Plex Sans Condensed"'); }catch(_){}
@@ -128,7 +126,7 @@ STORY.push({id:'SX1',arc:'Epilogue',title:`The First Box`,chars:['dez'],req:{aft
   brief:[`Dez is waiting at the old Coral Wing hangar with the same box you flew to Anguilla on your very first day. Same handwriting on the lid. "I owe you a story, rookie," he says. "And a flight. Same route."`,`Halfway across, he opens it. Inside: a logbook, a set of wings, and a photo of a younger Dez in a pilot's uniform. "I lost my license for flying for a man like Castillo. I wanted to see if you'd make it out. You did."`],
   teach:[`Same Cessna, same ten minutes, same runway. Fly it like it's your first day, because for Dez it sort of is.`],
   out:{good:`Dez pins his old wings on your shirt on the ramp at Anguilla. Neither of you says anything for a while.`,ok:`Dez leaves the box on your seat. The logbook's last entry is dated twenty years ago. There's space for one more.`,bad:`A bumpy landing. Dez laughs harder than you've ever heard him laugh. "Some things never change."`},rep:{dez:10}});
-(function(){ const base=storyAvailable; storyAvailable=function(st){ const L=base.apply(this, arguments); const f=flagsOf(st); const c=crime(st); return L.filter(m=> m.id!=='SX1' || (!!c.ending && f.boy && f.dezFree)); }; })();
+
 AFTER_RENDER.push(function secretChapter(){ const st=S.st; if(S.view!=='story'||!st) return; const main=document.querySelector('main'); if(!main||main.querySelector('.sx1')) return; const av=storyAvailable(st); const m=av.find(x=>x.id==='SX1'); if(!m) return;
   const d=document.createElement('section'); d.className='panel sx1'; d.innerHTML=`<p class="label">One more flight</p><h3>${esc(m.title)}</h3><p class="small muted">${esc(m.hook)}</p><div class="row" style="margin-top:8px">${chapterAction(st,m,new Set(av.map(x=>x.id)),true)}</div>`;
   const hero=main.querySelector('.story-card'); if(hero) hero.after(d); else main.prepend(d); });
@@ -140,7 +138,7 @@ const NG_TWIST = {
   CR12: `Dez didn't talk last time. This time you wonder whether the leak was ever in the hangar at all.`,
   CRB:  `Somebody in Castillo's own office has been on Reyes's payroll for a year. You can tell by who isn't worried.`,
 };
-(function(){ const base=dynM; dynM=function(st, m){ const r=base.apply(this, arguments); const c=crime(st); if(c.ng && NG_TWIST[m.id] && r && Array.isArray(r.brief)) return Object.assign({}, r, {brief:[NG_TWIST[m.id]].concat(r.brief)}); return r; }; })();
+
 PHONE_POOL.push({id:'ng1', from:'reyes', need:['CR11'], crime:true, gate:()=>!!(S.st&&crime(S.st).ng), text:`Off the record: it was never the kid. Your leak sits a lot closer to Castillo than to you.`});
 
 (function(){ const s=document.createElement('style'); s.textContent=`
