@@ -6,6 +6,7 @@
 const BETA = { on:true, links:{ discord:'', form:'' } };
 
 function betaFeedbackHTML(st){ const L=st.last; if(!BETA.on || !L || !L.job || L.job.kind!=='story') return '';
+  if((st.feedback||[]).some(f=>f.ch===L.job.story && f.v!==TW_VERSION)) return '';   // already rated this chapter in an earlier version
   const id=L.job.story, had=(st.feedback||[]).find(f=>f.ch===id && f.v===TW_VERSION);
   if(had) return `<section class="panel row between beta-fb"><p class="small muted">Thanks: your note on this chapter is saved and goes with your next report.</p>${betaLinksHTML()}</section>`;
   return `<section class="panel stack beta-fb"><div class="row between"><div><p class="label">Beta</p><h3>How was this chapter?</h3></div>${betaLinksHTML()}</div>

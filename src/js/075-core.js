@@ -30,7 +30,10 @@ function beatPhase(a){ const s=S.sim; if(!s||!s.motion||!s.position||s.motion.on
   return { climb: agl>800 && since>0.8, cruise: frac>=0.3 || (total<25 && since>3), descent: (frac>=0.5 || since>6) && togo<Math.max(8,Math.min(40,total*0.35)), final: togo<4 && agl<1500 }; }
 const BEAT = {last:0};
 function speakBeatBase(b){ if(!(typeof voiceOn==='function' && voiceOn()) || !window.speechSynthesis) return; const w=WHO[b.who]||WHO.self; try{ const u=new SpeechSynthesisUtterance(String(b.text).split('|')[0].replace(/"/g,'')); const v=pickVoice(w[1], b.who==='castillo'?1:0); if(v) u.voice=v; u.rate=w[2]; u.pitch=w[3]; u.volume=voiceVol(); speechSynthesis.speak(u); }catch(_){} }
-function showBeatBase(a, b, idx){ const w=WHO[b.who]||WHO.self; document.querySelectorAll('.beat').forEach(x=>x.remove()); const d=document.createElement('div'); d.className='beat beat-'+b.who; d.setAttribute('role','alertdialog');
+function showBeatBase(a, b, idx){
+  // a line with no question waits while a question is still on screen
+  { const cur=document.querySelector('.beat'); if(cur && cur.querySelector('.bt-o') && b && !b.opts){ const tries=(b._wait||0)+1; if(tries<=20){ const bb=Object.assign({}, b, {_wait:tries}); setTimeout(()=>{ try{ showBeatBase(a, bb, idx); }catch(_){} }, 3000); } return null; } }
+  const w=WHO[b.who]||WHO.self; document.querySelectorAll('.beat').forEach(x=>x.remove()); const d=document.createElement('div'); d.className='beat beat-'+b.who; d.setAttribute('role','alertdialog');
   d.innerHTML=`<div class="bt-in"><p class="bt-k">${b.who==='self'?'':'<span class="bt-ring"></span>'}${esc(w[0])}</p><p class="bt-t">${(()=>{ const [say,nar]=String(b.text).split('|'); return (b.who==='self'?esc(say):`“${esc(say)}”`)+(nar?` <span class="bt-nar">${esc(nar)}</span>`:''); })()}</p>${b.opts?`<div class="bt-o">${b.opts.map((o,i)=>`<button class="btn ${i?'':'primary'} sm" data-act="beat-opt" data-i="${i}">${esc(o.t)}</button>`).join('')}</div>`:''}</div>`;
   document.body.appendChild(d); try{ crackle && b.who==='radio' && crackle(0.2,0.2); }catch(_){}
   const close=()=>{ d.classList.add('out'); setTimeout(()=>d.remove(),400); };

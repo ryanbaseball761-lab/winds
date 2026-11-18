@@ -21,7 +21,6 @@ AFTER_RENDER.push(function ivReopen(){ const st=S.st; if(!st) return; const c=cr
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="iv-open"]')||!S.st) return; const w=twW(); w.iv=w.iv||{i:0,res:{truth:0,lie:0,caught:0,heat:0}}; twSheet('Interview: Agent Reyes', interviewHTML(S.st), 'wide'); });
 
 /* 10. daily costs on the Money page include insurance and your property income */
-(function(){ const base=dailyCosts; dailyCosts=function(st){ const L=base.apply(this, arguments); const w=st.w||{}; if(w.ins) L.push(['Hull insurance', insDaily(st)]); return L; }; })();
 
 /* 11. sell a property back for 60% of what you paid */
 AFTER_RENDER.push(function propSell(){ if(S.view!=='money'||!S.st) return; document.querySelectorAll('.w-props tr').forEach(tr=>{ const yours=tr.querySelector('.chip.good'); if(!yours || tr.querySelector('[data-act="w-sell"]')) return; const btn=tr.querySelector('td:last-child'); const name=tr.querySelector('b').textContent; const p=PROPS.find(x=>x.n===name); if(!p) return;
@@ -54,14 +53,8 @@ document.addEventListener('keydown', e=>{ if(e.key!=='Enter' || !S.showResult ||
 
 /* 18. M mutes and unmutes all sound */
 document.addEventListener('keydown', e=>{ if((e.key!=='m'&&e.key!=='M')||e.ctrlKey||e.metaKey||e.altKey) return; const t=e.target; if(t && /INPUT|TEXTAREA|SELECT/.test(t.tagName)) return; const u=uiP(); u.muted=!u.muted; save(); toast(u.muted?'Sound off (M to turn it back on).':'Sound on.'); try{ if(u.muted){ speechSynthesis.cancel(); } }catch(_){} });
-(function(){ if(typeof sfxOn==='function'){ const b=sfxOn; sfxOn=function(){ return !uiP().muted && b.apply(this, arguments); }; } if(typeof voiceOn==='function'){ const v=voiceOn; voiceOn=function(){ return !uiP().muted && v.apply(this, arguments); }; } })();
 
 /* 19. the command palette (Ctrl+K) knows the new places */
-(function(){ const base=cmdItems; cmdItems=function(){ const L=base.apply(this, arguments); if(!S.st) return L; const add=(n,k,run)=>L.push({n,k,run});
-  if(unlocked('phone')) add('Phone','Messages',()=>openPhone()); if(unlocked('props')) add('Property','Money',()=>{ go('money'); setTimeout(()=>{ const x=document.querySelector('.w-props'); x&&x.scrollIntoView({block:'start'}); },150); });
-  if(unlocked('islands')) add('Islands and contacts','Pilot',()=>{ go('profile'); setTimeout(()=>{ const x=document.querySelector('.w-isl'); x&&x.scrollIntoView({block:'start'}); },150); });
-  add('Aircraft logbooks','Hangar',()=>{ go('hangar'); setTimeout(()=>{ const x=document.querySelector('.w-achist'); x&&x.scrollIntoView({block:'start'}); },150); });
-  add('Mute or unmute (M)','Sound',()=>{ const u=uiP(); u.muted=!u.muted; save(); toast(u.muted?'Sound off.':'Sound on.'); }); return L; }; })();
 
 /* 20. the kbd hints don't run on every tiny DOM change any more */
 /* (handled in feat-ui by the observer; throttled here) */
@@ -79,10 +72,8 @@ AFTER_RENDER.push(function moreStats(){ if(S.view!=='profile'||!S.st) return; co
   const welcome=Object.values(w.isl||{}).filter(v=>v>=30).length; host.insertAdjacentHTML('afterbegin', `<div class="ro-strip w-stats"><div><small>Texts answered</small><b class="mono">${s.ph||0}</b></div><div><small>ATC instructions followed</small><b class="mono">${s.atc||0}</b></div><div><small>Short fuel caught</small><b class="mono">${s.fuel||0}</b></div><div><small>Islands that welcome you</small><b class="mono">${welcome}</b></div>${w.halcon?`<div><small>Races with Halcón</small><b class="mono">${w.halcon.w}–${w.halcon.l}</b></div>`:''}</div>`); });
 
 /* 28. the title screen says how long you've been away */
-(function(){ const base=titleHTML; titleHTML=function(){ let h=base.apply(this, arguments); try{ const t=Number(localStorage.getItem('tw.lastSeen')||0); if(t && S.st){ const m=Math.round((Date.now()-t)/60000); const ago = m<2?'just now' : m<60?`${m} min ago` : m<1440?`${Math.round(m/60)} h ago` : `${Math.round(m/1440)} day${m>=2880?'s':''} ago`; h=h.replace('</span></button>', ` · last played ${ago}</span></button>`); } }catch(_){} return h; }; })();
 
 /* 29. a short credits screen from the title menu */
-(function(){ const base=titleHTML; titleHTML=function(){ return base.apply(this, arguments).replace('</nav>', `<button data-ts-credits="1"><b>Credits</b><span>Who made this</span></button></nav>`); }; })();
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-ts-credits]')) return; e.stopPropagation(); const el=document.createElement('div'); el.className='tw-sheet-bg'; el.style.zIndex=13000;
   el.innerHTML=`<div class="tw-sheet" role="dialog" aria-modal="true" aria-label="Credits"><header><h2>Credits</h2><button class="btn sm ghost" data-act="w-close">Close</button></header><div class="tw-sheet-body"><p><b>Trade Winds</b><br>Designed and produced by Ryan.</p><p class="small muted">Story, code and art made with Claude (Anthropic).</p><p class="small muted">Fonts: IBM Plex, under the SIL Open Font License. Weather: U.S. National Hurricane Center. Flight planning links: SimBrief, SkyVector.</p><p class="small muted">Not affiliated with Microsoft, Asobo or any airline, airport or person. Every character and company in this story is made up.</p></div></div>`;
   document.body.appendChild(el); }, true);
@@ -104,7 +95,6 @@ document.addEventListener('change', e=>{ const i=e.target.closest('[data-act="ui
 AFTER_RENDER.push(function needAircraft(){ if(S.view!=='story') return; document.querySelectorAll('.story-card [data-act="nav"][data-v="hangar"]').forEach(b=>{ if(b.dataset.fx) return; b.dataset.fx=1; const nx=storyAvailable(S.st).filter(m=>CRIME_IDS.has(m.id)||m.arc==='Coral Wing')[0]; const role=nx&&typeof storyRoleName==='function'?storyRoleName(nx):''; b.textContent = role ? `Get ${/^[aeiou]/i.test(role)?'an':'a'} ${role.toLowerCase()} in the Hangar` : 'Get the right aircraft in the Hangar'; }); });
 
 /* 32. "Next" in the top bar knows when Reyes wants to see you */
-(function(){ const base=rightNow; rightNow=function(st){ try{ const w=st&&st.w, c=st&&crime(st); if(w && w.ivDue && c && !c.flags.interviewed && !st.active) return {t:'Agent Reyes wants to see you', b:'Go', act:'iv-open'}; }catch(_){} return base.apply(this, arguments); }; })();
 
 /* 33. at night, the customs scene happens under the floodlights, not on a sunny ramp (see customsScene in feat-flight.js) */
 
@@ -133,7 +123,6 @@ AFTER_RENDER.push(function sealedTo(){ if(S.view!=='board') return; document.que
 AFTER_RENDER.push(function mktMap(){ if(S.view!=='map'||!S.st) return; const e=mktNow(); if(!e||document.querySelector('.map-mkt')) return; const main=document.querySelector('main'); const h=main&&main.querySelector('h1,h2'); if(h) h.insertAdjacentHTML('afterend', `<p class="map-mkt small"><b>This week:</b> ${esc(e.text)}</p>`); });
 
 /* 45. the beta question only asks once per chapter, even if you replay it */
-(function(){ const base=betaFeedbackHTML; betaFeedbackHTML=function(st){ const L=st.last; if(L&&L.job&&(st.feedback||[]).some(f=>f.ch===L.job.story && f.v!==TW_VERSION)) return ''; return base.apply(this, arguments); }; })();
 
 /* 46. secret achievements count on the achievements list ("3 of 10 secrets found") */
 AFTER_RENDER.push(function secretCount(){ const list=document.querySelector('.ach')&&document.querySelector('.ach').parentElement; if(!list||list.querySelector('.sx-count')||!S.st) return; const got=SECRET_ACH.filter(a=>S.st.ach&&S.st.ach[a.id]).length; list.insertAdjacentHTML('beforebegin', `<p class="small muted sx-count">${got} of ${SECRET_ACH.length} secret achievements found.</p>`); });
@@ -152,5 +141,3 @@ AFTER_RENDER.push(function needMore(){ if(S.view!=='money'||!S.st) return; docum
 (function(){ const s=document.createElement('style'); s.textContent=`@media (max-width:600px){ .title-screen .ts-logo{gap:12px;margin-bottom:4vh}.title-screen .ts-logo svg{width:42px;height:42px}.title-screen .ts-logo h1{font-size:9vw;letter-spacing:.04em}.title-screen .ts-in{padding:0 7vw}.title-screen .ts-new,.title-screen .ts-foot{position:static!important;margin-top:18px}.title-screen .ts-menu button b{font-size:19px} }`; document.head.appendChild(s); })();
 
 /* a radio or cabin line never knocks a question you haven't answered yet off the screen: it waits its turn */
-(function(){ const base=showBeatBase; showBeatBase=function(a, b, idx){ const cur=document.querySelector('.beat'); if(cur && cur.querySelector('.bt-o') && b && !b.opts){ const tries=(b._wait||0)+1; if(tries<=20){ const bb=Object.assign({}, b, {_wait:tries}); setTimeout(()=>{ try{ showBeatBase(a, bb, idx); }catch(_){} }, 3000); } return null; }
-  return base.apply(this, arguments); }; })();

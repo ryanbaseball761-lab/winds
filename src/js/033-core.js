@@ -1,5 +1,5 @@
 /* ===================== RADIO ATMOSPHERE: squelch, cabin chimes, background ATC ===================== */
-function sfxOn(){ try{ return localStorage.getItem('tw.sfx')!=='off'; }catch(e){ return true; } }
+function sfxOn(){ if(uiP().muted) return false; try{ return localStorage.getItem('tw.sfx')!=='off'; }catch(e){ return true; } }
 let AC_CTX=null;
 /* the one audio context; sound effects and music each get their own volume (Settings → Sound) */
 function actx(){ try{ if(!AC_CTX){ const C=window.AudioContext||window.webkitAudioContext; if(!C) return null; AC_CTX=new C();

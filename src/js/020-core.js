@@ -14,7 +14,7 @@ function autoArm(){
 
 /* ---- Voices ---- */
 const FEMALE = ['mari','celeste','vivienne','rosa','wilkins','marchetti','okafor','amara'];
-function voiceOn(){ try{ return localStorage.getItem('tw.voice')!=='off'; }catch(e){ return true; } }
+function voiceOn(){ if(uiP().muted) return false; try{ return localStorage.getItem('tw.voice')!=='off'; }catch(e){ return true; } }
 function voiceVolBase(){ try{ return Number(localStorage.getItem('tw.vol')||'0.9'); }catch(e){ return 0.9; } }
 let _voices=[];
 function loadVoices(){ try{ _voices = (window.speechSynthesis && speechSynthesis.getVoices()) || []; }catch(e){ _voices=[]; } }

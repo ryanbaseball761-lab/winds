@@ -42,6 +42,11 @@ function cmdItems(){ const st=S.st; const L=[]; if(!st) return L; const pg=(n,v,
   L.forEach(it=>{ const run=it.run; it.run=()=>{ try{ const r=[it.n].concat(rec.filter(x=>x!==it.n)).slice(0,5); localStorage.setItem('tw.cmdRecent', JSON.stringify(r)); }catch(_){} run(); };
     const k=rec.indexOf(it.n); if(k>=0){ it.k='Recent · '+it.k; it._rec=5-k; } else if(it.airport){ const a=AP[it.airport]; it.k=`Airport · ${a.isl} · ${longestRwy(a).toLocaleString()} ft`; } });
   try{ metPeople(st).forEach(k=>L.push({n:CAST[k].n, k:'Person · '+(CAST[k].role||''), run:()=>{ go('story'); setTimeout(()=>personCard(k),150); }})); }catch(_){}
+  { const add=(n,k,run)=>L.push({n,k,run});
+  if(unlocked('phone')) add('Phone','Messages',()=>openPhone()); if(unlocked('props')) add('Property','Money',()=>{ go('money'); setTimeout(()=>{ const x=document.querySelector('.w-props'); x&&x.scrollIntoView({block:'start'}); },150); });
+  if(unlocked('islands')) add('Islands and contacts','Pilot',()=>{ go('profile'); setTimeout(()=>{ const x=document.querySelector('.w-isl'); x&&x.scrollIntoView({block:'start'}); },150); });
+  add('Aircraft logbooks','Hangar',()=>{ go('hangar'); setTimeout(()=>{ const x=document.querySelector('.w-achist'); x&&x.scrollIntoView({block:'start'}); },150); });
+  add('Mute or unmute (M)','Sound',()=>{ const u=uiP(); u.muted=!u.muted; save(); toast(u.muted?'Sound off.':'Sound on.'); }); }
   return L; }
 
 /* ---------- double-click guard ---------- */
