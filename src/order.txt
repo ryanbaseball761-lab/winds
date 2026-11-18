@@ -122,6 +122,7 @@ feat-ui.js
 feat-story.js
 feat-meta.js
 feat-focus.js
+feat-polish.js
 zz-cockpit.js
 zz-polish.js
 zz-boot.js

@@ -29,11 +29,15 @@ AFTER_RENDER.push(function echoLines(){ const st=S.st; if(!st) return; let id=nu
   if(!id || !host || host.parentElement.querySelector('.echo')) return; const t=echoFor(st,id); if(!t) return; host.insertAdjacentHTML('afterend', `<p class="echo">${esc(t)}</p>`); });
 
 /* ---------- 3. timed choices ---------- */
-const TIMED_SEC = 20;
+const TIMED_SEC = 30;
 (function(){ for(const id of ['CR2','CR3','CRM','CR16','CR8']){ (BEATS[id]||[]).forEach(b=>{ if(b && typeof b==='object' && !Array.isArray(b) && b.opts){ b.timed=TIMED_SEC; if(b.timedDefault==null) b.timedDefault=b.opts.length-1; } }); } })();
 (function(){ const base=showBeat; showBeat=function(a,b,idx){ const r=base.apply(this, arguments); if(b && b.timed && b.opts){ const d=document.querySelector('.beat'); const o=d&&d.querySelector('.bt-o'); if(o){ o.insertAdjacentHTML('beforebegin',`<div class="bt-timer" aria-hidden="true"><i style="animation-duration:${b.timed}s"></i></div>`);
-    const t=setTimeout(()=>{ if(d.isConnected && d.querySelector('.bt-o')){ const btn=d.querySelectorAll('.bt-o [data-act="beat-opt"]')[b.timedDefault]; if(btn){ toast('You waited too long. The moment decided for you.'); btn.click(); } } }, b.timed*1000);
-    d.addEventListener('click', e=>{ if(e.target.closest('[data-act="beat-opt"]')){ clearTimeout(t); const tm=d.querySelector('.bt-timer'); if(tm) tm.remove(); } }); } } return r; }; })();
+    /* the clock only runs while you can see it: alt-tab into MSFS and it waits for you */
+    let left=b.timed*1000, lastT=Date.now(); const bar=d.querySelector('.bt-timer i'); if(bar) bar.style.animation='none';
+    const t=setInterval(()=>{ const now=Date.now(); if(!document.hidden) left-=now-lastT; lastT=now; if(bar) bar.style.width=Math.max(0,left/(b.timed*1000)*100)+'%';
+      if(!d.isConnected || !d.querySelector('.bt-o')){ clearInterval(t); return; }
+      if(left<=0){ clearInterval(t); const btn=d.querySelectorAll('.bt-o [data-act="beat-opt"]')[b.timedDefault]; if(btn){ toast(`You took too long. You went with "${btn.textContent.replace(/^\d\s*/,'').trim()}".`); btn.click(); } } }, 250);
+    d.addEventListener('click', e=>{ if(e.target.closest('[data-act="beat-opt"]')){ clearInterval(t); const tm=d.querySelector('.bt-timer'); if(tm) tm.remove(); } }); } } return r; }; })();
 
 /* ---------- 4. two quieter endings ---------- */
 (function(){ const m=CRIME.find(x=>x.id==='CR17'); if(!m||!m.choice) return;

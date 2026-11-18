@@ -101,7 +101,7 @@ const results=[]; const ok=(n,c,info)=>{ results.push([n,!!c,info||'']); };
   // 14. streamer mode: chat votes pick a story choice; the ending card draws
   { const q=await page(); const r=await q.evaluate(async()=>{ const W=ms=>new Promise(r=>setTimeout(r,ms)); const st=S.st; uiP().streamer=true; uiP().twitchChannel='testchan'; uiP().voteSec=30; TWITCH.ws={close(){},send(){}}; TWITCH.state='live';
       for(const m of mainChapters().slice(0,5)) st.story.done[m.id]=1; const m=mainChapters()[5]; st.loc=m.from; const job=storyJob(st,m,storyAircraft(st,m)[0]||m.ac[0]); st.active={job,accepted:Date.now(),started:Date.now()};
-      applyResult(st,job,{landing:'smooth',tasks:[],simFpm:150},{score:88,grade:'B',parts:[],crash:false,block:30}); S.showResult=true; S.view='flight'; render(); document.querySelectorAll('.cut').forEach(e=>e.remove()); await W(1300);
+      applyResult(st,job,{landing:'smooth',tasks:[],simFpm:150},{score:88,grade:'B',parts:[],crash:false,block:30}); S.showResult=true; S.view='flight'; render(); for(let i=0;i<12;i++){ document.querySelectorAll('.cut').forEach(e=>e.remove()); await W(250); } await W(1300);
       const started=!!TWITCH.vote; twitchMsg('a','2'); twitchMsg('b','2'); twitchMsg('c','1'); twitchMsg('d','9'); if(TWITCH.vote) TWITCH.vote.t0-=31000; await W(1300);
       const picked=crime(st).choice[m.id]; uiP().streamer=false; TWITCH.ws=null; TWITCH.state='off';
       for(const x of mainChapters()) st.story.done[x.id]=1; crime(st).ending='ghost'; const card=drawEndingCard(st).toDataURL().length>20000; return {started, picked, card}; });

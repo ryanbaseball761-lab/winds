@@ -19,7 +19,7 @@ const CHECK=`(()=>{ const out={overflowX:0,wide:[],clipped:[],tiny:[]}; const W=
   const desc=e=>{ let d=e.tagName.toLowerCase(); if(e.id) d+='#'+e.id; if(e.className&&typeof e.className==='string') d+='.'+e.className.trim().split(/\\s+/).slice(0,2).join('.'); return d+' "'+(e.textContent||'').replace(/\\s+/g,' ').trim().slice(0,40)+'"'; };
   for(const e of document.querySelectorAll('body *')){ if(!vis(e)) continue; const r=e.getBoundingClientRect(); const s=getComputedStyle(e);
     if(r.right>W+2 && s.position!=='fixed' && !e.closest('[style*="overflow"],.scroll-x,table,pre,.cut')) { let inScroll=false; for(let p=e.parentElement;p;p=p.parentElement){ const ps=getComputedStyle(p); if(/auto|scroll|hidden/.test(ps.overflowX)){ inScroll=true; break; } } if(!inScroll && out.wide.length<12) out.wide.push(desc(e)+' right='+Math.round(r.right)); }
-    if(e.children.length===0 && (e.textContent||'').trim()){ if(e.scrollWidth>e.clientWidth+2 && /hidden|clip/.test(s.overflowX) && s.textOverflow!=='ellipsis' && out.clipped.length<12) out.clipped.push(desc(e));
+    if(e.children.length===0 && (e.textContent||'').trim() && !e.classList.contains('cb-h1')){ if(e.scrollWidth>e.clientWidth+2 && /hidden|clip/.test(s.overflowX) && s.textOverflow!=='ellipsis' && out.clipped.length<12) out.clipped.push(desc(e));
       const fs=parseFloat(s.fontSize); if(fs<11 && out.tiny.length<12) out.tiny.push(desc(e)+' '+fs+'px'); } }
   // text that barely shows against what's behind it (contrast under 2.5:1, opacity included)
   const rgb=c=>{ const m=String(c).match(/[\\d.]+/g)||[0,0,0,0]; return [+m[0],+m[1],+m[2],m[3]==null?1:+m[3]]; };

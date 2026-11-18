@@ -107,7 +107,7 @@ AFTER_RENDER.push(function customsScene(){ const st=S.st, L=st&&st.last; if(!S.s
     : [[[`Ramp, ${to}`,'self',`An officer walks out to the plane at ${to}, clipboard first.`],[`Ramp, ${to}`,'self',`He reads every line of the paperwork. Then he looks at you for a long time.`],[`Ramp, ${to}`,'self',`"Welcome back," he says, and walks away.`]],
        [[`Ramp, ${to}`,'self',`Customs at ${to} sends the young one this time. He's nervous. So are you.`],[`Ramp, ${to}`,'self',`He opens the cargo door, looks for exactly two seconds, and closes it again.`],[`Ramp, ${to}`,'self',`Someone already had a word with him.`]],
        [[`Ramp, ${to}`,'self',`A customs van parks nose to nose with your plane at ${to}.`],[`Ramp, ${to}`,'self',`The officer inside finishes his sandwich, waves, and drives away.`]]][Math.floor(fevHash(key)*3)];
-  setTimeout(()=>{ try{ cutscene({shots, art:(typeof SCENES!=='undefined'&&SCENES.ramp)?SCENES.ramp():'', replay:true}); }catch(_){} }, 1500); });
+  setTimeout(()=>{ try{ const night=st.clock>=1110||st.clock<390; cutscene({shots, art:(typeof SCENES!=='undefined'&&SCENES.ramp)?(night&&SCENES.cockpit?SCENES.cockpit():SCENES.ramp()):'', replay:true}); }catch(_){} }, 1500); });
 
 /* beat options are equal choices too */
 (function(){ const s=document.createElement('style'); s.textContent=`html.ckp .beat .bt-o .btn{background:transparent!important;border-color:var(--line-2)!important;color:var(--ink)!important}html.ckp .beat .bt-o .btn:hover{border-color:var(--amb)!important;color:var(--amb)!important}`; document.head.appendChild(s); })();
