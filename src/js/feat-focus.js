@@ -12,6 +12,7 @@
      case board ....... after chapter 4 */
 
 function unlocked(k){ const st=S.st; if(!st) return false; const c=crime(st), w=st.w||{}, d=st.story.done||{}, n=st.flights||0;
+  if(st.ui && st.ui.allSystems && k!=='phone') return (k==='loan'||k==='bribe'||k==='caseboard') ? c.on : true;   // Settings: show every system from the start
   switch(k){
     case 'phone': return !!(w.phone && w.phone.msgs.length);
     case 'home': return n>=3;
@@ -42,7 +43,6 @@ AFTER_RESULT.push(function unlockAfterFlight(){ setTimeout(unlockCheck, 500); })
 
 /* take away what isn't unlocked yet */
 AFTER_RENDER.push(function focusGate(){ if(!S.st) return; const hide=(sel)=>document.querySelectorAll(sel).forEach(e=>e.remove());
-  if(!unlocked('phone')) hide('.cb-phone');
   if(!unlocked('home')) hide('.home-strip');
   if(!unlocked('caseboard')) hide('.case-board');
   if(!unlocked('islands')) hide('.w-isl');

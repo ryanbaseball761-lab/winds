@@ -33,8 +33,7 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="job
 
 /* ---- 8. notifications: one stack at the bottom right, plus a history in the header ---- */
 S.notifs=S.notifs||[]; S.notifSeen=0;
-document.addEventListener('click', e=>{ if(e.target.closest('[data-act="cmd"]')){ openCmd(); return; } const b=e.target.closest('[data-act="bell"]'); if(!b) { if(!e.target.closest('.notif-pane')) document.querySelectorAll('.notif-pane').forEach(p=>p.remove()); return; } const open=document.querySelector('.notif-pane'); if(open){ open.remove(); return; }
-  S.notifSeen=S.notifs.length; const c=b.querySelector('b'); if(c) c.style.display='none'; const p=document.createElement('div'); p.className='notif-pane'; p.innerHTML=`<p class="label">Notifications</p>${S.notifs.length?`<ul>${S.notifs.map(n=>`<li><span>${new Date(n.t).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>${esc(n.m)}</li>`).join('')}</ul>`:'<p class="small muted">Nothing yet this session.</p>'}`; document.body.appendChild(p); });
+document.addEventListener('click', e=>{ if(e.target.closest('[data-act="cmd"]')){ openCmd(); } });   // notifications live in the phone now (feat-world.js)
 
 
 /* ---- 2 + 5 + 10. one layout system, one type scale, one meaning per colour, motion ---- */

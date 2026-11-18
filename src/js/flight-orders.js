@@ -43,6 +43,7 @@ function finishOrder(a, result){ const o=a.order; o.state=result; const out=o[re
   a.orders=(a.orders||[]).concat([{label:o.label, result}]); save();
   if(out.text){ try{ showBeatBase(a, {who:o.who||'self', text:out.text}, 'order'); }catch(_){ toast(out.text); } }
   toast(`${result==='ok'?'Done':'Missed'}: ${o.label}${out.power?` · Power ${out.power>0?'+':''}${out.power}`:''}${out.heat?` · Heat ${out.heat>0?'+':''}${out.heat}`:''}`);
+  try{ if(result==='ok'){ typeof chimeUp==='function' ? chimeUp() : twSfx('switch'); } else twSfx('stamp'); }catch(_){}
   renderOrderChip(); }
 
 /* runs on every MSFS update (see SIM_TICK in sim-live.js) */

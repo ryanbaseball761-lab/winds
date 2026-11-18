@@ -6012,6 +6012,7 @@ function finishOrder(a, result){ const o=a.order; o.state=result; const out=o[re
   a.orders=(a.orders||[]).concat([{label:o.label, result}]); save();
   if(out.text){ try{ showBeatBase(a, {who:o.who||'self', text:out.text}, 'order'); }catch(_){ toast(out.text); } }
   toast(`${result==='ok'?'Done':'Missed'}: ${o.label}${out.power?` · Power ${out.power>0?'+':''}${out.power}`:''}${out.heat?` · Heat ${out.heat>0?'+':''}${out.heat}`:''}`);
+  try{ if(result==='ok'){ typeof chimeUp==='function' ? chimeUp() : twSfx('switch'); } else twSfx('stamp'); }catch(_){}
   renderOrderChip(); }
 
 /* runs on every MSFS update (see SIM_TICK in sim-live.js) */
@@ -6077,11 +6078,12 @@ function twitchConnect(){ const P=streamP(); if(!P.on || !P.channel || typeof We
   ws.onclose=()=>{ if(TWITCH.ws!==ws) return; TWITCH.state='off'; streamStatus(); if(streamP().on){ const wait=Math.min(60000, 3000*Math.pow(2,TWITCH.retry++)); setTimeout(twitchConnect, wait); } };
   ws.onerror=()=>{ try{ ws.close(); }catch(_){} }; }
 function twitchClose(){ const ws=TWITCH.ws; TWITCH.ws=null; TWITCH.state='off'; if(ws) try{ ws.close(); }catch(_){} }
-function twitchMsg(user, text){ const v=TWITCH.vote; if(!v) return; const m=text.match(/^!?(?:vote\s*)?([1-9])\b/i); if(!m) return; const i=Number(m[1])-1; if(i<0 || i>=v.n) return;
+function twitchMsg(user, text){ if(/^!tip\b/i.test(String(text)) && S.st){ const T=TWITCH; T.tips=T.tips||{}; const day=S.st.day, k=user+'|'+day; if(!T.tips[k] && Object.keys(T.tips).filter(x=>x.endsWith('|'+day)).length<20){ T.tips[k]=1; txn(S.st, 50, 'Tips & bonuses', `Tip from ${user} (Twitch)`); toast(`${user} tipped you $50 from chat.`); save(); } return; }
+  const v=TWITCH.vote; if(!v) return; const m=text.match(/^!?(?:vote\s*)?([1-9])\b/i); if(!m) return; const i=Number(m[1])-1; if(i<0 || i>=v.n) return;
   v.by[user.toLowerCase()]=i; voteRender(); }
 
 /* a vote over a set of buttons that are on screen right now */
-function startVote(key, buttons){ const P=streamP(); if(TWITCH.vote && TWITCH.vote.key===key) return; endVote(false);
+function startVote(key, buttons){ if(document.querySelector('.cut')) return; const P=streamP(); if(TWITCH.vote && TWITCH.vote.key===key) return; endVote(false);
   TWITCH.vote={ key, n:buttons.length, by:{}, t0:Date.now(), sec:P.sec, buttons };
   buttons.forEach((b,i)=>{ if(!b.querySelector('.tw-n')){ const s=document.createElement('span'); s.className='tw-n'; s.textContent=String(i+1); b.prepend(s); const c=document.createElement('span'); c.className='tw-c'; b.append(c); } });
   let bar=document.getElementById('tw-vote'); if(!bar){ bar=document.createElement('div'); bar.id='tw-vote'; bar.setAttribute('role','status'); document.body.appendChild(bar); }
@@ -6090,7 +6092,8 @@ function voteTally(v){ const t=Array(v.n).fill(0); Object.values(v.by).forEach(i
 function voteRender(){ const v=TWITCH.vote, bar=document.getElementById('tw-vote'); if(!v||!bar) return; const t=voteTally(v), total=t.reduce((a,b)=>a+b,0), left=Math.max(0, Math.ceil(v.sec-(Date.now()-v.t0)/1000));
   v.buttons.forEach((b,i)=>{ const c=b.querySelector('.tw-c'); if(c) c.textContent = total ? ` ${Math.round(t[i]/total*100)}%` : ''; });
   bar.innerHTML=`<b>Chat is deciding</b><span>Type ${Array.from({length:v.n},(_,i)=>`<kbd>${i+1}</kbd>`).join(' ')} in chat · ${total} vote${total===1?'':'s'}</span><i class="mono">${left}s</i>`; }
-function endVote(pick){ const v=TWITCH.vote; TWITCH.vote=null; const bar=document.getElementById('tw-vote'); if(bar) bar.remove(); if(!v) return;
+function endVote(pick){ if(pick && document.querySelector('.cut') && TWITCH.vote){ const v0=TWITCH.vote; setTimeout(()=>{ if(TWITCH.vote===v0) endVote(pick); }, 800); return; }   // the pick waits for the scene
+  const v=TWITCH.vote; TWITCH.vote=null; const bar=document.getElementById('tw-vote'); if(bar) bar.remove(); if(!v) return;
   v.buttons.forEach(b=>b.querySelectorAll('.tw-n,.tw-c').forEach(x=>x.remove()));
   if(!pick) return; const t=voteTally(v); const total=t.reduce((a,b)=>a+b,0); if(!total){ toast('No votes from chat. Your call.'); return; }
   const win=t.indexOf(Math.max(...t)); const b=v.buttons[win]; if(b && b.isConnected){ toast(`Chat picked option ${win+1} (${t[win]} of ${total} votes).`); b.click(); } }
@@ -6286,8 +6289,7 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="job
 
 /* ---- 8. notifications: one stack at the bottom right, plus a history in the header ---- */
 S.notifs=S.notifs||[]; S.notifSeen=0;
-document.addEventListener('click', e=>{ if(e.target.closest('[data-act="cmd"]')){ openCmd(); return; } const b=e.target.closest('[data-act="bell"]'); if(!b) { if(!e.target.closest('.notif-pane')) document.querySelectorAll('.notif-pane').forEach(p=>p.remove()); return; } const open=document.querySelector('.notif-pane'); if(open){ open.remove(); return; }
-  S.notifSeen=S.notifs.length; const c=b.querySelector('b'); if(c) c.style.display='none'; const p=document.createElement('div'); p.className='notif-pane'; p.innerHTML=`<p class="label">Notifications</p>${S.notifs.length?`<ul>${S.notifs.map(n=>`<li><span>${new Date(n.t).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>${esc(n.m)}</li>`).join('')}</ul>`:'<p class="small muted">Nothing yet this session.</p>'}`; document.body.appendChild(p); });
+document.addEventListener('click', e=>{ if(e.target.closest('[data-act="cmd"]')){ openCmd(); } });   // notifications live in the phone now (feat-world.js)
 
 
 /* ---- 2 + 5 + 10. one layout system, one type scale, one meaning per colour, motion ---- */
@@ -6666,7 +6668,7 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cold-ag
 
 
 /* 10. notifications: a Clear button */
-document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="bell"]'); if(!b) return; setTimeout(()=>{ const p=document.querySelector('.notif-pane'); if(p && S.notifs.length && !p.querySelector('.np-clear')){ const c=document.createElement('button'); c.className='btn sm ghost np-clear'; c.textContent='Clear'; c.onclick=()=>{ S.notifs=[]; S.notifSeen=0; p.remove(); }; p.querySelector('.label').after(c); } }, 0); });
+/* (the notifications dropdown and its Clear button moved into the phone) */
 
 /* 11. Profile: story achievements are listed first */
 (function(){ const story=ACH.filter(a=>/^cx_/.test(a.id)); const rest=ACH.filter(a=>!/^cx_/.test(a.id)); ACH.splice(0, ACH.length, ...story, ...rest); })();
@@ -6912,7 +6914,7 @@ function band(){
         ${c.on?`<button class="cb-ro heat-chip ${c.heat>=80?'hot':c.heat>=60?'warm':'cool'}" data-act="nav" data-v="story" title="${esc(CX_TIPS.Heat)}"><small>Heat</small><b class="mono">${c.heat}</b></button>`:''}
         ${c.dirty>0?`<button class="cb-ro dirty-chip" data-act="nav" data-v="money" title="Dirty cash from network runs. Launder it on the Money page."><small>Dirty</small><b class="mono">${money(c.dirty)}</b></button>`:''}
         <span class="cb-ro cb-sim ${live?'on':''}" title="${live?'MSFS is connected':'MSFS is not connected'}"><small>Sim</small><b class="mono"><i class="simdot ${live?'on':''}"></i><span id="sim-band">${live?'MSFS live':'Not connected'}</span></b></span>
-        <button class="cb-ic bell" data-act="bell" title="Notifications" aria-label="Notifications">${ICON_BELL}<b${unread>0?'':' style="display:none"'}>${unread>9?'9+':unread}</b></button><button class="cb-ic cmd-btn" data-act="cmd" title="Search (Ctrl+K)" aria-label="Search">${ICON_SEARCH}</button><button class="cb-ic cmd-btn gear-btn" title="Settings" aria-label="Settings" data-act="open-settings">${ICON_GEAR}</button>
+        <button class="cb-ic cb-phone" data-act="w-phone" title="Phone: texts and notifications" aria-label="Phone"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 18.5h3" stroke="currentColor" stroke-width="1.6"/></svg><b style="display:none"></b></button><button class="cb-ic cmd-btn" data-act="cmd" title="Search (Ctrl+K)" aria-label="Search">${ICON_SEARCH}</button><button class="cb-ic cmd-btn gear-btn" title="Settings" aria-label="Settings" data-act="open-settings">${ICON_GEAR}</button>
       </div>
     </div>
     <div class="cb-sub">
@@ -7109,6 +7111,7 @@ const AFTER_RESULT = [
     else if(o) o.notes.unshift(`Caribe Cargo flies under ${st.company.name}'s certificate. Buy aircraft and set up routes on the Pilot → Airline page.`); },
   /* network runs add Heat; at Heat 60+ customs may search you, at 90+ you're busted */
   function customs(st, job, f, res){ const c=crime(st); const o=st.last&&st.last.out; if(!c.on || res.crash) return;
+    if(typeof bribeCustoms==='function' && bribeCustoms(st, job, res)) return;   // a paid-off officer (feat-world.js)
     if(job.network){ crBump(c,'heat',12); crBump(c,'power',1); }   // (a network run is also a 'gen' job, so the −2 above already ran: net +5)
     if((job.network || job.kind==='story') && o){
       if(c.heat>=90){ txn(st,-50000,'Payoffs',`Lawyers, ${job.to}`); crBump(c,'power',-10); c.heat=50; o.notes.push(`BUSTED at ${job.to}. Customs found the hidden compartment. The network's lawyers got you out for $50,000. Power −10, Heat down to 50.`); try{ setTimeout(()=>takeover({kind:'orders',kicker:'Busted',title:`Customs at ${job.to}`,text:`They found the hidden compartment. The network's lawyers got you out, for $50,000.`,ms:9000}),600); }catch(_){} }
@@ -7145,6 +7148,8 @@ const AFTER_RESULT = [
 ];
 
 function applyResult(st, job, f, res){
+  S._lastActive=st&&st.active;   // the flight as it was, for the after-flight steps (orders, failures, races)
+  { const a=st&&st.active; if(a && a.fev && a.fev.type==='failure' && a.order && a.order.k==='landwithin' && f && f.landedAt && f.landedAt!==job.to && !f.scen) f.scen='book'; }   // forced down by a failure: a proper diversion
   S.fmMenu=false; S.openJob=null;   // flight mode resets, so the next flight starts clean
   const c=crime(st);
   const was = { power:c.power, heat:c.heat, cash:st.cash, ach:new Set(Object.keys(st.ach||{})), track:st.active&&st.active.track, reputation:null };
@@ -7292,6 +7297,7 @@ function rest(st){
   try{ const c=crime(st); if(c.on) crBump(c,'heat',-1); }catch(_){}
   // daily costs never push cash below zero: what you can't pay costs Heat instead
   try{ if(st.cash<0 && cashBefore>=0){ const short=-st.cash; txn(st, short, 'Owed to Castillo', 'Costs you couldn\'t cover (owed to Castillo\'s people)'); const c=crime(st); if(c.on) crBump(c,'heat',2); setTimeout(()=>toast(`You couldn't cover ${money(short)} of today's costs. People talk: Heat +2.`), 600); } }catch(_){}
+  if(typeof DAY_HOOKS!=='undefined') for(const h of DAY_HOOKS){ try{ h(st); }catch(_){} }   // the systems that tick once a day (feat-world.js and later)
   return net;
 }
 /* ===================== JOBS =====================
@@ -8757,7 +8763,7 @@ function toast(msg){
   showToast(msg);
 }
 function showToast(msg){
-  try{ if(msg){ S.notifs.unshift({t:Date.now(), m:String(msg)}); S.notifs=S.notifs.slice(0,40); const b=document.querySelector('.bell b'); if(b){ b.textContent=S.notifs.length-S.notifSeen; b.style.display=''; } } }catch(_){}
+  try{ if(msg){ S.notifs.unshift({t:Date.now(), m:String(msg)}); S.notifs=S.notifs.slice(0,40); if(typeof phoneBadge==='function') phoneBadge(); } }catch(_){}
   const m=String(msg); const now=Date.now(); if(S._lt===m && now-(S._ltT||0)<20000) return; S._lt=m; S._ltT=now;   // the same message twice in 20 s shows once
   S.toast=msg; let host=document.getElementById('toasts'); if(!host){ host=document.createElement('div'); host.id='toasts'; host.setAttribute('role','status'); host.setAttribute('aria-live','polite'); document.body.appendChild(host); }
   const k=toastKind(msg); const el=document.createElement('div'); el.className='toast2 '+k; el.innerHTML=`<span class="ti">${k==='ok'?'✓':k==='warn'?'!':'✈'}</span><span class="tt"></span><i class="tbar"></i>`; el.querySelector('.tt').textContent=msg;
@@ -8965,16 +8971,18 @@ function wSeed(n){ const st=S.st; return rng(hashStr(`${st.day}|${n||0}|${st.pil
 function islOf(code){ return (AP[code] && AP[code].isl) || code; }
 
 /* a panel that opens over the page (Esc or the button closes it) */
-function twSheet(title, body, cls){ twSheetClose(); const d=document.createElement('div'); d.className='tw-sheet-bg'; d.innerHTML=`<div class="tw-sheet ${cls||''}" role="dialog" aria-modal="true" aria-label="${esc(title)}"><header><h2>${esc(title)}</h2><button class="btn sm ghost" data-act="w-close" aria-label="Close">Close</button></header><div class="tw-sheet-body">${body}</div></div>`;
+let twSheetOpener=null;
+function twSheet(title, body, cls){ const op=document.activeElement; twSheetClose(); twSheetOpener=op; const d=document.createElement('div'); d.className='tw-sheet-bg'; d.innerHTML=`<div class="tw-sheet ${cls||''}" role="dialog" aria-modal="true" aria-label="${esc(title)}"><header><h2>${esc(title)}</h2><button class="btn sm ghost" data-act="w-close" aria-label="Close">Close</button></header><div class="tw-sheet-body">${body}</div></div>`;
   document.body.appendChild(d); S._sheet={title,cls}; const f=d.querySelector('button:not([data-act="w-close"]),input,select'); (f||d.querySelector('button')).focus(); }
-function twSheetClose(){ document.querySelectorAll('.tw-sheet-bg').forEach(e=>e.remove()); S._sheet=null; }
+function twSheetClose(){ const had=!!document.querySelector('.tw-sheet-bg'); document.querySelectorAll('.tw-sheet-bg').forEach(e=>e.remove()); S._sheet=null; if(had && twSheetOpener && twSheetOpener.isConnected){ try{ twSheetOpener.focus(); }catch(_){} } twSheetOpener=null; }
+document.addEventListener('keydown', e=>{ if(e.key!=='Tab') return; const d=document.querySelector('.tw-sheet'); if(!d) return; const f=[...d.querySelectorAll('button,input,select,a[href],textarea')].filter(x=>!x.disabled&&x.offsetParent); if(!f.length) return;
+  const first=f[0], last=f[f.length-1]; if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); } else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); } });
 function twSheetBody(html){ const b=document.querySelector('.tw-sheet-body'); if(b) b.innerHTML=html; }
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && document.querySelector('.tw-sheet-bg')){ twSheetClose(); } });
 document.addEventListener('click', e=>{ if(e.target.classList && e.target.classList.contains('tw-sheet-bg')) twSheetClose(); });
 
 /* day and flight hooks for the modules that come after this one */
 const DAY_HOOKS = [];
-(function(){ const base=rest; rest=function(st){ const r=base.apply(this, arguments); for(const h of DAY_HOOKS){ try{ h(st); }catch(_){} } return r; }; })();
 
 /* =====================================================================
    PHONE
@@ -9019,27 +9027,45 @@ const PHONE_POOL = [
 
 function phoneEligible(p){ const st=S.st, w=twW(); if(w.phone.seen[p.id]) return false; const c=crime(st);
   if(p.crime && !c.on) return false; if((p.need||[]).some(id=>!wDone(id))) return false; if((p.not||[]).some(id=>wDone(id))) return false; if(p.gate && !p.gate(wFlags())) return false; return true; }
-function phonePush(m){ const w=twW(); m.id=m.id||('x'+Date.now().toString(36)+Math.floor(Math.random()*999)); m.day=S.st.day; m.t=S.st.clock; m.read=false;
+/* a new text: the sender's display name comes from the pool; someone you've upset drops the friendly emoji */
+function phonePush(m){ const w=twW(); const p=m.pid&&PHONE_POOL.find(x=>x.id===m.pid); if(p&&p.fromName&&!m.fromName) m.fromName=p.fromName;
+  const r=S.st.rep&&S.st.rep[m.from]; if(r!=null && r<25 && typeof m.text==='string') m.text=m.text.replace(/\s*[👍😴🙏❤️😂]+/g,'');
+  m.id=m.id||('x'+Date.now().toString(36)+Math.floor(Math.random()*999)); m.day=S.st.day; m.t=S.st.clock; m.read=false;
   w.phone.msgs.unshift(m); w.phone.seen[m.pid||m.id]=1; if(w.phone.msgs.length>60) w.phone.msgs.length=60; phoneBadge(); try{ twSfx && twSfx('buzz'); }catch(_){} }
 function phoneDeliver(max){ const st=S.st; if(!st) return 0; const L=PHONE_POOL.filter(phoneEligible); let n=0;
   for(const p of L){ if(n>=max) break; phonePush({pid:p.id, from:p.from, text:p.text, opts:p.opts?p.opts.map((o,i)=>({i,t:o.t})):null}); n++; }
   if(n) save(); return n; }
-function phoneUnread(){ if(!S.st) return 0; return twW().phone.msgs.filter(m=>!m.read || (m.opts && m.ans==null)).length; }
-function phoneBadge(){ const n=phoneUnread(); document.querySelectorAll('.cb-phone b').forEach(b=>{ b.textContent=n>9?'9+':n; b.style.display=n?'':'none'; }); }
+function phoneNeedsAnswer(m){ return m.ans==null && !!(PHONE_POOL.find(p=>p.id===m.pid)||{}).opts; }
+function phoneUnread(){ if(!S.st) return 0; return twW().phone.msgs.filter(m=>!m.read || phoneNeedsAnswer(m)).length; }
+function notifUnread(){ return Math.max(0, (S.notifs||[]).length-(S.notifSeen||0)); }
+/* one badge on the phone: unread texts plus new notifications */
+function phoneBadge(){ const n=phoneUnread()+notifUnread(); document.querySelectorAll('.cb-phone b').forEach(b=>{ b.textContent=n>9?'9+':n; b.style.display=n?'':'none'; }); }
 function phoneAnswer(id, i){ const w=twW(); const m=w.phone.msgs.find(x=>x.id===id); if(!m || m.ans!=null) return; const p=PHONE_POOL.find(x=>x.id===m.pid); const o=(p&&p.opts&&p.opts[i]) || (m.optsFull&&m.optsFull[i]); if(!o) return;
-  m.ans=i; m.ansT=o.t; m.reply=o.reply; const c=crime(S.st);
+  m.ans=i; m.ansT=o.t; m.reply=o.reply; m.read=true; const c=crime(S.st);
   for(const k in (o.rep||{})) wRep(k,o.rep[k]); if(o.heat && c.on) crBump(c,'heat',o.heat); if(o.power && c.on) crBump(c,'power',o.power); if(o.flag) c.flags[o.flag]=1; if(o.cash) txn(S.st,o.cash,'Gifts & windfalls',PH_WHO[m.from]||'Phone');
   if(o.run){ try{ o.run(); }catch(_){} }
-  save(); phoneBadge(); }
-function phoneHTML(){ const w=twW(); const L=w.phone.msgs; if(!L.length) return `<p class="muted">No messages. Quiet days are allowed.</p>`;
-  return `<ol class="ph-list">${L.map(m=>{ const who=m.fromName||PH_WHO[m.from]||m.from; const p=PHONE_POOL.find(x=>x.id===m.pid); const opts=(p&&p.opts)||m.optsFull;
+  w.stats=w.stats||{atc:0,ph:0,fuel:0}; w.stats.ph++; save(); phoneBadge(); }
+/* the phone has two tabs: texts (the ones waiting for an answer first) and the game's notifications */
+function phoneHTML(tab){ tab=tab||S._phTab||'msgs'; S._phTab=tab; const w=twW(); const nN=notifUnread(), nM=phoneUnread();
+  const tabs=`<div class="ph-tabs" role="tablist"><button role="tab" aria-selected="${tab==='msgs'}" class="${tab==='msgs'?'on':''}" data-act="ph-tab" data-v="msgs">Messages${nM?` <i>${nM}</i>`:''}</button><button role="tab" aria-selected="${tab==='notifs'}" class="${tab==='notifs'?'on':''}" data-act="ph-tab" data-v="notifs">Notifications${nN?` <i>${nN}</i>`:''}</button></div>`;
+  if(tab==='notifs'){ const L=S.notifs||[]; return tabs + (L.length ? `<div class="row between ph-top"><span class="small muted">This session</span><button class="btn sm ghost" data-act="ph-clear">Clear</button></div><ul class="ph-notifs">${L.map(n=>`<li><small class="mono">${new Date(n.t).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</small><span>${esc(n.m)}</span></li>`).join('')}</ul>` : `<p class="muted">Nothing yet this session.</p>`); }
+  const all=w.phone.msgs; if(!all.length) return tabs+`<p class="muted">No messages. Quiet days are allowed.</p>`;
+  const L=all.filter(phoneNeedsAnswer).concat(all.filter(m=>!phoneNeedsAnswer(m))); const n=all.filter(m=>!m.read).length;
+  return tabs+`<div class="row between ph-top"><span class="small muted">${all.length} message${all.length>1?'s':''}${n?`, ${n} new`:''}</span>${n?`<button class="btn sm ghost" data-act="ph-allread">Mark all read</button>`:''}</div>
+  <ol class="ph-list">${L.map(m=>{ const who=m.fromName||PH_WHO[m.from]||m.from; const p=PHONE_POOL.find(x=>x.id===m.pid); const opts=(p&&p.opts)||m.optsFull;
     return `<li class="ph-msg ${m.read?'':'new'}"><div class="ph-h"><b>${esc(who)}</b><small class="mono">Day ${m.day} · ${hhmm(m.t)}</small></div><p class="ph-in">${esc(m.text)}</p>
       ${m.ans!=null?`<p class="ph-out">${esc(m.ansT)}</p>${m.reply?`<p class="ph-in">${esc(m.reply)}</p>`:''}`:
         opts?`<div class="ph-opts">${opts.map((o,i)=>`<button class="btn sm" data-act="w-ph-ans" data-id="${m.id}" data-i="${i}">${esc(o.t)}</button>`).join('')}</div>`:''}</li>`; }).join('')}</ol>`; }
-function openPhone(){ const w=twW(); twSheet('Phone', phoneHTML(), 'ph-sheet'); w.phone.msgs.forEach(m=>{ if(!m.opts) m.read=true; else if(m.ans!=null) m.read=true; }); save(); phoneBadge(); }
+function openPhone(tab){ const w=twW(); twSheet('Phone', phoneHTML(tab), 'ph-sheet'); if((tab||S._phTab)==='notifs') S.notifSeen=(S.notifs||[]).length; w.phone.msgs.forEach(m=>{ if(!phoneNeedsAnswer(m)) m.read=true; }); save(); phoneBadge(); }
+document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="ph-tab"],[data-act="ph-allread"],[data-act="ph-clear"]'); if(!b||!S.st) return; const a=b.dataset.act;
+  if(a==='ph-tab'){ if(b.dataset.v==='notifs') S.notifSeen=(S.notifs||[]).length; twSheetBody(phoneHTML(b.dataset.v)); }
+  else if(a==='ph-allread'){ twW().phone.msgs.forEach(m=>{ if(!phoneNeedsAnswer(m)) m.read=true; }); save(); twSheetBody(phoneHTML()); }
+  else if(a==='ph-clear'){ S.notifs=[]; S.notifSeen=0; twSheetBody(phoneHTML('notifs')); }
+  phoneBadge(); });
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act]'); if(!b) return; const a=b.dataset.act;
   if(a==='w-close'){ twSheetClose(); }
   else if(a==='w-phone'){ openPhone(); }
+  else if(a==='bell'){ openPhone('notifs'); }
   else if(a==='w-ph-ans'){ phoneAnswer(b.dataset.id, +b.dataset.i); const m=twW().phone.msgs.find(x=>x.id===b.dataset.id); if(m) m.read=true; save(); twSheetBody(phoneHTML()); phoneBadge(); } });
 DAY_HOOKS.push(st=>{ phoneDeliver(1); });
 
@@ -9098,15 +9124,15 @@ function contactJob(st, k){ const archs=ARCH.filter(a=>k.arch.includes(a.id) && 
 const BRIBE_DAYS=7;
 function bribeCost(code){ const h=crime(S.st).heat||0; return Math.round((2500 + h*60)/100)*100; }
 function bribeActive(code){ const b=twW().bribes[code]; return b && b.until>=S.st.day; }
-(function wrapCustoms(){ const i=AFTER_RESULT.findIndex(f=>f.name==='customs'); if(i<0) return; const base=AFTER_RESULT[i];
-  AFTER_RESULT[i]=function customs(st, job, f, res){ const c=crime(st); const o=st.last&&st.last.out;
+/* called first thing by the customs step (game-flow.js): true when your man handled it */
+function bribeCustoms(st, job, res){ const c=crime(st); const o=st.last&&st.last.out;
     if(c.on && !res.crash && (job.network||job.kind==='story') && bribeActive(job.to) && c.heat>=60){
       const b=twW().bribes[job.to]; b.used=(b.used||0)+1;
       if(Math.random()<0.1*b.used){ delete twW().bribes[job.to]; crBump(c,'heat',15); islBump(islOf(job.to),-15); if(o) o.notes.push(`Your man in customs at ${job.to} got caught taking money. He gave them your name. Heat +15.`);
-        phonePush({from:'reyes', text:`A customs officer in ${islOf(job.to)} just told us a very interesting story about you.`}); return; }
+        phonePush({from:'reyes', text:`A customs officer in ${islOf(job.to)} just told us a very interesting story about you.`}); return true; }
       if(job.network){ crBump(c,'heat',12); crBump(c,'power',1); }
-      if(o) o.notes.push(`Customs came out to the plane at ${job.to}. Your man looked at the paperwork, then at you, and waved you through.`); return; }
-    return base.apply(this, arguments); }; })();
+      if(o) o.notes.push(`Customs came out to the plane at ${job.to}. Your man looked at the paperwork, then at you, and waved you through.`); return true; }
+    return false; }
 
 /* =====================================================================
    CASTILLO'S LOAN
@@ -9194,11 +9220,8 @@ GEN_JOB_STEPS.push(function worldJobs(st, L){ if(!L) return;
 /* =====================================================================
    WHERE IT SHOWS UP
    ===================================================================== */
-/* a phone button in the top bar */
-AFTER_RENDER.push(function phoneButton(){ const hud=document.querySelector('.cb-hud'); if(!hud || !S.st || hud.querySelector('.cb-phone')) { phoneBadge(); return; }
-  const bell=hud.querySelector('.bell'); const b=document.createElement('button'); b.className='cb-ic cb-phone'; b.dataset.act='w-phone'; b.title='Phone'; b.setAttribute('aria-label','Phone');
-  b.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 18.5h3" stroke="currentColor" stroke-width="1.6"/></svg><b style="display:none"></b>`;
-  hud.insertBefore(b, bell); phoneBadge(); });
+/* the phone button is part of the top bar (chrome.js); refresh its badge after every render */
+AFTER_RENDER.push(function phoneButton(){ phoneBadge(); });
 
 /* the job board: the week's event and a contact tag on their jobs */
 AFTER_RENDER.push(function boardWorld(){ if(S.view!=='board' || !S.st) return; const main=document.querySelector('main'); if(!main || main.querySelector('.w-mkt')) return;
@@ -9206,7 +9229,7 @@ AFTER_RENDER.push(function boardWorld(){ if(S.view!=='board' || !S.st) return; c
   S.st.jobs && S.st.jobs.forEach(j=>{ if(!j.contact && !j.mkt) return; const r=main.querySelector(`.jrow [data-id="${j.id}"] .jr-t small`); if(r && !r.dataset.w){ r.dataset.w=1; r.textContent += j.contact?` · ${CONTACTS.find(k=>k.id===j.contact).n}`:` · ${j.mkt}`; } }); });
 
 /* Profile: islands and contacts */
-function islandsHTML(){ const w=twW(); const L=Object.entries(w.isl).filter(([,v])=>v!==0).sort((a,b)=>b[1]-a[1]);
+function islandsHTML(){ const w=twW(); const L=Object.entries(w.isl).filter(([,v])=>v!==0).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1])).slice(0,8).sort((a,b)=>b[1]-a[1]);
   const met=contactsMet();
   return `<section class="panel w-isl"><div class="section-title"><h2>Islands</h2></div>
     ${L.length?`<table class="w-tab"><tbody>${L.map(([k,v])=>`<tr><td>${esc(k)}</td><td><span class="w-bar"><i style="left:50%;width:${Math.abs(v)}%;${v<0?'transform:translateX(-100%);background:var(--bad)':''}"></i></span></td><td class="mono">${v>0?'+':''}${v}</td><td class="muted">${islWord(v)}</td></tr>`).join('')}</tbody></table>`:`<p class="muted">Nobody knows you anywhere yet.</p>`}
@@ -9245,6 +9268,9 @@ document.addEventListener('change', e=>{ const i=e.target.closest('.w-nick'); if
 .tw-sheet header h2{font-size:20px;margin:0}
 .tw-sheet-body{overflow:auto;padding:16px 18px 40px;flex:1}
 .ph-list{list-style:none;margin:0;padding:0}
+.ph-tabs{display:flex;border-bottom:1px solid var(--line);margin:-4px 0 10px}.ph-tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);font:600 14px var(--f-body);padding:8px 14px;cursor:pointer;margin-bottom:-1px}.ph-tabs button.on{color:var(--ink);border-bottom-color:var(--amb)}.ph-tabs i{font-style:normal;font:600 11px var(--f-mono);background:var(--amb);color:var(--amb-ink);padding:1px 5px;margin-left:4px}
+.ph-top{padding:4px 0 10px;border-bottom:1px solid var(--line)}
+.ph-notifs{list-style:none;padding:0;margin:0}.ph-notifs li{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}.ph-notifs small{color:var(--dim);flex:none;padding-top:2px}
 .ph-msg{padding:14px 0;border-bottom:1px solid var(--line)}
 .ph-msg.new .ph-h b::after{content:"";display:inline-block;width:7px;height:7px;background:var(--amb);margin-left:8px;vertical-align:middle;border-radius:50%!important}
 .ph-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}.ph-h small{color:var(--dim)}
@@ -9312,10 +9338,11 @@ function fevFire(a){ const s=S.sim, f=a.fev, cs=callsign(); f.done=true; save();
     showBeat(a,{who:'self', text}, 'fail');
     startOrder(a,{k:'landwithin', min:20, label:'Land within 20 minutes', fail2:kind, ok:{text: kind==='oil'?`The mechanic finds a cracked oil line. "Another ten minutes and you'd have been swimming."`:`On the ground with the battery at nine volts. The mechanic says it was the regulator.`}, fail:{text:`You stretched it. The engine is worse for it, and so is the bill.`}}); }
   else if(f.type==='intercept'){
-    showBeat(a,{who:'radio', text:`${callsign()}, this is the U.S. Coast Guard, off your left wing. Reduce speed and maintain your heading.|A white HC-144 is sitting off your wing.`, opts:[
+    showBeat(a,{who:'radio', timed:30, timedDefault:0, text:`${callsign()}, this is the U.S. Coast Guard, off your left wing. Reduce speed and maintain your heading.|A white HC-144 is sitting off your wing.`, opts:[
       {t:`Comply`, reply:`You pull the power back and keep it straight.`, order:{k:'slow', pct:0.8, sec:120, within:60, label:'Coast Guard: slow down and hold your heading', ok:{text:`They photograph your tail, take their time, and peel away. They'll remember you.`, heat:3}, fail:{text:`You didn't slow down. They follow you all the way to the ground.`, heat:9}}},
       {t:`Run for it`, reply:`Full power. Nose up.`, order:{k:'climb', by:3000, sec:120, label:'Climb 3,000 ft and lose them', ok:{text:`Into the cloud tops and gone. They never got your registration.`, heat:2, power:2}, fail:{text:`A turboprop full of radar beat you. They have your tail number now.`, heat:12}}}]}, 'icpt'); }
-}
+
+  if(a.order && a.order.atc){ setTimeout(()=>toast(`You: "${a.order.label.replace(/^ATC: /,'').replace(/^fly heading/,'Heading')}, ${cs}."`), 2500); } }
 
 /* fires once, in cruise, when nothing else is going on */
 SIM_TICK.push(function flightEvents(){ const a=S.st&&S.st.active; if(!a || !a.started || S.simState!=='live') return; const s=S.sim; if(!s||!s.motion||!s.position) return;
@@ -9343,7 +9370,6 @@ function approachVerdict(R){ const A=R&&R.approach; if(!A || A.length<20) return
   const speeds=low.map(x=>x[2]).sort((a,b)=>a-b); const med=speeds[Math.floor(speeds.length/2)];
   const bad=low.filter(x=> x[3]<-1100 || x[3]>-150 && x[1]>80 || Math.abs(x[2]-med)>12 ).length; const pct=Math.round(100*(1-bad/low.length));
   return {pct, stable:pct>=80, med:Math.round(med)}; }
-(function(){ const base=applyResult; applyResult=function(st){ S._lastActive=st&&st.active; return base.apply(this, arguments); }; })();
 AFTER_RESULT.push(function flightAftermath(st, job, f, res){ if(job.practice) return; const a=S._lastActive; const o=st.last&&st.last.out; if(!o) return; const c=crime(st);
   // ATC and failures
   if(a && a.order && a.order.label && /^Coast Guard|^Climb 3,000 ft and lose/.test(a.order.label)) o.notes.push(a.order.state==='ok' ? `Coast Guard intercept: ${a.order.label.startsWith('Coast')?'you complied, and they let you go':'you outran them'}.` : `Coast Guard intercept: it didn't go your way.`);
@@ -9361,9 +9387,9 @@ AFTER_RESULT.push(function flightAftermath(st, job, f, res){ if(job.practice) re
 });
 
 /* ---------- a customs search plays out as a scene ---------- */
-AFTER_RENDER.push(function customsScene(){ const st=S.st, L=st&&st.last; if(!S.showResult || !L || !L.out || document.querySelector('.cut')) return; const key=(L.job&&L.job.id)+'|cs'; st._csSeen=st._csSeen||{}; if(st._csSeen[key]) return;
+AFTER_RENDER.push(function customsScene(){ const st=S.st, L=st&&st.last; if(!S.showResult || !L || !L.out || document.querySelector('.cut')) return; const key=(L.job&&L.job.id)+'|cs'; st._csSeen=st._csSeen||{}; if(st._csSeen[key]) return; st._csDay=st._csDay||{}; const dayK=L.job.to+'|'+st.day;
   const n=L.out.notes||[]; const searched=n.find(x=>/^Customs searched/.test(x)), waved=n.find(x=>/^Customs came out to the plane/.test(x)), busted=n.find(x=>/^BUSTED/.test(x)); if(!searched && !waved && !busted) return;
-  st._csSeen[key]=1; const ks=Object.keys(st._csSeen); if(ks.length>30) delete st._csSeen[ks[0]]; save(); const to=L.job.to;
+  st._csSeen[key]=1; const ks=Object.keys(st._csSeen); if(ks.length>30) delete st._csSeen[ks[0]]; if(st._csDay[dayK]){ save(); return; } st._csDay[dayK]=1; save(); const to=L.job.to;
   const shots = busted ? [[`Ramp, ${to}`,'radio',`${callsign()}, shut down where you are. Do not taxi.`],[`Ramp, ${to}`,'self',`Four cars. Blue lights. Someone already has the cargo door open.`],[`Ramp, ${to}`,'self',`A dog finds the panel behind the seats in under a minute.`]]
     : searched ? [[`Ramp, ${to}`,'radio',`${callsign()}, customs requests you hold position after landing.`],[`Ramp, ${to}`,'self',`Two officers with a flashlight and a lot of time. One of them taps the cargo floor with his knuckles.`],[`Ramp, ${to}`,'self',`A phone call later, they're gone. Your people paid. It won't be cheap.`]]
     : [[[`Ramp, ${to}`,'self',`An officer walks out to the plane at ${to}, clipboard first.`],[`Ramp, ${to}`,'self',`He reads every line of the paperwork. Then he looks at you for a long time.`],[`Ramp, ${to}`,'self',`"Welcome back," he says, and walks away.`]],
@@ -9442,8 +9468,9 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act]'); 
 function routeStripHTML(a){ const s=S.sim; if(S.simState!=='live'||!s||!s.position) return ''; const from=AP[a.job.from], to=AP[a.job.local?a.job.from:a.job.to]; if(!from||!to) return '';
   const tot=Math.max(1,distNm(from,to)), togo=distNm({lat:s.position.lat,lon:s.position.lon},to); const f=a.job.local?0.5:clamp(1-togo/tot,0,1);
   const gs=s.motion.gs||s.motion.ias||0; const eta=gs>40?Math.round(togo/gs*60):null;
-  return `<div class="rs"><b class="mono">${esc(a.job.from)}</b><div class="rs-line"><i style="width:${(f*100).toFixed(1)}%"></i><svg class="rs-plane" style="left:${(f*100).toFixed(1)}%" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15.5 13.5 11V5.5a1.5 1.5 0 0 0-3 0V11L3 15.5v2l7.5-2.3V19l-2 1.5V22l3.5-1 3.5 1v-1.5l-2-1.5v-3.8l7.5 2.3z" transform="rotate(90 12 12)"/></svg></div><b class="mono">${esc(a.job.local?a.job.from:a.job.to)}</b><span class="mono small">${Math.round(togo)} nm${eta!=null?` · ${eta} min`:''}</span></div>`; }
-function radarHTML(){ const s=S.sim; const w=(s&&s.ext&&s.ext.weather)||null; if(S.simState!=='live'||!w) return '';
+  return `<div class="rs"><b class="mono">${esc(a.job.from)}</b><div class="rs-line"><i style="width:${(f*100).toFixed(1)}%"></i><svg class="rs-plane" style="left:${(f*100).toFixed(1)}%" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15.5 13.5 11V5.5a1.5 1.5 0 0 0-3 0V11L3 15.5v2l7.5-2.3V19l-2 1.5V22l3.5-1 3.5 1v-1.5l-2-1.5v-3.8l7.5 2.3z" transform="rotate(90 12 12)"/></svg></div><b class="mono">${esc(a.job.local?a.job.from:a.job.to)}</b><span class="mono small">${Math.round(togo)} nm${eta!=null?` · ${eta} min · lands ${hhmm((S.st.clock+eta)%1440)}`:''}</span></div>`; }
+function radarHTML(){ const s=S.sim; const w=(s&&s.ext&&s.ext.weather)||null; if(S.simState!=='live') return '';
+  if(!w) return `<div class="radar" title="Weather radar"><svg viewBox="0 0 200 200" aria-label="Weather radar"><circle cx="100" cy="100" r="90" fill="none" stroke="#323a41"/><circle cx="100" cy="100" r="60" fill="none" stroke="#22282d"/><path d="M100 92 l5 12 h-10z" fill="#e8eaec"/></svg><small class="mono">No weather data</small></div>`;
   const rain=Number(w.precip||w.rain||0), vis=Number(w.visSm||w.vis||10), wind=Number(w.windKt||w.wind||0), dir=Number(w.windDir||0); const cells=[];
   const n=Math.min(9, Math.round(rain*6 + (vis<5?3:0) + wind/10)); for(let i=0;i<n;i++){ const ang=(fevHash('r'+i+Math.floor(Date.now()/60000))*360), dist=20+fevHash('d'+i)*65, sz=6+fevHash('s'+i)*14; const x=100+Math.cos(ang*Math.PI/180)*dist, y=100+Math.sin(ang*Math.PI/180)*dist; const col=sz>15&&rain>0.5?'#ef5b4c':sz>10?'#f0a53a':'#5cc97a'; cells.push(`<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${sz.toFixed(0)}" fill="${col}" opacity=".45"/>`); }
   return `<div class="radar" title="Weather radar"><svg viewBox="0 0 200 200" aria-label="Weather radar">${cells.join('')}<circle cx="100" cy="100" r="90" fill="none" stroke="#323a41"/><circle cx="100" cy="100" r="60" fill="none" stroke="#22282d"/><circle cx="100" cy="100" r="30" fill="none" stroke="#22282d"/><line x1="100" y1="100" x2="100" y2="12" stroke="#f0a53a" stroke-opacity=".5" class="radar-sweep"/><path d="M100 92 l5 12 h-10z" fill="#e8eaec"/></svg><small class="mono">${wind?`${String(dir).padStart(3,'0')}°/${Math.round(wind)} kt`:'calm'}${rain>0.05?' · rain':''}</small></div>`; }
@@ -9619,6 +9646,7 @@ if(typeof ENDING_TITLE!=='undefined'){ ENDING_TITLE.walk='Walk Away'; ENDING_TIT
 (function(){ const s=document.createElement('style'); s.textContent=''; document.head.appendChild(s); })();
 
 /* ---------- 5. chapter cards ---------- */
+try{ document.fonts && document.fonts.load('600 84px "IBM Plex Sans Condensed"'); }catch(_){}
 function drawChapterCard(st){ const L=st.last, j=L.job, o=L.out; const cv=document.createElement('canvas'); cv.width=1200; cv.height=630; const g=cv.getContext('2d');
   g.fillStyle='#0a0c0e'; g.fillRect(0,0,1200,630); g.strokeStyle='#f0a53a'; g.lineWidth=4; g.beginPath(); g.moveTo(0,2); g.lineTo(1200,2); g.stroke();
   for(let i=0;i<9000;i++){ g.fillStyle=`rgba(255,255,255,${Math.random()*0.03})`; g.fillRect(Math.random()*1200,Math.random()*630,1,1); }
@@ -9654,7 +9682,6 @@ const HALCON_MSGS = [
   {id:'hal3', from:'unknown', fromName:'Halcón', need:['CRT'], crime:true, gate:()=>halcon().w<=halcon().l, text:`Medina gave me your routes. No hard feelings. Actually, a few.`},
 ];
 HALCON_MSGS.forEach(m=>PHONE_POOL.push(m));
-(function(){ const base=phonePush; phonePush=function(m){ const p=PHONE_POOL.find(x=>x.id===m.pid); if(p&&p.fromName&&!m.fromName) m.fromName=p.fromName; return base.apply(this, arguments); }; })();
 
 /* ---------- 7. Reyes's interview ---------- */
 function interviewQs(st){ const d=st.story.done; const qs=[];
@@ -9714,7 +9741,6 @@ PHONE_POOL.push({id:'ng1', from:'reyes', need:['CR11'], crime:true, gate:()=>!!(
 
 /* ---------- counters the other features feed ---------- */
 function twStats(){ const w=twW(); w.stats=w.stats||{atc:0,ph:0,fuel:0}; return w.stats; }
-(function(){ const base=phoneAnswer; phoneAnswer=function(){ const r=base.apply(this, arguments); twStats().ph++; return r; }; })();
 AFTER_RESULT.push(function metaCounters(st, job){ const a=S._lastActive; if(!a) return; const S2=twStats(); if(a.order && a.order.atc && a.order.state==='ok') S2.atc++; if(job.fuelLie && a.fuelChecked) S2.fuel++; });
 
 /* =====================================================================
@@ -9764,11 +9790,7 @@ SIM_TICK.push(function photoMoment(){ const a=S.st&&S.st.active; if(!a||!a.start
   const d=distNm({lat:s.position.lat,lon:s.position.lon},AP[to]); if(d>5 || (s.position.aglFt||0)>1800 || document.querySelector('.beat')) return; a.photoSaid=1; save();
   showBeat(a,{who:'self', text:`${t}|Photo moment: hit your MSFS screenshot key now.`}, 'photo'); });
 
-/* =====================================================================
-   TWITCH: tips and chapter choices
-   ===================================================================== */
-(function(){ const base=twitchMsg; twitchMsg=function(user, text){ const m=String(text).match(/^!tip\b/i); if(m && S.st){ const T=TWITCH; T.tips=T.tips||{}; const day=S.st.day; const k=user+'|'+day; if(!T.tips[k] && Object.keys(T.tips).filter(x=>x.endsWith('|'+day)).length<20){ T.tips[k]=1; txn(S.st, 50, 'Tips & bonuses', `Tip from ${user} (Twitch)`); toast(`${user} tipped you $50 from chat.`); save(); } return; }
-  return base.apply(this, arguments); }; })();
+/* (Twitch !tip lives in streamer.js) */
 /* =====================================================================
    FIRST FLIGHT (new careers)
    ===================================================================== */
@@ -9875,6 +9897,7 @@ AFTER_RESULT.push(function tourOff(st){ if(!st.tourDone){ st.tourDone=true; } })
      case board ....... after chapter 4 */
 
 function unlocked(k){ const st=S.st; if(!st) return false; const c=crime(st), w=st.w||{}, d=st.story.done||{}, n=st.flights||0;
+  if(st.ui && st.ui.allSystems && k!=='phone') return (k==='loan'||k==='bribe'||k==='caseboard') ? c.on : true;   // Settings: show every system from the start
   switch(k){
     case 'phone': return !!(w.phone && w.phone.msgs.length);
     case 'home': return n>=3;
@@ -9905,7 +9928,6 @@ AFTER_RESULT.push(function unlockAfterFlight(){ setTimeout(unlockCheck, 500); })
 
 /* take away what isn't unlocked yet */
 AFTER_RENDER.push(function focusGate(){ if(!S.st) return; const hide=(sel)=>document.querySelectorAll(sel).forEach(e=>e.remove());
-  if(!unlocked('phone')) hide('.cb-phone');
   if(!unlocked('home')) hide('.home-strip');
   if(!unlocked('caseboard')) hide('.case-board');
   if(!unlocked('islands')) hide('.w-isl');
@@ -9944,31 +9966,9 @@ html.calm-motion *,html.calm-motion *::before,html.calm-motion *::after{animatio
 html.calm-motion .confetti,html.calm-motion [class*="confetti"],html.calm-motion .cut-flash,html.calm-motion .bolt{display:none!important}
 html.calm-motion .bt-timer i{animation-duration:var(--td,20s)!important}`; document.head.appendChild(s); })();
 
-/* 3. toasts: the same message twice in a row shows once, and never more than three at a time */
-(function(){ const base=showToast; let last='', lastT=0; showToast=function(msg){ const m=String(msg||''); if(m===last && Date.now()-lastT<4000) return; last=m; lastT=Date.now();
-  const r=base.apply(this, arguments); const L=[...document.querySelectorAll('.toast')]; if(L.length>3) L.slice(0, L.length-3).forEach(e=>e.remove()); return r; }; })();
-
-/* 4. panels that open over the page keep focus inside and give it back when they close */
-(function(){ const bOpen=twSheet, bClose=twSheetClose; let opener=null;
-  twSheet=function(){ opener=document.activeElement; return bOpen.apply(this, arguments); };
-  twSheetClose=function(){ const had=!!document.querySelector('.tw-sheet-bg'); const r=bClose.apply(this, arguments); if(had && opener && opener.isConnected) try{ opener.focus(); }catch(_){} opener=null; return r; };
-  document.addEventListener('keydown', e=>{ if(e.key!=='Tab') return; const d=document.querySelector('.tw-sheet'); if(!d) return; const f=[...d.querySelectorAll('button,input,select,a[href],textarea')].filter(x=>!x.disabled&&x.offsetParent); if(!f.length) return;
-    const first=f[0], last=f[f.length-1]; if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); } else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); } }); })();
-
-/* 5. phone: mark everything read; 6. a text that needs an answer says so in the list */
-(function(){ const base=phoneHTML; phoneHTML=function(){ const h=base.apply(this, arguments); const w=twW(); const n=w.phone.msgs.filter(m=>!m.read).length;
-  return (w.phone.msgs.length?`<div class="row between ph-top"><span class="small muted">${w.phone.msgs.length} message${w.phone.msgs.length>1?'s':''}${n?`, ${n} new`:''}</span>${n?`<button class="btn sm ghost" data-act="ph-allread">Mark all read</button>`:''}</div>`:'')+h; }; })();
-document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="ph-allread"]')||!S.st) return; twW().phone.msgs.forEach(m=>{ if(!m.opts||m.ans!=null) m.read=true; }); save(); twSheetBody(phoneHTML()); phoneBadge(); });
-
 /* 7. Reyes's interview can be reopened from her text if you closed it */
 AFTER_RENDER.push(function ivReopen(){ const st=S.st; if(!st) return; const c=crime(st), w=twW(); if(!w.ivDue || c.flags.interviewed) return; document.querySelectorAll('.ph-msg').forEach(li=>{ if(li.querySelector('[data-act="iv-open"]')) return; if(/come in and talk to me today/.test(li.textContent)) li.insertAdjacentHTML('beforeend',`<div class="ph-opts"><button class="btn sm" data-act="iv-open">Go see her</button></div>`); }); });
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="iv-open"]')||!S.st) return; const w=twW(); w.iv=w.iv||{i:0,res:{truth:0,lie:0,caught:0,heat:0}}; twSheet('Interview: Agent Reyes', interviewHTML(S.st), 'wide'); });
-
-/* 8. a failure that forces you down somewhere else counts as a proper diversion, not "landed at the wrong airport" */
-(function(){ const base=applyResult; applyResult=function(st, job, f){ const a=st&&st.active; if(a && a.fev && a.fev.type==='failure' && a.order && a.order.k==='landwithin' && f && f.landedAt && f.landedAt!==job.to && !f.scen) f.scen='book'; return base.apply(this, arguments); }; })();
-
-/* 9. the Coast Guard won't wait forever: 20 seconds, then you've complied */
-(function(){ const base=fevFire; fevFire=function(a){ if(a && a.fev && a.fev.type==='intercept'){ const bs=showBeat; showBeat=function(aa,b,idx){ if(idx==="icpt" && b){ b.timed=30; b.timedDefault=0; } return bs.apply(this, arguments); }; try{ return base.apply(this, arguments); } finally { showBeat=bs; } } return base.apply(this, arguments); }; })();
 
 /* 10. daily costs on the Money page include insurance and your property income */
 (function(){ const base=dailyCosts; dailyCosts=function(st){ const L=base.apply(this, arguments); const w=st.w||{}; if(w.ins) L.push(['Hull insurance', insDaily(st)]); return L; }; })();
@@ -9998,9 +9998,6 @@ AFTER_RENDER.push(function loanChip(){ const st=S.st; const L=st&&st.w&&st.w.loa
 /* 15. this week's event also shows on the Story page */
 AFTER_RENDER.push(function mktOnStory(){ if(S.view!=='story'||!S.st) return; const e=mktNow(); const hero=document.querySelector('.story-card'); if(!e||!hero||document.querySelector('.mkt-line')) return; hero.insertAdjacentHTML('afterend', `<p class="mkt-line small"><b>This week:</b> ${esc(e.text)} <button class="btn sm ghost" data-act="nav" data-v="board">See jobs</button></p>`); });
 
-/* 16. the islands list shows the eight that matter most */
-(function(){ const base=islandsHTML; islandsHTML=function(){ const w=twW(); const all=w.isl; const keep=Object.entries(all).filter(([,v])=>v!==0).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1])).slice(0,8); w.isl=Object.fromEntries(keep); try{ return base.apply(this, arguments); } finally{ w.isl=all; } }; })();
-
 /* 17. Enter on a result screen goes to the next chapter (or back to the jobs) */
 document.addEventListener('keydown', e=>{ if(e.key!=='Enter' || !S.showResult || document.querySelector('.cut,.tw-sheet,.title-screen')) return; const t=e.target; if(t && /INPUT|TEXTAREA|SELECT|BUTTON|A/.test(t.tagName)) return;
   const b=document.querySelector('main .btn.action, main .btn.primary'); if(b){ e.preventDefault(); b.click(); } });
@@ -10019,19 +10016,6 @@ document.addEventListener('keydown', e=>{ if((e.key!=='m'&&e.key!=='M')||e.ctrlK
 /* 20. the kbd hints don't run on every tiny DOM change any more */
 /* (handled in feat-ui by the observer; throttled here) */
 (function(){ let q=false; const mo=new MutationObserver(()=>{ if(q) return; q=true; requestAnimationFrame(()=>{ q=false; document.querySelectorAll('.beat .bt-o button, .ph-opts button').forEach(b=>{ if(b.querySelector('kbd')) return; const i=[...b.parentElement.children].indexOf(b); b.insertAdjacentHTML('afterbegin',`<kbd class="kh">${i+1}</kbd>`); }); }); }); mo.observe(document.body,{childList:true,subtree:true}); })();
-
-/* 21. radar says when it has nothing to show */
-(function(){ const base=radarHTML; radarHTML=function(){ const h=base.apply(this, arguments); if(h || S.simState!=='live') return h; return `<div class="radar" title="Weather radar"><svg viewBox="0 0 200 200" aria-label="Weather radar"><circle cx="100" cy="100" r="90" fill="none" stroke="#323a41"/><circle cx="100" cy="100" r="60" fill="none" stroke="#22282d"/><path d="M100 92 l5 12 h-10z" fill="#e8eaec"/></svg><small class="mono">No weather data</small></div>`; }; })();
-
-/* 22. the route strip shows your arrival time on the game clock */
-(function(){ const base=routeStripHTML; routeStripHTML=function(a){ const h=base.apply(this, arguments); const m=h.match(/· (\d+) min<\/span>/); if(!m) return h; const arr=(S.st.clock+Number(m[1]))%1440; return h.replace(`· ${m[1]} min</span>`, `· ${m[1]} min · lands ${hhmm(arr)}</span>`); }; })();
-
-/* 23. chapter cards wait for the fonts, so the title is never drawn in a fallback font */
-(function(){ const base=drawChapterCard; let ready=false; try{ document.fonts.ready.then(()=>{ ready=true; }); }catch(_){ ready=true; } drawChapterCard=function(){ if(!ready){ try{ document.fonts.load('600 84px "IBM Plex Sans Condensed"'); }catch(_){} } return base.apply(this, arguments); }; })();
-
-/* 24. the customs scene plays at most once per airport per day */
-(function(){ const i=AFTER_RENDER.findIndex(f=>f.name==='customsScene'); if(i<0) return; const base=AFTER_RENDER[i];
-  AFTER_RENDER[i]=function customsScene(){ const st=S.st, L=st&&st.last; if(L && L.job){ const k=L.job.to+'|'+st.day; st._csDay=st._csDay||{}; const key=(L.job.id)+'|cs'; if(st._csDay[k] && !(st._csSeen&&st._csSeen[key])){ st._csSeen=st._csSeen||{}; st._csSeen[key]=1; return; } const before=st._csSeen&&st._csSeen[key]; const r=base.apply(this, arguments); if(!before && st._csSeen && st._csSeen[key]) st._csDay[k]=1; return r; } return base.apply(this, arguments); }; })();
 
 /* 25. "Flight details" on the result remembers whether you keep it open */
 document.addEventListener('toggle', e=>{ const d=e.target; if(!(d.tagName==='DETAILS') || !S.showResult || !S.st) return; if(!/Flight details/.test((d.querySelector('summary')||{}).textContent||'')) return; uiP().detailsOpen=d.open; save(); }, true);
@@ -10056,11 +10040,9 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-ts-credits]'
 /* 30. Settings: reduce motion, and a switch to show every system right away for players who want it all */
 AFTER_RENDER.push(function polishSettings(){ if(S.view!=='hangar'||S.hangarTab!=='settings'||!S.st) return; const box=document.querySelector('.ui3-set'); if(!box||box.querySelector('[data-act="ui-all"]')) return; const u=uiP();
   box.insertAdjacentHTML('beforeend', `<label class="row" style="gap:8px;margin-top:6px"><input type="checkbox" data-act="ui-all" ${u.allSystems?'checked':''}> Show every system from the start (skip the gradual introductions)</label>`); });
-document.addEventListener('change', e=>{ const i=e.target.closest('[data-act="ui-calm"],[data-act="ui-all"]'); if(!i||!S.st) return; const u=uiP(); if(i.dataset.act==='ui-calm') u.calm=i.checked; else u.allSystems=i.checked; save(); render(); });
-(function(){ const base=unlocked; unlocked=function(k){ if(S.st && uiP().allSystems && k!=='phone') return k==='loan'||k==='bribe'||k==='caseboard' ? crime(S.st).on : true; return base.apply(this, arguments); }; })();
+document.addEventListener('change', e=>{ const i=e.target.closest('[data-act="ui-all"]'); if(!i||!S.st) return; uiP().allSystems=i.checked; save(); render(); });
 
 (function(){ const s=document.createElement('style'); s.textContent=`
-.ph-top{padding:4px 0 10px;border-bottom:1px solid var(--line)}
 .nick{display:block;color:var(--amb);font-family:var(--f-body);font-size:12px;font-weight:500}.jr-ac .nick{display:inline}
 .jsort{gap:6px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}.jsort .btn.on{border-color:var(--amb)!important;color:var(--amb)!important}
 .mkt-line{margin:0!important;padding:10px 14px;border:1px solid var(--line);border-left:2px solid var(--amb);background:var(--surface)}.mkt-line .btn{margin-left:8px}
@@ -10091,24 +10073,14 @@ AFTER_RESULT.push(function halconNote(st, job){ if(!job.rival) return; const o=s
 /* 38. when a new weekly event starts, the job board says so with a toast the first time you open it */
 AFTER_RENDER.push(function mktToast(){ if(S.view!=='board'||!S.st) return; const e=mktNow(); const w=twW(); if(e && w.mktToasted!==e.until){ w.mktToasted=e.until; save(); setTimeout(()=>toast(`This week: ${e.text}`), 400); } });
 
-/* 39. a phone text from someone you've upset reads colder (trust under 25 drops the friendly emoji) */
-(function(){ const base=phonePush; phonePush=function(m){ try{ const r=S.st&&S.st.rep&&S.st.rep[m.from]; if(r!=null && r<25 && typeof m.text==='string') m.text=m.text.replace(/\s*[👍😴🙏❤️😂]+/g,''); }catch(_){} return base.apply(this, arguments); }; })();
-
 /* 40. Spanish covers the new screens too */
 Object.assign(I18N.es, {'Mark all read':'Marcar todo como leído','Go see her':'Ir a verla','Sort':'Ordenar','Departure':'Salida','Flight time':'Tiempo de vuelo','Sell':'Vender','Insured':'Asegurado','This week:':'Esta semana:','See jobs':'Ver trabajos','Texts answered':'Mensajes respondidos','ATC instructions followed':'Instrucciones de ATC seguidas','Islands that welcome you':'Islas que te reciben bien','Credits':'Créditos','Hull insurance':'Seguro de casco','Buy the policy':'Comprar la póliza','Cancel the policy':'Cancelar la póliza','Aircraft logbooks':'Bitácoras de aviones','Chapter card':'Tarjeta del capítulo','Show all':'Mostrar todo','Show fewer':'Mostrar menos','Owed to Castillo':'Le debes a Castillo','Booked':'Reservado','Next: ':'Siguiente: '});
-
-/* 41. the phone list puts texts waiting for an answer first */
-(function(){ const base=phoneHTML; phoneHTML=function(){ const w=twW(); const L=w.phone.msgs; const wait=L.filter(m=>m.ans==null && (PHONE_POOL.find(p=>p.id===m.pid)||{}).opts); if(!wait.length) return base.apply(this, arguments);
-  const rest=L.filter(m=>!wait.includes(m)); w.phone.msgs=wait.concat(rest); try{ return base.apply(this, arguments); } finally{ w.phone.msgs=L; } }; })();
 
 /* 42. the job board's sealed-destination rows say "Sealed" in the To column, never "????" */
 AFTER_RENDER.push(function sealedTo(){ if(S.view!=='board') return; document.querySelectorAll('.jr-rt b').forEach(b=>{ if(b.textContent.trim()==='????'){ b.textContent='Sealed'; b.parentElement.title='Destination in a sealed envelope'; } }); });
 
 /* 43. a market event's island gets a marker on the map */
 AFTER_RENDER.push(function mktMap(){ if(S.view!=='map'||!S.st) return; const e=mktNow(); if(!e||document.querySelector('.map-mkt')) return; const main=document.querySelector('main'); const h=main&&main.querySelector('h1,h2'); if(h) h.insertAdjacentHTML('afterend', `<p class="map-mkt small"><b>This week:</b> ${esc(e.text)}</p>`); });
-
-/* 44. ATC instructions get a short readback line, like a real pilot would answer */
-(function(){ const base=fevFire; fevFire=function(a){ const r=base.apply(this, arguments); try{ if(a.order && a.order.atc){ setTimeout(()=>toast(`You: "${a.order.label.replace(/^ATC: /,'').replace(/^fly heading/,'Heading')}, ${callsign()}."`), 2500); } }catch(_){} return r; }; })();
 
 /* 45. the beta question only asks once per chapter, even if you replay it */
 (function(){ const base=betaFeedbackHTML; betaFeedbackHTML=function(st){ const L=st.last; if(L&&L.job&&(st.feedback||[]).some(f=>f.ch===L.job.story && f.v!==TW_VERSION)) return ''; return base.apply(this, arguments); }; })();
@@ -10125,16 +10097,9 @@ document.addEventListener('keydown', e=>{ if(e.key!=='Enter') return; if(e.targe
 /* 49. buying something you can't afford explains how much more you need */
 AFTER_RENDER.push(function needMore(){ if(S.view!=='money'||!S.st) return; document.querySelectorAll('.w-props [data-act="w-buy"][disabled]').forEach(b=>{ if(b.dataset.nm) return; b.dataset.nm=1; const p=PROPS.find(x=>x.id===b.dataset.id); if(p) b.title=`You need ${money(p.price-S.st.cash)} more`; b.insertAdjacentHTML('afterend', `<span class="small muted" style="display:block">${money(p.price-S.st.cash)} short</span>`); }); });
 
-/* 50. a quick sound when a flight order is done or missed, so you hear it inside the sim */
-(function(){ const base=finishOrder; finishOrder=function(a, result){ const r=base.apply(this, arguments); try{ if(result==='ok'){ typeof chimeUp==='function' ? chimeUp() : twSfx('switch'); } else twSfx('stamp'); }catch(_){} return r; }; })();
-
 (function(){ const s=document.createElement('style'); s.textContent=`.map-mkt{padding:8px 12px;border-left:2px solid var(--amb);background:var(--surface);margin:8px 0}.sx-count{margin:0 0 8px}`; document.head.appendChild(s); })();
 /* the title screen fits a phone: the name doesn't run off the edge and the footer doesn't overlap */
 (function(){ const s=document.createElement('style'); s.textContent=`@media (max-width:600px){ .title-screen .ts-logo{gap:12px;margin-bottom:4vh}.title-screen .ts-logo svg{width:42px;height:42px}.title-screen .ts-logo h1{font-size:9vw;letter-spacing:.04em}.title-screen .ts-in{padding:0 7vw}.title-screen .ts-new,.title-screen .ts-foot{position:static!important;margin-top:18px}.title-screen .ts-menu button b{font-size:19px} }`; document.head.appendChild(s); })();
-
-/* Twitch: a chat vote never runs underneath a cutscene, and if one ends while a scene is playing, the pick waits for the scene to finish */
-(function(){ const base=endVote; endVote=function(pick){ if(pick && document.querySelector('.cut')){ const v=TWITCH.vote; if(v){ setTimeout(()=>{ if(TWITCH.vote===v) endVote(pick); }, 800); return; } } return base.apply(this, arguments); };
-  const sv=startVote; startVote=function(){ if(document.querySelector('.cut')) return; return sv.apply(this, arguments); }; })();
 
 /* a radio or cabin line never knocks a question you haven't answered yet off the screen: it waits its turn */
 (function(){ const base=showBeatBase; showBeatBase=function(a, b, idx){ const cur=document.querySelector('.beat'); if(cur && cur.querySelector('.bt-o') && b && !b.opts){ const tries=(b._wait||0)+1; if(tries<=20){ const bb=Object.assign({}, b, {_wait:tries}); setTimeout(()=>{ try{ showBeatBase(a, bb, idx); }catch(_){} }, 3000); } return null; }

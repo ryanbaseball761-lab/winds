@@ -20,7 +20,7 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cold-ag
 
 
 /* 10. notifications: a Clear button */
-document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="bell"]'); if(!b) return; setTimeout(()=>{ const p=document.querySelector('.notif-pane'); if(p && S.notifs.length && !p.querySelector('.np-clear')){ const c=document.createElement('button'); c.className='btn sm ghost np-clear'; c.textContent='Clear'; c.onclick=()=>{ S.notifs=[]; S.notifSeen=0; p.remove(); }; p.querySelector('.label').after(c); } }, 0); });
+/* (the notifications dropdown and its Clear button moved into the phone) */
 
 /* 11. Profile: story achievements are listed first */
 (function(){ const story=ACH.filter(a=>/^cx_/.test(a.id)); const rest=ACH.filter(a=>!/^cx_/.test(a.id)); ACH.splice(0, ACH.length, ...story, ...rest); })();

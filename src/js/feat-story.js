@@ -66,6 +66,7 @@ if(typeof ENDING_TITLE!=='undefined'){ ENDING_TITLE.walk='Walk Away'; ENDING_TIT
 (function(){ const s=document.createElement('style'); s.textContent=''; document.head.appendChild(s); })();
 
 /* ---------- 5. chapter cards ---------- */
+try{ document.fonts && document.fonts.load('600 84px "IBM Plex Sans Condensed"'); }catch(_){}
 function drawChapterCard(st){ const L=st.last, j=L.job, o=L.out; const cv=document.createElement('canvas'); cv.width=1200; cv.height=630; const g=cv.getContext('2d');
   g.fillStyle='#0a0c0e'; g.fillRect(0,0,1200,630); g.strokeStyle='#f0a53a'; g.lineWidth=4; g.beginPath(); g.moveTo(0,2); g.lineTo(1200,2); g.stroke();
   for(let i=0;i<9000;i++){ g.fillStyle=`rgba(255,255,255,${Math.random()*0.03})`; g.fillRect(Math.random()*1200,Math.random()*630,1,1); }
@@ -101,7 +102,6 @@ const HALCON_MSGS = [
   {id:'hal3', from:'unknown', fromName:'Halcón', need:['CRT'], crime:true, gate:()=>halcon().w<=halcon().l, text:`Medina gave me your routes. No hard feelings. Actually, a few.`},
 ];
 HALCON_MSGS.forEach(m=>PHONE_POOL.push(m));
-(function(){ const base=phonePush; phonePush=function(m){ const p=PHONE_POOL.find(x=>x.id===m.pid); if(p&&p.fromName&&!m.fromName) m.fromName=p.fromName; return base.apply(this, arguments); }; })();
 
 /* ---------- 7. Reyes's interview ---------- */
 function interviewQs(st){ const d=st.story.done; const qs=[];

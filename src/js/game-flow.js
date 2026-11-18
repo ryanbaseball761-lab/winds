@@ -185,6 +185,7 @@ const AFTER_RESULT = [
     else if(o) o.notes.unshift(`Caribe Cargo flies under ${st.company.name}'s certificate. Buy aircraft and set up routes on the Pilot → Airline page.`); },
   /* network runs add Heat; at Heat 60+ customs may search you, at 90+ you're busted */
   function customs(st, job, f, res){ const c=crime(st); const o=st.last&&st.last.out; if(!c.on || res.crash) return;
+    if(typeof bribeCustoms==='function' && bribeCustoms(st, job, res)) return;   // a paid-off officer (feat-world.js)
     if(job.network){ crBump(c,'heat',12); crBump(c,'power',1); }   // (a network run is also a 'gen' job, so the −2 above already ran: net +5)
     if((job.network || job.kind==='story') && o){
       if(c.heat>=90){ txn(st,-50000,'Payoffs',`Lawyers, ${job.to}`); crBump(c,'power',-10); c.heat=50; o.notes.push(`BUSTED at ${job.to}. Customs found the hidden compartment. The network's lawyers got you out for $50,000. Power −10, Heat down to 50.`); try{ setTimeout(()=>takeover({kind:'orders',kicker:'Busted',title:`Customs at ${job.to}`,text:`They found the hidden compartment. The network's lawyers got you out, for $50,000.`,ms:9000}),600); }catch(_){} }
@@ -221,6 +222,8 @@ const AFTER_RESULT = [
 ];
 
 function applyResult(st, job, f, res){
+  S._lastActive=st&&st.active;   // the flight as it was, for the after-flight steps (orders, failures, races)
+  { const a=st&&st.active; if(a && a.fev && a.fev.type==='failure' && a.order && a.order.k==='landwithin' && f && f.landedAt && f.landedAt!==job.to && !f.scen) f.scen='book'; }   // forced down by a failure: a proper diversion
   S.fmMenu=false; S.openJob=null;   // flight mode resets, so the next flight starts clean
   const c=crime(st);
   const was = { power:c.power, heat:c.heat, cash:st.cash, ach:new Set(Object.keys(st.ach||{})), track:st.active&&st.active.track, reputation:null };
@@ -368,5 +371,6 @@ function rest(st){
   try{ const c=crime(st); if(c.on) crBump(c,'heat',-1); }catch(_){}
   // daily costs never push cash below zero: what you can't pay costs Heat instead
   try{ if(st.cash<0 && cashBefore>=0){ const short=-st.cash; txn(st, short, 'Owed to Castillo', 'Costs you couldn\'t cover (owed to Castillo\'s people)'); const c=crime(st); if(c.on) crBump(c,'heat',2); setTimeout(()=>toast(`You couldn't cover ${money(short)} of today's costs. People talk: Heat +2.`), 600); } }catch(_){}
+  if(typeof DAY_HOOKS!=='undefined') for(const h of DAY_HOOKS){ try{ h(st); }catch(_){} }   // the systems that tick once a day (feat-world.js and later)
   return net;
 }

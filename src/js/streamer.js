@@ -19,11 +19,12 @@ function twitchConnect(){ const P=streamP(); if(!P.on || !P.channel || typeof We
   ws.onclose=()=>{ if(TWITCH.ws!==ws) return; TWITCH.state='off'; streamStatus(); if(streamP().on){ const wait=Math.min(60000, 3000*Math.pow(2,TWITCH.retry++)); setTimeout(twitchConnect, wait); } };
   ws.onerror=()=>{ try{ ws.close(); }catch(_){} }; }
 function twitchClose(){ const ws=TWITCH.ws; TWITCH.ws=null; TWITCH.state='off'; if(ws) try{ ws.close(); }catch(_){} }
-function twitchMsg(user, text){ const v=TWITCH.vote; if(!v) return; const m=text.match(/^!?(?:vote\s*)?([1-9])\b/i); if(!m) return; const i=Number(m[1])-1; if(i<0 || i>=v.n) return;
+function twitchMsg(user, text){ if(/^!tip\b/i.test(String(text)) && S.st){ const T=TWITCH; T.tips=T.tips||{}; const day=S.st.day, k=user+'|'+day; if(!T.tips[k] && Object.keys(T.tips).filter(x=>x.endsWith('|'+day)).length<20){ T.tips[k]=1; txn(S.st, 50, 'Tips & bonuses', `Tip from ${user} (Twitch)`); toast(`${user} tipped you $50 from chat.`); save(); } return; }
+  const v=TWITCH.vote; if(!v) return; const m=text.match(/^!?(?:vote\s*)?([1-9])\b/i); if(!m) return; const i=Number(m[1])-1; if(i<0 || i>=v.n) return;
   v.by[user.toLowerCase()]=i; voteRender(); }
 
 /* a vote over a set of buttons that are on screen right now */
-function startVote(key, buttons){ const P=streamP(); if(TWITCH.vote && TWITCH.vote.key===key) return; endVote(false);
+function startVote(key, buttons){ if(document.querySelector('.cut')) return; const P=streamP(); if(TWITCH.vote && TWITCH.vote.key===key) return; endVote(false);
   TWITCH.vote={ key, n:buttons.length, by:{}, t0:Date.now(), sec:P.sec, buttons };
   buttons.forEach((b,i)=>{ if(!b.querySelector('.tw-n')){ const s=document.createElement('span'); s.className='tw-n'; s.textContent=String(i+1); b.prepend(s); const c=document.createElement('span'); c.className='tw-c'; b.append(c); } });
   let bar=document.getElementById('tw-vote'); if(!bar){ bar=document.createElement('div'); bar.id='tw-vote'; bar.setAttribute('role','status'); document.body.appendChild(bar); }
@@ -32,7 +33,8 @@ function voteTally(v){ const t=Array(v.n).fill(0); Object.values(v.by).forEach(i
 function voteRender(){ const v=TWITCH.vote, bar=document.getElementById('tw-vote'); if(!v||!bar) return; const t=voteTally(v), total=t.reduce((a,b)=>a+b,0), left=Math.max(0, Math.ceil(v.sec-(Date.now()-v.t0)/1000));
   v.buttons.forEach((b,i)=>{ const c=b.querySelector('.tw-c'); if(c) c.textContent = total ? ` ${Math.round(t[i]/total*100)}%` : ''; });
   bar.innerHTML=`<b>Chat is deciding</b><span>Type ${Array.from({length:v.n},(_,i)=>`<kbd>${i+1}</kbd>`).join(' ')} in chat · ${total} vote${total===1?'':'s'}</span><i class="mono">${left}s</i>`; }
-function endVote(pick){ const v=TWITCH.vote; TWITCH.vote=null; const bar=document.getElementById('tw-vote'); if(bar) bar.remove(); if(!v) return;
+function endVote(pick){ if(pick && document.querySelector('.cut') && TWITCH.vote){ const v0=TWITCH.vote; setTimeout(()=>{ if(TWITCH.vote===v0) endVote(pick); }, 800); return; }   // the pick waits for the scene
+  const v=TWITCH.vote; TWITCH.vote=null; const bar=document.getElementById('tw-vote'); if(bar) bar.remove(); if(!v) return;
   v.buttons.forEach(b=>b.querySelectorAll('.tw-n,.tw-c').forEach(x=>x.remove()));
   if(!pick) return; const t=voteTally(v); const total=t.reduce((a,b)=>a+b,0); if(!total){ toast('No votes from chat. Your call.'); return; }
   const win=t.indexOf(Math.max(...t)); const b=v.buttons[win]; if(b && b.isConnected){ toast(`Chat picked option ${win+1} (${t[win]} of ${total} votes).`); b.click(); } }

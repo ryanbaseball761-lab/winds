@@ -50,10 +50,11 @@ function fevFire(a){ const s=S.sim, f=a.fev, cs=callsign(); f.done=true; save();
     showBeat(a,{who:'self', text}, 'fail');
     startOrder(a,{k:'landwithin', min:20, label:'Land within 20 minutes', fail2:kind, ok:{text: kind==='oil'?`The mechanic finds a cracked oil line. "Another ten minutes and you'd have been swimming."`:`On the ground with the battery at nine volts. The mechanic says it was the regulator.`}, fail:{text:`You stretched it. The engine is worse for it, and so is the bill.`}}); }
   else if(f.type==='intercept'){
-    showBeat(a,{who:'radio', text:`${callsign()}, this is the U.S. Coast Guard, off your left wing. Reduce speed and maintain your heading.|A white HC-144 is sitting off your wing.`, opts:[
+    showBeat(a,{who:'radio', timed:30, timedDefault:0, text:`${callsign()}, this is the U.S. Coast Guard, off your left wing. Reduce speed and maintain your heading.|A white HC-144 is sitting off your wing.`, opts:[
       {t:`Comply`, reply:`You pull the power back and keep it straight.`, order:{k:'slow', pct:0.8, sec:120, within:60, label:'Coast Guard: slow down and hold your heading', ok:{text:`They photograph your tail, take their time, and peel away. They'll remember you.`, heat:3}, fail:{text:`You didn't slow down. They follow you all the way to the ground.`, heat:9}}},
       {t:`Run for it`, reply:`Full power. Nose up.`, order:{k:'climb', by:3000, sec:120, label:'Climb 3,000 ft and lose them', ok:{text:`Into the cloud tops and gone. They never got your registration.`, heat:2, power:2}, fail:{text:`A turboprop full of radar beat you. They have your tail number now.`, heat:12}}}]}, 'icpt'); }
-}
+
+  if(a.order && a.order.atc){ setTimeout(()=>toast(`You: "${a.order.label.replace(/^ATC: /,'').replace(/^fly heading/,'Heading')}, ${cs}."`), 2500); } }
 
 /* fires once, in cruise, when nothing else is going on */
 SIM_TICK.push(function flightEvents(){ const a=S.st&&S.st.active; if(!a || !a.started || S.simState!=='live') return; const s=S.sim; if(!s||!s.motion||!s.position) return;
@@ -81,7 +82,6 @@ function approachVerdict(R){ const A=R&&R.approach; if(!A || A.length<20) return
   const speeds=low.map(x=>x[2]).sort((a,b)=>a-b); const med=speeds[Math.floor(speeds.length/2)];
   const bad=low.filter(x=> x[3]<-1100 || x[3]>-150 && x[1]>80 || Math.abs(x[2]-med)>12 ).length; const pct=Math.round(100*(1-bad/low.length));
   return {pct, stable:pct>=80, med:Math.round(med)}; }
-(function(){ const base=applyResult; applyResult=function(st){ S._lastActive=st&&st.active; return base.apply(this, arguments); }; })();
 AFTER_RESULT.push(function flightAftermath(st, job, f, res){ if(job.practice) return; const a=S._lastActive; const o=st.last&&st.last.out; if(!o) return; const c=crime(st);
   // ATC and failures
   if(a && a.order && a.order.label && /^Coast Guard|^Climb 3,000 ft and lose/.test(a.order.label)) o.notes.push(a.order.state==='ok' ? `Coast Guard intercept: ${a.order.label.startsWith('Coast')?'you complied, and they let you go':'you outran them'}.` : `Coast Guard intercept: it didn't go your way.`);
@@ -99,9 +99,9 @@ AFTER_RESULT.push(function flightAftermath(st, job, f, res){ if(job.practice) re
 });
 
 /* ---------- a customs search plays out as a scene ---------- */
-AFTER_RENDER.push(function customsScene(){ const st=S.st, L=st&&st.last; if(!S.showResult || !L || !L.out || document.querySelector('.cut')) return; const key=(L.job&&L.job.id)+'|cs'; st._csSeen=st._csSeen||{}; if(st._csSeen[key]) return;
+AFTER_RENDER.push(function customsScene(){ const st=S.st, L=st&&st.last; if(!S.showResult || !L || !L.out || document.querySelector('.cut')) return; const key=(L.job&&L.job.id)+'|cs'; st._csSeen=st._csSeen||{}; if(st._csSeen[key]) return; st._csDay=st._csDay||{}; const dayK=L.job.to+'|'+st.day;
   const n=L.out.notes||[]; const searched=n.find(x=>/^Customs searched/.test(x)), waved=n.find(x=>/^Customs came out to the plane/.test(x)), busted=n.find(x=>/^BUSTED/.test(x)); if(!searched && !waved && !busted) return;
-  st._csSeen[key]=1; const ks=Object.keys(st._csSeen); if(ks.length>30) delete st._csSeen[ks[0]]; save(); const to=L.job.to;
+  st._csSeen[key]=1; const ks=Object.keys(st._csSeen); if(ks.length>30) delete st._csSeen[ks[0]]; if(st._csDay[dayK]){ save(); return; } st._csDay[dayK]=1; save(); const to=L.job.to;
   const shots = busted ? [[`Ramp, ${to}`,'radio',`${callsign()}, shut down where you are. Do not taxi.`],[`Ramp, ${to}`,'self',`Four cars. Blue lights. Someone already has the cargo door open.`],[`Ramp, ${to}`,'self',`A dog finds the panel behind the seats in under a minute.`]]
     : searched ? [[`Ramp, ${to}`,'radio',`${callsign()}, customs requests you hold position after landing.`],[`Ramp, ${to}`,'self',`Two officers with a flashlight and a lot of time. One of them taps the cargo floor with his knuckles.`],[`Ramp, ${to}`,'self',`A phone call later, they're gone. Your people paid. It won't be cheap.`]]
     : [[[`Ramp, ${to}`,'self',`An officer walks out to the plane at ${to}, clipboard first.`],[`Ramp, ${to}`,'self',`He reads every line of the paperwork. Then he looks at you for a long time.`],[`Ramp, ${to}`,'self',`"Welcome back," he says, and walks away.`]],

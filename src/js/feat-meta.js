@@ -10,7 +10,6 @@
 
 /* ---------- counters the other features feed ---------- */
 function twStats(){ const w=twW(); w.stats=w.stats||{atc:0,ph:0,fuel:0}; return w.stats; }
-(function(){ const base=phoneAnswer; phoneAnswer=function(){ const r=base.apply(this, arguments); twStats().ph++; return r; }; })();
 AFTER_RESULT.push(function metaCounters(st, job){ const a=S._lastActive; if(!a) return; const S2=twStats(); if(a.order && a.order.atc && a.order.state==='ok') S2.atc++; if(job.fuelLie && a.fuelChecked) S2.fuel++; });
 
 /* =====================================================================
@@ -60,11 +59,7 @@ SIM_TICK.push(function photoMoment(){ const a=S.st&&S.st.active; if(!a||!a.start
   const d=distNm({lat:s.position.lat,lon:s.position.lon},AP[to]); if(d>5 || (s.position.aglFt||0)>1800 || document.querySelector('.beat')) return; a.photoSaid=1; save();
   showBeat(a,{who:'self', text:`${t}|Photo moment: hit your MSFS screenshot key now.`}, 'photo'); });
 
-/* =====================================================================
-   TWITCH: tips and chapter choices
-   ===================================================================== */
-(function(){ const base=twitchMsg; twitchMsg=function(user, text){ const m=String(text).match(/^!tip\b/i); if(m && S.st){ const T=TWITCH; T.tips=T.tips||{}; const day=S.st.day; const k=user+'|'+day; if(!T.tips[k] && Object.keys(T.tips).filter(x=>x.endsWith('|'+day)).length<20){ T.tips[k]=1; txn(S.st, 50, 'Tips & bonuses', `Tip from ${user} (Twitch)`); toast(`${user} tipped you $50 from chat.`); save(); } return; }
-  return base.apply(this, arguments); }; })();
+/* (Twitch !tip lives in streamer.js) */
 /* =====================================================================
    FIRST FLIGHT (new careers)
    ===================================================================== */

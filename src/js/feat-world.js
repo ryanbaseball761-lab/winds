@@ -20,16 +20,18 @@ function wSeed(n){ const st=S.st; return rng(hashStr(`${st.day}|${n||0}|${st.pil
 function islOf(code){ return (AP[code] && AP[code].isl) || code; }
 
 /* a panel that opens over the page (Esc or the button closes it) */
-function twSheet(title, body, cls){ twSheetClose(); const d=document.createElement('div'); d.className='tw-sheet-bg'; d.innerHTML=`<div class="tw-sheet ${cls||''}" role="dialog" aria-modal="true" aria-label="${esc(title)}"><header><h2>${esc(title)}</h2><button class="btn sm ghost" data-act="w-close" aria-label="Close">Close</button></header><div class="tw-sheet-body">${body}</div></div>`;
+let twSheetOpener=null;
+function twSheet(title, body, cls){ const op=document.activeElement; twSheetClose(); twSheetOpener=op; const d=document.createElement('div'); d.className='tw-sheet-bg'; d.innerHTML=`<div class="tw-sheet ${cls||''}" role="dialog" aria-modal="true" aria-label="${esc(title)}"><header><h2>${esc(title)}</h2><button class="btn sm ghost" data-act="w-close" aria-label="Close">Close</button></header><div class="tw-sheet-body">${body}</div></div>`;
   document.body.appendChild(d); S._sheet={title,cls}; const f=d.querySelector('button:not([data-act="w-close"]),input,select'); (f||d.querySelector('button')).focus(); }
-function twSheetClose(){ document.querySelectorAll('.tw-sheet-bg').forEach(e=>e.remove()); S._sheet=null; }
+function twSheetClose(){ const had=!!document.querySelector('.tw-sheet-bg'); document.querySelectorAll('.tw-sheet-bg').forEach(e=>e.remove()); S._sheet=null; if(had && twSheetOpener && twSheetOpener.isConnected){ try{ twSheetOpener.focus(); }catch(_){} } twSheetOpener=null; }
+document.addEventListener('keydown', e=>{ if(e.key!=='Tab') return; const d=document.querySelector('.tw-sheet'); if(!d) return; const f=[...d.querySelectorAll('button,input,select,a[href],textarea')].filter(x=>!x.disabled&&x.offsetParent); if(!f.length) return;
+  const first=f[0], last=f[f.length-1]; if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); } else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); } });
 function twSheetBody(html){ const b=document.querySelector('.tw-sheet-body'); if(b) b.innerHTML=html; }
 document.addEventListener('keydown', e=>{ if(e.key==='Escape' && document.querySelector('.tw-sheet-bg')){ twSheetClose(); } });
 document.addEventListener('click', e=>{ if(e.target.classList && e.target.classList.contains('tw-sheet-bg')) twSheetClose(); });
 
 /* day and flight hooks for the modules that come after this one */
 const DAY_HOOKS = [];
-(function(){ const base=rest; rest=function(st){ const r=base.apply(this, arguments); for(const h of DAY_HOOKS){ try{ h(st); }catch(_){} } return r; }; })();
 
 /* =====================================================================
    PHONE
@@ -74,27 +76,45 @@ const PHONE_POOL = [
 
 function phoneEligible(p){ const st=S.st, w=twW(); if(w.phone.seen[p.id]) return false; const c=crime(st);
   if(p.crime && !c.on) return false; if((p.need||[]).some(id=>!wDone(id))) return false; if((p.not||[]).some(id=>wDone(id))) return false; if(p.gate && !p.gate(wFlags())) return false; return true; }
-function phonePush(m){ const w=twW(); m.id=m.id||('x'+Date.now().toString(36)+Math.floor(Math.random()*999)); m.day=S.st.day; m.t=S.st.clock; m.read=false;
+/* a new text: the sender's display name comes from the pool; someone you've upset drops the friendly emoji */
+function phonePush(m){ const w=twW(); const p=m.pid&&PHONE_POOL.find(x=>x.id===m.pid); if(p&&p.fromName&&!m.fromName) m.fromName=p.fromName;
+  const r=S.st.rep&&S.st.rep[m.from]; if(r!=null && r<25 && typeof m.text==='string') m.text=m.text.replace(/\s*[👍😴🙏❤️😂]+/g,'');
+  m.id=m.id||('x'+Date.now().toString(36)+Math.floor(Math.random()*999)); m.day=S.st.day; m.t=S.st.clock; m.read=false;
   w.phone.msgs.unshift(m); w.phone.seen[m.pid||m.id]=1; if(w.phone.msgs.length>60) w.phone.msgs.length=60; phoneBadge(); try{ twSfx && twSfx('buzz'); }catch(_){} }
 function phoneDeliver(max){ const st=S.st; if(!st) return 0; const L=PHONE_POOL.filter(phoneEligible); let n=0;
   for(const p of L){ if(n>=max) break; phonePush({pid:p.id, from:p.from, text:p.text, opts:p.opts?p.opts.map((o,i)=>({i,t:o.t})):null}); n++; }
   if(n) save(); return n; }
-function phoneUnread(){ if(!S.st) return 0; return twW().phone.msgs.filter(m=>!m.read || (m.opts && m.ans==null)).length; }
-function phoneBadge(){ const n=phoneUnread(); document.querySelectorAll('.cb-phone b').forEach(b=>{ b.textContent=n>9?'9+':n; b.style.display=n?'':'none'; }); }
+function phoneNeedsAnswer(m){ return m.ans==null && !!(PHONE_POOL.find(p=>p.id===m.pid)||{}).opts; }
+function phoneUnread(){ if(!S.st) return 0; return twW().phone.msgs.filter(m=>!m.read || phoneNeedsAnswer(m)).length; }
+function notifUnread(){ return Math.max(0, (S.notifs||[]).length-(S.notifSeen||0)); }
+/* one badge on the phone: unread texts plus new notifications */
+function phoneBadge(){ const n=phoneUnread()+notifUnread(); document.querySelectorAll('.cb-phone b').forEach(b=>{ b.textContent=n>9?'9+':n; b.style.display=n?'':'none'; }); }
 function phoneAnswer(id, i){ const w=twW(); const m=w.phone.msgs.find(x=>x.id===id); if(!m || m.ans!=null) return; const p=PHONE_POOL.find(x=>x.id===m.pid); const o=(p&&p.opts&&p.opts[i]) || (m.optsFull&&m.optsFull[i]); if(!o) return;
-  m.ans=i; m.ansT=o.t; m.reply=o.reply; const c=crime(S.st);
+  m.ans=i; m.ansT=o.t; m.reply=o.reply; m.read=true; const c=crime(S.st);
   for(const k in (o.rep||{})) wRep(k,o.rep[k]); if(o.heat && c.on) crBump(c,'heat',o.heat); if(o.power && c.on) crBump(c,'power',o.power); if(o.flag) c.flags[o.flag]=1; if(o.cash) txn(S.st,o.cash,'Gifts & windfalls',PH_WHO[m.from]||'Phone');
   if(o.run){ try{ o.run(); }catch(_){} }
-  save(); phoneBadge(); }
-function phoneHTML(){ const w=twW(); const L=w.phone.msgs; if(!L.length) return `<p class="muted">No messages. Quiet days are allowed.</p>`;
-  return `<ol class="ph-list">${L.map(m=>{ const who=m.fromName||PH_WHO[m.from]||m.from; const p=PHONE_POOL.find(x=>x.id===m.pid); const opts=(p&&p.opts)||m.optsFull;
+  w.stats=w.stats||{atc:0,ph:0,fuel:0}; w.stats.ph++; save(); phoneBadge(); }
+/* the phone has two tabs: texts (the ones waiting for an answer first) and the game's notifications */
+function phoneHTML(tab){ tab=tab||S._phTab||'msgs'; S._phTab=tab; const w=twW(); const nN=notifUnread(), nM=phoneUnread();
+  const tabs=`<div class="ph-tabs" role="tablist"><button role="tab" aria-selected="${tab==='msgs'}" class="${tab==='msgs'?'on':''}" data-act="ph-tab" data-v="msgs">Messages${nM?` <i>${nM}</i>`:''}</button><button role="tab" aria-selected="${tab==='notifs'}" class="${tab==='notifs'?'on':''}" data-act="ph-tab" data-v="notifs">Notifications${nN?` <i>${nN}</i>`:''}</button></div>`;
+  if(tab==='notifs'){ const L=S.notifs||[]; return tabs + (L.length ? `<div class="row between ph-top"><span class="small muted">This session</span><button class="btn sm ghost" data-act="ph-clear">Clear</button></div><ul class="ph-notifs">${L.map(n=>`<li><small class="mono">${new Date(n.t).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</small><span>${esc(n.m)}</span></li>`).join('')}</ul>` : `<p class="muted">Nothing yet this session.</p>`); }
+  const all=w.phone.msgs; if(!all.length) return tabs+`<p class="muted">No messages. Quiet days are allowed.</p>`;
+  const L=all.filter(phoneNeedsAnswer).concat(all.filter(m=>!phoneNeedsAnswer(m))); const n=all.filter(m=>!m.read).length;
+  return tabs+`<div class="row between ph-top"><span class="small muted">${all.length} message${all.length>1?'s':''}${n?`, ${n} new`:''}</span>${n?`<button class="btn sm ghost" data-act="ph-allread">Mark all read</button>`:''}</div>
+  <ol class="ph-list">${L.map(m=>{ const who=m.fromName||PH_WHO[m.from]||m.from; const p=PHONE_POOL.find(x=>x.id===m.pid); const opts=(p&&p.opts)||m.optsFull;
     return `<li class="ph-msg ${m.read?'':'new'}"><div class="ph-h"><b>${esc(who)}</b><small class="mono">Day ${m.day} · ${hhmm(m.t)}</small></div><p class="ph-in">${esc(m.text)}</p>
       ${m.ans!=null?`<p class="ph-out">${esc(m.ansT)}</p>${m.reply?`<p class="ph-in">${esc(m.reply)}</p>`:''}`:
         opts?`<div class="ph-opts">${opts.map((o,i)=>`<button class="btn sm" data-act="w-ph-ans" data-id="${m.id}" data-i="${i}">${esc(o.t)}</button>`).join('')}</div>`:''}</li>`; }).join('')}</ol>`; }
-function openPhone(){ const w=twW(); twSheet('Phone', phoneHTML(), 'ph-sheet'); w.phone.msgs.forEach(m=>{ if(!m.opts) m.read=true; else if(m.ans!=null) m.read=true; }); save(); phoneBadge(); }
+function openPhone(tab){ const w=twW(); twSheet('Phone', phoneHTML(tab), 'ph-sheet'); if((tab||S._phTab)==='notifs') S.notifSeen=(S.notifs||[]).length; w.phone.msgs.forEach(m=>{ if(!phoneNeedsAnswer(m)) m.read=true; }); save(); phoneBadge(); }
+document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="ph-tab"],[data-act="ph-allread"],[data-act="ph-clear"]'); if(!b||!S.st) return; const a=b.dataset.act;
+  if(a==='ph-tab'){ if(b.dataset.v==='notifs') S.notifSeen=(S.notifs||[]).length; twSheetBody(phoneHTML(b.dataset.v)); }
+  else if(a==='ph-allread'){ twW().phone.msgs.forEach(m=>{ if(!phoneNeedsAnswer(m)) m.read=true; }); save(); twSheetBody(phoneHTML()); }
+  else if(a==='ph-clear'){ S.notifs=[]; S.notifSeen=0; twSheetBody(phoneHTML('notifs')); }
+  phoneBadge(); });
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act]'); if(!b) return; const a=b.dataset.act;
   if(a==='w-close'){ twSheetClose(); }
   else if(a==='w-phone'){ openPhone(); }
+  else if(a==='bell'){ openPhone('notifs'); }
   else if(a==='w-ph-ans'){ phoneAnswer(b.dataset.id, +b.dataset.i); const m=twW().phone.msgs.find(x=>x.id===b.dataset.id); if(m) m.read=true; save(); twSheetBody(phoneHTML()); phoneBadge(); } });
 DAY_HOOKS.push(st=>{ phoneDeliver(1); });
 
@@ -153,15 +173,15 @@ function contactJob(st, k){ const archs=ARCH.filter(a=>k.arch.includes(a.id) && 
 const BRIBE_DAYS=7;
 function bribeCost(code){ const h=crime(S.st).heat||0; return Math.round((2500 + h*60)/100)*100; }
 function bribeActive(code){ const b=twW().bribes[code]; return b && b.until>=S.st.day; }
-(function wrapCustoms(){ const i=AFTER_RESULT.findIndex(f=>f.name==='customs'); if(i<0) return; const base=AFTER_RESULT[i];
-  AFTER_RESULT[i]=function customs(st, job, f, res){ const c=crime(st); const o=st.last&&st.last.out;
+/* called first thing by the customs step (game-flow.js): true when your man handled it */
+function bribeCustoms(st, job, res){ const c=crime(st); const o=st.last&&st.last.out;
     if(c.on && !res.crash && (job.network||job.kind==='story') && bribeActive(job.to) && c.heat>=60){
       const b=twW().bribes[job.to]; b.used=(b.used||0)+1;
       if(Math.random()<0.1*b.used){ delete twW().bribes[job.to]; crBump(c,'heat',15); islBump(islOf(job.to),-15); if(o) o.notes.push(`Your man in customs at ${job.to} got caught taking money. He gave them your name. Heat +15.`);
-        phonePush({from:'reyes', text:`A customs officer in ${islOf(job.to)} just told us a very interesting story about you.`}); return; }
+        phonePush({from:'reyes', text:`A customs officer in ${islOf(job.to)} just told us a very interesting story about you.`}); return true; }
       if(job.network){ crBump(c,'heat',12); crBump(c,'power',1); }
-      if(o) o.notes.push(`Customs came out to the plane at ${job.to}. Your man looked at the paperwork, then at you, and waved you through.`); return; }
-    return base.apply(this, arguments); }; })();
+      if(o) o.notes.push(`Customs came out to the plane at ${job.to}. Your man looked at the paperwork, then at you, and waved you through.`); return true; }
+    return false; }
 
 /* =====================================================================
    CASTILLO'S LOAN
@@ -249,11 +269,8 @@ GEN_JOB_STEPS.push(function worldJobs(st, L){ if(!L) return;
 /* =====================================================================
    WHERE IT SHOWS UP
    ===================================================================== */
-/* a phone button in the top bar */
-AFTER_RENDER.push(function phoneButton(){ const hud=document.querySelector('.cb-hud'); if(!hud || !S.st || hud.querySelector('.cb-phone')) { phoneBadge(); return; }
-  const bell=hud.querySelector('.bell'); const b=document.createElement('button'); b.className='cb-ic cb-phone'; b.dataset.act='w-phone'; b.title='Phone'; b.setAttribute('aria-label','Phone');
-  b.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 18.5h3" stroke="currentColor" stroke-width="1.6"/></svg><b style="display:none"></b>`;
-  hud.insertBefore(b, bell); phoneBadge(); });
+/* the phone button is part of the top bar (chrome.js); refresh its badge after every render */
+AFTER_RENDER.push(function phoneButton(){ phoneBadge(); });
 
 /* the job board: the week's event and a contact tag on their jobs */
 AFTER_RENDER.push(function boardWorld(){ if(S.view!=='board' || !S.st) return; const main=document.querySelector('main'); if(!main || main.querySelector('.w-mkt')) return;
@@ -261,7 +278,7 @@ AFTER_RENDER.push(function boardWorld(){ if(S.view!=='board' || !S.st) return; c
   S.st.jobs && S.st.jobs.forEach(j=>{ if(!j.contact && !j.mkt) return; const r=main.querySelector(`.jrow [data-id="${j.id}"] .jr-t small`); if(r && !r.dataset.w){ r.dataset.w=1; r.textContent += j.contact?` · ${CONTACTS.find(k=>k.id===j.contact).n}`:` · ${j.mkt}`; } }); });
 
 /* Profile: islands and contacts */
-function islandsHTML(){ const w=twW(); const L=Object.entries(w.isl).filter(([,v])=>v!==0).sort((a,b)=>b[1]-a[1]);
+function islandsHTML(){ const w=twW(); const L=Object.entries(w.isl).filter(([,v])=>v!==0).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1])).slice(0,8).sort((a,b)=>b[1]-a[1]);
   const met=contactsMet();
   return `<section class="panel w-isl"><div class="section-title"><h2>Islands</h2></div>
     ${L.length?`<table class="w-tab"><tbody>${L.map(([k,v])=>`<tr><td>${esc(k)}</td><td><span class="w-bar"><i style="left:50%;width:${Math.abs(v)}%;${v<0?'transform:translateX(-100%);background:var(--bad)':''}"></i></span></td><td class="mono">${v>0?'+':''}${v}</td><td class="muted">${islWord(v)}</td></tr>`).join('')}</tbody></table>`:`<p class="muted">Nobody knows you anywhere yet.</p>`}
@@ -300,6 +317,9 @@ document.addEventListener('change', e=>{ const i=e.target.closest('.w-nick'); if
 .tw-sheet header h2{font-size:20px;margin:0}
 .tw-sheet-body{overflow:auto;padding:16px 18px 40px;flex:1}
 .ph-list{list-style:none;margin:0;padding:0}
+.ph-tabs{display:flex;border-bottom:1px solid var(--line);margin:-4px 0 10px}.ph-tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);font:600 14px var(--f-body);padding:8px 14px;cursor:pointer;margin-bottom:-1px}.ph-tabs button.on{color:var(--ink);border-bottom-color:var(--amb)}.ph-tabs i{font-style:normal;font:600 11px var(--f-mono);background:var(--amb);color:var(--amb-ink);padding:1px 5px;margin-left:4px}
+.ph-top{padding:4px 0 10px;border-bottom:1px solid var(--line)}
+.ph-notifs{list-style:none;padding:0;margin:0}.ph-notifs li{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px}.ph-notifs small{color:var(--dim);flex:none;padding-top:2px}
 .ph-msg{padding:14px 0;border-bottom:1px solid var(--line)}
 .ph-msg.new .ph-h b::after{content:"";display:inline-block;width:7px;height:7px;background:var(--amb);margin-left:8px;vertical-align:middle;border-radius:50%!important}
 .ph-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}.ph-h small{color:var(--dim)}

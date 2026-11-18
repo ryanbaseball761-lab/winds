@@ -16,31 +16,9 @@ html.calm-motion *,html.calm-motion *::before,html.calm-motion *::after{animatio
 html.calm-motion .confetti,html.calm-motion [class*="confetti"],html.calm-motion .cut-flash,html.calm-motion .bolt{display:none!important}
 html.calm-motion .bt-timer i{animation-duration:var(--td,20s)!important}`; document.head.appendChild(s); })();
 
-/* 3. toasts: the same message twice in a row shows once, and never more than three at a time */
-(function(){ const base=showToast; let last='', lastT=0; showToast=function(msg){ const m=String(msg||''); if(m===last && Date.now()-lastT<4000) return; last=m; lastT=Date.now();
-  const r=base.apply(this, arguments); const L=[...document.querySelectorAll('.toast')]; if(L.length>3) L.slice(0, L.length-3).forEach(e=>e.remove()); return r; }; })();
-
-/* 4. panels that open over the page keep focus inside and give it back when they close */
-(function(){ const bOpen=twSheet, bClose=twSheetClose; let opener=null;
-  twSheet=function(){ opener=document.activeElement; return bOpen.apply(this, arguments); };
-  twSheetClose=function(){ const had=!!document.querySelector('.tw-sheet-bg'); const r=bClose.apply(this, arguments); if(had && opener && opener.isConnected) try{ opener.focus(); }catch(_){} opener=null; return r; };
-  document.addEventListener('keydown', e=>{ if(e.key!=='Tab') return; const d=document.querySelector('.tw-sheet'); if(!d) return; const f=[...d.querySelectorAll('button,input,select,a[href],textarea')].filter(x=>!x.disabled&&x.offsetParent); if(!f.length) return;
-    const first=f[0], last=f[f.length-1]; if(e.shiftKey && document.activeElement===first){ e.preventDefault(); last.focus(); } else if(!e.shiftKey && document.activeElement===last){ e.preventDefault(); first.focus(); } }); })();
-
-/* 5. phone: mark everything read; 6. a text that needs an answer says so in the list */
-(function(){ const base=phoneHTML; phoneHTML=function(){ const h=base.apply(this, arguments); const w=twW(); const n=w.phone.msgs.filter(m=>!m.read).length;
-  return (w.phone.msgs.length?`<div class="row between ph-top"><span class="small muted">${w.phone.msgs.length} message${w.phone.msgs.length>1?'s':''}${n?`, ${n} new`:''}</span>${n?`<button class="btn sm ghost" data-act="ph-allread">Mark all read</button>`:''}</div>`:'')+h; }; })();
-document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="ph-allread"]')||!S.st) return; twW().phone.msgs.forEach(m=>{ if(!m.opts||m.ans!=null) m.read=true; }); save(); twSheetBody(phoneHTML()); phoneBadge(); });
-
 /* 7. Reyes's interview can be reopened from her text if you closed it */
 AFTER_RENDER.push(function ivReopen(){ const st=S.st; if(!st) return; const c=crime(st), w=twW(); if(!w.ivDue || c.flags.interviewed) return; document.querySelectorAll('.ph-msg').forEach(li=>{ if(li.querySelector('[data-act="iv-open"]')) return; if(/come in and talk to me today/.test(li.textContent)) li.insertAdjacentHTML('beforeend',`<div class="ph-opts"><button class="btn sm" data-act="iv-open">Go see her</button></div>`); }); });
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="iv-open"]')||!S.st) return; const w=twW(); w.iv=w.iv||{i:0,res:{truth:0,lie:0,caught:0,heat:0}}; twSheet('Interview: Agent Reyes', interviewHTML(S.st), 'wide'); });
-
-/* 8. a failure that forces you down somewhere else counts as a proper diversion, not "landed at the wrong airport" */
-(function(){ const base=applyResult; applyResult=function(st, job, f){ const a=st&&st.active; if(a && a.fev && a.fev.type==='failure' && a.order && a.order.k==='landwithin' && f && f.landedAt && f.landedAt!==job.to && !f.scen) f.scen='book'; return base.apply(this, arguments); }; })();
-
-/* 9. the Coast Guard won't wait forever: 20 seconds, then you've complied */
-(function(){ const base=fevFire; fevFire=function(a){ if(a && a.fev && a.fev.type==='intercept'){ const bs=showBeat; showBeat=function(aa,b,idx){ if(idx==="icpt" && b){ b.timed=30; b.timedDefault=0; } return bs.apply(this, arguments); }; try{ return base.apply(this, arguments); } finally { showBeat=bs; } } return base.apply(this, arguments); }; })();
 
 /* 10. daily costs on the Money page include insurance and your property income */
 (function(){ const base=dailyCosts; dailyCosts=function(st){ const L=base.apply(this, arguments); const w=st.w||{}; if(w.ins) L.push(['Hull insurance', insDaily(st)]); return L; }; })();
@@ -70,9 +48,6 @@ AFTER_RENDER.push(function loanChip(){ const st=S.st; const L=st&&st.w&&st.w.loa
 /* 15. this week's event also shows on the Story page */
 AFTER_RENDER.push(function mktOnStory(){ if(S.view!=='story'||!S.st) return; const e=mktNow(); const hero=document.querySelector('.story-card'); if(!e||!hero||document.querySelector('.mkt-line')) return; hero.insertAdjacentHTML('afterend', `<p class="mkt-line small"><b>This week:</b> ${esc(e.text)} <button class="btn sm ghost" data-act="nav" data-v="board">See jobs</button></p>`); });
 
-/* 16. the islands list shows the eight that matter most */
-(function(){ const base=islandsHTML; islandsHTML=function(){ const w=twW(); const all=w.isl; const keep=Object.entries(all).filter(([,v])=>v!==0).sort((a,b)=>Math.abs(b[1])-Math.abs(a[1])).slice(0,8); w.isl=Object.fromEntries(keep); try{ return base.apply(this, arguments); } finally{ w.isl=all; } }; })();
-
 /* 17. Enter on a result screen goes to the next chapter (or back to the jobs) */
 document.addEventListener('keydown', e=>{ if(e.key!=='Enter' || !S.showResult || document.querySelector('.cut,.tw-sheet,.title-screen')) return; const t=e.target; if(t && /INPUT|TEXTAREA|SELECT|BUTTON|A/.test(t.tagName)) return;
   const b=document.querySelector('main .btn.action, main .btn.primary'); if(b){ e.preventDefault(); b.click(); } });
@@ -91,19 +66,6 @@ document.addEventListener('keydown', e=>{ if((e.key!=='m'&&e.key!=='M')||e.ctrlK
 /* 20. the kbd hints don't run on every tiny DOM change any more */
 /* (handled in feat-ui by the observer; throttled here) */
 (function(){ let q=false; const mo=new MutationObserver(()=>{ if(q) return; q=true; requestAnimationFrame(()=>{ q=false; document.querySelectorAll('.beat .bt-o button, .ph-opts button').forEach(b=>{ if(b.querySelector('kbd')) return; const i=[...b.parentElement.children].indexOf(b); b.insertAdjacentHTML('afterbegin',`<kbd class="kh">${i+1}</kbd>`); }); }); }); mo.observe(document.body,{childList:true,subtree:true}); })();
-
-/* 21. radar says when it has nothing to show */
-(function(){ const base=radarHTML; radarHTML=function(){ const h=base.apply(this, arguments); if(h || S.simState!=='live') return h; return `<div class="radar" title="Weather radar"><svg viewBox="0 0 200 200" aria-label="Weather radar"><circle cx="100" cy="100" r="90" fill="none" stroke="#323a41"/><circle cx="100" cy="100" r="60" fill="none" stroke="#22282d"/><path d="M100 92 l5 12 h-10z" fill="#e8eaec"/></svg><small class="mono">No weather data</small></div>`; }; })();
-
-/* 22. the route strip shows your arrival time on the game clock */
-(function(){ const base=routeStripHTML; routeStripHTML=function(a){ const h=base.apply(this, arguments); const m=h.match(/· (\d+) min<\/span>/); if(!m) return h; const arr=(S.st.clock+Number(m[1]))%1440; return h.replace(`· ${m[1]} min</span>`, `· ${m[1]} min · lands ${hhmm(arr)}</span>`); }; })();
-
-/* 23. chapter cards wait for the fonts, so the title is never drawn in a fallback font */
-(function(){ const base=drawChapterCard; let ready=false; try{ document.fonts.ready.then(()=>{ ready=true; }); }catch(_){ ready=true; } drawChapterCard=function(){ if(!ready){ try{ document.fonts.load('600 84px "IBM Plex Sans Condensed"'); }catch(_){} } return base.apply(this, arguments); }; })();
-
-/* 24. the customs scene plays at most once per airport per day */
-(function(){ const i=AFTER_RENDER.findIndex(f=>f.name==='customsScene'); if(i<0) return; const base=AFTER_RENDER[i];
-  AFTER_RENDER[i]=function customsScene(){ const st=S.st, L=st&&st.last; if(L && L.job){ const k=L.job.to+'|'+st.day; st._csDay=st._csDay||{}; const key=(L.job.id)+'|cs'; if(st._csDay[k] && !(st._csSeen&&st._csSeen[key])){ st._csSeen=st._csSeen||{}; st._csSeen[key]=1; return; } const before=st._csSeen&&st._csSeen[key]; const r=base.apply(this, arguments); if(!before && st._csSeen && st._csSeen[key]) st._csDay[k]=1; return r; } return base.apply(this, arguments); }; })();
 
 /* 25. "Flight details" on the result remembers whether you keep it open */
 document.addEventListener('toggle', e=>{ const d=e.target; if(!(d.tagName==='DETAILS') || !S.showResult || !S.st) return; if(!/Flight details/.test((d.querySelector('summary')||{}).textContent||'')) return; uiP().detailsOpen=d.open; save(); }, true);
@@ -128,11 +90,9 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-ts-credits]'
 /* 30. Settings: reduce motion, and a switch to show every system right away for players who want it all */
 AFTER_RENDER.push(function polishSettings(){ if(S.view!=='hangar'||S.hangarTab!=='settings'||!S.st) return; const box=document.querySelector('.ui3-set'); if(!box||box.querySelector('[data-act="ui-all"]')) return; const u=uiP();
   box.insertAdjacentHTML('beforeend', `<label class="row" style="gap:8px;margin-top:6px"><input type="checkbox" data-act="ui-all" ${u.allSystems?'checked':''}> Show every system from the start (skip the gradual introductions)</label>`); });
-document.addEventListener('change', e=>{ const i=e.target.closest('[data-act="ui-calm"],[data-act="ui-all"]'); if(!i||!S.st) return; const u=uiP(); if(i.dataset.act==='ui-calm') u.calm=i.checked; else u.allSystems=i.checked; save(); render(); });
-(function(){ const base=unlocked; unlocked=function(k){ if(S.st && uiP().allSystems && k!=='phone') return k==='loan'||k==='bribe'||k==='caseboard' ? crime(S.st).on : true; return base.apply(this, arguments); }; })();
+document.addEventListener('change', e=>{ const i=e.target.closest('[data-act="ui-all"]'); if(!i||!S.st) return; uiP().allSystems=i.checked; save(); render(); });
 
 (function(){ const s=document.createElement('style'); s.textContent=`
-.ph-top{padding:4px 0 10px;border-bottom:1px solid var(--line)}
 .nick{display:block;color:var(--amb);font-family:var(--f-body);font-size:12px;font-weight:500}.jr-ac .nick{display:inline}
 .jsort{gap:6px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}.jsort .btn.on{border-color:var(--amb)!important;color:var(--amb)!important}
 .mkt-line{margin:0!important;padding:10px 14px;border:1px solid var(--line);border-left:2px solid var(--amb);background:var(--surface)}.mkt-line .btn{margin-left:8px}
@@ -163,24 +123,14 @@ AFTER_RESULT.push(function halconNote(st, job){ if(!job.rival) return; const o=s
 /* 38. when a new weekly event starts, the job board says so with a toast the first time you open it */
 AFTER_RENDER.push(function mktToast(){ if(S.view!=='board'||!S.st) return; const e=mktNow(); const w=twW(); if(e && w.mktToasted!==e.until){ w.mktToasted=e.until; save(); setTimeout(()=>toast(`This week: ${e.text}`), 400); } });
 
-/* 39. a phone text from someone you've upset reads colder (trust under 25 drops the friendly emoji) */
-(function(){ const base=phonePush; phonePush=function(m){ try{ const r=S.st&&S.st.rep&&S.st.rep[m.from]; if(r!=null && r<25 && typeof m.text==='string') m.text=m.text.replace(/\s*[👍😴🙏❤️😂]+/g,''); }catch(_){} return base.apply(this, arguments); }; })();
-
 /* 40. Spanish covers the new screens too */
 Object.assign(I18N.es, {'Mark all read':'Marcar todo como leído','Go see her':'Ir a verla','Sort':'Ordenar','Departure':'Salida','Flight time':'Tiempo de vuelo','Sell':'Vender','Insured':'Asegurado','This week:':'Esta semana:','See jobs':'Ver trabajos','Texts answered':'Mensajes respondidos','ATC instructions followed':'Instrucciones de ATC seguidas','Islands that welcome you':'Islas que te reciben bien','Credits':'Créditos','Hull insurance':'Seguro de casco','Buy the policy':'Comprar la póliza','Cancel the policy':'Cancelar la póliza','Aircraft logbooks':'Bitácoras de aviones','Chapter card':'Tarjeta del capítulo','Show all':'Mostrar todo','Show fewer':'Mostrar menos','Owed to Castillo':'Le debes a Castillo','Booked':'Reservado','Next: ':'Siguiente: '});
-
-/* 41. the phone list puts texts waiting for an answer first */
-(function(){ const base=phoneHTML; phoneHTML=function(){ const w=twW(); const L=w.phone.msgs; const wait=L.filter(m=>m.ans==null && (PHONE_POOL.find(p=>p.id===m.pid)||{}).opts); if(!wait.length) return base.apply(this, arguments);
-  const rest=L.filter(m=>!wait.includes(m)); w.phone.msgs=wait.concat(rest); try{ return base.apply(this, arguments); } finally{ w.phone.msgs=L; } }; })();
 
 /* 42. the job board's sealed-destination rows say "Sealed" in the To column, never "????" */
 AFTER_RENDER.push(function sealedTo(){ if(S.view!=='board') return; document.querySelectorAll('.jr-rt b').forEach(b=>{ if(b.textContent.trim()==='????'){ b.textContent='Sealed'; b.parentElement.title='Destination in a sealed envelope'; } }); });
 
 /* 43. a market event's island gets a marker on the map */
 AFTER_RENDER.push(function mktMap(){ if(S.view!=='map'||!S.st) return; const e=mktNow(); if(!e||document.querySelector('.map-mkt')) return; const main=document.querySelector('main'); const h=main&&main.querySelector('h1,h2'); if(h) h.insertAdjacentHTML('afterend', `<p class="map-mkt small"><b>This week:</b> ${esc(e.text)}</p>`); });
-
-/* 44. ATC instructions get a short readback line, like a real pilot would answer */
-(function(){ const base=fevFire; fevFire=function(a){ const r=base.apply(this, arguments); try{ if(a.order && a.order.atc){ setTimeout(()=>toast(`You: "${a.order.label.replace(/^ATC: /,'').replace(/^fly heading/,'Heading')}, ${callsign()}."`), 2500); } }catch(_){} return r; }; })();
 
 /* 45. the beta question only asks once per chapter, even if you replay it */
 (function(){ const base=betaFeedbackHTML; betaFeedbackHTML=function(st){ const L=st.last; if(L&&L.job&&(st.feedback||[]).some(f=>f.ch===L.job.story && f.v!==TW_VERSION)) return ''; return base.apply(this, arguments); }; })();
@@ -197,16 +147,9 @@ document.addEventListener('keydown', e=>{ if(e.key!=='Enter') return; if(e.targe
 /* 49. buying something you can't afford explains how much more you need */
 AFTER_RENDER.push(function needMore(){ if(S.view!=='money'||!S.st) return; document.querySelectorAll('.w-props [data-act="w-buy"][disabled]').forEach(b=>{ if(b.dataset.nm) return; b.dataset.nm=1; const p=PROPS.find(x=>x.id===b.dataset.id); if(p) b.title=`You need ${money(p.price-S.st.cash)} more`; b.insertAdjacentHTML('afterend', `<span class="small muted" style="display:block">${money(p.price-S.st.cash)} short</span>`); }); });
 
-/* 50. a quick sound when a flight order is done or missed, so you hear it inside the sim */
-(function(){ const base=finishOrder; finishOrder=function(a, result){ const r=base.apply(this, arguments); try{ if(result==='ok'){ typeof chimeUp==='function' ? chimeUp() : twSfx('switch'); } else twSfx('stamp'); }catch(_){} return r; }; })();
-
 (function(){ const s=document.createElement('style'); s.textContent=`.map-mkt{padding:8px 12px;border-left:2px solid var(--amb);background:var(--surface);margin:8px 0}.sx-count{margin:0 0 8px}`; document.head.appendChild(s); })();
 /* the title screen fits a phone: the name doesn't run off the edge and the footer doesn't overlap */
 (function(){ const s=document.createElement('style'); s.textContent=`@media (max-width:600px){ .title-screen .ts-logo{gap:12px;margin-bottom:4vh}.title-screen .ts-logo svg{width:42px;height:42px}.title-screen .ts-logo h1{font-size:9vw;letter-spacing:.04em}.title-screen .ts-in{padding:0 7vw}.title-screen .ts-new,.title-screen .ts-foot{position:static!important;margin-top:18px}.title-screen .ts-menu button b{font-size:19px} }`; document.head.appendChild(s); })();
-
-/* Twitch: a chat vote never runs underneath a cutscene, and if one ends while a scene is playing, the pick waits for the scene to finish */
-(function(){ const base=endVote; endVote=function(pick){ if(pick && document.querySelector('.cut')){ const v=TWITCH.vote; if(v){ setTimeout(()=>{ if(TWITCH.vote===v) endVote(pick); }, 800); return; } } return base.apply(this, arguments); };
-  const sv=startVote; startVote=function(){ if(document.querySelector('.cut')) return; return sv.apply(this, arguments); }; })();
 
 /* a radio or cabin line never knocks a question you haven't answered yet off the screen: it waits its turn */
 (function(){ const base=showBeatBase; showBeatBase=function(a, b, idx){ const cur=document.querySelector('.beat'); if(cur && cur.querySelector('.bt-o') && b && !b.opts){ const tries=(b._wait||0)+1; if(tries<=20){ const bb=Object.assign({}, b, {_wait:tries}); setTimeout(()=>{ try{ showBeatBase(a, bb, idx); }catch(_){} }, 3000); } return null; }
