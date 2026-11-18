@@ -2599,7 +2599,7 @@ function companyView(){
       <p class="tiny muted">${esc(CLS[a.cls].name)} · ${a.pax} pax · ${a.cruise} kt${canFly(st,acId)?'':' · you can\'t fly it yet, but a hired pilot can'}</p>${note?`<p class="small">${esc(note)}</p>`:''}
       <div class="row between small"><span>Condition</span><span class="mono">${cond}%</span></div><div class="meter ${cond<65?'bad':cond<80?'warn':''}"><i style="width:${cond}%"></i></div>
       <dl class="kv small"><dt>Price</dt><dd>${money(p)}${disc?` <span class="chip good">−${Math.round(disc*100)}%</span>`:''}</dd>${fair?`<dt>Fair value</dt><dd>${money(fair)}</dd>`:''}<dt>${t.dp>=100?'Cash':'Down ('+t.dp+'%)'}</dt><dd>${money(t.down)}</dd>${t.daily?`<dt>Loan</dt><dd>${money(t.daily)}/day · ${t.yrs} yrs · ${(rate*100).toFixed(1)}%</dd>`:''}</dl>
-      <button class="btn sm primary" data-act="co-buy" data-src="${id}" ${st.cash<t.down?'disabled':''}>Buy</button></div>`; };
+      ${st.cash<t.down?`<p class="small muted co-short">You need ${money(t.down-st.cash)} more for the down payment.</p>`:`<button class="btn sm primary" data-act="co-buy" data-src="${id}">Buy</button>`}</div>`; };
   const newCards = Object.keys(AC).filter(k=>acPrice(k)>0).sort((x,y)=>acPrice(x)-acPrice(y)).map(k=>buyCard(`New ${AC[k].n}`, k, acPrice(k), 100, '', 'new:'+k));
   const usedCards = listings.map(L=>buyCard(`${L.year} ${AC[L.ac].n}`, L.ac, L.price, L.cond, `${L.note} · ${L.hours.toLocaleString()} hours`, 'used:'+L.id, L.fair));
   const fleet = c.fleet.map(f=>{ const a=AC[f.ac]; const fv=fairValue(f); const eq=fv-(f.loan?f.loan.bal:0); const repair=Math.round((100-f.cond)*f.value*0.0004*(coUpg(st,'hangar')?0.6:1));
@@ -2623,7 +2623,7 @@ function companyView(){
     ${c.fleet.length?`<section><div class="section-title"><h2>Fleet</h2></div><div class="cards">${fleet}</div></section>`:''}
     ${led.length?`<section class="panel"><h3>Daily operations log</h3><div class="scroll-x" tabindex="0"><table><thead><tr><th>Day</th><th class="num">Net</th><th>Notes</th></tr></thead><tbody>${led.map(l=>`<tr><td class="mono">${l.day}</td><td class="num">${money(l.net)}</td><td class="small" style="white-space:normal">${esc(l.lines.join(' · ')||'Loans, insurance and hangar fees')}</td></tr>`).join('')}</tbody></table></div></section>`:''}
     ${coUpgHTML(st)}
-    <section class="panel stack"><div class="row between"><h2>Buy an aircraft</h2><div class="row small"><label class="row" style="gap:6px">Down payment <select id="co-dp" style="width:auto">${[10,20,30,50,100].map(v=>`<option value="${v}" ${(S.downPct||20)===v?'selected':''}>${v===100?'Pay cash':v+'%'}</option>`).join('')}</select></label><label class="row" style="gap:6px">Term <select id="co-yrs" style="width:auto">${[3,5,7,10].map(v=>`<option value="${v}" ${(S.loanYrs||5)===v?'selected':''}>${v} years</option>`).join('')}</select></label></div></div>
+    <section class="panel stack"><div class="row between"><h2>Buy an aircraft</h2><div class="row small co-terms"><label class="row" style="gap:6px">Down payment <select id="co-dp" style="width:auto">${[10,20,30,50,100].map(v=>`<option value="${v}" ${(S.downPct||20)===v?'selected':''}>${v===100?'Pay cash':v+'%'}</option>`).join('')}</select></label><label class="row" style="gap:6px">Term <select id="co-yrs" style="width:auto">${[3,5,7,10].map(v=>`<option value="${v}" ${(S.loanYrs||5)===v?'selected':''}>${v} years</option>`).join('')}</select></label></div></div>
       <p class="small muted">Your rate is ${(rate*100).toFixed(1)}% APR, based on a credit score of ${Math.round(F.score)}. Used listings refresh every 7 days (next refresh on day ${F.marketDay+7}). Buy below fair value and you start with equity.</p>
       <h3>Used aircraft</h3><div class="cards">${usedCards.join('')}</div>
       <details><summary>New from the factory</summary><div class="cards" style="margin-top:10px">${newCards.join('')}</div></details></section>
@@ -3757,7 +3757,7 @@ ALT_OUT.BO5 = st => st.story.flags.BO4==='a' ? {good:`De Vries closes his notebo
 /* Hartwell now follows The Buyout */
 (function(){ const h=STORY.find(m=>m.id==='HW1'); if(h && h.req) h.req.after='BO3'; })();
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.76.0';
+const TW_VERSION = '0.77.0';
 
 /* ---------- live map ---------- */
 function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
@@ -6837,6 +6837,7 @@ WHATS_NEW.unshift(['0.73','Polish: the dispatch weights now add up (you count, a
 WHATS_NEW.unshift(['0.74','The top bar fits every screen size (it ran off the edge on laptops once Heat and dirty cash appeared). Property income comes as a weekly bank text instead of a pile of pop-ups.']);
 WHATS_NEW.unshift(['0.75','Focus: the Story page shows what matters now (next chapter, your people, the last three chapters); the operation panels moved to Money. New systems appear one at a time, each introduced by a text. Dispatch folds away unless something needs you. The outdated welcome tour is gone. The result shows how your pay splits into base pay and bonuses. Daytime chapters end on the ramp, not a night cockpit. Customs is less predictable above 60 Heat, and above 75 only an A landing talks you out of a search.']);
 WHATS_NEW.unshift(['0.76','Polish: the Airline page says how much more you need for a facility instead of showing empty buttons, phone layouts fixed on the result screen, the story path, flight tickets and money rows, and no more failed voice-file request at startup.']);
+WHATS_NEW.unshift(['0.77','Polish: readable Buy and Start the story buttons, plain logbook columns, tidy Hours by aircraft rows, used aircraft say how much more the down payment needs, a steadier income chart, and centred achievement pop-ups.']);
 /* ===================== RECORDED VOICE LINES =====================
    Story lines can be played from recorded audio instead of computer speech. Each spoken line has a stable id made
    from its words (voKey). Put recordings in art/voice/<id>.mp3 and list the ids in art/voice/index.json:
@@ -8417,9 +8418,9 @@ function moneyView(){
   if(hist.length>=2){ const vals=hist.flatMap(h=>[h.net,h.cash]); const mn=Math.min(0,...vals), mx=Math.max(1,...vals); const x=i=>P+i*(W-2*P)/(hist.length-1), y=v=>Hh-P-(v-mn)/(mx-mn)*(Hh-2*P);
     const line=k=>hist.map((h,i)=>`${x(i).toFixed(1)},${y(h[k]).toFixed(1)}`).join(' ');
     nwChart = `<svg viewBox="0 0 ${W} ${Hh}" class="chart" role="img" aria-label="Net worth and cash over time"><line x1="${P}" x2="${W-P}" y1="${y(0)}" y2="${y(0)}" class="cg"/><text x="2" y="${y(mx)+4}" class="ct">${money(mx).replace('$','$')}</text><text x="2" y="${y(mn)+4}" class="ct">${money(mn)}</text><polyline points="${line('cash')}" class="cl2"/><polyline points="${line('net')}" class="cl"/><circle cx="${x(hist.length-1)}" cy="${y(hist[hist.length-1].net)}" r="4" class="cd gB"/></svg><div class="row small muted" style="gap:14px"><span><i class="lk sea"></i> Net worth</span><span><i class="lk sky"></i> Cash</span></div>`; }
-  const days=[]; for(let d=Math.max(1,st.day-13); d<=st.day; d++){ let inc=0,exp=0; const dd=F.days[d]||{}; for(const c in dd){ if(CAT_GROUP[c]==='in') inc+=dd[c]; else if(CAT_GROUP[c]==='op') exp+=dd[c]; } days.push({d,inc,exp}); }
+  const days=[]; for(let d=st.day-13; d<=st.day; d++){ if(d<1){ days.push({d,inc:0,exp:0,pad:1}); continue; } let inc=0,exp=0; const dd=F.days[d]||{}; for(const c in dd){ if(CAT_GROUP[c]==='in') inc+=dd[c]; else if(CAT_GROUP[c]==='op') exp+=dd[c]; } days.push({d,inc,exp}); }
   const mxb=Math.max(1,...days.map(x=>Math.max(x.inc,-x.exp))); const bw=(W-2*P)/days.length;
-  const bars = `<svg viewBox="0 0 ${W} ${Hh}" class="chart" role="img" aria-label="Daily income and expenses, last 14 days"><line x1="${P}" x2="${W-P}" y1="${Hh/2}" y2="${Hh/2}" class="cg"/>${days.map((x,i)=>{ const hi=(x.inc/mxb)*(Hh/2-P/2), he=(-x.exp/mxb)*(Hh/2-P/2); return `<rect x="${P+i*bw+bw*0.15}" y="${Hh/2-hi}" width="${bw*0.7}" height="${Math.max(0,hi)}" class="bi"><title>Day ${x.d}: income ${money(x.inc)}</title></rect><rect x="${P+i*bw+bw*0.15}" y="${Hh/2}" width="${bw*0.7}" height="${Math.max(0,he)}" class="be"><title>Day ${x.d}: expenses ${money(x.exp)}</title></rect><text x="${P+i*bw+bw/2}" y="${Hh-4}" text-anchor="middle" class="ct">${x.d}</text>`; }).join('')}</svg>`;
+  const bars = `<svg viewBox="0 0 ${W} ${Hh}" class="chart" role="img" aria-label="Daily income and expenses, last 14 days"><line x1="${P}" x2="${W-P}" y1="${Hh/2}" y2="${Hh/2}" class="cg"/>${days.map((x,i)=>{ if(x.pad) return ''; const hi=(x.inc/mxb)*(Hh/2-P/2), he=(-x.exp/mxb)*(Hh/2-P/2); return `<rect x="${P+i*bw+bw*0.15}" y="${Hh/2-hi}" width="${bw*0.7}" height="${Math.max(0,hi)}" class="bi"><title>Day ${x.d}: income ${money(x.inc)}</title></rect><rect x="${P+i*bw+bw*0.15}" y="${Hh/2}" width="${bw*0.7}" height="${Math.max(0,he)}" class="be"><title>Day ${x.d}: expenses ${money(x.exp)}</title></rect><text x="${P+i*bw+bw/2}" y="${Hh-4}" text-anchor="middle" class="ct">${x.d}</text>`; }).join('')}</svg>`;
   const bank = `<section class="panel stack"><h3>Island Trust Bank</h3>
           <dl class="kv small"><dt>Savings</dt><dd>${money(F.savings)} at 4.5% APY</dd><dt>Credit line</dt><dd>${money(F.credit)} used of ${money(lim)} at 19.9% APR</dd><dt>Credit score</dt><dd>${Math.round(F.score)} · aircraft loans at ${(loanRate(st)*100).toFixed(1)}% APR</dd>${F.bond>0?`<dt>Training bond</dt><dd>${money(F.bond)} owed to Coral Wing, repaid at 20% of each flight's pay</dd>`:''}</dl>
           <label class="field"><span>Amount</span><input id="fin-amt" type="number" min="0" step="100" value="1000"></label>
@@ -10292,7 +10293,8 @@ html.ckp .ts-logo p,html.ckp .s2-feats,html.ckp .setup2 .eyebrow{display:none}
 /* a little film grain over everything so flat surfaces don't look rendered */
 (function(){ const s=document.createElement('style'); s.textContent=`html.ckp body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:99999;opacity:.06;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}`; document.getElementById('ck-human').after(s); s.id='ck-grain'; })();
 /* ===================== POLISH (0.76) =====================
-   Small layout fixes found by the screenshot audit (tests/shots.js). Loaded after the cockpit theme so it wins. */
+   Small layout fixes found by the screenshot audit (tests/shots.js). The cockpit theme moves its own styles last, so a rule here that fights one of its rules at equal
+   specificity needs an extra "body" in the selector to win. */
 const POLISH_CSS = `
 /* job board: the "dirty · Heat +5" note under a network run's pay stays on one line */
 .jr-p small.dirty{white-space:nowrap}
@@ -10300,8 +10302,30 @@ const POLISH_CSS = `
 .fc-row>.btn{flex-shrink:0;white-space:nowrap}
 /* airline: what's missing for a facility you can't afford yet */
 .co-short{margin:2px 0 0}
+/* achievement pop-up: centred without a transform (its fade-in animation replaced the transform, so it slid in from
+   the right), and as wide as its title instead of half the screen, which wrapped titles on a phone */
+body .achpop{left:0;right:0;margin:0 auto;transform:none;width:max-content;max-width:calc(100vw - 32px);text-align:center}
+/* Buy an aircraft: Down payment and Term labels sit level with their dropdowns */
+.co-terms{flex-wrap:wrap;gap:8px 16px;align-items:center}
+.panel .co-terms>label.row{align-items:center;white-space:nowrap}
+.co-terms select{margin:0}
+/* outlined buttons in job lists, tables and cards (airline Buy, facilities): light text, not dark-on-dark */
+html.ckp .jrow button.btn.primary.sm,html.ckp .jlist button.btn.primary.sm,html.ckp .cards button.btn.primary.sm,html.ckp table button.btn.primary.sm{color:var(--ink)!important}
+/* amber action buttons outside the pages (Start the story): dark text on amber, as everywhere else */
+html.ckp[data-noir] .btn.action{color:var(--amb-ink)!important}
+/* number columns in tables (logbook, money, scorecard) are plain columns, not the amber step badges that share the class */
+html.ckp th.num,html.ckp td.num{border:0!important;border-bottom:1px solid var(--line)!important;background:none!important}
+html.ckp th.num{color:var(--muted)!important}
+html.ckp td.num{color:var(--ink)!important}
+/* profile: "Hours by aircraft" and "Landings" rows were squashed to 4px, so long aircraft names overlapped */
+html.ckp body .pf-bar{height:auto;background:none!important;grid-template-columns:minmax(0,1fr) auto;row-gap:6px;column-gap:12px;padding:4px 0}
+html.ckp body .pf-bar>span{grid-column:1;grid-row:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html.ckp body .pf-bar>b{grid-column:2;grid-row:1}
+html.ckp body .pf-bar>div{grid-column:1 / -1;grid-row:2;height:4px;border-radius:0;background:var(--line)!important}
 .sh-time li.sh-empty{display:block}
 @media (max-width:600px){
+  /* chart labels are drawn in a 600-wide viewBox; at phone width they shrank to about 6px */
+  .chart .ct{font-size:19px}
   /* result: the grade ring sits above the title on a phone, so the title gets the full width */
   .res-head{flex-wrap:wrap;gap:12px!important}
   .res-head>.stack{flex:1 1 100%!important}

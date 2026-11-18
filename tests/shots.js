@@ -21,6 +21,14 @@ const CHECK=`(()=>{ const out={overflowX:0,wide:[],clipped:[],tiny:[]}; const W=
     if(r.right>W+2 && s.position!=='fixed' && !e.closest('[style*="overflow"],.scroll-x,table,pre,.cut')) { let inScroll=false; for(let p=e.parentElement;p;p=p.parentElement){ const ps=getComputedStyle(p); if(/auto|scroll|hidden/.test(ps.overflowX)){ inScroll=true; break; } } if(!inScroll && out.wide.length<12) out.wide.push(desc(e)+' right='+Math.round(r.right)); }
     if(e.children.length===0 && (e.textContent||'').trim()){ if(e.scrollWidth>e.clientWidth+2 && /hidden|clip/.test(s.overflowX) && s.textOverflow!=='ellipsis' && out.clipped.length<12) out.clipped.push(desc(e));
       const fs=parseFloat(s.fontSize); if(fs<11 && out.tiny.length<12) out.tiny.push(desc(e)+' '+fs+'px'); } }
+  // text that barely shows against what's behind it (contrast under 2.5:1, opacity included)
+  const rgb=c=>{ const m=String(c).match(/[\\d.]+/g)||[0,0,0,0]; return [+m[0],+m[1],+m[2],m[3]==null?1:+m[3]]; };
+  const lum=([r,g,b])=>{ const f=v=>{ v/=255; return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4); }; return .2126*f(r)+.7152*f(g)+.0722*f(b); };
+  const bgOf=e=>{ for(let p=e;p&&p.nodeType===1;p=p.parentElement){ const c=rgb(getComputedStyle(p).backgroundColor); if(c[3]>0.5) return c; if(getComputedStyle(p).backgroundImage!=='none') return null; } return [7,9,11,1]; };
+  const opac=e=>{ let o=1; for(let p=e;p&&p.nodeType===1;p=p.parentElement) o*=+getComputedStyle(p).opacity; return o; };
+  out.faint=[]; for(const e of document.querySelectorAll('main button, main a, main .btn, main p, main span, main b, main small, main td, main dd, main dt, main h1, main h2, main h3, main h4, header button, header span')){ if(out.faint.length>=10||!vis(e)) continue; const own=[...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim()); if(!own) continue;
+    const bg=bgOf(e); if(!bg) continue; const s=getComputedStyle(e); const fg=rgb(s.color); const a=fg[3]*opac(e); const mix=[0,1,2].map(i=>fg[i]*a+bg[i]*(1-a)); const L1=lum(mix),L2=lum(bg); const cr=(Math.max(L1,L2)+.05)/(Math.min(L1,L2)+.05);
+    if(cr<2.5) out.faint.push(desc(e)+' contrast='+cr.toFixed(2)+(e.disabled?' (disabled)':'')); }
   out.disabled=[...document.querySelectorAll('button:disabled')].filter(vis).slice(0,6).map(e=>{ const s=getComputedStyle(e); return desc(e)+' color='+s.color+' fill='+s.webkitTextFillColor+' op='+s.opacity+' fs='+s.fontSize+' bg='+s.backgroundColor; });
   return out; })()`;
 (async()=>{ const b=await chromium.launch(); const report={};
@@ -51,6 +59,6 @@ const CHECK=`(()=>{ const out={overflowX:0,wide:[],clipped:[],tiny:[]}; const W=
   await p.evaluate(()=>{ for(let n=0;n<300 && document.querySelector('.cut');n++){ const c=document.querySelector('.cut'); const o=c.querySelectorAll('.cut-opt:not([disabled])'); if(o.length) o[0].click(); else (c.querySelector('.cut-stage')||c).click(); __tick(900); } __tick(1000); window.scrollTo(0,0); }); await shot(p,`${tag}-ch5-orders`);
   await p._ctx.close(); }
  await b.close(); fs.writeFileSync(path.join(OUT,'report.json'),JSON.stringify(report,null,1));
- const probs=Object.entries(report).filter(([k,r])=>r.errors.length||r.overflowX>2||r.wide.length||r.clipped.length);
- console.log(probs.map(([k,r])=>`${k}: ${r.errors.length?'errors='+r.errors.slice(0,2).join(' | ')+' ':''}${r.overflowX>2?'overflowX='+r.overflowX+' ':''}${r.wide.length?'wide='+r.wide.slice(0,3).join('; ')+' ':''}${r.clipped.length?'clipped='+r.clipped.slice(0,3).join('; '):''}`).join('\n')||'no layout problems');
+ const probs=Object.entries(report).filter(([k,r])=>r.errors.length||r.overflowX>2||r.wide.length||r.clipped.length||r.faint.length);
+ console.log(probs.map(([k,r])=>`${k}: ${r.errors.length?'errors='+r.errors.slice(0,2).join(' | ')+' ':''}${r.overflowX>2?'overflowX='+r.overflowX+' ':''}${r.wide.length?'wide='+r.wide.slice(0,3).join('; ')+' ':''}${r.clipped.length?'clipped='+r.clipped.slice(0,3).join('; ')+' ':''}${r.faint.length?'faint='+r.faint.slice(0,4).join('; '):''}`).join('\n')||'no layout problems');
  console.log(Object.keys(report).length+' screens captured in '+OUT); })();

@@ -83,6 +83,10 @@
 - Airline: a facility or new base you can't afford yet says how much more you need, instead of an empty button.
 - Phones: the result screen puts the grade above the flight title, the story path on the Pilot page is a tidy list, the flight ticket's details line up in two columns, and Money-page buttons keep their label on one line.
 - Job board: a network run's "dirty · Heat +5" note no longer breaks over two lines.
+- Readable buttons: Buy on the job board and in lists, and Start the story, no longer blend into their background.
+- Logbook number columns are plain text again, and the profile's Hours by aircraft rows put each plane's name above its bar.
+- Airline: a used aircraft you can't afford says how much more the down payment needs, and the loan pickers line up with their labels.
+- Money: the income chart always shows 14 days, its labels are readable on a phone, and achievement pop-ups sit centred at full width.
 
 ## Under the hood
 - **Saves repair themselves.** A save with missing or broken parts (no story, an unknown airport, a missing cash value, a flight to an airport that no longer exists) is filled in when it loads instead of crashing pages. A save that can't be read at all is kept aside and the newest backup loads.
