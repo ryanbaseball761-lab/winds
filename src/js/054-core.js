@@ -6,7 +6,6 @@ function wrapDetails(nodes, title, cls){ if(!nodes.length) return null; const d=
 /* ---- navigation: fewer tabs ---- */
 
 /* ---- job board ---- */
-const CHIP_KEEP = /urgent|vip|sealed|bonus|owner|ifr|night|instructor|festival|storm|hurricane|2×|double/i;
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="all-jobs"]')){ S.allJobs=true; S.keepScroll=true; render(); } });
 function go(v){ trail('page', v); if(v!=='board') S.allJobs=false; return goBase.apply(this, arguments); }
 

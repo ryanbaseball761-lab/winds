@@ -19,6 +19,4 @@ function urgentOn(){ try{ return localStorage.getItem('tw.urgent')==='on'; }catc
   ARC_META['Island Tales'] = {n:14, main:false, tag:`Short stories from around the islands: Rosa's cakes, Dez's cricket, Calloway's comeback, the hurricane relief flights and old passengers returning.`, col:'#2a68aa'};
 })();
 /* in a collection like Island Tales, the "next" chapter is the first one you can actually fly */
-function arcState(st, arc, availSet){ const ch=arcChapters(arc); const done=ch.filter(m=>st.story.done[m.id]).length; const open=ch.filter(m=>!st.story.done[m.id]);
-  const next = open.find(m=>chapterStatus(st,m,availSet).k!=='locked') || open[0] || null;
-  return {arc, ch, done, total:ch.length, next, status: next ? chapterStatus(st,next,availSet) : {k:'complete'}, meta:arcMeta(arc)}; }
+

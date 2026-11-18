@@ -1585,7 +1585,7 @@ function hasAllButTarget(st,k,rid){ return AC[k].req.every(r=>r===rid || st.rati
 
 /* ---------- Company ---------- */
 function fleetTypes(st){ if(!st.company) return []; return [...new Set(st.company.fleet.filter(f=>!f.hired).map(f=>f.ac))].filter(k=>canFly(st,k)); }
-function loanTerms(price){ const down = Math.round(price*0.15); const principal = price-down; const total = principal*1.3; return { down, principal, daily: Math.round(total/1825), total:Math.round(total) }; }
+
 
 function regFor(st){ const c=st.company; const pre = {SXM:'PJ-',MAF:'F-O',BLM:'F-O',AIA:'VP-A',ATG:'V2-',KNA:'V4-',BRB:'8P-',LCA:'J6-',VCT:'J8-',GRD:'J3-',TTO:'9Y-',ABW:'P4-',CUW:'PJ-',BES:'PJ-',MSR:'VP-M',GLP:'F-O',MTQ:'F-O',DMA:'J7-',VGB:'VP-L',BHS:'C6-',TCA:'VQ-T',CYM:'VP-C',JAM:'6Y-',DOM:'HI'}[AP[c.base].c]||'N';
   const n = c.fleet.length+1; const letters = (c.name.replace(/[^A-Za-z]/g,'').toUpperCase()+'XXX').slice(0,2);
@@ -2367,16 +2367,7 @@ function boot(){
 
 /* ---------- extras UI ---------- */
 function stars(n){ return `<span class="on">${'★'.repeat(n)}</span><span class="off">${'★'.repeat(5-n)}</span>`; }
-function dispatchCardBase(st){
-  if(!st.brief || st.brief.day!==st.day){ newDayBrief(st); save(); }
-  const b=st.brief; const storm=stormActive(st); const fest=festivalOn(st);
-  return `<section class="panel dispatch"><div class="row between"><p class="label">Morning dispatch · Day ${st.day} · ${dateTxt(st.day)}</p><span class="small muted">Coral Wing ops board</span></div>
-    <h3 style="margin-top:6px;font-size:18px">${esc(b.headline)}</h3>
-    ${storm?`<p class="small" style="color:var(--bad);margin-top:4px">Hurricane ${esc(storm.name)}, Category ${storm.cat}: ${esc(REGIONS[storm.region].name)} through day ${storm.until}. ${hasRating(st,'IR')?'Instrument conditions on routes there, and relief flights pay 30% more.':'Flights there need an Instrument Rating until it passes.'}</p>`:''}
-    ${fest.length?`<p class="small" style="margin-top:4px"><b>${esc(fest.map(f=>f.n).join(', '))}</b> is on. Charters to ${esc(fest.map(f=>AP[f.ap].isl).join(', '))} pay 40% more.</p>`:''}
-    <div class="msgs">${b.msgs.map(m=>`<div class="msg">${avatar(m.from)}<div style="min-width:0"><b class="small">${esc(CAST[m.from].n.replace(/ ".*?"/,''))}</b><p class="small">${esc(m.text)}</p></div></div>`).join('')}</div>
-    <p class="small tip"><b>Pilot tip:</b> ${esc(b.tip)}</p></section>`;
-}
+
 function pilotExtras(st){
   const r=rankOf(st); const got=ACH.filter(a=>st.ach&&st.ach[a.id]);
   const last=st.log.slice(0,20).reverse(); const W=600,H=150,P=24;
@@ -2639,17 +2630,7 @@ function coUpgHTML(st){ const c=st.company; const owned=CO_UPG.filter(u=>coUpg(s
       <div class="cell stack" style="gap:6px"><h4>Open a new base</h4><p class="small">Station aircraft at another hub and fly routes from there. Bigger hubs have more travelers.</p><p class="tiny muted">${money(BASE_COST)} · then ${money(BASE_DAY)}/day${bases.length?` · yours: ${bases.join(', ')}`:''}</p>${free.length?`<div class="row" style="gap:6px"><select id="co-newbase" style="width:auto" aria-label="New base">${free.map(k=>`<option value="${k}">${k} · ${esc(AP[k].isl)}</option>`).join('')}</select>${st.cash<BASE_COST?'':`<button class="btn sm primary" data-act="co-base">Open · ${money(BASE_COST)}</button>`}</div>${st.cash<BASE_COST?`<p class="small muted co-short">You need ${money(BASE_COST-st.cash)} more to open one.</p>`:''}`:'<p class="small muted">You have a base at every hub.</p>'}</div></div></section>`; }
 
 /* ---------- goals panel ---------- */
-function goalsHTML(st){
-  const g=[];
-  const nextR = RATING_ORDER.find(r=>r!=='CO' && !st.ratings[r] && (RATINGS[r].req.after||[]).every(x=>st.ratings[x]));
-  if(nextR){ const R=RATINGS[nextR]; const ch=checkrideReady(st,nextR); g.push(ch.ok?`<b>${esc(R.n)}</b> checkride is ready (${money(feeFor(st,nextR))}).`:`<b>${esc(R.n)}</b>: ${esc((ch.miss||[]).filter(x=>!/first$/.test(x))[0]||'keep flying')}.`); }
-  const locked = STORY.filter(m=>!st.story.done[m.id] && !storyAvailable(st).includes(m) && (!m.req.after || st.story.done[m.req.after]));
-  if(locked.length){ const m=locked[0]; const need=[...(m.req.ratings||[]).filter(r=>!st.ratings[r]).map(r=>RATINGS[r].n), ...(m.req.hours&&st.minutes/60<m.req.hours?[`${m.req.hours} hours`]:[])]; if(need.length) g.push(`A new chapter unlocks with: ${esc(need.join(', '))}.`); }
-  if(!st.company){ g.push(st.ratings.COMM ? `Own company: ${money(Math.max(0,150000-st.cash))} and ${Math.max(0,25-st.minutes/60).toFixed(1)} hours to go.` : `Earn your Commercial license to start building toward your own company.`); }
-  const cs=Object.keys(st.celebs||{}).length; g.push(`Celebrity guestbook: ${cs} of ${CELEB_ORDER.length} met.`);
-  const ach = ACH.filter(a=>!(st.ach&&st.ach[a.id])).slice(0,1); if(ach.length) g.push(`Next achievement idea: ${esc(ach[0].n)} (${esc(ach[0].d.toLowerCase().replace(/\.$/,''))}).`);
-  return `<div class="panel stack"><h3>Goals</h3><ul class="tight small">${g.map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
-}
+
 
 /* ---------- events ---------- */
 document.addEventListener('click', e=>{
@@ -2714,8 +2695,8 @@ ACH.push(
 const LOGO = `<svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".5"/><path d="M5 19c4-1 7-1 11 0s7 1 11 0" fill="none" stroke="var(--coral)" stroke-width="2" stroke-linecap="round"/><path d="M16 6l2.2 7.5 7.3 1.8-7.3 1.6L16 24l-2.2-7.1-7.3-1.6 7.3-1.8z" fill="currentColor"/></svg>`;
 
 /* ---------- scenery ---------- */
-function islandsSVG(cls){ return `<svg class="${cls||'isles'}" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 120V92c60-4 90-30 150-34s95 26 150 30 70-16 120-18 70 20 110 20h670v30z" class="isle1"/><path d="M640 120V96c40-2 70-40 120-44s80 30 130 34 120-8 170-14 90 14 140 18v30z" class="isle2"/><path d="M0 120v-10c200 6 400-6 600 0s400 6 600 0v10z" class="sea"/></svg>`; }
-function skyClass(min){ const t=timeLabel(min); return t==='Night'?'night':t==='Dawn'?'dawn':t==='Sunset'?'sunset':'day'; }
+
+
 
 /* ---------- start screen ---------- */
 function setupView(){
@@ -2747,39 +2728,13 @@ function setupView(){
     </section></main>`;
 }
 
-/* ---------- welcome tour ---------- */
-const TOUR = [
-  {t:`Welcome to Coral Wing`, d:`You're a trainee pilot in St. Martin. Mari, the owner, will hand you work. Dez, the dispatcher, will hand you nicknames. Your first story chapter is waiting at the top of the job board.`},
-  {t:`Pick a job, read the briefing`, d:`Accept a job and the Flight tab becomes your boarding pass: the story, the route, the weather to set in MSFS, the load sheet and the fuel plan. There's also a one-click flight plan for SimBrief.`},
-  {t:`Fly it with the Cockpit tab`, d:`Open the Cockpit tab on your phone or second screen. It walks you through each phase of the flight with your speeds, runway and winds. Some flights carry sealed envelopes: open them when they say.`},
-  {t:`Log the landing honestly`, d:`After shutdown, press "Log the landing". Your grade sets your pay, your reputation and how the story turns. Get the free MSFS Bridge (Hangar tab) and the debrief fills itself in.`}
-];
-function tourBase(st){
-  /* retired in 0.75: the setup wizard and the story itself teach the game now; the old tour described screens that no longer exist */
-  return '';
-  if(!st || st.tourDone) return ''; const i=S.tourStep||0; const s=TOUR[i];
-  return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="tour-t"><div class="tour panel">
-    <div class="tour-dots">${TOUR.map((_,k)=>`<span class="${k===i?'on':''}"></span>`).join('')}</div>
-    <p class="label">Step ${i+1} of ${TOUR.length}</p><h2 id="tour-t">${s.t}</h2><p class="brief">${s.d}</p>
-    <div class="row between" style="margin-top:8px"><button class="btn ghost" data-act="tour-skip">Skip</button><div class="row">${i>0?`<button class="btn" data-act="tour-back">Back</button>`:''}<button class="btn action" data-act="tour-next">${i===TOUR.length-1?`Let's fly`:'Next'}</button></div></div>
-  </div></div>`;
-}
-/* top of the Flight page when no flight is booked: the setup screen for a new career, or the tour */
+/* top of the Flight page when no flight is booked: the setup screen for a new career (the old tour was retired in 0.75) */
 function tourHTML(st){ const wiz = st && ((!st.tourDone && (st.flights||0)===0) || S.wizOpen);
-  return wiz ? wizardHTML(st) : tourBase(st); }
+  return wiz ? wizardHTML(st) : ''; }
 
 
 /* ---------- today hero on the board ---------- */
-function todayHeroBase(st){
-  const ap=AP[st.loc]; const wx=genLocWx(st); const r=rankOf(st); const sky=skyClass(st.clock);
-  return `<section class="today sky-${sky}">
-    <div class="sun" aria-hidden="true"></div>
-    ${islandsSVG()}
-    <div class="today-in">
-      <div style="min-width:0"><p class="eyebrow">${esc(COUNTRY[ap.c])} · ${esc(st.loc)}</p><h1>${esc(ap.isl)}</h1><p class="today-sub">${esc(ap.n)} · ${dateTxt(st.day)} · ${seasonName(st)}</p></div>
-      <div class="today-right"><div class="clock mono">${hhmm(st.clock)}</div><p class="today-sub">${esc(wx.n)} · ${wx.t} °C · wind ${pad3(wx.dir)}° ${wx.spd}${wx.gust?'G'+wx.gust:''} kt</p><p class="today-sub"><span class="pill">${esc(r.name)}</span> <span class="pill">${money(st.cash)}</span></p></div>
-    </div></section>`;
-}
+
 
 /* ---------- boarding pass ---------- */
 const ICAO_TYPE = {C152:'C152',C172:'C172',DA40:'DA40',G36:'BE36',BEAVER:'DHC2',GOOSE:'G21',PC6:'PC6T',C208:'C208',DA62:'DA62',DHC6:'DHC6',PC12:'PC12',TBM:'TBM9',KA350:'B350',DC3:'DC3',SF50:'SF50',CJ4:'C25C',A320:'A20N',B38M:'B38M',A321:'A21N',A333:'A333',B748:'B748'};
@@ -2853,9 +2808,7 @@ function cockpitView(){ let h=cockpitBase().replace('<main class="wrap stack fad
 /* ---------- events ---------- */
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act]'); if(!b || !S.st) return; const st=S.st; const act=b.dataset.act;
-  if(act==='tour-next'){ if((S.tourStep||0)>=TOUR.length-1){ st.tourDone=true; save(); } else S.tourStep=(S.tourStep||0)+1; render(); }
-  else if(act==='tour-back'){ S.tourStep=Math.max(0,(S.tourStep||0)-1); render(); }
-  else if(act==='tour-skip'){ st.tourDone=true; save(); render(); }
+  if(act==='tour-skip'){ st.tourDone=true; save(); render(); }
   else if(act==='ck-item' && st.active){ const ck=st.active.ck; ck.done[b.dataset.k]=!ck.done[b.dataset.k]; if(b.dataset.k.startsWith('4-') && !st.active.started){ st.active.started=Date.now(); simArm(); } save(); S.keepScroll=true; render(); }
   else if(act==='ck-phase' && st.active){ st.active.ck.p=Number(b.dataset.i); save(); S.keepScroll=true; render(); }
   else if(act==='ck-next' && st.active){ const ck=st.active.ck; ck.p=ck.p+1; if(ck.p===4 && !st.active.started){ st.active.started=Date.now(); simArm(); toast('Block timer started.'); } save(); render(); window.scrollTo(0,0); }
@@ -3204,12 +3157,7 @@ function makeJobFor(st, acId){
   } finally { eligibleAircraft = orig; }
   if(job) job.loaded = true; return job;
 }
-function loadedBanner(st){
-  const L = loadedAircraft(); if(!L.title) return '';
-  if(!L.id) return `<div class="notice row between" style="gap:10px"><span><b>MSFS has “${esc(L.title)}” loaded.</b> It isn't in your career yet.</span><button class="btn sm primary" data-act="nav" data-v="hangar">Add it in the Hangar</button></div>`;
-  const a=AC[L.id]; const ok=canFly(st,L.id);
-  return `<div class="notice row between" style="gap:10px"><span><b>Loaded in MSFS: ${esc(a.n)}.</b> ${ok?`Jobs for it are at the top of the board.`:`You'll need ${a.req.filter(r=>!st.ratings[r]).map(r=>RATINGS[r].n).join(' + ')} to fly it for pay.`}</span>${ok?'<span class="chip sea">Your plane</span>':''}</div>`;
-}
+
 
 /* Hangar: bring your own aircraft */
 function byoSection(st){
@@ -3760,8 +3708,7 @@ ALT_OUT.BO5 = st => st.story.flags.BO4==='a' ? {good:`De Vries closes his notebo
 const TW_VERSION = '0.82.0';
 
 /* ---------- live map ---------- */
-function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
-  return { W, H, X: lon => (lon - v.lon[0])/(v.lon[1]-v.lon[0])*W, Y: lat => H - (lat - v.lat[0])/(v.lat[1]-v.lat[0])*H }; }
+
 function liveFlightInfo(){
   const st=S.st, a=st&&st.active, s=S.sim; if(!a || !s || S.simState!=='live' || !s.position) return null;
   const job=a.job; const pos={lat:s.position.lat, lon:s.position.lon}; const dest = job.local ? AP[job.from] : AP[job.to];
@@ -4090,8 +4037,6 @@ function speakNew(){
   return speakNewBase();
 }
 /* cabin chimes on the big moments, and the radio murmuring in the background */
-const ATC_CALLS = [`{cs}, descend and maintain four thousand.`,`{cs}, contact San Juan Center, one two four point six five.`,`{cs}, traffic two o'clock, five miles, opposite direction.`,`{cs}, turn left heading two seven zero, vectors for the I L S.`,`{cs}, climb and maintain flight level two four zero.`,`{cs}, roger, maintain V F R, report the field in sight.`,`{cs}, radar contact, altimeter three zero zero one.`,`{cs}, cleared to land runway one zero, wind zero nine zero at twelve.`];
-const CALLSIGNS = [`American twelve forty`,`JetBlue four sixty one`,`Winair one zero seven`,`LIAT three two two`,`Cessna two four Kilo Tango`,`Seaborne six zero five`,`Caribbean three five two`,`Delta eight eleven`,`Cape Air nine one`,`November five Alpha Victor`];
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="sfx-toggle"]')) return; const on=!sfxOn(); try{ localStorage.setItem('tw.sfx', on?'on':'off'); }catch(_){} if(on){ crackle(); setTimeout(()=>chime(),300); } toast(on?'Radio sounds on.':'Radio sounds off.'); render(); });
 /* sound switch next to the voice switch */
 /* ===================== PILOT PROFILE (shareable) ===================== */
@@ -4465,9 +4410,7 @@ ARCH.push(
 function boardPrefs(){ try{ return JSON.parse(localStorage.getItem('tw_board')||'{}'); }catch(_){ return {}; } }
 function setBoardPrefs(p){ try{ localStorage.setItem('tw_board', JSON.stringify(p)); }catch(_){} }
 function jobPerHour(j){ const est=j.est||plan(j).est; return j.pay / Math.max(0.25, est/60); }
-function boardTools(st){ const p=boardPrefs(); const acs=[...new Set(st.jobs.map(j=>j.ac))];
-  const sel=(k,opts)=>`<select data-act="bp" data-k="${k}" aria-label="${k}">${opts.map(([v,l])=>`<option value="${v}" ${ (p[k]||opts[0][0])===v?'selected':''}>${esc(l)}</option>`).join('')}</select>`;
-  return `<div class="board-tools">${sel('sort',[['dep','Soonest'],['pay','Highest pay'],['rate','Best pay per hour'],['short','Shortest'],['long','Longest']])}${sel('kind',[['all','All jobs'],['pax','Passengers'],['cargo','Cargo'],['vip','VIP'],['urgent','Urgent'],['local','Local tours']])}${acs.length>1?sel('ac',[['all','Any aircraft'],...acs.map(k=>[k,AC[k].n])]):''}</div>`; }
+
 document.addEventListener('change', e=>{ const s=e.target.closest('[data-act="bp"]'); if(!s) return; const p=boardPrefs(); p[s.dataset.k]=s.value; setBoardPrefs(p); S.keepScroll=true; render(); });
 
 /* ---- difficulty with teeth ---- */
@@ -4545,22 +4488,14 @@ async function writeFlightLog(job, f, res){ const T=S.trace; if(!window.twNative
   const rec = S.sim && S.sim.recorder; const body={ app: (typeof TW_VERSION!=='undefined'?TW_VERSION:''), difficulty:diff(), job:{id:job.id,title:job.title,from:job.from,to:job.to,ac:job.ac,kind:job.kind,scen:job.scen||null,dep:job.dep,est:job.est}, result:{score:res.score, grade:res.grade, parts:res.parts}, input:Object.assign({}, f, {td:f.td||null}), recorder:rec||null, samples:(T&&T.id===job.id)?T.samples:[], aircraftTitle:S.sim&&S.sim.aircraft&&S.sim.aircraft.title, errors:errLog().slice(-10) };
   try{ await twNative.flightLog(name, JSON.stringify(body)); }catch(_){} S.trace=null; }
 /* ---- a calmer job board ---- */
-function dispatchCard(st){ let h=dispatchCardBase(st); const n=(st.brief&&st.brief.msgs||[]).length;
-  return h.replace('<div class="msgs">', `<details class="dispatch-more"><summary class="small">Crew messages and today's tip (${n})</summary><div class="msgs">`).replace(/<\/section>\s*$/, '</details></section>'); }
+
 /* ===================== LOOK & FEEL: living sky, weather, splash, motion, reveals, toasts, sound ===================== */
 function calmMotion(){ return document.documentElement.classList.contains('rm') || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); }
 
 /* 1 + 2. living sky: the sun tracks the game clock, stars at night, drifting clouds and weather you can see */
-const STARS = (()=>{ let s=[]; let seed=7; const r=()=>{ seed=(seed*9301+49297)%233280; return seed/233280; }; for(let i=0;i<70;i++) s.push(`${Math.round(r()*1400)}px ${Math.round(r()*200)}px 0 ${r()<.15?1:0}px rgba(255,255,255,${(.35+r()*.6).toFixed(2)})`); return s.join(','); })();
-function skyPos(min){ const m=((min%1440)+1440)%1440; const rise=360, set=1110; if(m<rise||m>set){ const nm=(m<rise?m+1440:m)-set; const f=nm/(1440-(set-rise)); return {night:true, x:42+34*f, y:62-Math.sin(Math.PI*f)*42}; } const f=(m-rise)/(set-rise); return {night:false, x:40+38*f, y:74-Math.sin(Math.PI*f)*52}; }
-function wxFx(key){ const rain=['showers','tstorm','wave','squall'].includes(key); const clouds = key==='calm' ? 1 : ['wave','tstorm','north','showers'].includes(key) ? 5 : 3;
-  let h=`<div class="fx-clouds c${clouds}" aria-hidden="true">${Array.from({length:clouds},(_,i)=>`<i style="--i:${i}"></i>`).join('')}</div>`;
-  if(rain) h+=`<div class="fx-rain ${key==='tstorm'||key==='squall'?'heavy':''}" aria-hidden="true"></div>`;
-  if(key==='dust') h+=`<div class="fx-haze" aria-hidden="true"></div>`;
-  return h; }
-function todayHero(st){ let h=todayHeroBase(st); const P=skyPos(st.clock); const wx=genLocWx(st);
-  h=h.replace('<section class="today ', `<section style="--sx:${P.x.toFixed(1)}%;--sy:${P.y.toFixed(1)}%" class="today live-sky wx-${esc(wx.key||'')} ${P.night?'is-night':''} `);
-  return h.replace('<div class="sun" aria-hidden="true"></div>', `<div class="stars" aria-hidden="true" style="box-shadow:${STARS}"></div><div class="sun" aria-hidden="true"></div>${wxFx(wx.key)}`); }
+
+
+
 
 /* 3. splash on launch */
 (function splash(){ try{ const d=document.createElement('div'); d.id='tw-splash'; d.setAttribute('aria-hidden','true');
@@ -4758,7 +4693,7 @@ const WEEKEND = [
   {id:'reggae', n:'Reggae Sumfest weekend', ap:'MKJS', d:'Montego Bay fills up for three nights of music. Every seat into Sangster is gold.'}
 ].filter(e=>AP[e.ap]);
 function weekendEvent(st){ const d=dateOf(st.day); const wd=d.getUTCDay(); if(wd!==5 && wd!==6 && wd!==0) return null; const sat = wd===0 ? st.day-1 : wd===5 ? st.day+1 : st.day; const wk=Math.floor(sat/7); return WEEKEND[wk % WEEKEND.length]; }
-function weekendBanner(st){ const ev=weekendEvent(st); if(!ev) return ''; return `<section class="panel weekend"><div class="row between"><div><p class="label">This weekend · ${esc(AP[ev.ap].isl)}</p><h3>${esc(ev.n)}</h3></div><span class="chip good">+35% pay to ${esc(ev.ap)}</span></div><p class="small">${esc(ev.d)}</p></section>`; }
+
 
 /* ---- 6. new side story: Coast Watch ---- */
 CAST.ortiz = {n:`Lt. Daniela Ortiz`, col:'#c2410c', role:`US Coast Guard, Air Station Borinquen`, bio:`Flew Jayhawks with Mari a lifetime ago. Calm on the radio, terrifying in a debrief.`};
@@ -4851,8 +4786,7 @@ function suggestParking(job){ const P=S.park[job.from]; const cls=AC[job.ac].cls
   return { spot:best, rw, text:`${best.name} (${PARK_LABEL[best.type]||best.type.replace(/_/g,' ')})${rw?`, ${best._d<0.1?'right beside':(best._d.toFixed(1)+' nm from')} runway ${rw.id}`:''}` }; }
 async function fetchParking(icao){ if(!S.mcp || S.park[icao] && (S.park[icao].spots || Date.now()-S.park[icao].t<60000)) return; S.park[icao]={t:Date.now()};
   try{ const r=await S.mcp.callTool(SIM_SERVER,'parking_spots',{icao},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} } if(o && o.ok && o.spots && o.spots.length){ S.park[icao]={t:Date.now(), spots:o.spots}; renderPreflight(); } }catch(_){} }
-function parkingRowHTML(job){ if(job.local===undefined) return ''; const s=suggestParking(job); const live=S.simState==='live'; const atDep = live && S.sim.position && distNm({lat:S.sim.position.lat,lon:S.sim.position.lon},AP[job.from])<3;
-  return `<div class="park-row"><span class="pf-ic">P</span><div><b>Spawn at: ${esc(s.text)}</b><span class="tiny muted">${s.generic?`In the MSFS world map, choose ${esc(job.from)} and pick a parking spot of this type near runway ${s.rw?esc(s.rw.id):''}.`:'Pick this spot in the MSFS world map when you load in, or use the button once you\'re in the sim.'}</span></div>${!s.generic && atDep && S.sim.motion && S.sim.motion.gs<1 ? `<button class="btn xs" data-act="park-move">Move me there</button>`:''}</div>`; }
+
 async function autoClock(){ const a=S.st&&S.st.active; if(!a || a.started || a._clockSet || !(S.st.pro?S.st.pro.autoTime!==false:true) || S.simState!=='live' || !S.mcp) return; const s=S.sim; if(!s || !s.motion || !s.motion.onGround || !atDeparture(a.job)) return;
   a._clockSet=true; const r=await setSimClock(a.job.dep); if(r.ok) toast(`MSFS clock set to ${hhmm(a.job.dep)} for this flight.`); }
 /* Sets the MSFS clock, then reads back what MSFS actually shows and corrects it once if it's off
@@ -4979,7 +4913,6 @@ function wrapDetails(nodes, title, cls){ if(!nodes.length) return null; const d=
 /* ---- navigation: fewer tabs ---- */
 
 /* ---- job board ---- */
-const CHIP_KEEP = /urgent|vip|sealed|bonus|owner|ifr|night|instructor|festival|storm|hurricane|2×|double/i;
 document.addEventListener('click', e=>{ if(e.target.closest('[data-act="all-jobs"]')){ S.allJobs=true; S.keepScroll=true; render(); } });
 function go(v){ trail('page', v); if(v!=='board') S.allJobs=false; return goBase.apply(this, arguments); }
 
@@ -5012,9 +4945,7 @@ function urgentOn(){ try{ return localStorage.getItem('tw.urgent')==='on'; }catc
   ARC_META['Island Tales'] = {n:14, main:false, tag:`Short stories from around the islands: Rosa's cakes, Dez's cricket, Calloway's comeback, the hurricane relief flights and old passengers returning.`, col:'#2a68aa'};
 })();
 /* in a collection like Island Tales, the "next" chapter is the first one you can actually fly */
-function arcState(st, arc, availSet){ const ch=arcChapters(arc); const done=ch.filter(m=>st.story.done[m.id]).length; const open=ch.filter(m=>!st.story.done[m.id]);
-  const next = open.find(m=>chapterStatus(st,m,availSet).k!=='locked') || open[0] || null;
-  return {arc, ch, done, total:ch.length, next, status: next ? chapterStatus(st,next,availSet) : {k:'complete'}, meta:arcMeta(arc)}; }
+
 /* ===================== MORE: in-flight requests, quick filters, first flight, real aircraft numbers, fair diversions, clear debrief, story goals ===================== */
 
 /* ---- 1. requests during the flight, checked from MSFS ---- */
@@ -5147,7 +5078,6 @@ function autoReady(a){ if(!a || !a.started) return null; const rec=simRecFor(a);
 
 /* ---- 1. flight screen reads top to bottom: briefing, setup steps, then the boarding pass with Start ---- */
 /* setup tiles in the order you do them, numbered; parking first */
-const STEP_ORDER = [['Parking spot','Spawn here'],['Fuel & cargo','Fuel & weight'],['Time of day','Time of day'],['Runways','Runways'],['Weather','Weather']];
 /* fuel and weights are locked once you're rolling or airborne; and only fuel is loaded, so the plane can't tip over */
 async function loadIntoSim(job){ if(!S.mcp){ toast('MSFS isn\'t connected.'); return; } if(await loadFuelLie(job)) return; const s=S.sim; const rec=s&&s.recorder;
   if(s && s.motion && (!s.motion.onGround || s.motion.gs>2) || (rec && rec.takeoff && S.st.active && S.st.active.started)){ toast('Fuel is locked once you\'re moving.'); return; }
@@ -5276,7 +5206,6 @@ AP.WSBL = {n:`Simpson Bay Lagoon (water)`, isl:`Sint Maarten`, c:'SXM', r:'LEE',
 /* ===================== Seaplane checkride: a short hop at St. Martin, Juliana (TNCM) to Simpson Bay Lagoon ===================== */
 RATINGS.SEA.tasks = [`Water landing in Simpson Bay Lagoon: landing attitude, a steady 100–150 fpm down, no flaring by eye`, `Taxi slowly clear of boats`];
 /* passing it: no crash, not a hard landing, and most of the tasks */
-/* ===================== Checkrides: an A or B (or 70+) with no crash is a pass ===================== */
 /* ===================== MAIN STORY: CONTRABAND =====================
    A clean pilot gets pulled into the islands' smuggling network and rises to run it.
    4 acts, 15 chapters. Power (how much of the network answers to you) and Heat (how close the law is). */
@@ -5837,8 +5766,6 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="pro-rep
 .pro-replay{float:right;position:relative;z-index:2}
 @media (prefers-reduced-motion:reduce){.cut-bg{transition:none}.cut-line.in{transition:none}}`;
   const s=document.createElement('style'); s.textContent=css; document.head.appendChild(s); })();
-/* ===================== the chapter story lives in the cutscene; the flight screen stays short ===================== */
-
 /* ===================== TESTING: skip any flight with a perfect grade ===================== */
 function testSkip(){ const st=S.st, a=st&&st.active; if(!a) return; const job=a.job; a.started=a.started||Date.now();
   const f={ landing:'butter', tdz:true, center:true, fuel:40, fuelUnit:'pct', block:(job.est||plan(job).est), landedAt:job.local?job.from:job.to, checklist:true, radio:true, weather:true, smooth:true, scen:null, tasks:(job.tasks||[]).slice(), bonus:true, request:true, verified:false, simFpm:0, simBounces:0, simG:null, comfort:null, testSkip:true };
@@ -6893,7 +6820,6 @@ setTimeout(()=>voLoad(0), 1500);
    The parts of the screen that surround every page: the side menu, the top bar with its
    status chips, and the phone-width menu. band() returns all of it as one piece of HTML. */
 
-const ICON_BELL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0"/></svg>';
 const ICON_SEARCH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4-4"/></svg>';
 const ICON_GEAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
 
@@ -6901,17 +6827,7 @@ const ICON_GEAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" st
 function nowHTML(st){ const r=rightNow(st); if(!r) return ''; return `<div class="now-pill" title="${esc(r.t)}"${(S.view==='flight'||S.view==='story'||S.view==='board')?' style="display: none;"':''}><span>${esc(r.t)}</span><button class="btn sm action" data-act="${r.act}" ${r.v?`data-v="${r.v}"`:''} ${r.id?`data-id="${r.id}"`:''}>${esc(r.b)}</button></div>`; }
 
 /* The status chips on the right of the top bar. */
-function hudHTMLTop(st){
-  const c=crime(st); const unread=S.notifs.length-S.notifSeen;
-  return `<div class="hud">${nowHTML(st)}
-        <span class="hp"><small>At</small><b class="mono">${esc(st.loc)}</b></span>
-        <span class="hp"><small>Day ${st.day}</small><b class="mono">${dateTxt(st.day)} ${hhmm(st.clock)}</b></span>
-        <span class="hp cash"><small>Cash</small><b class="mono">${money(st.cash)}</b></span>
-        ${st.active?`<button class="hp go" data-act="nav" data-v="flight"><small>Booked</small><b class="mono">${esc(st.active.job.from)}→${esc(st.active.job.local?st.active.job.from:st.active.job.to)}</b></button>`:''}
-      ${c.on?`<button class="heat-chip ${c.heat>=80?'hot':c.heat>=60?'warm':'cool'}" data-act="nav" data-v="story" title="${esc(CX_TIPS.Heat)}"><span>Heat</span><b>${c.heat}</b></button>`:''
-      }${c.dirty>0?`<button class="dirty-chip" data-act="nav" data-v="money" title="Dirty cash from network runs. Launder it on the Money page."><span>Dirty</span><b>${money(c.dirty)}</b></button>`:''
-      }<button class="bell" data-act="bell" title="Notifications">${ICON_BELL}<b${unread>0?'':' style="display:none"'}>${unread>9?'9+':unread}</b></button><button class="cmd-btn" data-act="cmd" title="Search (Ctrl+K)">${ICON_SEARCH}<kbd>Ctrl K</kbd></button><button class="cmd-btn gear-btn" title="Settings" data-act="open-settings">${ICON_GEAR}</button></div>`;
-}
+
 
 function band(){
   const st=S.st; const rk=rankOf(st); const c=crime(st); const live=S.simState==='live';
@@ -9653,7 +9569,6 @@ function beatTimer(b){ if(b && b.timed && b.opts){ const d=document.querySelecto
     {t:`Walk away clean`, out:`You taxi to the cargo terminal, sign the 747 over to the leasing company that actually owns it, and leave Castillo sitting in the jump seat. You walk out through the terminal like any other crew. Nobody stops you. Nobody ever finds a reason to.`, heat:-40, power:-30, ending:'walk'},
     {t:`Go home`, out:`You switch off the engines, hand Castillo his bag, and tell him you're done. Outside the fence, someone is waiting with Dez's old truck. Three weeks later you're flying the 7 a.m. mail run to Anguilla again, on a trainee's wage. It's the best job you've ever had.`, heat:-20, power:-50, ending:'home'});
   if(typeof ENDING_REQ!=='undefined'){ ENDING_REQ.walk=c=>c.heat<40 ? null : `Needs Heat under 40 (you have ${c.heat})`; ENDING_REQ.home=c=>(c.flags.mari||c.flags.dezFree) ? null : `Nobody's waiting for you`; } })();
-const END_NAMES={kingpin:'Kingpin',witness:'Witness',ghost:'Ghost',walk:'Walk Away',home:'Coming Home'};
 
 
 if(typeof ENDING_TITLE!=='undefined'){ ENDING_TITLE.walk='Walk Away'; ENDING_TITLE.home='Coming Home'; }
@@ -9817,16 +9732,10 @@ SIM_TICK.push(function photoMoment(){ const a=S.st&&S.st.active; if(!a||!a.start
   const d=distNm({lat:s.position.lat,lon:s.position.lon},AP[to]); if(d>5 || (s.position.aglFt||0)>1800 || document.querySelector('.beat')) return; a.photoSaid=1; save();
   showBeat(a,{who:'self', text:`${t}|Photo moment: hit your MSFS screenshot key now.`}, 'photo'); });
 
-/* (Twitch !tip lives in streamer.js) */
 /* =====================================================================
    FIRST FLIGHT (new careers)
    ===================================================================== */
-function firstFlightHTML(st){ if(st.flights>0 || st.active) return ''; const live=S.simState==='live';
-  const step=(n,done,t,d,btn='')=>`<li class="${done?'done':''}"><span class="mono">${done?'✓':n}</span><div><b>${t}</b><p class="small muted">${d}</p>${btn}</div></li>`;
-  return `<section class="panel first-flight"><div class="section-title"><h2>Your first ten minutes</h2></div><ol class="ff">
-    ${step(1, live, 'Start MSFS and the Trade Winds bridge', live?'Connected.':'Open MSFS, load any airport, and the dot in the top bar turns green.')}
-    ${step(2, false, 'Fly one practice circuit', 'Take off, fly around the pattern and land. No pay, no logbook. Just to see how grading works.', `<button class="btn sm" data-act="practice">Fly a practice circuit</button>`)}
-    ${step(3, false, 'Play chapter 1', 'Ten minutes to Anguilla in a Cessna. The story starts here.')}</ol></section>`; }
+
 /* (the setup wizard covers this now; the panel stays defined for reference) */
 
 /* =====================================================================

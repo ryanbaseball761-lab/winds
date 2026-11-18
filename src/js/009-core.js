@@ -2,8 +2,8 @@
 const LOGO = `<svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".5"/><path d="M5 19c4-1 7-1 11 0s7 1 11 0" fill="none" stroke="var(--coral)" stroke-width="2" stroke-linecap="round"/><path d="M16 6l2.2 7.5 7.3 1.8-7.3 1.6L16 24l-2.2-7.1-7.3-1.6 7.3-1.8z" fill="currentColor"/></svg>`;
 
 /* ---------- scenery ---------- */
-function islandsSVG(cls){ return `<svg class="${cls||'isles'}" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true"><path d="M0 120V92c60-4 90-30 150-34s95 26 150 30 70-16 120-18 70 20 110 20h670v30z" class="isle1"/><path d="M640 120V96c40-2 70-40 120-44s80 30 130 34 120-8 170-14 90 14 140 18v30z" class="isle2"/><path d="M0 120v-10c200 6 400-6 600 0s400 6 600 0v10z" class="sea"/></svg>`; }
-function skyClass(min){ const t=timeLabel(min); return t==='Night'?'night':t==='Dawn'?'dawn':t==='Sunset'?'sunset':'day'; }
+
+
 
 /* ---------- start screen ---------- */
 function setupView(){
@@ -35,39 +35,13 @@ function setupView(){
     </section></main>`;
 }
 
-/* ---------- welcome tour ---------- */
-const TOUR = [
-  {t:`Welcome to Coral Wing`, d:`You're a trainee pilot in St. Martin. Mari, the owner, will hand you work. Dez, the dispatcher, will hand you nicknames. Your first story chapter is waiting at the top of the job board.`},
-  {t:`Pick a job, read the briefing`, d:`Accept a job and the Flight tab becomes your boarding pass: the story, the route, the weather to set in MSFS, the load sheet and the fuel plan. There's also a one-click flight plan for SimBrief.`},
-  {t:`Fly it with the Cockpit tab`, d:`Open the Cockpit tab on your phone or second screen. It walks you through each phase of the flight with your speeds, runway and winds. Some flights carry sealed envelopes: open them when they say.`},
-  {t:`Log the landing honestly`, d:`After shutdown, press "Log the landing". Your grade sets your pay, your reputation and how the story turns. Get the free MSFS Bridge (Hangar tab) and the debrief fills itself in.`}
-];
-function tourBase(st){
-  /* retired in 0.75: the setup wizard and the story itself teach the game now; the old tour described screens that no longer exist */
-  return '';
-  if(!st || st.tourDone) return ''; const i=S.tourStep||0; const s=TOUR[i];
-  return `<div class="overlay" role="dialog" aria-modal="true" aria-labelledby="tour-t"><div class="tour panel">
-    <div class="tour-dots">${TOUR.map((_,k)=>`<span class="${k===i?'on':''}"></span>`).join('')}</div>
-    <p class="label">Step ${i+1} of ${TOUR.length}</p><h2 id="tour-t">${s.t}</h2><p class="brief">${s.d}</p>
-    <div class="row between" style="margin-top:8px"><button class="btn ghost" data-act="tour-skip">Skip</button><div class="row">${i>0?`<button class="btn" data-act="tour-back">Back</button>`:''}<button class="btn action" data-act="tour-next">${i===TOUR.length-1?`Let's fly`:'Next'}</button></div></div>
-  </div></div>`;
-}
-/* top of the Flight page when no flight is booked: the setup screen for a new career, or the tour */
+/* top of the Flight page when no flight is booked: the setup screen for a new career (the old tour was retired in 0.75) */
 function tourHTML(st){ const wiz = st && ((!st.tourDone && (st.flights||0)===0) || S.wizOpen);
-  return wiz ? wizardHTML(st) : tourBase(st); }
+  return wiz ? wizardHTML(st) : ''; }
 
 
 /* ---------- today hero on the board ---------- */
-function todayHeroBase(st){
-  const ap=AP[st.loc]; const wx=genLocWx(st); const r=rankOf(st); const sky=skyClass(st.clock);
-  return `<section class="today sky-${sky}">
-    <div class="sun" aria-hidden="true"></div>
-    ${islandsSVG()}
-    <div class="today-in">
-      <div style="min-width:0"><p class="eyebrow">${esc(COUNTRY[ap.c])} · ${esc(st.loc)}</p><h1>${esc(ap.isl)}</h1><p class="today-sub">${esc(ap.n)} · ${dateTxt(st.day)} · ${seasonName(st)}</p></div>
-      <div class="today-right"><div class="clock mono">${hhmm(st.clock)}</div><p class="today-sub">${esc(wx.n)} · ${wx.t} °C · wind ${pad3(wx.dir)}° ${wx.spd}${wx.gust?'G'+wx.gust:''} kt</p><p class="today-sub"><span class="pill">${esc(r.name)}</span> <span class="pill">${money(st.cash)}</span></p></div>
-    </div></section>`;
-}
+
 
 /* ---------- boarding pass ---------- */
 const ICAO_TYPE = {C152:'C152',C172:'C172',DA40:'DA40',G36:'BE36',BEAVER:'DHC2',GOOSE:'G21',PC6:'PC6T',C208:'C208',DA62:'DA62',DHC6:'DHC6',PC12:'PC12',TBM:'TBM9',KA350:'B350',DC3:'DC3',SF50:'SF50',CJ4:'C25C',A320:'A20N',B38M:'B38M',A321:'A21N',A333:'A333',B748:'B748'};
@@ -141,9 +115,7 @@ function cockpitView(){ let h=cockpitBase().replace('<main class="wrap stack fad
 /* ---------- events ---------- */
 document.addEventListener('click', e=>{
   const b=e.target.closest('[data-act]'); if(!b || !S.st) return; const st=S.st; const act=b.dataset.act;
-  if(act==='tour-next'){ if((S.tourStep||0)>=TOUR.length-1){ st.tourDone=true; save(); } else S.tourStep=(S.tourStep||0)+1; render(); }
-  else if(act==='tour-back'){ S.tourStep=Math.max(0,(S.tourStep||0)-1); render(); }
-  else if(act==='tour-skip'){ st.tourDone=true; save(); render(); }
+  if(act==='tour-skip'){ st.tourDone=true; save(); render(); }
   else if(act==='ck-item' && st.active){ const ck=st.active.ck; ck.done[b.dataset.k]=!ck.done[b.dataset.k]; if(b.dataset.k.startsWith('4-') && !st.active.started){ st.active.started=Date.now(); simArm(); } save(); S.keepScroll=true; render(); }
   else if(act==='ck-phase' && st.active){ st.active.ck.p=Number(b.dataset.i); save(); S.keepScroll=true; render(); }
   else if(act==='ck-next' && st.active){ const ck=st.active.ck; ck.p=ck.p+1; if(ck.p===4 && !st.active.started){ st.active.started=Date.now(); simArm(); toast('Block timer started.'); } save(); render(); window.scrollTo(0,0); }

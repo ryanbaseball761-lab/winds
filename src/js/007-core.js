@@ -250,16 +250,7 @@ function boot(){
 
 /* ---------- extras UI ---------- */
 function stars(n){ return `<span class="on">${'★'.repeat(n)}</span><span class="off">${'★'.repeat(5-n)}</span>`; }
-function dispatchCardBase(st){
-  if(!st.brief || st.brief.day!==st.day){ newDayBrief(st); save(); }
-  const b=st.brief; const storm=stormActive(st); const fest=festivalOn(st);
-  return `<section class="panel dispatch"><div class="row between"><p class="label">Morning dispatch · Day ${st.day} · ${dateTxt(st.day)}</p><span class="small muted">Coral Wing ops board</span></div>
-    <h3 style="margin-top:6px;font-size:18px">${esc(b.headline)}</h3>
-    ${storm?`<p class="small" style="color:var(--bad);margin-top:4px">Hurricane ${esc(storm.name)}, Category ${storm.cat}: ${esc(REGIONS[storm.region].name)} through day ${storm.until}. ${hasRating(st,'IR')?'Instrument conditions on routes there, and relief flights pay 30% more.':'Flights there need an Instrument Rating until it passes.'}</p>`:''}
-    ${fest.length?`<p class="small" style="margin-top:4px"><b>${esc(fest.map(f=>f.n).join(', '))}</b> is on. Charters to ${esc(fest.map(f=>AP[f.ap].isl).join(', '))} pay 40% more.</p>`:''}
-    <div class="msgs">${b.msgs.map(m=>`<div class="msg">${avatar(m.from)}<div style="min-width:0"><b class="small">${esc(CAST[m.from].n.replace(/ ".*?"/,''))}</b><p class="small">${esc(m.text)}</p></div></div>`).join('')}</div>
-    <p class="small tip"><b>Pilot tip:</b> ${esc(b.tip)}</p></section>`;
-}
+
 function pilotExtras(st){
   const r=rankOf(st); const got=ACH.filter(a=>st.ach&&st.ach[a.id]);
   const last=st.log.slice(0,20).reverse(); const W=600,H=150,P=24;

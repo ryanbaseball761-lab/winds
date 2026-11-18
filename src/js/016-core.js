@@ -33,12 +33,7 @@ function makeJobFor(st, acId){
   } finally { eligibleAircraft = orig; }
   if(job) job.loaded = true; return job;
 }
-function loadedBanner(st){
-  const L = loadedAircraft(); if(!L.title) return '';
-  if(!L.id) return `<div class="notice row between" style="gap:10px"><span><b>MSFS has “${esc(L.title)}” loaded.</b> It isn't in your career yet.</span><button class="btn sm primary" data-act="nav" data-v="hangar">Add it in the Hangar</button></div>`;
-  const a=AC[L.id]; const ok=canFly(st,L.id);
-  return `<div class="notice row between" style="gap:10px"><span><b>Loaded in MSFS: ${esc(a.n)}.</b> ${ok?`Jobs for it are at the top of the board.`:`You'll need ${a.req.filter(r=>!st.ratings[r]).map(r=>RATINGS[r].n).join(' + ')} to fly it for pay.`}</span>${ok?'<span class="chip sea">Your plane</span>':''}</div>`;
-}
+
 
 /* Hangar: bring your own aircraft */
 function byoSection(st){

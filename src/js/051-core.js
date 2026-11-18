@@ -38,8 +38,7 @@ function suggestParking(job){ const P=S.park[job.from]; const cls=AC[job.ac].cls
   return { spot:best, rw, text:`${best.name} (${PARK_LABEL[best.type]||best.type.replace(/_/g,' ')})${rw?`, ${best._d<0.1?'right beside':(best._d.toFixed(1)+' nm from')} runway ${rw.id}`:''}` }; }
 async function fetchParking(icao){ if(!S.mcp || S.park[icao] && (S.park[icao].spots || Date.now()-S.park[icao].t<60000)) return; S.park[icao]={t:Date.now()};
   try{ const r=await S.mcp.callTool(SIM_SERVER,'parking_spots',{icao},{cache:false}); let o=r.payload; if(typeof o==='string'){ try{o=JSON.parse(o);}catch(_){} } if(o && o.ok && o.spots && o.spots.length){ S.park[icao]={t:Date.now(), spots:o.spots}; renderPreflight(); } }catch(_){} }
-function parkingRowHTML(job){ if(job.local===undefined) return ''; const s=suggestParking(job); const live=S.simState==='live'; const atDep = live && S.sim.position && distNm({lat:S.sim.position.lat,lon:S.sim.position.lon},AP[job.from])<3;
-  return `<div class="park-row"><span class="pf-ic">P</span><div><b>Spawn at: ${esc(s.text)}</b><span class="tiny muted">${s.generic?`In the MSFS world map, choose ${esc(job.from)} and pick a parking spot of this type near runway ${s.rw?esc(s.rw.id):''}.`:'Pick this spot in the MSFS world map when you load in, or use the button once you\'re in the sim.'}</span></div>${!s.generic && atDep && S.sim.motion && S.sim.motion.gs<1 ? `<button class="btn xs" data-act="park-move">Move me there</button>`:''}</div>`; }
+
 async function autoClock(){ const a=S.st&&S.st.active; if(!a || a.started || a._clockSet || !(S.st.pro?S.st.pro.autoTime!==false:true) || S.simState!=='live' || !S.mcp) return; const s=S.sim; if(!s || !s.motion || !s.motion.onGround || !atDeparture(a.job)) return;
   a._clockSet=true; const r=await setSimClock(a.job.dep); if(r.ok) toast(`MSFS clock set to ${hhmm(a.job.dep)} for this flight.`); }
 /* Sets the MSFS clock, then reads back what MSFS actually shows and corrects it once if it's off

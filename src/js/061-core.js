@@ -2,7 +2,6 @@
 
 /* ---- 1. flight screen reads top to bottom: briefing, setup steps, then the boarding pass with Start ---- */
 /* setup tiles in the order you do them, numbered; parking first */
-const STEP_ORDER = [['Parking spot','Spawn here'],['Fuel & cargo','Fuel & weight'],['Time of day','Time of day'],['Runways','Runways'],['Weather','Weather']];
 /* fuel and weights are locked once you're rolling or airborne; and only fuel is loaded, so the plane can't tip over */
 async function loadIntoSim(job){ if(!S.mcp){ toast('MSFS isn\'t connected.'); return; } if(await loadFuelLie(job)) return; const s=S.sim; const rec=s&&s.recorder;
   if(s && s.motion && (!s.motion.onGround || s.motion.gs>2) || (rec && rec.takeoff && S.st.active && S.st.active.started)){ toast('Fuel is locked once you\'re moving.'); return; }

@@ -9,3 +9,6 @@ if(typeof PORTRAIT!=='undefined'){
 }
 try{ const r=RIVALS.find(x=>/^Ana Reyes/.test(x.n)); if(r) r.n='Ana Ruiz (Winair)'; }catch(_){}
 
+/* ================= 1. the cabin goes quiet: no passenger chatter or cabin requests; safety calls stay ================= */
+function spokenText(m){ if(!m.kind) return null; return spokenTextBase(m); }
+

@@ -46,7 +46,6 @@ function beatTimer(b){ if(b && b.timed && b.opts){ const d=document.querySelecto
     {t:`Walk away clean`, out:`You taxi to the cargo terminal, sign the 747 over to the leasing company that actually owns it, and leave Castillo sitting in the jump seat. You walk out through the terminal like any other crew. Nobody stops you. Nobody ever finds a reason to.`, heat:-40, power:-30, ending:'walk'},
     {t:`Go home`, out:`You switch off the engines, hand Castillo his bag, and tell him you're done. Outside the fence, someone is waiting with Dez's old truck. Three weeks later you're flying the 7 a.m. mail run to Anguilla again, on a trainee's wage. It's the best job you've ever had.`, heat:-20, power:-50, ending:'home'});
   if(typeof ENDING_REQ!=='undefined'){ ENDING_REQ.walk=c=>c.heat<40 ? null : `Needs Heat under 40 (you have ${c.heat})`; ENDING_REQ.home=c=>(c.flags.mari||c.flags.dezFree) ? null : `Nobody's waiting for you`; } })();
-const END_NAMES={kingpin:'Kingpin',witness:'Witness',ghost:'Ghost',walk:'Walk Away',home:'Coming Home'};
 
 
 if(typeof ENDING_TITLE!=='undefined'){ ENDING_TITLE.walk='Walk Away'; ENDING_TITLE.home='Coming Home'; }

@@ -2,8 +2,7 @@
 const TW_VERSION = '0.82.0';
 
 /* ---------- live map ---------- */
-function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
-  return { W, H, X: lon => (lon - v.lon[0])/(v.lon[1]-v.lon[0])*W, Y: lat => H - (lat - v.lat[0])/(v.lat[1]-v.lat[0])*H }; }
+
 function liveFlightInfo(){
   const st=S.st, a=st&&st.active, s=S.sim; if(!a || !s || S.simState!=='live' || !s.position) return null;
   const job=a.job; const pos={lat:s.position.lat, lon:s.position.lon}; const dest = job.local ? AP[job.from] : AP[job.to];

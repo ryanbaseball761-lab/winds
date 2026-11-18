@@ -2,16 +2,9 @@
 function calmMotion(){ return document.documentElement.classList.contains('rm') || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); }
 
 /* 1 + 2. living sky: the sun tracks the game clock, stars at night, drifting clouds and weather you can see */
-const STARS = (()=>{ let s=[]; let seed=7; const r=()=>{ seed=(seed*9301+49297)%233280; return seed/233280; }; for(let i=0;i<70;i++) s.push(`${Math.round(r()*1400)}px ${Math.round(r()*200)}px 0 ${r()<.15?1:0}px rgba(255,255,255,${(.35+r()*.6).toFixed(2)})`); return s.join(','); })();
-function skyPos(min){ const m=((min%1440)+1440)%1440; const rise=360, set=1110; if(m<rise||m>set){ const nm=(m<rise?m+1440:m)-set; const f=nm/(1440-(set-rise)); return {night:true, x:42+34*f, y:62-Math.sin(Math.PI*f)*42}; } const f=(m-rise)/(set-rise); return {night:false, x:40+38*f, y:74-Math.sin(Math.PI*f)*52}; }
-function wxFx(key){ const rain=['showers','tstorm','wave','squall'].includes(key); const clouds = key==='calm' ? 1 : ['wave','tstorm','north','showers'].includes(key) ? 5 : 3;
-  let h=`<div class="fx-clouds c${clouds}" aria-hidden="true">${Array.from({length:clouds},(_,i)=>`<i style="--i:${i}"></i>`).join('')}</div>`;
-  if(rain) h+=`<div class="fx-rain ${key==='tstorm'||key==='squall'?'heavy':''}" aria-hidden="true"></div>`;
-  if(key==='dust') h+=`<div class="fx-haze" aria-hidden="true"></div>`;
-  return h; }
-function todayHero(st){ let h=todayHeroBase(st); const P=skyPos(st.clock); const wx=genLocWx(st);
-  h=h.replace('<section class="today ', `<section style="--sx:${P.x.toFixed(1)}%;--sy:${P.y.toFixed(1)}%" class="today live-sky wx-${esc(wx.key||'')} ${P.night?'is-night':''} `);
-  return h.replace('<div class="sun" aria-hidden="true"></div>', `<div class="stars" aria-hidden="true" style="box-shadow:${STARS}"></div><div class="sun" aria-hidden="true"></div>${wxFx(wx.key)}`); }
+
+
+
 
 /* 3. splash on launch */
 (function splash(){ try{ const d=document.createElement('div'); d.id='tw-splash'; d.setAttribute('aria-hidden','true');

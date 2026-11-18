@@ -85,7 +85,7 @@ const WEEKEND = [
   {id:'reggae', n:'Reggae Sumfest weekend', ap:'MKJS', d:'Montego Bay fills up for three nights of music. Every seat into Sangster is gold.'}
 ].filter(e=>AP[e.ap]);
 function weekendEvent(st){ const d=dateOf(st.day); const wd=d.getUTCDay(); if(wd!==5 && wd!==6 && wd!==0) return null; const sat = wd===0 ? st.day-1 : wd===5 ? st.day+1 : st.day; const wk=Math.floor(sat/7); return WEEKEND[wk % WEEKEND.length]; }
-function weekendBanner(st){ const ev=weekendEvent(st); if(!ev) return ''; return `<section class="panel weekend"><div class="row between"><div><p class="label">This weekend · ${esc(AP[ev.ap].isl)}</p><h3>${esc(ev.n)}</h3></div><span class="chip good">+35% pay to ${esc(ev.ap)}</span></div><p class="small">${esc(ev.d)}</p></section>`; }
+
 
 /* ---- 6. new side story: Coast Watch ---- */
 CAST.ortiz = {n:`Lt. Daniela Ortiz`, col:'#c2410c', role:`US Coast Guard, Air Station Borinquen`, bio:`Flew Jayhawks with Mari a lifetime ago. Calm on the radio, terrifying in a debrief.`};

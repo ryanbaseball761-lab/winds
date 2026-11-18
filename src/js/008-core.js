@@ -244,17 +244,7 @@ function coUpgHTML(st){ const c=st.company; const owned=CO_UPG.filter(u=>coUpg(s
       <div class="cell stack" style="gap:6px"><h4>Open a new base</h4><p class="small">Station aircraft at another hub and fly routes from there. Bigger hubs have more travelers.</p><p class="tiny muted">${money(BASE_COST)} · then ${money(BASE_DAY)}/day${bases.length?` · yours: ${bases.join(', ')}`:''}</p>${free.length?`<div class="row" style="gap:6px"><select id="co-newbase" style="width:auto" aria-label="New base">${free.map(k=>`<option value="${k}">${k} · ${esc(AP[k].isl)}</option>`).join('')}</select>${st.cash<BASE_COST?'':`<button class="btn sm primary" data-act="co-base">Open · ${money(BASE_COST)}</button>`}</div>${st.cash<BASE_COST?`<p class="small muted co-short">You need ${money(BASE_COST-st.cash)} more to open one.</p>`:''}`:'<p class="small muted">You have a base at every hub.</p>'}</div></div></section>`; }
 
 /* ---------- goals panel ---------- */
-function goalsHTML(st){
-  const g=[];
-  const nextR = RATING_ORDER.find(r=>r!=='CO' && !st.ratings[r] && (RATINGS[r].req.after||[]).every(x=>st.ratings[x]));
-  if(nextR){ const R=RATINGS[nextR]; const ch=checkrideReady(st,nextR); g.push(ch.ok?`<b>${esc(R.n)}</b> checkride is ready (${money(feeFor(st,nextR))}).`:`<b>${esc(R.n)}</b>: ${esc((ch.miss||[]).filter(x=>!/first$/.test(x))[0]||'keep flying')}.`); }
-  const locked = STORY.filter(m=>!st.story.done[m.id] && !storyAvailable(st).includes(m) && (!m.req.after || st.story.done[m.req.after]));
-  if(locked.length){ const m=locked[0]; const need=[...(m.req.ratings||[]).filter(r=>!st.ratings[r]).map(r=>RATINGS[r].n), ...(m.req.hours&&st.minutes/60<m.req.hours?[`${m.req.hours} hours`]:[])]; if(need.length) g.push(`A new chapter unlocks with: ${esc(need.join(', '))}.`); }
-  if(!st.company){ g.push(st.ratings.COMM ? `Own company: ${money(Math.max(0,150000-st.cash))} and ${Math.max(0,25-st.minutes/60).toFixed(1)} hours to go.` : `Earn your Commercial license to start building toward your own company.`); }
-  const cs=Object.keys(st.celebs||{}).length; g.push(`Celebrity guestbook: ${cs} of ${CELEB_ORDER.length} met.`);
-  const ach = ACH.filter(a=>!(st.ach&&st.ach[a.id])).slice(0,1); if(ach.length) g.push(`Next achievement idea: ${esc(ach[0].n)} (${esc(ach[0].d.toLowerCase().replace(/\.$/,''))}).`);
-  return `<div class="panel stack"><h3>Goals</h3><ul class="tight small">${g.map(x=>`<li>${x}</li>`).join('')}</ul></div>`;
-}
+
 
 /* ---------- events ---------- */
 document.addEventListener('click', e=>{

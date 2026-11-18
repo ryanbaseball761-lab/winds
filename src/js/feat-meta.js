@@ -60,16 +60,10 @@ SIM_TICK.push(function photoMoment(){ const a=S.st&&S.st.active; if(!a||!a.start
   const d=distNm({lat:s.position.lat,lon:s.position.lon},AP[to]); if(d>5 || (s.position.aglFt||0)>1800 || document.querySelector('.beat')) return; a.photoSaid=1; save();
   showBeat(a,{who:'self', text:`${t}|Photo moment: hit your MSFS screenshot key now.`}, 'photo'); });
 
-/* (Twitch !tip lives in streamer.js) */
 /* =====================================================================
    FIRST FLIGHT (new careers)
    ===================================================================== */
-function firstFlightHTML(st){ if(st.flights>0 || st.active) return ''; const live=S.simState==='live';
-  const step=(n,done,t,d,btn='')=>`<li class="${done?'done':''}"><span class="mono">${done?'✓':n}</span><div><b>${t}</b><p class="small muted">${d}</p>${btn}</div></li>`;
-  return `<section class="panel first-flight"><div class="section-title"><h2>Your first ten minutes</h2></div><ol class="ff">
-    ${step(1, live, 'Start MSFS and the Trade Winds bridge', live?'Connected.':'Open MSFS, load any airport, and the dot in the top bar turns green.')}
-    ${step(2, false, 'Fly one practice circuit', 'Take off, fly around the pattern and land. No pay, no logbook. Just to see how grading works.', `<button class="btn sm" data-act="practice">Fly a practice circuit</button>`)}
-    ${step(3, false, 'Play chapter 1', 'Ten minutes to Anguilla in a Cessna. The story starts here.')}</ol></section>`; }
+
 /* (the setup wizard covers this now; the panel stays defined for reference) */
 
 /* =====================================================================
