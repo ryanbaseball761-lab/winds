@@ -61,7 +61,8 @@ function fevFire(a){ const s=S.sim, f=a.fev, cs=callsign(); f.done=true; save();
 SIM_TICK.push(function flightEvents(){ const a=S.st&&S.st.active; if(!a || !a.started || S.simState!=='live') return; const s=S.sim; if(!s||!s.motion||!s.position) return;
   const rec=s.recorder; if(rec && rec.takeoff && a.toMin==null){ a.toMin=simMinutes(); }
   if(a.job.fuelLie && !a.fuelChecked && !a.fuelLieSaid && rec && rec.takeoff && (Date.now()-rec.takeoff.t)>90000){ a.fuelLieSaid=1; save(); showBeat(a,{who:'self', text:`The fuel gauges read lower than the slip said. A lot lower.|Somebody shorted your fuel. Plan for it.`}, 'fuel'); return; }
-  const f=fevPlan(a); if(!f.type || f.done) return; if(a.order && a.order.state==='active') return; if(document.querySelector('.beat, .cut')) return;
+  const f=fevPlan(a); if(!f.type || f.done) return; if(a.order && a.order.state==='active') return;
+  if(f.type==='intercept' && (!a.cgCall || Date.now()-a.cgCall<60000)) return;   // the radio warning comes first, then the HC-144 shows up if(document.querySelector('.beat, .cut')) return;
   if(s.motion.onGround || (s.position.aglFt||0)<1500 || !rec || !rec.takeoff || (Date.now()-rec.takeoff.t)<4*60000) return;
   try{ if(window.speechSynthesis && speechSynthesis.speaking) return; }catch(_){}
   const ph=beatPhase(a); if(!ph || !ph.cruise || ph.descent) return;

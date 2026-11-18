@@ -3,7 +3,7 @@
    Answers stay in the save and go into "Report a problem" exports, so testers can send everything at once.
    BETA.links: where the Feedback buttons point (fill in the Discord invite / form when they exist).
    Set BETA.on = false for the 1.0 release. */
-const BETA = { on:true, links:{ discord:'', form:'' } };
+const BETA = { on:false, links:{ discord:'', form:'' } };
 
 function betaFeedbackHTML(st){ const L=st.last; if(!BETA.on || !L || !L.job || L.job.kind!=='story') return '';
   if((st.feedback||[]).some(f=>f.ch===L.job.story && f.v!==TW_VERSION)) return '';   // already rated this chapter in an earlier version

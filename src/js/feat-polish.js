@@ -23,8 +23,6 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="iv-open
 /* 10. daily costs on the Money page include insurance and your property income */
 
 /* 11. sell a property back for 60% of what you paid */
-AFTER_RENDER.push(function propSell(){ if(S.view!=='money'||!S.st) return; document.querySelectorAll('.w-props tr').forEach(tr=>{ const yours=tr.querySelector('.chip.good'); if(!yours || tr.querySelector('[data-act="w-sell"]')) return; const btn=tr.querySelector('td:last-child'); const name=tr.querySelector('b').textContent; const p=PROPS.find(x=>x.n===name); if(!p) return;
-  btn.insertAdjacentHTML('beforeend', ` <button class="btn sm ghost" data-act="w-sell" data-id="${p.id}" title="Sell for ${money(Math.round(p.price*0.6))}">Sell</button>`); }); });
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="w-sell"]'); if(!b||!S.st) return; const p=PROPS.find(x=>x.id===b.dataset.id); if(!p||!propOwned(p.id)) return;
   if(!b.dataset.ok){ b.dataset.ok=1; b.textContent=`Sell for ${money(Math.round(p.price*0.6))}?`; return; } delete twW().props[p.id]; txn(S.st, Math.round(p.price*0.6), 'Property', `Sold: ${p.n}`); save(); toast(`Sold the ${p.n}.`); S.keepScroll=true; render(); });
 
@@ -113,8 +111,6 @@ AFTER_RESULT.push(function halconNote(st, job){ if(!job.rival) return; const o=s
 /* 38. when a new weekly event starts, the job board says so with a toast the first time you open it */
 AFTER_RENDER.push(function mktToast(){ if(S.view!=='board'||!S.st) return; const e=mktNow(); const w=twW(); if(e && w.mktToasted!==e.until){ w.mktToasted=e.until; save(); setTimeout(()=>toast(`This week: ${e.text}`), 400); } });
 
-/* 40. Spanish covers the new screens too */
-Object.assign(I18N.es, {'Mark all read':'Marcar todo como leído','Go see her':'Ir a verla','Sort':'Ordenar','Departure':'Salida','Flight time':'Tiempo de vuelo','Sell':'Vender','Insured':'Asegurado','This week:':'Esta semana:','See jobs':'Ver trabajos','Texts answered':'Mensajes respondidos','ATC instructions followed':'Instrucciones de ATC seguidas','Islands that welcome you':'Islas que te reciben bien','Credits':'Créditos','Hull insurance':'Seguro de casco','Buy the policy':'Comprar la póliza','Cancel the policy':'Cancelar la póliza','Aircraft logbooks':'Bitácoras de aviones','Chapter card':'Tarjeta del capítulo','Show all':'Mostrar todo','Show fewer':'Mostrar menos','Owed to Castillo':'Le debes a Castillo','Booked':'Reservado','Next: ':'Siguiente: '});
 
 /* 42. the job board's sealed-destination rows say "Sealed" in the To column, never "????" */
 AFTER_RENDER.push(function sealedTo(){ if(S.view!=='board') return; document.querySelectorAll('.jr-rt b').forEach(b=>{ if(b.textContent.trim()==='????'){ b.textContent='Sealed'; b.parentElement.title='Destination in a sealed envelope'; } }); });
@@ -134,7 +130,6 @@ AFTER_RENDER.push(function tipHelp(){ const s=document.querySelector('.streamer-
 document.addEventListener('keydown', e=>{ if(e.key!=='Enter') return; if(e.target && (e.target.id==='cup-friend-c'||e.target.id==='cup-friend-n')){ e.preventDefault(); const b=document.querySelector('[data-act="cup-add"]'); b&&b.click(); } });
 
 /* 49. buying something you can't afford explains how much more you need */
-AFTER_RENDER.push(function needMore(){ if(S.view!=='money'||!S.st) return; document.querySelectorAll('.w-props [data-act="w-buy"][disabled]').forEach(b=>{ if(b.dataset.nm) return; b.dataset.nm=1; const p=PROPS.find(x=>x.id===b.dataset.id); if(p) b.title=`You need ${money(p.price-S.st.cash)} more`; b.insertAdjacentHTML('afterend', `<span class="small muted" style="display:block">${money(p.price-S.st.cash)} short</span>`); }); });
 
 (function(){ const s=document.createElement('style'); s.textContent=`.map-mkt{padding:8px 12px;border-left:2px solid var(--amb);background:var(--surface);margin:8px 0}.sx-count{margin:0 0 8px}`; document.head.appendChild(s); })();
 /* the title screen fits a phone: the name doesn't run off the edge and the footer doesn't overlap */

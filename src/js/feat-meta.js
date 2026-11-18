@@ -72,26 +72,6 @@ SIM_TICK.push(function photoMoment(){ const a=S.st&&S.st.active; if(!a||!a.start
 AFTER_RESULT.push(function difficultyHeat(st, job, f, res, was){ const c=crime(st); if(!c.on) return; const d=diff(); const gain=c.heat-was.heat; if(gain<=0) return;
   if(d==='casual') crBump(c,'heat',-Math.round(gain*0.3)); else if(d==='expert') crBump(c,'heat',Math.round(gain*0.3)); });
 
-/* =====================================================================
-   LANGUAGE (menus and buttons; the story stays English for now)
-   ===================================================================== */
-const I18N = { es: {
-  'STORY':'HISTORIA','JOBS':'TRABAJOS','FLIGHT':'VUELO','PILOT':'PILOTO','HANGAR':'HANGAR','Story':'Historia','Jobs':'Trabajos','Flight':'Vuelo','Pilot':'Piloto','Hangar':'Hangar','Map':'Mapa',
-  'Licenses':'Licencias','Profile':'Perfil','Logbook':'Bitácora','Money':'Dinero','Airline':'Aerolínea','Butter Cup':'Copa Mantequilla','Academy':'Academia','Settings':'Ajustes','Fleet':'Flota',
-  'Accept':'Aceptar','Start flight':'Iniciar vuelo','Open cockpit checklist':'Abrir lista de cabina','Book checkride':'Reservar examen','Show':'Mostrar','Hide':'Ocultar','Close':'Cerrar','Buy':'Comprar','Save image':'Guardar imagen','Leave':'Salir','Copy':'Copiar',
-  'Route':'Ruta','Aircraft':'Avión','Light':'Luz','With':'Con','Daytime':'De día','Night':'Noche','Dawn':'Amanecer','Dusk':'Atardecer','Departs':'Sale','To':'A','Job':'Trabajo','Time':'Tiempo','Pay':'Pago',
-  'Chapters':'Capítulos','Flights':'Vuelos','Hours':'Horas','Earned':'Ganado','Best landing':'Mejor aterrizaje','Laundered':'Lavado','Cash':'Efectivo','Heat':'Calor','Power':'Poder','Sim':'Sim','Loc':'Lugar',
-  'The story so far':'La historia hasta ahora','The people':'La gente','The five acts':'Los cinco actos','Home':'Casa','Dispatch':'Despacho','Weight':'Peso','Fuel':'Combustible','NOTAMs':'NOTAMs','Islands':'Islas','Contacts':'Contactos','Property':'Propiedades','Phone':'Teléfono',
-  'Sim not connected':'Sim no conectado','MSFS live':'MSFS en vivo','Read the fuel slip':'Leer el recibo de combustible','Race your friends':'Compite con tus amigos','Your first ten minutes':'Tus primeros diez minutos','What they have on you':'Lo que tienen contra ti',
-}};
-function lang(){ return (S.st&&S.st.ui&&S.st.ui.lang)||'en'; }
-function tr(t){ const d=I18N[lang()]; return (d && d[t]) || t; }
-AFTER_RENDER.push(function translate(){ const L=lang(); document.documentElement.lang = L; if(L==='en') return; const d=I18N[L]; if(!d) return; const root=document.getElementById('app')||document.body;
-  const w=document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes=[]; while(w.nextNode()) nodes.push(w.currentNode);
-  for(const n of nodes){ const t=n.nodeValue.trim(); if(t && d[t]) n.nodeValue=n.nodeValue.replace(t, d[t]); } });
-AFTER_RENDER.push(function langSetting(){ if(S.view!=='hangar'||S.hangarTab!=='settings'||!S.st) return; const box=document.querySelector('.ui3-set'); if(!box||box.querySelector('[data-act="ui-lang"]')) return;
-  box.insertAdjacentHTML('beforeend', `<label class="field" style="margin-top:10px;max-width:280px"><span>Language (menus)</span><select data-act="ui-lang"><option value="en" ${lang()==='en'?'selected':''}>English</option><option value="es" ${lang()==='es'?'selected':''}>Español (beta)</option></select></label>`); });
-document.addEventListener('change', e=>{ const s=e.target.closest('[data-act="ui-lang"]'); if(!s||!S.st) return; S.st.ui=S.st.ui||{}; S.st.ui.lang=s.value; save(); render(); });
 
 /* =====================================================================
    CRASH REPORTS

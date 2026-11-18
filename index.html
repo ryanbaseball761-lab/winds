@@ -6089,7 +6089,7 @@ document.addEventListener('click', async e=>{ const b=e.target.closest('[data-ac
    Answers stay in the save and go into "Report a problem" exports, so testers can send everything at once.
    BETA.links: where the Feedback buttons point (fill in the Discord invite / form when they exist).
    Set BETA.on = false for the 1.0 release. */
-const BETA = { on:true, links:{ discord:'', form:'' } };
+const BETA = { on:false, links:{ discord:'', form:'' } };
 
 function betaFeedbackHTML(st){ const L=st.last; if(!BETA.on || !L || !L.job || L.job.kind!=='story') return '';
   if((st.feedback||[]).some(f=>f.ch===L.job.story && f.v!==TW_VERSION)) return '';   // already rated this chapter in an earlier version
@@ -6358,8 +6358,8 @@ function logErr(msg){ logErrBase(msg); try{ if(window.twNative&&twNative.flightL
 /* ===================== B1. ECONOMY: upkeep for your fleet and crew, and things worth buying ===================== */
 const UPKEEP = { SF50:300, CJ4:700, B38M:1800, B748:4000 };
 const WAGES = { loaders:120, fo:350 };
-const SAFEHOUSES = [ {id:'flat',n:'Apartment in Philipsburg',cost:25000,perk:'Heat −1 every new day'},
-  {id:'villa',n:'Villa above Simpson Bay',cost:120000,perk:'Heat −2 every new day, laundering fees −5%'},
+const SAFEHOUSES = [ {id:'flat',n:'Back-street flat in Cole Bay',cost:25000,perk:'Heat −1 every new day'},
+  {id:'villa',n:'Gated villa above Cupecoy',cost:120000,perk:'Heat −2 every new day, laundering fees −5%'},
   {id:'strip',n:'Private strip on a quiet cay',cost:600000,perk:'Network runs pay +20%, Heat −3 every new day'} ];
 function safeLevel(st){ const c=crime(st); return SAFEHOUSES.findIndex(s=>s.id===c.safe); }
 function dailyCosts(st){ const d=st.story.done; const L=[]; FLEET.forEach(f=>{ if(d[f[0]] && UPKEEP[f[1]]) L.push([`${f[2]} (${f[3]}) upkeep`, UPKEEP[f[1]]]); }); const c=crime(st); if(c.crew){ for(const k in WAGES) if(crewHas(st,k)) L.push([`${CREW.find(x=>x.id===k).n} wages`, WAGES[k]]); }
@@ -6626,7 +6626,7 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="cut
 
 /* 14. "What's new" on the title screen */
 const WHATS_NEW = [['0.42','Illustrated portraits and scenes, person cards on the Story page, flight progress in flight mode, ← to go back in cutscenes, shortcuts list (?), and more.'],['0.41','Fixed Butter Cup, Academy and Profile pages; 21 smaller fixes.'],['0.40','20 small fixes: the right airline on your ticket, dirty cash in the header, cutscene auto-play.'],['0.39','Title screen, cold open, music, character voices, volume and units settings.'],['0.38','Backups before every chapter, safehouses, the feds, New Game+.']];
-document.addEventListener('click', e=>{ if(!e.target.closest('[data-ts-new]')) return; e.stopPropagation(); const d=document.createElement('div'); d.className='pc-wrap'; d.style.zIndex=13000; d.innerHTML=`<div class="pc keys"><div class="pc-in"><p class="label">Updates</p><h2>What's new</h2><dl>${WHATS_NEW.map(([v,t])=>`<dt><b>${v}</b></dt><dd>${esc(t)}</dd>`).join('')}</dl><button class="btn sm" data-act="pc-close">Close</button></div></div>`; document.body.appendChild(d); d.addEventListener('click', ev=>{ if(ev.target===d||ev.target.closest('[data-act="pc-close"]')) d.remove(); }); }, true);
+document.addEventListener('click', e=>{ if(!e.target.closest('[data-ts-new]')) return; e.stopPropagation(); const d=document.createElement('div'); d.className='pc-wrap'; d.style.zIndex=13000; d.innerHTML=`<div class="pc keys"><div class="pc-in"><p class="label">Updates</p><h2>What's new</h2><dl>${WHATS_NEW.slice(0,5).map(([v,t])=>`<dt><b>${v}</b></dt><dd>${esc(t)}</dd>`).join('')}</dl><button class="btn sm" data-act="pc-close">Close</button></div></div>`; document.body.appendChild(d); d.addEventListener('click', ev=>{ if(ev.target===d||ev.target.closest('[data-act="pc-close"]')) d.remove(); }); }, true);
 
 
 /* 16. click a finished chapter in "The story so far" for its full recap */
@@ -7550,7 +7550,8 @@ const SIM_TICK = [
     if(!s.motion.onGround){ T.air+=dt; if((s.position.aglFt||0)<1000) T.low+=dt; }
     if(s.systems && s.systems.fuelLb!=null){ T.fuel.push([now, s.systems.fuelLb]); while(T.fuel.length && now-T.fuel[0][0]>15*60000) T.fuel.shift(); }
     const x=s.ext||{}; if(a.job.network && x.transponder!=null){ T.xpdrSeen=true; if(String(x.transponder.mode||x.transponder).match(/stby|standby|off/i)) T.dark=(T.dark||0)+dt; }
-    const c=crime(); if(a.job.network && c.heat>=50 && !a.cgCall && T.air>240){ a.cgCall=true; showBeat(a,{at:'cruise',who:'radio',text:`Aircraft on this frequency, U.S. Coast Guard. Be advised, we are conducting air interdiction operations in this sector.|Your Heat is high. They might be talking about you.`},99); } },
+    // the Coast Guard's general warning is the lead-in to an intercept (feat-flight.js), never a separate event
+    if(!a.cgCall && T.air>240 && typeof fevPlan==='function' && fevPlan(a).type==='intercept' && !a.fev.done){ a.cgCall=Date.now(); showBeat(a,{at:'cruise',who:'radio',text:`Aircraft on this frequency, U.S. Coast Guard. Be advised, we are conducting air interdiction operations in this sector.|Your Heat is high. They might be talking about you.`},99); } },
   /* the flight display at the top of flight mode */
   function flightDisplay(){ const a=S.st&&S.st.active; const el=document.querySelector('.fhud'); if(a&&el){ const t=tpl(hudHTML(a)); el.replaceWith(t.content.firstElementChild); } },
   /* the aircraft you load in MSFS is added to your hangar list */
@@ -8307,15 +8308,10 @@ function fleetCrewHTML(st){ const d=st.story.done; const f=FLEET.filter(x=>d[x[0
   return `<section class="panel fleet"><p class="label">Your operation</p><h3>Fleet</h3>${f.length?`<div class="fc-grid">${f.map(x=>`<div class="fc-ac"><b class="mono">${x[3]}</b><span>${esc(x[2])}</span><small>${esc(x[4])}</small>${UPKEEP[x[1]]?`<small class="mono">${money(UPKEEP[x[1]])}/day</small>`:''}</div>`).join('')}</div>`:'<p class="small muted">Your first jet comes in Act 2.</p>'}
     ${crew?`<h3 style="margin-top:16px">Crew</h3>${crew}`:''}</section>`; }
 
-/* Daily costs and the safehouses, bought in order. */
-function operationHTML(st){ const c=crime(st); if(!c.on) return ''; const L=dailyCosts(st); const tot=L.reduce((s,x)=>s+x[1],0); const lv=safeLevel(st);
-  const buy=(s,i)=> i<=lv ? '<span class="chip good">Yours</span>'
-    : i>lv+1 ? `<span class="small muted">${money(s.cost)} · buy the one above first</span>`
-    : st.cash<s.cost ? `<span class="small muted">${money(s.cost)} · you need ${money(s.cost-st.cash)} more</span>`
-    : `<button class="btn sm" data-act="buy-safe" data-v="${s.id}" >Buy · ${money(s.cost)}</button>`;
-  return `<section class="panel op-panel"><p class="label">Your operation</p><div class="op-grid">
-    <div><h3>Daily costs <span class="mono">${money(tot)}</span></h3>${L.length?`<ul class="tight small">${L.map(x=>`<li>${esc(x[0])}: ${money(x[1])}</li>`).join('')}</ul>`:'<p class="small muted">Nothing yet. Jets and crew cost money every day.</p>'}</div>
-    <div><h3>Safehouse</h3>${SAFEHOUSES.map((s,i)=>`<div class="fc-row"><div><b>${esc(s.n)}</b><p class="small muted">${esc(s.perk)}</p></div>${buy(s,i)}</div>`).join('')}</div></div>${st.company?`<div class="fc-row" style="margin-top:12px"><div><b>${esc(st.company.name)}</b><p class="small muted">${st.company.fleet.length} aircraft of your own. Buy more, hire crews and put them on routes that earn while you rest.</p></div><button class="btn sm" data-act="nav" data-v="company">Open the airline</button></div>`:''}${crime(st).dirty?`<div class="fc-row" style="margin-top:12px"><div><b>Dirty cash ${money(crime(st).dirty)}</b><p class="small muted">You can't spend it until it's laundered.</p></div><button class="btn sm primary" data-act="nav" data-v="money">Launder it</button></div>`:''}</section>`; }
+/* Daily costs, your airline and dirty cash. (Safehouses are in the Property list.) */
+function operationHTML(st){ const c=crime(st); if(!c.on) return ''; const L=dailyCosts(st); const tot=L.reduce((s,x)=>s+x[1],0);
+  return `<section class="panel op-panel"><p class="label">Your operation</p>
+    <h3>Daily costs <span class="mono">${money(tot)}</span></h3>${L.length?`<ul class="tight small">${L.map(x=>`<li>${esc(x[0])}: ${money(x[1])}</li>`).join('')}</ul>`:'<p class="small muted">Nothing yet. Jets and crew cost money every day.</p>'}${st.company?`<div class="fc-row" style="margin-top:12px"><div><b>${esc(st.company.name)}</b><p class="small muted">${st.company.fleet.length} aircraft of your own. Buy more, hire crews and put them on routes that earn while you rest.</p></div><button class="btn sm" data-act="nav" data-v="company">Open the airline</button></div>`:''}${crime(st).dirty?`<div class="fc-row" style="margin-top:12px"><div><b>Dirty cash ${money(crime(st).dirty)}</b><p class="small muted">You can't spend it until it's laundered.</p></div><button class="btn sm primary" data-act="nav" data-v="money">Launder it</button></div>`:''}</section>`; }
 
 function storyView(){
   const st=S.st; const c=crime(st); const MC=mainChapters(); const availSet=new Set(storyAvailable(st).map(m=>m.id)); const done=MC.filter(m=>st.story.done[m.id]); const next=MC.find(m=>!st.story.done[m.id]);
@@ -8347,7 +8343,7 @@ function storyView(){
   </main>`;
 }
 /* ===================== MONEY PAGE =====================
-   Cash, savings, debt and net worth; the income statement; housing and fuel; the transaction list.
+   Cash, savings, debt and net worth; the income statement; fuel; the transaction list. (Housing is in the Property list.)
    With the crime story on, your operation (crew, safehouses) and dirty cash sit at the top.
    The bank (savings, credit line, bond) is folded away at the bottom. */
 
@@ -8360,7 +8356,7 @@ function moneyView(){
   const tot = g=>groups[g].reduce((s,x)=>s+x[1],0);
   const opProfit = tot('in')+tot('op');
   const row = ([k,v])=>`<tr><td>${esc(k)}</td><td class="num" style="color:${v<0?'var(--bad)':'var(--good)'}">${money(v)}</td></tr>`;
-  const H=HOUSING[F.housing]||HOUSING.bunk; const lim=creditLimit(st);
+  const lim=creditLimit(st);
   // charts
   const hist = F.history.slice(-60); const W=600,Hh=160,P=28;
   let nwChart = `<p class="small muted">No history yet.</p>`;
@@ -8399,13 +8395,11 @@ function moneyView(){
         </tbody></table></div>
         </section>
       <aside class="stack">
-        <section class="panel stack"><h3>Where you live</h3><p class="small"><b>${esc(H.n)}</b> · ${money(H.rent)}/day</p><p class="small muted">${esc(H.blurb)}</p>
-          <select id="fin-house" aria-label="Housing">${Object.entries(HOUSING).map(([k,h])=>`<option value="${k}" ${k===F.housing?'selected':''}>${esc(h.n)} · ${money(h.rent)}/day${h.rep?` · +${h.rep} rep/week`:''}</option>`).join('')}</select></section>
         <section class="panel stack"><h3>Fuel today at ${esc(st.loc)}</h3><dl class="kv small"><dt>Avgas</dt><dd class="mono">$${fuelPrice(st,st.loc,'avgas').toFixed(2)}/gal</dd><dt>Jet-A</dt><dd class="mono">$${fuelPrice(st,st.loc,'jeta').toFixed(2)}/gal</dd><dt>Oil index</dt><dd class="mono">${F.oil.toFixed(2)}</dd></dl><p class="tiny muted">You only pay for fuel on your own company's planes.</p></section>
       </aside>
     </div>
     <section class="panel"><div class="section-title"><h2>Transactions</h2><span class="small muted">Most recent first</span></div><div class="scroll-x" tabindex="0"><table><thead><tr><th>Day</th><th>Category</th><th>Details</th><th class="num">Amount</th></tr></thead><tbody>${F.ledger.slice(0,60).map(e=>`<tr><td class="mono">${e.d} · ${hhmm(e.t)}</td><td>${esc(e.c)}${e.transfer?' <span class="chip">transfer</span>':''}</td><td style="white-space:normal">${esc(e.m)}</td><td class="num" style="color:${e.a<0?'var(--bad)':'var(--good)'}">${money(e.a)}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">No transactions yet. Fly a job.</td></tr>'}</tbody></table></div></section>
-    <details class="calm-more"><summary>Bank, savings, credit and housing</summary><div class="calm-more-in">${bank}</div></details>
+    <details class="calm-more"><summary>Bank, savings and credit</summary><div class="calm-more-in">${bank}</div></details>
   </main>`;
 }
 /* ===================== MAP PAGE =====================
@@ -8728,7 +8722,7 @@ function cmdItems(){ const st=S.st; const L=[]; if(!st) return L; const pg=(n,v,
     const k=rec.indexOf(it.n); if(k>=0){ it.k='Recent · '+it.k; it._rec=5-k; } else if(it.airport){ const a=AP[it.airport]; it.k=`Airport · ${a.isl} · ${longestRwy(a).toLocaleString()} ft`; } });
   try{ metPeople(st).forEach(k=>L.push({n:CAST[k].n, k:'Person · '+(CAST[k].role||''), run:()=>{ go('story'); setTimeout(()=>personCard(k),150); }})); }catch(_){}
   { const add=(n,k,run)=>L.push({n,k,run});
-  if(unlocked('phone')) add('Phone','Messages',()=>openPhone()); if(unlocked('props')) add('Property','Money',()=>{ go('money'); setTimeout(()=>{ const x=document.querySelector('.w-props'); x&&x.scrollIntoView({block:'start'}); },150); });
+  if(unlocked('phone')) add('Phone','Messages',()=>openPhone()); add('Property','Money',()=>{ go('money'); setTimeout(()=>{ const x=document.querySelector('.w-props'); x&&x.scrollIntoView({block:'start'}); },150); });
   if(unlocked('islands')) add('Islands and contacts','Pilot',()=>{ go('profile'); setTimeout(()=>{ const x=document.querySelector('.w-isl'); x&&x.scrollIntoView({block:'start'}); },150); });
   add('Aircraft logbooks','Hangar',()=>{ go('hangar'); setTimeout(()=>{ const x=document.querySelector('.w-achist'); x&&x.scrollIntoView({block:'start'}); },150); });
   add('Mute or unmute (M)','Sound',()=>{ const u=uiP(); u.muted=!u.muted; save(); toast(u.muted?'Sound off.':'Sound on.'); }); }
@@ -9176,9 +9170,19 @@ function islandsHTML(){ const w=twW(); const L=Object.entries(w.isl).filter(([,v
     <h3 style="margin-top:18px">Contacts</h3>
     ${met.length?`<ul class="w-contacts">${met.map(k=>`<li><b>${esc(k.n)}</b> <span class="muted">${esc(k.role)}. ${esc(islOf(k.ap))} (${k.ap}).</span> ${contactLevel(k.id)?`<span class="chip">${contactLevel(k.id)} job${contactLevel(k.id)>1?'s':''}</span>`:''}</li>`).join('')}</ul>`:`<p class="muted">Be good to an island and someone there will start sending you work.</p>`}</section>`; }
 
-/* Money: properties, the loan, bribes */
+/* Money: property (home, safehouses, businesses), the loan, bribes */
 function moneyWorldHTML(){ const st=S.st, w=twW(), c=crime(st), L=loanNow();
-  const props=`<section class="panel w-props"><div class="section-title"><h2>Property</h2></div><table class="w-tab"><tbody>${PROPS.map(p=>`<tr><td><b>${esc(p.n)}</b><br><span class="small muted">${esc(p.note)}</span></td><td class="mono">${money(p.price)}</td><td>${propOwned(p.id)?`<span class="chip good">Yours</span>`:`<button class="btn sm" data-act="w-buy" data-id="${p.id}" ${st.cash<p.price?'disabled':''}>Buy</button>`}</td></tr>`).join('')}</tbody></table></section>`;
+  /* one Property list: where you live (rented), safehouses (bought in order, crime story only), and businesses */
+  const F=fin(st), H=HOUSING[F.housing]||HOUSING.bunk, lv=safeLevel(st);
+  const safeBuy=(s,i)=> i<=lv ? '<span class="chip good">Yours</span>'
+    : i>lv+1 ? `<span class="small muted">Buy the one above first</span>`
+    : `<button class="btn sm" data-act="buy-safe" data-v="${s.id}" ${st.cash<s.cost?`disabled title="You need ${money(s.cost-st.cash)} more"`:''}>Buy</button>${st.cash<s.cost?short(s.cost):''}`;
+  const short=n=>`<span class="small muted" style="display:block">${money(n-st.cash)} short</span>`;
+  const grp=(t,cls)=>`<tr class="w-pgroup${cls?' '+cls:''}"><th colspan="3">${t}</th></tr>`;
+  const home=grp('Where you live')+`<tr><td><b>${esc(H.n)}</b><br><span class="small muted">${esc(H.blurb)}</span></td><td class="mono">${money(H.rent)}/day</td><td><select id="fin-house" aria-label="Move house">${Object.entries(HOUSING).map(([k,h])=>`<option value="${k}" ${k===F.housing?'selected':''}>${esc(h.n)} · ${money(h.rent)}/day${h.rep?` · +${h.rep} rep/week`:''}</option>`).join('')}</select></td></tr>`;
+  const safe=c.on ? grp('Safehouses')+SAFEHOUSES.map((s,i)=>`<tr><td><b>${esc(s.n)}</b><br><span class="small muted">${esc(s.perk)}</span></td><td class="mono">${money(s.cost)}</td><td>${safeBuy(s,i)}</td></tr>`).join('') : '';
+  const biz=grp('Businesses','w-biz')+PROPS.map(p=>`<tr class="w-biz"><td><b>${esc(p.n)}</b><br><span class="small muted">${esc(p.note)}</span></td><td class="mono">${money(p.price)}</td><td>${propOwned(p.id)?`<span class="chip good">Yours</span> <button class="btn sm ghost" data-act="w-sell" data-id="${p.id}" title="Sell for ${money(Math.round(p.price*0.6))}">Sell</button>`:`<button class="btn sm" data-act="w-buy" data-id="${p.id}" ${st.cash<p.price?`disabled title="You need ${money(p.price-st.cash)} more"`:''}>Buy</button>${st.cash<p.price?short(p.price):''}`}</td></tr>`).join('');
+  const props=`<section class="panel w-props"><div class="section-title"><h2>Property</h2></div><table class="w-tab"><tbody>${home}${safe}${biz}</tbody></table></section>`;
   const loan = c.on ? `<section class="panel w-loan"><div class="section-title"><h2>Castillo's money</h2></div>${L?`<p>You owe <b class="mono">${money(L.owe)}</b> by day ${L.due} (${Math.max(0,L.due-st.day)} days).</p><button class="btn sm" data-act="w-repay" ${st.cash<L.owe?'disabled':''}>Pay him back</button>`:`<p class="muted">Castillo lends at 20% for two weeks. Late, and he sends someone.</p><div class="row" style="gap:8px;flex-wrap:wrap">${[10000,25000,50000].map(a=>`<button class="btn sm" data-act="w-loan" data-a="${a}">Borrow ${money(a)}</button>`).join('')}</div>`}</section>` : '';
   const here=st.loc; const br = c.on ? `<section class="panel w-bribe"><div class="section-title"><h2>Customs at ${esc(here)}</h2></div>${bribeActive(here)?`<p>Your man at ${esc(here)} is looking the other way until day ${w.bribes[here].until}.</p>`:`<p class="muted">For ${money(bribeCost(here))}, an officer here waves you through for a week, even when you're hot. Every time he does, the chance he gets caught goes up.</p><button class="btn sm" data-act="w-bribe" ${st.cash<bribeCost(here)?'disabled':''}>Pay him · ${money(bribeCost(here))}</button>`}</section>` : '';
   return props+loan+br; }
@@ -9224,6 +9228,7 @@ document.addEventListener('change', e=>{ const i=e.target.closest('.w-nick'); if
 .w-nick{height:32px!important;padding:0 8px!important;font-size:13.5px!important;width:170px}
 .w-mkt{border-left:2px solid var(--amb)!important}
 .cb-phone b{position:absolute;top:10px;right:8px;min-width:15px;height:15px;padding:0 3px;background:var(--amb);color:var(--amb-ink);font:600 9.5px/15px var(--f-mono);text-align:center}
+.w-props .w-pgroup th{text-align:left;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:16px 0 6px;border-bottom:1px solid var(--line)}.w-props .w-pgroup:first-child th{padding-top:0}.w-props select{max-width:100%}.w-props .w-pgroup th{width:100%;box-sizing:border-box}
 @media (max-width:700px){ .w-bar{width:70px} .w-tab{font-size:13px} .w-props .w-tab,.w-props .w-tab tbody,.w-props .w-tab tr,.w-props .w-tab td,.w-achist .w-tab,.w-achist .w-tab tbody,.w-achist .w-tab tr,.w-achist .w-tab td{display:block;width:auto} .w-achist thead{display:none} .w-props tr,.w-achist tr{border-top:1px solid var(--line);padding:10px 0} .w-props td,.w-achist td{border:0!important;padding:3px 0!important} .w-achist td[data-l]{display:inline-block;margin-right:14px} .w-achist td[data-l]::before{content:attr(data-l) ' ';color:var(--muted);font-family:var(--f-body)} .w-nick{width:100%!important} }
 `; document.head.appendChild(s); })();
 /* ===================== THINGS THAT HAPPEN IN THE AIR (0.68) =====================
@@ -9289,7 +9294,8 @@ function fevFire(a){ const s=S.sim, f=a.fev, cs=callsign(); f.done=true; save();
 SIM_TICK.push(function flightEvents(){ const a=S.st&&S.st.active; if(!a || !a.started || S.simState!=='live') return; const s=S.sim; if(!s||!s.motion||!s.position) return;
   const rec=s.recorder; if(rec && rec.takeoff && a.toMin==null){ a.toMin=simMinutes(); }
   if(a.job.fuelLie && !a.fuelChecked && !a.fuelLieSaid && rec && rec.takeoff && (Date.now()-rec.takeoff.t)>90000){ a.fuelLieSaid=1; save(); showBeat(a,{who:'self', text:`The fuel gauges read lower than the slip said. A lot lower.|Somebody shorted your fuel. Plan for it.`}, 'fuel'); return; }
-  const f=fevPlan(a); if(!f.type || f.done) return; if(a.order && a.order.state==='active') return; if(document.querySelector('.beat, .cut')) return;
+  const f=fevPlan(a); if(!f.type || f.done) return; if(a.order && a.order.state==='active') return;
+  if(f.type==='intercept' && (!a.cgCall || Date.now()-a.cgCall<60000)) return;   // the radio warning comes first, then the HC-144 shows up if(document.querySelector('.beat, .cut')) return;
   if(s.motion.onGround || (s.position.aglFt||0)<1500 || !rec || !rec.takeoff || (Date.now()-rec.takeoff.t)<4*60000) return;
   try{ if(window.speechSynthesis && speechSynthesis.speaking) return; }catch(_){}
   const ph=beatPhase(a); if(!ph || !ph.cruise || ph.descent) return;
@@ -9744,26 +9750,6 @@ SIM_TICK.push(function photoMoment(){ const a=S.st&&S.st.active; if(!a||!a.start
 AFTER_RESULT.push(function difficultyHeat(st, job, f, res, was){ const c=crime(st); if(!c.on) return; const d=diff(); const gain=c.heat-was.heat; if(gain<=0) return;
   if(d==='casual') crBump(c,'heat',-Math.round(gain*0.3)); else if(d==='expert') crBump(c,'heat',Math.round(gain*0.3)); });
 
-/* =====================================================================
-   LANGUAGE (menus and buttons; the story stays English for now)
-   ===================================================================== */
-const I18N = { es: {
-  'STORY':'HISTORIA','JOBS':'TRABAJOS','FLIGHT':'VUELO','PILOT':'PILOTO','HANGAR':'HANGAR','Story':'Historia','Jobs':'Trabajos','Flight':'Vuelo','Pilot':'Piloto','Hangar':'Hangar','Map':'Mapa',
-  'Licenses':'Licencias','Profile':'Perfil','Logbook':'Bitácora','Money':'Dinero','Airline':'Aerolínea','Butter Cup':'Copa Mantequilla','Academy':'Academia','Settings':'Ajustes','Fleet':'Flota',
-  'Accept':'Aceptar','Start flight':'Iniciar vuelo','Open cockpit checklist':'Abrir lista de cabina','Book checkride':'Reservar examen','Show':'Mostrar','Hide':'Ocultar','Close':'Cerrar','Buy':'Comprar','Save image':'Guardar imagen','Leave':'Salir','Copy':'Copiar',
-  'Route':'Ruta','Aircraft':'Avión','Light':'Luz','With':'Con','Daytime':'De día','Night':'Noche','Dawn':'Amanecer','Dusk':'Atardecer','Departs':'Sale','To':'A','Job':'Trabajo','Time':'Tiempo','Pay':'Pago',
-  'Chapters':'Capítulos','Flights':'Vuelos','Hours':'Horas','Earned':'Ganado','Best landing':'Mejor aterrizaje','Laundered':'Lavado','Cash':'Efectivo','Heat':'Calor','Power':'Poder','Sim':'Sim','Loc':'Lugar',
-  'The story so far':'La historia hasta ahora','The people':'La gente','The five acts':'Los cinco actos','Home':'Casa','Dispatch':'Despacho','Weight':'Peso','Fuel':'Combustible','NOTAMs':'NOTAMs','Islands':'Islas','Contacts':'Contactos','Property':'Propiedades','Phone':'Teléfono',
-  'Sim not connected':'Sim no conectado','MSFS live':'MSFS en vivo','Read the fuel slip':'Leer el recibo de combustible','Race your friends':'Compite con tus amigos','Your first ten minutes':'Tus primeros diez minutos','What they have on you':'Lo que tienen contra ti',
-}};
-function lang(){ return (S.st&&S.st.ui&&S.st.ui.lang)||'en'; }
-function tr(t){ const d=I18N[lang()]; return (d && d[t]) || t; }
-AFTER_RENDER.push(function translate(){ const L=lang(); document.documentElement.lang = L; if(L==='en') return; const d=I18N[L]; if(!d) return; const root=document.getElementById('app')||document.body;
-  const w=document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes=[]; while(w.nextNode()) nodes.push(w.currentNode);
-  for(const n of nodes){ const t=n.nodeValue.trim(); if(t && d[t]) n.nodeValue=n.nodeValue.replace(t, d[t]); } });
-AFTER_RENDER.push(function langSetting(){ if(S.view!=='hangar'||S.hangarTab!=='settings'||!S.st) return; const box=document.querySelector('.ui3-set'); if(!box||box.querySelector('[data-act="ui-lang"]')) return;
-  box.insertAdjacentHTML('beforeend', `<label class="field" style="margin-top:10px;max-width:280px"><span>Language (menus)</span><select data-act="ui-lang"><option value="en" ${lang()==='en'?'selected':''}>English</option><option value="es" ${lang()==='es'?'selected':''}>Español (beta)</option></select></label>`); });
-document.addEventListener('change', e=>{ const s=e.target.closest('[data-act="ui-lang"]'); if(!s||!S.st) return; S.st.ui=S.st.ui||{}; S.st.ui.lang=s.value; save(); render(); });
 
 /* =====================================================================
    CRASH REPORTS
@@ -9865,7 +9851,7 @@ AFTER_RENDER.push(function focusGate(){ if(!S.st) return; const hide=(sel)=>docu
   if(!unlocked('home')) hide('.home-strip');
   if(!unlocked('caseboard')) hide('.case-board');
   if(!unlocked('islands')) hide('.w-isl');
-  if(!unlocked('props')) hide('.w-props');
+  if(!unlocked('props')) hide('.w-biz');
   if(!unlocked('loan')) hide('.w-loan');
   if(!unlocked('bribe')) hide('.w-bribe');
   if(!unlocked('insurance')) hide('.w-ins'); });
@@ -9907,8 +9893,6 @@ document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="iv-open
 /* 10. daily costs on the Money page include insurance and your property income */
 
 /* 11. sell a property back for 60% of what you paid */
-AFTER_RENDER.push(function propSell(){ if(S.view!=='money'||!S.st) return; document.querySelectorAll('.w-props tr').forEach(tr=>{ const yours=tr.querySelector('.chip.good'); if(!yours || tr.querySelector('[data-act="w-sell"]')) return; const btn=tr.querySelector('td:last-child'); const name=tr.querySelector('b').textContent; const p=PROPS.find(x=>x.n===name); if(!p) return;
-  btn.insertAdjacentHTML('beforeend', ` <button class="btn sm ghost" data-act="w-sell" data-id="${p.id}" title="Sell for ${money(Math.round(p.price*0.6))}">Sell</button>`); }); });
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="w-sell"]'); if(!b||!S.st) return; const p=PROPS.find(x=>x.id===b.dataset.id); if(!p||!propOwned(p.id)) return;
   if(!b.dataset.ok){ b.dataset.ok=1; b.textContent=`Sell for ${money(Math.round(p.price*0.6))}?`; return; } delete twW().props[p.id]; txn(S.st, Math.round(p.price*0.6), 'Property', `Sold: ${p.n}`); save(); toast(`Sold the ${p.n}.`); S.keepScroll=true; render(); });
 
@@ -9997,8 +9981,6 @@ AFTER_RESULT.push(function halconNote(st, job){ if(!job.rival) return; const o=s
 /* 38. when a new weekly event starts, the job board says so with a toast the first time you open it */
 AFTER_RENDER.push(function mktToast(){ if(S.view!=='board'||!S.st) return; const e=mktNow(); const w=twW(); if(e && w.mktToasted!==e.until){ w.mktToasted=e.until; save(); setTimeout(()=>toast(`This week: ${e.text}`), 400); } });
 
-/* 40. Spanish covers the new screens too */
-Object.assign(I18N.es, {'Mark all read':'Marcar todo como leído','Go see her':'Ir a verla','Sort':'Ordenar','Departure':'Salida','Flight time':'Tiempo de vuelo','Sell':'Vender','Insured':'Asegurado','This week:':'Esta semana:','See jobs':'Ver trabajos','Texts answered':'Mensajes respondidos','ATC instructions followed':'Instrucciones de ATC seguidas','Islands that welcome you':'Islas que te reciben bien','Credits':'Créditos','Hull insurance':'Seguro de casco','Buy the policy':'Comprar la póliza','Cancel the policy':'Cancelar la póliza','Aircraft logbooks':'Bitácoras de aviones','Chapter card':'Tarjeta del capítulo','Show all':'Mostrar todo','Show fewer':'Mostrar menos','Owed to Castillo':'Le debes a Castillo','Booked':'Reservado','Next: ':'Siguiente: '});
 
 /* 42. the job board's sealed-destination rows say "Sealed" in the To column, never "????" */
 AFTER_RENDER.push(function sealedTo(){ if(S.view!=='board') return; document.querySelectorAll('.jr-rt b').forEach(b=>{ if(b.textContent.trim()==='????'){ b.textContent='Sealed'; b.parentElement.title='Destination in a sealed envelope'; } }); });
@@ -10018,7 +10000,6 @@ AFTER_RENDER.push(function tipHelp(){ const s=document.querySelector('.streamer-
 document.addEventListener('keydown', e=>{ if(e.key!=='Enter') return; if(e.target && (e.target.id==='cup-friend-c'||e.target.id==='cup-friend-n')){ e.preventDefault(); const b=document.querySelector('[data-act="cup-add"]'); b&&b.click(); } });
 
 /* 49. buying something you can't afford explains how much more you need */
-AFTER_RENDER.push(function needMore(){ if(S.view!=='money'||!S.st) return; document.querySelectorAll('.w-props [data-act="w-buy"][disabled]').forEach(b=>{ if(b.dataset.nm) return; b.dataset.nm=1; const p=PROPS.find(x=>x.id===b.dataset.id); if(p) b.title=`You need ${money(p.price-S.st.cash)} more`; b.insertAdjacentHTML('afterend', `<span class="small muted" style="display:block">${money(p.price-S.st.cash)} short</span>`); }); });
 
 (function(){ const s=document.createElement('style'); s.textContent=`.map-mkt{padding:8px 12px;border-left:2px solid var(--amb);background:var(--surface);margin:8px 0}.sx-count{margin:0 0 8px}`; document.head.appendChild(s); })();
 /* the title screen fits a phone: the name doesn't run off the edge and the footer doesn't overlap */

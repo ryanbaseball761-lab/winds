@@ -64,15 +64,10 @@ function fleetCrewHTML(st){ const d=st.story.done; const f=FLEET.filter(x=>d[x[0
   return `<section class="panel fleet"><p class="label">Your operation</p><h3>Fleet</h3>${f.length?`<div class="fc-grid">${f.map(x=>`<div class="fc-ac"><b class="mono">${x[3]}</b><span>${esc(x[2])}</span><small>${esc(x[4])}</small>${UPKEEP[x[1]]?`<small class="mono">${money(UPKEEP[x[1]])}/day</small>`:''}</div>`).join('')}</div>`:'<p class="small muted">Your first jet comes in Act 2.</p>'}
     ${crew?`<h3 style="margin-top:16px">Crew</h3>${crew}`:''}</section>`; }
 
-/* Daily costs and the safehouses, bought in order. */
-function operationHTML(st){ const c=crime(st); if(!c.on) return ''; const L=dailyCosts(st); const tot=L.reduce((s,x)=>s+x[1],0); const lv=safeLevel(st);
-  const buy=(s,i)=> i<=lv ? '<span class="chip good">Yours</span>'
-    : i>lv+1 ? `<span class="small muted">${money(s.cost)} · buy the one above first</span>`
-    : st.cash<s.cost ? `<span class="small muted">${money(s.cost)} · you need ${money(s.cost-st.cash)} more</span>`
-    : `<button class="btn sm" data-act="buy-safe" data-v="${s.id}" >Buy · ${money(s.cost)}</button>`;
-  return `<section class="panel op-panel"><p class="label">Your operation</p><div class="op-grid">
-    <div><h3>Daily costs <span class="mono">${money(tot)}</span></h3>${L.length?`<ul class="tight small">${L.map(x=>`<li>${esc(x[0])}: ${money(x[1])}</li>`).join('')}</ul>`:'<p class="small muted">Nothing yet. Jets and crew cost money every day.</p>'}</div>
-    <div><h3>Safehouse</h3>${SAFEHOUSES.map((s,i)=>`<div class="fc-row"><div><b>${esc(s.n)}</b><p class="small muted">${esc(s.perk)}</p></div>${buy(s,i)}</div>`).join('')}</div></div>${st.company?`<div class="fc-row" style="margin-top:12px"><div><b>${esc(st.company.name)}</b><p class="small muted">${st.company.fleet.length} aircraft of your own. Buy more, hire crews and put them on routes that earn while you rest.</p></div><button class="btn sm" data-act="nav" data-v="company">Open the airline</button></div>`:''}${crime(st).dirty?`<div class="fc-row" style="margin-top:12px"><div><b>Dirty cash ${money(crime(st).dirty)}</b><p class="small muted">You can't spend it until it's laundered.</p></div><button class="btn sm primary" data-act="nav" data-v="money">Launder it</button></div>`:''}</section>`; }
+/* Daily costs, your airline and dirty cash. (Safehouses are in the Property list.) */
+function operationHTML(st){ const c=crime(st); if(!c.on) return ''; const L=dailyCosts(st); const tot=L.reduce((s,x)=>s+x[1],0);
+  return `<section class="panel op-panel"><p class="label">Your operation</p>
+    <h3>Daily costs <span class="mono">${money(tot)}</span></h3>${L.length?`<ul class="tight small">${L.map(x=>`<li>${esc(x[0])}: ${money(x[1])}</li>`).join('')}</ul>`:'<p class="small muted">Nothing yet. Jets and crew cost money every day.</p>'}${st.company?`<div class="fc-row" style="margin-top:12px"><div><b>${esc(st.company.name)}</b><p class="small muted">${st.company.fleet.length} aircraft of your own. Buy more, hire crews and put them on routes that earn while you rest.</p></div><button class="btn sm" data-act="nav" data-v="company">Open the airline</button></div>`:''}${crime(st).dirty?`<div class="fc-row" style="margin-top:12px"><div><b>Dirty cash ${money(crime(st).dirty)}</b><p class="small muted">You can't spend it until it's laundered.</p></div><button class="btn sm primary" data-act="nav" data-v="money">Launder it</button></div>`:''}</section>`; }
 
 function storyView(){
   const st=S.st; const c=crime(st); const MC=mainChapters(); const availSet=new Set(storyAvailable(st).map(m=>m.id)); const done=MC.filter(m=>st.story.done[m.id]); const next=MC.find(m=>!st.story.done[m.id]);

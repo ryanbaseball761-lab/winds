@@ -1,5 +1,5 @@
 /* ===================== MONEY PAGE =====================
-   Cash, savings, debt and net worth; the income statement; housing and fuel; the transaction list.
+   Cash, savings, debt and net worth; the income statement; fuel; the transaction list. (Housing is in the Property list.)
    With the crime story on, your operation (crew, safehouses) and dirty cash sit at the top.
    The bank (savings, credit line, bond) is folded away at the bottom. */
 
@@ -12,7 +12,7 @@ function moneyView(){
   const tot = g=>groups[g].reduce((s,x)=>s+x[1],0);
   const opProfit = tot('in')+tot('op');
   const row = ([k,v])=>`<tr><td>${esc(k)}</td><td class="num" style="color:${v<0?'var(--bad)':'var(--good)'}">${money(v)}</td></tr>`;
-  const H=HOUSING[F.housing]||HOUSING.bunk; const lim=creditLimit(st);
+  const lim=creditLimit(st);
   // charts
   const hist = F.history.slice(-60); const W=600,Hh=160,P=28;
   let nwChart = `<p class="small muted">No history yet.</p>`;
@@ -51,12 +51,10 @@ function moneyView(){
         </tbody></table></div>
         </section>
       <aside class="stack">
-        <section class="panel stack"><h3>Where you live</h3><p class="small"><b>${esc(H.n)}</b> · ${money(H.rent)}/day</p><p class="small muted">${esc(H.blurb)}</p>
-          <select id="fin-house" aria-label="Housing">${Object.entries(HOUSING).map(([k,h])=>`<option value="${k}" ${k===F.housing?'selected':''}>${esc(h.n)} · ${money(h.rent)}/day${h.rep?` · +${h.rep} rep/week`:''}</option>`).join('')}</select></section>
         <section class="panel stack"><h3>Fuel today at ${esc(st.loc)}</h3><dl class="kv small"><dt>Avgas</dt><dd class="mono">$${fuelPrice(st,st.loc,'avgas').toFixed(2)}/gal</dd><dt>Jet-A</dt><dd class="mono">$${fuelPrice(st,st.loc,'jeta').toFixed(2)}/gal</dd><dt>Oil index</dt><dd class="mono">${F.oil.toFixed(2)}</dd></dl><p class="tiny muted">You only pay for fuel on your own company's planes.</p></section>
       </aside>
     </div>
     <section class="panel"><div class="section-title"><h2>Transactions</h2><span class="small muted">Most recent first</span></div><div class="scroll-x" tabindex="0"><table><thead><tr><th>Day</th><th>Category</th><th>Details</th><th class="num">Amount</th></tr></thead><tbody>${F.ledger.slice(0,60).map(e=>`<tr><td class="mono">${e.d} · ${hhmm(e.t)}</td><td>${esc(e.c)}${e.transfer?' <span class="chip">transfer</span>':''}</td><td style="white-space:normal">${esc(e.m)}</td><td class="num" style="color:${e.a<0?'var(--bad)':'var(--good)'}">${money(e.a)}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">No transactions yet. Fly a job.</td></tr>'}</tbody></table></div></section>
-    <details class="calm-more"><summary>Bank, savings, credit and housing</summary><div class="calm-more-in">${bank}</div></details>
+    <details class="calm-more"><summary>Bank, savings and credit</summary><div class="calm-more-in">${bank}</div></details>
   </main>`;
 }

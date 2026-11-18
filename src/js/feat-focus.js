@@ -46,7 +46,7 @@ AFTER_RENDER.push(function focusGate(){ if(!S.st) return; const hide=(sel)=>docu
   if(!unlocked('home')) hide('.home-strip');
   if(!unlocked('caseboard')) hide('.case-board');
   if(!unlocked('islands')) hide('.w-isl');
-  if(!unlocked('props')) hide('.w-props');
+  if(!unlocked('props')) hide('.w-biz');
   if(!unlocked('loan')) hide('.w-loan');
   if(!unlocked('bribe')) hide('.w-bribe');
   if(!unlocked('insurance')) hide('.w-ins'); });
