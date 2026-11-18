@@ -1,0 +1,13 @@
+{
+ "bad": [],
+ "day": 91,
+ "cash": 416372,
+ "heat": 0,
+ "msgs": 32,
+ "mkt": "{\"id\":\"fuel\",\"isl\":\"Ocho Rios, Jamaica\",\"reg\":null,\"until\":93,\"text\":\"Fuel workers are on strike in Ocho Rios, Jamaica. Anyone who flies there anyway gets paid 25% more.\"}",
+ "isl": 29,
+ "loan": "null",
+ "errlog": []
+}
+PAGE ERRORS []
+soak.js exit 0

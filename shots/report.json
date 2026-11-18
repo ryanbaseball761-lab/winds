@@ -1,0 +1,1545 @@
+{
+ "d-00-title": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Main story\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-01-setup": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [],
+  "tiny": [],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-02-setup-form": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [],
+  "tiny": [],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-03-coldopen": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Main story\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-04-coldopen-later": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Main story\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-05-first-home": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Main story\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-early-story": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Main story\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-early-board": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Side jobs\"",
+   "span.sr \"Destination\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-early-map": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Map\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-early-flight": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Flight\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-early-cockpit": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Cockpit\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-early-pilot": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Pilot\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-early-log": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Logbook\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-early-money": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Money\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-early-company": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Airline\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-early-cup": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"The Butter Cup\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-early-academy": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Flight Academy\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-early-profile": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Pilot profile\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-early-hangar": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Hangar\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-early-hangar-fleet": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Hangar\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-early-hangar-settings": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Hangar\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-early-hangar-msfs": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Hangar\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-early-hangar-save": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Hangar\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-early-result-cut": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Flight\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-early-result": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Flight\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-mid-story": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Main story\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [
+   "span.cashfx.up \"+$57,106\" contrast=1.00"
+  ],
+  "disabled": [],
+  "errors": []
+ },
+ "d-mid-board": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Side jobs\"",
+   "span.sr \"Destination\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px",
+   "small \"Sim\" 10.5px",
+   "small.dirty \"dirty · Heat +5\" 10px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-mid-map": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Map\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-mid-flight": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Flight\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-mid-cockpit": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Cockpit\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-mid-pilot": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Pilot\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-mid-log": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Logbook\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-mid-money": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Money\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [
+   "button.btn.sm \"Buy\" color=rgb(232, 234, 236) fill=rgb(232, 234, 236) op=0.4 fs=13px bg=rgba(0, 0, 0, 0)",
+   "button.btn.sm \"Buy\" color=rgb(232, 234, 236) fill=rgb(232, 234, 236) op=0.4 fs=13px bg=rgba(0, 0, 0, 0)",
+   "button.btn.sm \"Buy\" color=rgb(232, 234, 236) fill=rgb(232, 234, 236) op=0.4 fs=13px bg=rgba(0, 0, 0, 0)"
+  ],
+  "errors": []
+ },
+ "d-mid-company": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Airline\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-mid-cup": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"The Butter Cup\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-mid-academy": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Flight Academy\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-mid-profile": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Pilot profile\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-mid-hangar": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Hangar\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-mid-hangar-fleet": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Hangar\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-mid-hangar-settings": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Hangar\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-mid-hangar-msfs": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Hangar\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-mid-hangar-save": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Hangar\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-mid-result-cut": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Flight\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px",
+   "small \"Sim\" 10.5px",
+   "small.up \"+1\" 10.8333px",
+   "small.up \"+10\" 10.8333px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-mid-result": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Flight\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px",
+   "small \"Sim\" 10.5px",
+   "small.up \"+1\" 10.8333px",
+   "small.up \"+10\" 10.8333px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-ch5-story": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Main story\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [
+   "span.cashfx.up \"+$77,106\" contrast=1.00"
+  ],
+  "disabled": [],
+  "errors": []
+ },
+ "d-ch5-prologue": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Main story\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "d-ch5-orders": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Flight\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Loc\" 10.5px",
+   "small \"Day 1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Sim\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-00-title": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Main story\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-01-setup": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [],
+  "tiny": [],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-02-setup-form": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [],
+  "tiny": [],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-03-coldopen": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Main story\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-04-coldopen-later": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Main story\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-05-first-home": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Main story\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-early-story": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Main story\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-early-board": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Side jobs\"",
+   "span.sr \"Destination\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-early-map": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Map\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-early-flight": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Flight\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-early-cockpit": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Cockpit\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-early-pilot": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Pilot\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-early-log": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Logbook\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-early-money": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Money\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-early-company": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Airline\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-early-cup": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"The Butter Cup\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-early-academy": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Flight Academy\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-early-profile": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Pilot profile\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-early-hangar": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Hangar\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-early-hangar-fleet": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Hangar\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-early-hangar-settings": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Hangar\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-early-hangar-msfs": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Hangar\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-early-hangar-save": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Hangar\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-early-result-cut": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Flight\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-early-result": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Flight\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-mid-story": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Main story\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px"
+  ],
+  "faint": [
+   "span.cashfx.up \"+$57,106\" contrast=1.00"
+  ],
+  "disabled": [],
+  "errors": []
+ },
+ "m-mid-board": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Side jobs\"",
+   "span.sr \"Destination\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px",
+   "small.dirty \"dirty · Heat +5\" 10px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-mid-map": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Map\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-mid-flight": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Flight\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-mid-cockpit": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Cockpit\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-mid-pilot": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Pilot\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-mid-log": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Logbook\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-mid-money": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Money\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [
+   "button.btn.sm \"Buy\" color=rgb(232, 234, 236) fill=rgb(232, 234, 236) op=0.4 fs=13px bg=rgba(0, 0, 0, 0)",
+   "button.btn.sm \"Buy\" color=rgb(232, 234, 236) fill=rgb(232, 234, 236) op=0.4 fs=13px bg=rgba(0, 0, 0, 0)",
+   "button.btn.sm \"Buy\" color=rgb(232, 234, 236) fill=rgb(232, 234, 236) op=0.4 fs=13px bg=rgba(0, 0, 0, 0)"
+  ],
+  "errors": []
+ },
+ "m-mid-company": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Airline\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-mid-cup": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"The Butter Cup\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-mid-academy": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Flight Academy\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-mid-profile": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Pilot profile\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-mid-hangar": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Hangar\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-mid-hangar-fleet": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Hangar\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-mid-hangar-settings": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Hangar\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-mid-hangar-msfs": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Hangar\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-mid-hangar-save": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Hangar\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-mid-result-cut": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Flight\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px",
+   "small.up \"+1\" 10.8333px",
+   "small.up \"+10\" 10.8333px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-mid-result": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Flight\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px",
+   "small \"Dirty\" 10.5px",
+   "small.up \"+1\" 10.8333px",
+   "small.up \"+10\" 10.8333px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-ch5-story": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Main story\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px"
+  ],
+  "faint": [
+   "span.cashfx.up \"+$77,106\" contrast=1.00"
+  ],
+  "disabled": [],
+  "errors": []
+ },
+ "m-ch5-prologue": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Main story\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ },
+ "m-ch5-orders": {
+  "overflowX": 0,
+  "wide": [],
+  "clipped": [
+   "h1.cb-h1 \"Flight\""
+  ],
+  "tiny": [
+   "i.cb-nb \"1\" 10.5px",
+   "small \"Cash\" 10.5px",
+   "small \"Heat\" 10.5px"
+  ],
+  "faint": [],
+  "disabled": [],
+  "errors": []
+ }
+}

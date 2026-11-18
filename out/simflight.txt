@@ -1,0 +1,13 @@
+step 0 parked f=0: started=true view=flight active=true cab=
+step 1 taxi f=0: started=true view=flight active=true cab=
+step 2 air f=0.02: started=true view=flight active=true cab=Copilot:Speed! 130 knots. Power back.
+step 3 air f=0.3: started=true view=flight active=true cab=Copilot:Speed! 130 knots. Power back. | Copilot:Speed! 130 knots. Power back.
+step 4 air f=0.6: started=true view=flight active=true cab=Copilot:Speed! 260 knots. Power back. | Mari:Easy on the bank. Past 45° the passengers start praying. | Copilot:Speed! 130 knots. Power back. | Copilot:Speed! 130 knots. Power back.
+step 5 air f=0.9: started=true view=flight active=true cab=Copilot:Speed! 130 knots. Power back. | Copilot:Speed! 260 knots. Power back. | Mari:Easy on the bank. Past 45° the passengers start praying. | Copilot:Speed! 130 knots. Power back. | Copilot:Speed! 130 knots. Power back.
+step 6 air f=0.98: started=true view=flight active=true cab=Copilot:Speed! 130 knots. Power back. | Copilot:Five hundred. Sink rate! | Copilot:One thousand. | Mari:Too much speed for this runway. Get it down to 45 or go around. | Mari:Sink rate! Too steep this low. If it's not stable by 500 ft, go around. | Copilot:Speed! 130 knots. Power back. | Copilot:Speed! 260 knots. Power back. | Mari:Easy on the bank. Past 45° the passengers start praying. | Copilot:Speed! 130 knots. Power back. | Copilot:Speed! 130 knots. Power back.
+step 7 taxi f=1: started=true view=flight active=true cab=Copilot:Nice landing. | Copilot:Speed! 130 knots. Power back. | Copilot:Five hundred. Sink rate! | Copilot:One thousand. | Mari:Too much speed for this runway. Get it down to 45 or go around. | Mari:Sink rate! Too steep this low. If it's not stable by 500 ft, go around. | Copilot:Speed! 130 knots. Power back. | Copilot:Speed! 260 knots. Power back. | Mari:Easy on the bank. Past 45° the passengers start praying. | Copilot:Speed! 130 knots. Power back. | Copilot:Speed! 130 knots. Power back.
+step 8 parked f=1: started=false view=flight active=false cab=
+RESULT {"grade":"B","score":87,"notes":["Recorded by MSFS: touchdown at 180 fpm.","New type in your logbook: Zlin Savage Cub.","Passenger comfort: 94/100.","The passengers loved the ride: $30 comfort bonus.","Mari's notes: steep bank, sink rate on final, fast on final.","New personal record: softest landing, 180 fpm.","Zlin Savage Cub airframe health: 99%.","Landing league: you're #5 this week. Jack Calloway leads with 96 fpm."],"pay":411}
+TOASTS Briefing weather now matches MSFS. || Engine running: flight started. || Mari: Sink rate! Too steep this low. If it's not stable by 500 ft, go around. || Parked. Flight logged automatically from MSFS. || New tab unlocked: Butter Cup
+CASH 3305 REP 30
+simflight.js exit 0

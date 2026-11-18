@@ -1,0 +1,4 @@
+moderate heading-order (7 on profile,money,cup,academy,hangar,flight,title): Heading levels should only increase by one
+   e.g. .grid-2 > .panel > h3 ::   Heading order invalid
+ACCESSIBILITY OK (no serious issues)
+a11y.js exit 0

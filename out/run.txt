@@ -1,0 +1,31 @@
+ok   loads without script errors
+ok   all pages draw their own content
+ok   main story plays through (all chapters, choices, ending)
+ok   no script errors during the story
+ok   after-flight cutscene shows and takes the decision
+ok   test skip finishes as 100
+ok   cancelled checkride is refunded
+ok   feds block at Heat 80+, no network runs then
+ok   paying the fix cuts Heat
+ok   new day charges fleet upkeep
+ok   New Game+ restarts the story
+ok   no script errors in economy checks
+ok   chapter label survives earlier choices
+ok   Expert checklist penalty is not lost
+ok   wear is capped at 12% per flight, no grounding above 25%
+ok   double click on New day counts once
+ok   dollar amounts are never cut to ",800"
+ok   no script errors in regression checks
+ok   MSFS clock lands on the planned time for any sim offset
+ok   airline: buy an A320, facilities, bases, refits, shared routes
+ok   Earned is the same on Profile and Story
+ok   no script errors in clock and airline checks
+ok   damaged saves still load and draw every page
+ok   an unreadable save loads the newest backup and is kept aside
+ok   flight orders are judged from the sim (climb, stay low, steep turn)
+ok   Act 1 has flyable story choices (CR2, CR3, CR4)
+ok   a custom business jet can fly the jet chapters (and not the Cessna ones)
+ok   Twitch chat votes pick the story choice
+ok   the ending card draws
+ALL PASSED
+run.js exit 0

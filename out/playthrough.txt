@@ -1,0 +1,39 @@
+{
+ "journalDup": [
+  "Deadheaded to Sint Maarten|Rode in the back of an airliner t ×3"
+ ],
+ "notifDup": [
+  "Daily costs: $2,800 for your fleet and crew. ×2",
+  "Your phone buzzes: Mari and Dez. ×2"
+ ],
+ "ledgerDup": [
+  "5|Tips & bonuses|undefined|40 ×2",
+  "5|Tips & bonuses|undefined|20 ×2",
+  "4|Tips & bonuses|undefined|40 ×2",
+  "3|Tips & bonuses|undefined|80 ×3",
+  "2|Tips & bonuses|undefined|60 ×2",
+  "2|Tips & bonuses|undefined|20 ×2",
+  "1|Tips & bonuses|undefined|40 ×2",
+  "1|Tips & bonuses|undefined|70 ×2",
+  "1|Tips & bonuses|undefined|20 ×2"
+ ],
+ "issues": [],
+ "ignored": [
+  "Customs at MKJS sends the young one this time. He's nervous. @story",
+  "Customs at MKJS sends the young one this time. He's nervous. @story",
+  "Customs at MKJS sends the young one this time. He's nervous. @story",
+  "Customs at KMIA sends the young one this time. He's nervous. @flight",
+  "Customs at KMIA sends the young one this time. He's nervous. @flight"
+ ],
+ "steps": [
+  "ENDING kingpin"
+ ],
+ "cuts": 42,
+ "chapters": 20,
+ "dups": [],
+ "stacked": 0,
+ "toastDup": [],
+ "flights": 30
+}
+ERRORS []
+playthrough.js exit 0
