@@ -129,3 +129,4 @@ WHATS_NEW.unshift(['0.78','Polish: no more empty portrait boxes while the painte
 WHATS_NEW.unshift(['0.79','Phones and tablets: the job board shows each job\'s destination, aircraft and flight time again. Tidier flight ticket and story card on phones.']);
 WHATS_NEW.unshift(['0.80','Polish: Flight Academy lessons are numbered instead of using emoji, and the Saves page lines up. The whole 20-chapter story was played through by clicks at desktop and phone width with no errors.']);
 WHATS_NEW.unshift(['0.81','A still title screen and fifty fixes and upgrades: sort the job board, mute with M, sell property, name your planes on the pass, timed choices that pause while you\'re in MSFS, phone tidy-ups, new stats, credits and more. Full list in docs/launch/patch-0.81.md.']);
+WHATS_NEW.unshift(['0.82','A radio call or cabin line no longer knocks an unanswered question (like the Coast Guard) off the screen; it waits its turn.']);

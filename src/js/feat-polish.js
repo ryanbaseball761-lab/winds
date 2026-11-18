@@ -207,3 +207,7 @@ AFTER_RENDER.push(function needMore(){ if(S.view!=='money'||!S.st) return; docum
 /* Twitch: a chat vote never runs underneath a cutscene, and if one ends while a scene is playing, the pick waits for the scene to finish */
 (function(){ const base=endVote; endVote=function(pick){ if(pick && document.querySelector('.cut')){ const v=TWITCH.vote; if(v){ setTimeout(()=>{ if(TWITCH.vote===v) endVote(pick); }, 800); return; } } return base.apply(this, arguments); };
   const sv=startVote; startVote=function(){ if(document.querySelector('.cut')) return; return sv.apply(this, arguments); }; })();
+
+/* a radio or cabin line never knocks a question you haven't answered yet off the screen: it waits its turn */
+(function(){ const base=showBeatBase; showBeatBase=function(a, b, idx){ const cur=document.querySelector('.beat'); if(cur && cur.querySelector('.bt-o') && b && !b.opts){ const tries=(b._wait||0)+1; if(tries<=20){ const bb=Object.assign({}, b, {_wait:tries}); setTimeout(()=>{ try{ showBeatBase(a, bb, idx); }catch(_){} }, 3000); } return null; }
+  return base.apply(this, arguments); }; })();

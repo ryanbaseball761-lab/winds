@@ -6845,6 +6845,7 @@ WHATS_NEW.unshift(['0.78','Polish: no more empty portrait boxes while the painte
 WHATS_NEW.unshift(['0.79','Phones and tablets: the job board shows each job\'s destination, aircraft and flight time again. Tidier flight ticket and story card on phones.']);
 WHATS_NEW.unshift(['0.80','Polish: Flight Academy lessons are numbered instead of using emoji, and the Saves page lines up. The whole 20-chapter story was played through by clicks at desktop and phone width with no errors.']);
 WHATS_NEW.unshift(['0.81','A still title screen and fifty fixes and upgrades: sort the job board, mute with M, sell property, name your planes on the pass, timed choices that pause while you\'re in MSFS, phone tidy-ups, new stats, credits and more. Full list in docs/launch/patch-0.81.md.']);
+WHATS_NEW.unshift(['0.82','A radio call or cabin line no longer knocks an unanswered question (like the Coast Guard) off the screen; it waits its turn.']);
 /* ===================== RECORDED VOICE LINES =====================
    Story lines can be played from recorded audio instead of computer speech. Each spoken line has a stable id made
    from its words (voKey). Put recordings in art/voice/<id>.mp3 and list the ids in art/voice/index.json:
@@ -10134,6 +10135,10 @@ AFTER_RENDER.push(function needMore(){ if(S.view!=='money'||!S.st) return; docum
 /* Twitch: a chat vote never runs underneath a cutscene, and if one ends while a scene is playing, the pick waits for the scene to finish */
 (function(){ const base=endVote; endVote=function(pick){ if(pick && document.querySelector('.cut')){ const v=TWITCH.vote; if(v){ setTimeout(()=>{ if(TWITCH.vote===v) endVote(pick); }, 800); return; } } return base.apply(this, arguments); };
   const sv=startVote; startVote=function(){ if(document.querySelector('.cut')) return; return sv.apply(this, arguments); }; })();
+
+/* a radio or cabin line never knocks a question you haven't answered yet off the screen: it waits its turn */
+(function(){ const base=showBeatBase; showBeatBase=function(a, b, idx){ const cur=document.querySelector('.beat'); if(cur && cur.querySelector('.bt-o') && b && !b.opts){ const tries=(b._wait||0)+1; if(tries<=20){ const bb=Object.assign({}, b, {_wait:tries}); setTimeout(()=>{ try{ showBeatBase(a, bb, idx); }catch(_){} }, 3000); } return null; }
+  return base.apply(this, arguments); }; })();
 /* ===================== GLASS COCKPIT THEME (0.65) =====================
    One visual system for the whole app, loaded last so it wins over the older layers:
    near-black, square corners, 1px lines, one amber accent for "do this", avionics-style numbers.
