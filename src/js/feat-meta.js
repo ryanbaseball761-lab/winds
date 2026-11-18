@@ -38,8 +38,9 @@ function cupCode(cid, fpm, bounces){ const wk=isoWeek(); const raw=`${cid}.${Mat
 function cupDecode(code){ const m=String(code).trim().toUpperCase().match(/^TW-([A-Z0-9]+)-(\d+)-(\d+)-([A-Z0-9]+)-([A-Z0-9]{2})$/); if(!m) return null; const cid=m[1].toLowerCase(); if(!CUP.some(c=>c.id===cid)) return null;
   const wk=isoWeek(); if(m[4]!==String(wk).replace(/\W/g,'').toUpperCase()) return {old:true}; const raw=`${cid}.${m[2]}.${m[3]}.${wk}`; const chk=(hashStr(raw+'tw')%1296).toString(36).padStart(2,'0').toUpperCase(); if(chk!==m[5]) return null;
   return {cid, fpm:+m[2], b:+m[3]}; }
-(function(){ const base=cupBoard; cupBoard=function(st, c){ let h=base.apply(this, arguments); const fr=(cupState(st).friends||[]).filter(f=>f.cid===c.id && f.wk===isoWeek()); if(!fr.length||!h) return h;
-  return h + `<div class="cup-friends">${fr.map(f=>`<p class="small"><b>${esc(f.n)}</b> <span class="mono">${f.fpm} fpm</span>${f.b?` · ${f.b} bounce${f.b>1?'s':''}`:''}</p>`).join('')}</div>`; }; })();
+/* friends' codes for this week show under the board (cupBoard in 037-core.js calls this) */
+function cupFriendsHTML(st, c){ const fr=(cupState(st).friends||[]).filter(f=>f.cid===c.id && f.wk===isoWeek()); if(!fr.length) return '';
+  return `<div class="cup-friends">${fr.map(f=>`<p class="small"><b>${esc(f.n)}</b> <span class="mono">${f.fpm} fpm</span>${f.b?` · ${f.b} bounce${f.b>1?'s':''}`:''}</p>`).join('')}</div>`; }
 AFTER_RENDER.push(function cupShare(){ if(S.view!=='cup'||!S.st) return; const main=document.querySelector('main'); if(!main||main.querySelector('.cup-share')) return; const C=cupState(S.st);
   const mine=CUP.filter(c=>C.best[c.id]).map(c=>`<li><span>${esc(c.n)}</span><code class="mono">${cupCode(c.id, C.best[c.id].fpm, C.best[c.id].bounces)}</code><button class="btn sm" data-act="cup-copy" data-c="${cupCode(c.id, C.best[c.id].fpm, C.best[c.id].bounces)}">Copy</button></li>`).join('');
   const d=document.createElement('section'); d.className='panel cup-share'; d.innerHTML=`<div class="section-title"><h2>Race your friends</h2></div>${mine?`<p class="small muted">Your codes for this week. Send one to a friend.</p><ul class="cs-list">${mine}</ul>`:`<p class="small muted">Land on any Cup approach and you'll get a code to send.</p>`}
@@ -101,12 +102,10 @@ document.addEventListener('change', e=>{ const s=e.target.closest('[data-act="ui
 /* =====================================================================
    CRASH REPORTS
    ===================================================================== */
-const TW_TRAIL=[]; function trail(k,v){ TW_TRAIL.push([new Date().toISOString().slice(11,19), k, String(v).slice(0,160)]); if(TW_TRAIL.length>50) TW_TRAIL.shift(); }
-(function(){ const bt=toast; toast=function(m){ trail('toast',m); return bt.apply(this, arguments); }; const bg=go; go=function(v){ trail('page',v); return bg.apply(this, arguments); }; })();
+/* the last 50 toasts, page changes and errors (TW_TRAIL in 027-core.js) go into every report */
 window.addEventListener('error', e=>{ trail('error', `${e.message} @ ${(e.filename||'').split('/').pop()}:${e.lineno}`); crashCopy(); });
 window.addEventListener('unhandledrejection', e=>{ trail('error', 'Promise: '+(e.reason&&(e.reason.message||e.reason))); });
 let crashT=0; function crashCopy(){ if(Date.now()-crashT<60000) return; crashT=Date.now(); try{ if(window.twNative && twNative.flightLog) twNative.flightLog(`crash-${new Date().toISOString().replace(/[:.]/g,'-')}.json`, JSON.stringify({version:TW_VERSION, trail:TW_TRAIL}, null, 1)); }catch(_){} }
-(function(){ const base=buildReport; buildReport=function(note){ const r=base.apply(this, arguments); try{ const j=JSON.parse(r); j.trail=TW_TRAIL.slice(); return JSON.stringify(j); }catch(_){ return r; } }; })();
 
 /* =====================================================================
    SAVE FOLDER (desktop): put your career in a synced folder (OneDrive, Dropbox, iCloud)

@@ -7,7 +7,7 @@ const TOAST_QUEUE = [];   // messages waiting for a cutscene or the title screen
 
 /* Shows a short message bottom-right and adds it to the notifications list.
    During a cutscene or on the title screen it waits its turn. */
-function toast(msg){
+function toast(msg){ trail('toast', msg);
   if(/^New tab unlocked/i.test(String(msg))) return;   // the five-item menu has everything now
   if(document.querySelector('.cut,.title-screen')){ TOAST_QUEUE.push(msg); return; }
   showToast(msg);

@@ -16,7 +16,7 @@ function medalFor(c, fpm, bounces){ if(bounces>1) return fpm<c.par[2]?'bronze':n
 const MEDAL = {gold:['🥇','Gold'], silver:['🥈','Silver'], bronze:['🥉','Bronze']};
 function rivalScores(cid){ const key=isoWeek()+cid; let h=hashStr(key); const R=rng(h); return RIVALS.map(r=>({n:r.n, fpm:Math.round(r.base[0]+R()*(r.base[1]-r.base[0]))})); }
 function cupBoard(st, c){ const me=cupState(st).best[c.id]; const rows=rivalScores(c.id).concat(me?[{n:st.pilot.name+' (you)', fpm:me.fpm, me:true}]:[]).sort((a,b)=>a.fpm-b.fpm);
-  return `<ol class="cup-board">${rows.map((r,i)=>`<li class="${r.me?'me':''}"><span>${i+1}</span><b>${esc(r.n)}</b><span class="mono">${r.fpm} fpm</span></li>`).join('')}</ol>`; }
+  return `<ol class="cup-board">${rows.map((r,i)=>`<li class="${r.me?'me':''}"><span>${i+1}</span><b>${esc(r.n)}</b><span class="mono">${r.fpm} fpm</span></li>`).join('')}</ol>` + cupFriendsHTML(st, c); }
 async function startCup(id){
   const st=S.st, C=cupState(st); if(st.active){ toast('Finish or cancel your current job first.'); return; }
   if(!S.mcp || ['off','nobridge'].includes(S.simState)){ toast('Connect MSFS first: the Butter Cup scores your touchdown straight from the sim.'); return; }

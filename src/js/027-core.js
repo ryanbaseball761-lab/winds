@@ -46,11 +46,13 @@ function errLog(){ try{ return JSON.parse(localStorage.getItem('tw.errors')||'[]
 function logErrBase(msg){ try{ const a=errLog(); a.push({t:new Date().toISOString(), msg:String(msg).slice(0,400), view:S.view}); localStorage.setItem('tw.errors', JSON.stringify(a.slice(-30))); }catch(e){} }
 window.addEventListener('error', e=>logErr(`${e.message} @ ${(e.filename||'').split('/').pop()}:${e.lineno}`));
 window.addEventListener('unhandledrejection', e=>logErr(`Promise: ${e.reason && (e.reason.message||e.reason.code||e.reason)}`));
+/* a short trail of what happened before a crash: toasts, page changes, errors */
+const TW_TRAIL=[]; function trail(k,v){ TW_TRAIL.push([new Date().toISOString().slice(11,19), k, String(v).slice(0,160)]); if(TW_TRAIL.length>50) TW_TRAIL.shift(); }
 function buildReport(note){ const st=S.st||{}; return JSON.stringify({ app:'Trade Winds', version:TW_VERSION, standalone:!!window.TW_STANDALONE, at:new Date().toISOString(), note,
   sim:{state:S.simState, bridge:S.sim&&S.sim.version, connected:S.sim&&S.sim.connected, aircraft:S.sim&&S.sim.aircraft&&S.sim.aircraft.title},
   feedback:(st.feedback||[]).slice(-30),
   career:{day:st.day, loc:st.loc, flights:st.flights, minutes:st.minutes, difficulty:st.difficulty, active:st.active?{title:st.active.job.title, ac:st.active.job.ac, from:st.active.job.from, to:st.active.job.to}:null},
-  errors:errLog(), screen:`${innerWidth}x${innerHeight}`, ua:navigator.userAgent }, null, 2); }
+  errors:errLog(), screen:`${innerWidth}x${innerHeight}`, ua:navigator.userAgent, trail:TW_TRAIL.slice() }, null, 2); }
 document.addEventListener('click', async e=>{
   const b=e.target.closest('[data-act="bug-save"],[data-act="bug-copy"]'); if(!b) return; const note=(document.getElementById('bug-note')||{}).value||''; const rep=buildReport(note);
   if(b.dataset.act==='bug-copy'){ try{ await navigator.clipboard.writeText(rep); toast('Report copied.'); }catch(_){ toast('Copy not allowed here. Use Save.'); } return; }
