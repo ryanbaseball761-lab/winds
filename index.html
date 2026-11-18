@@ -3705,7 +3705,7 @@ ALT_OUT.BO5 = st => st.story.flags.BO4==='a' ? {good:`De Vries closes his notebo
 /* Hartwell now follows The Buyout */
 (function(){ const h=STORY.find(m=>m.id==='HW1'); if(h && h.req) h.req.after='BO3'; })();
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.82.0';
+const TW_VERSION = '0.83.0';
 
 /* ---------- live map ---------- */
 
@@ -6793,6 +6793,7 @@ WHATS_NEW.unshift(['0.79','Phones and tablets: the job board shows each job\'s d
 WHATS_NEW.unshift(['0.80','Polish: Flight Academy lessons are numbered instead of using emoji, and the Saves page lines up. The whole 20-chapter story was played through by clicks at desktop and phone width with no errors.']);
 WHATS_NEW.unshift(['0.81','A still title screen and fifty fixes and upgrades: sort the job board, mute with M, sell property, name your planes on the pass, timed choices that pause while you\'re in MSFS, phone tidy-ups, new stats, credits and more. Full list in docs/launch/patch-0.81.md.']);
 WHATS_NEW.unshift(['0.82','A radio call or cabin line no longer knocks an unanswered question (like the Coast Guard) off the screen; it waits its turn.']);
+WHATS_NEW.unshift(['0.83','A tidier game: one Property list on the Money page (your home, safehouses and businesses together), one phone for texts and notifications, the Coast Guard radio warning now leads into the intercept instead of being a separate scare, and a lot of old code cleaned out underneath.']);
 /* ===================== RECORDED VOICE LINES =====================
    Story lines can be played from recorded audio instead of computer speech. Each spoken line has a stable id made
    from its words (voKey). Put recordings in art/voice/<id>.mp3 and list the ids in art/voice/index.json:
