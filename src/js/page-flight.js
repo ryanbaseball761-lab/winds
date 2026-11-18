@@ -57,7 +57,7 @@ function boardingPass(st, job, p, a, started, mins, ai){
   const carrier = base==='Coral Wing Air' && storyCarrier ? storyCarrier : esc(base);
   let startBtn = `<button class="btn action" data-act="start">Start flight</button>`;
   if(diff()==='expert' && !started && !checklistDone(st.active)){ const [n,t]=checklistCount(st.active); startBtn=`<button class="btn action" data-act="nav" data-v="cockpit">Complete checklist (${n}/${t})</button><span class="chip warn">Expert: checklist required before engine start</span>`; }
-  return `<section class="pass"><div class="pass-art">${islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 170, job.ac)}</div>
+  return `<section class="pass"><div class="pass-art">${islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 120, job.ac)}</div>
     <div class="pass-main">
       <div class="row between"><span class="carrier">${LOGO}<b>${carrier}</b></span><span class="row">${chipsFor(st,job)}</span></div>
       ${job.kind==='story' ? '' : `<p class="label" style="margin-top:12px">${esc(job.label)}${job.client?` · ${esc(job.client)}`:''}</p>

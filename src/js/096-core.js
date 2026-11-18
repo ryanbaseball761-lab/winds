@@ -50,7 +50,10 @@ function speakBeat(b){ try{ twSpeaker(b.who); }catch(_){} return speakBeatBase(b
 /* ---- art pipeline: drop in painted portraits and scenes and they replace the drawings ---- */
 const ART = { portraits:{}, scenes:{}, bases:['https://raw.githubusercontent.com/ryanbaseball761-lab/winds/main/art/'] };
 /* one small index file per location lists the art that exists, e.g. {"portraits":["castillo"],"scenes":["villa"]} */
-function artLoadBase(i){ if(i>=ART.bases.length) return; const base=ART.bases[i]; fetch(base+'index.json',{cache:'no-cache'}).then(r=>r.ok?r.json():Promise.reject()).then(ix=>{ (ix.portraits||[]).forEach(k=>{ if(!ART.portraits[k]) ART.portraits[k]=`${base}portraits/${k}.jpg`; }); (ix.scenes||[]).forEach(k=>{ if(!ART.scenes[k]) ART.scenes[k]=`${base}scenes/${k}.jpg`; }); try{ render(); }catch(_){} }).catch(()=>{}).finally(()=>artLoad(i+1)); }
+/* use a picture only once it has actually downloaded: until then (or offline) the drawn portrait or scene stays, never an empty box */
+let artRerender=0;
+function artUse(kind,k,url){ if(ART[kind][k]) return; const im=new Image(); im.onload=()=>{ if(ART[kind][k]) return; ART[kind][k]=url; clearTimeout(artRerender); artRerender=setTimeout(()=>{ try{ render(); }catch(_){} },250); }; im.src=url; }
+function artLoadBase(i){ if(i>=ART.bases.length) return; const base=ART.bases[i]; fetch(base+'index.json',{cache:'no-cache'}).then(r=>r.ok?r.json():Promise.reject()).then(ix=>{ (ix.portraits||[]).forEach(k=>artUse('portraits',k,`${base}portraits/${k}.jpg`)); (ix.scenes||[]).forEach(k=>artUse('scenes',k,`${base}scenes/${k}.jpg`)); }).catch(()=>{}).finally(()=>artLoad(i+1)); }
 setTimeout(()=>artLoad(0), 1500);
 Object.keys(SCENES).forEach(k=>{ const f=SCENES[k]; SCENES[k]=()=>ART.scenes[k] ? `<div class="art-scene" style="background-image:url('${ART.scenes[k]}')"></div>` : f(); });
 

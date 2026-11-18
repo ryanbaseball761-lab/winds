@@ -2618,7 +2618,7 @@ function companyView(){
         ${S.confirm==='sell-'+f.fid ? `<button class="btn sm danger" data-act="co-sell" data-f="${f.fid}">Sell: ${money(Math.round(fv*0.97))} (${money(Math.round(fv*0.97)-(f.loan?f.loan.bal:0))} after loan)</button><button class="btn sm" data-act="confirm-no">Keep</button>` : `<button class="btn sm ghost" data-act="sell" data-f="${f.fid}">Sell</button>`}</div>${routeHTML}</div>`; }).join('');
   const led=(c.ledger||[]).slice(0,10);
   return `<main class="wrap stack fade">
-    <section class="panel"><div class="row between"><div><p class="label">Your company · based at ${esc(c.base)}</p><h1 style="font-size:32px">${esc(c.name)}</h1></div><div class="row" style="gap:22px"><div class="stat"><span class="label">Fleet</span><span class="mono" style="font-size:20px">${c.fleet.length}</span></div><div class="stat"><span class="label">Company value</span><span class="mono" style="font-size:20px" title="Aircraft equity plus facilities and bases at half their cost">${money(companyValue(st))}</span></div><div class="stat"><span class="label">Last day's profit</span><span class="mono" style="font-size:20px">${led[0]?money(led[0].net):'—'}</span></div><div class="stat"><span class="label">Demand</span><span class="mono" style="font-size:20px" title="Charter demand vs. normal (×${demandIndex(st).toFixed(2)})">${seasonName(st).replace(' season','')}</span></div></div></div>
+    <section class="panel"><div class="row between"><div><p class="label">Your company · based at ${esc(c.base)}</p><h1 style="font-size:32px">${esc(c.name)}</h1></div><div class="row" style="gap:22px"><div class="stat"><span class="label">Fleet</span><span class="mono" style="font-size:20px">${c.fleet.length}</span></div><div class="stat"><span class="label">Company value</span><span class="mono" style="font-size:20px" title="Aircraft equity plus facilities and bases at half their cost">${money(companyValue(st))}</span></div><div class="stat"><span class="label">Last day's profit</span><span class="mono" style="font-size:20px">${led[0]?money(led[0].net):'—'}</span></div><div class="stat"><span class="label">Demand</span><span style="font-size:20px;font-weight:600" title="Charter demand vs. normal (×${demandIndex(st).toFixed(2)})">${seasonName(st).replace(' season','')}</span></div></div></div>
       <p class="small muted" style="margin-top:8px">Aircraft "with you" show up as company jobs on the job board: you collect the full charter fare and pay fuel, maintenance and fees. Aircraft with a hired pilot fly a route or the charter pool every day you rest. Loan payments, insurance and hangar fees come out daily either way. Demand follows the seasons: busy December to April, slow in September and October.</p></section>
     ${c.fleet.length?`<section><div class="section-title"><h2>Fleet</h2></div><div class="cards">${fleet}</div></section>`:''}
     ${led.length?`<section class="panel"><h3>Daily operations log</h3><div class="scroll-x" tabindex="0"><table><thead><tr><th>Day</th><th class="num">Net</th><th>Notes</th></tr></thead><tbody>${led.map(l=>`<tr><td class="mono">${l.day}</td><td class="num">${money(l.net)}</td><td class="small" style="white-space:normal">${esc(l.lines.join(' · ')||'Loans, insurance and hangar fees')}</td></tr>`).join('')}</tbody></table></div></section>`:''}
@@ -3757,7 +3757,7 @@ ALT_OUT.BO5 = st => st.story.flags.BO4==='a' ? {good:`De Vries closes his notebo
 /* Hartwell now follows The Buyout */
 (function(){ const h=STORY.find(m=>m.id==='HW1'); if(h && h.req) h.req.after='BO3'; })();
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.77.0';
+const TW_VERSION = '0.78.0';
 
 /* ---------- live map ---------- */
 function mapProj(){ const v = MAPV[S.mapZoom||'east']; const W=1000, H=Math.round(1000*(v.lat[1]-v.lat[0])/(v.lon[1]-v.lon[0])*1.05);
@@ -6565,7 +6565,10 @@ function speakBeat(b){ try{ twSpeaker(b.who); }catch(_){} return speakBeatBase(b
 /* ---- art pipeline: drop in painted portraits and scenes and they replace the drawings ---- */
 const ART = { portraits:{}, scenes:{}, bases:['https://raw.githubusercontent.com/ryanbaseball761-lab/winds/main/art/'] };
 /* one small index file per location lists the art that exists, e.g. {"portraits":["castillo"],"scenes":["villa"]} */
-function artLoadBase(i){ if(i>=ART.bases.length) return; const base=ART.bases[i]; fetch(base+'index.json',{cache:'no-cache'}).then(r=>r.ok?r.json():Promise.reject()).then(ix=>{ (ix.portraits||[]).forEach(k=>{ if(!ART.portraits[k]) ART.portraits[k]=`${base}portraits/${k}.jpg`; }); (ix.scenes||[]).forEach(k=>{ if(!ART.scenes[k]) ART.scenes[k]=`${base}scenes/${k}.jpg`; }); try{ render(); }catch(_){} }).catch(()=>{}).finally(()=>artLoad(i+1)); }
+/* use a picture only once it has actually downloaded: until then (or offline) the drawn portrait or scene stays, never an empty box */
+let artRerender=0;
+function artUse(kind,k,url){ if(ART[kind][k]) return; const im=new Image(); im.onload=()=>{ if(ART[kind][k]) return; ART[kind][k]=url; clearTimeout(artRerender); artRerender=setTimeout(()=>{ try{ render(); }catch(_){} },250); }; im.src=url; }
+function artLoadBase(i){ if(i>=ART.bases.length) return; const base=ART.bases[i]; fetch(base+'index.json',{cache:'no-cache'}).then(r=>r.ok?r.json():Promise.reject()).then(ix=>{ (ix.portraits||[]).forEach(k=>artUse('portraits',k,`${base}portraits/${k}.jpg`)); (ix.scenes||[]).forEach(k=>artUse('scenes',k,`${base}scenes/${k}.jpg`)); }).catch(()=>{}).finally(()=>artLoad(i+1)); }
 setTimeout(()=>artLoad(0), 1500);
 Object.keys(SCENES).forEach(k=>{ const f=SCENES[k]; SCENES[k]=()=>ART.scenes[k] ? `<div class="art-scene" style="background-image:url('${ART.scenes[k]}')"></div>` : f(); });
 
@@ -6838,6 +6841,7 @@ WHATS_NEW.unshift(['0.74','The top bar fits every screen size (it ran off the ed
 WHATS_NEW.unshift(['0.75','Focus: the Story page shows what matters now (next chapter, your people, the last three chapters); the operation panels moved to Money. New systems appear one at a time, each introduced by a text. Dispatch folds away unless something needs you. The outdated welcome tour is gone. The result shows how your pay splits into base pay and bonuses. Daytime chapters end on the ramp, not a night cockpit. Customs is less predictable above 60 Heat, and above 75 only an A landing talks you out of a search.']);
 WHATS_NEW.unshift(['0.76','Polish: the Airline page says how much more you need for a facility instead of showing empty buttons, phone layouts fixed on the result screen, the story path, flight tickets and money rows, and no more failed voice-file request at startup.']);
 WHATS_NEW.unshift(['0.77','Polish: readable Buy and Start the story buttons, plain logbook columns, tidy Hours by aircraft rows, used aircraft say how much more the down payment needs, a steadier income chart, and centred achievement pop-ups.']);
+WHATS_NEW.unshift(['0.78','Polish: no more empty portrait boxes while the painted portraits load, the flight ticket plane is no longer clipped, and tidier collapsed sections.']);
 /* ===================== RECORDED VOICE LINES =====================
    Story lines can be played from recorded audio instead of computer speech. Each spoken line has a stable id made
    from its words (voKey). Put recordings in art/voice/<id>.mp3 and list the ids in art/voice/index.json:
@@ -7975,7 +7979,7 @@ function boardingPass(st, job, p, a, started, mins, ai){
   const carrier = base==='Coral Wing Air' && storyCarrier ? storyCarrier : esc(base);
   let startBtn = `<button class="btn action" data-act="start">Start flight</button>`;
   if(diff()==='expert' && !started && !checklistDone(st.active)){ const [n,t]=checklistCount(st.active); startBtn=`<button class="btn action" data-act="nav" data-v="cockpit">Complete checklist (${n}/${t})</button><span class="chip warn">Expert: checklist required before engine start</span>`; }
-  return `<section class="pass"><div class="pass-art">${islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 170, job.ac)}</div>
+  return `<section class="pass"><div class="pass-art">${islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 120, job.ac)}</div>
     <div class="pass-main">
       <div class="row between"><span class="carrier">${LOGO}<b>${carrier}</b></span><span class="row">${chipsFor(st,job)}</span></div>
       ${job.kind==='story' ? '' : `<p class="label" style="margin-top:12px">${esc(job.label)}${job.client?` · ${esc(job.client)}`:''}</p>
@@ -10305,6 +10309,8 @@ const POLISH_CSS = `
 /* achievement pop-up: centred without a transform (its fade-in animation replaced the transform, so it slid in from
    the right), and as wide as its title instead of half the screen, which wrapped titles on a phone */
 body .achpop{left:0;right:0;margin:0 auto;transform:none;width:max-content;max-width:calc(100vw - 32px);text-align:center}
+/* a collapsed section (Dispatch on the flight page) has no rule and gap under its title */
+html.ckp body details:not([open])>summary.section-title{border-bottom:0;padding-bottom:0;margin-bottom:0}
 /* Buy an aircraft: Down payment and Term labels sit level with their dropdowns */
 .co-terms{flex-wrap:wrap;gap:8px 16px;align-items:center}
 .panel .co-terms>label.row{align-items:center;white-space:nowrap}

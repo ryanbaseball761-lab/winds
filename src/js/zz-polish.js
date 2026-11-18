@@ -11,6 +11,8 @@ const POLISH_CSS = `
 /* achievement pop-up: centred without a transform (its fade-in animation replaced the transform, so it slid in from
    the right), and as wide as its title instead of half the screen, which wrapped titles on a phone */
 body .achpop{left:0;right:0;margin:0 auto;transform:none;width:max-content;max-width:calc(100vw - 32px);text-align:center}
+/* a collapsed section (Dispatch on the flight page) has no rule and gap under its title */
+html.ckp body details:not([open])>summary.section-title{border-bottom:0;padding-bottom:0;margin-bottom:0}
 /* Buy an aircraft: Down payment and Term labels sit level with their dropdowns */
 .co-terms{flex-wrap:wrap;gap:8px 16px;align-items:center}
 .panel .co-terms>label.row{align-items:center;white-space:nowrap}
