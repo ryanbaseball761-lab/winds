@@ -143,8 +143,9 @@ function mktRoll(st){ const w=twW(); if(mktNow()) return; if(w.mktNext && st.day
   const c=crime(st); const pool=MKT.filter(m=>!m.crime||c.on); const m=pool[Math.floor(r()*pool.length)];
   const islands=[...new Set(Object.keys(AP).filter(k=>AP[k].r && ['LEE','WIN','VIR','ABC','GA'].includes(AP[k].r)).map(k=>AP[k].isl))].filter(Boolean);
   const isl=islands[Math.floor(r()*islands.length)]||'Antigua';
-  const regName={LEE:'the Leeward Islands',WIN:'the Windward Islands',VIR:'the Virgin Islands'}[m.reg?m.reg[0]:'']||'';
-  w.mkt={id:m.id, isl:m.isl?isl:null, reg:m.reg?m.reg[0]:null, until:st.day+6, text:m.txt(m.isl?String(isl).replace(/\s*\(.*?\)/,''):regName)}; w.mktNext=st.day+9;
+  const reg=m.reg ? m.reg[Math.floor(r()*m.reg.length)] : null;   // storms hit any of their regions, not always the first
+  const regName={LEE:'the Leeward Islands',WIN:'the Windward Islands',VIR:'the Virgin Islands'}[reg||'']||'';
+  w.mkt={id:m.id, isl:m.isl?isl:null, reg, until:st.day+6, text:m.txt(m.isl?String(isl).replace(/\s*\(.*?\)/,''):regName)}; w.mktNext=st.day+9;
   phonePush({from:m.from, text:w.mkt.text}); }
 function mktHit(job){ const e=mktNow(); if(!e) return null; const m=MKT.find(x=>x.id===e.id); const ap=AP[job.to]; if(!ap||!m) return null;
   const where = e.isl ? ap.isl===e.isl : ap.r===e.reg; if(!where) return null; if(m.cats && !m.cats.includes(job.cat) && !(m.cats.includes('vip')&&job.vip)) return null; return m; }
@@ -213,7 +214,7 @@ function propBuy(id){ const p=PROPS.find(x=>x.id===id); if(!p || propOwned(id) |
 DAY_HOOKS.push(st=>{ const w=twW(); const c=crime(st); let inc=0, washed=0, fee=0;
   for(const p of PROPS){ if(!w.props[p.id]) continue; inc+=p.inc;
     if(p.front && c.dirty>0){ const amt=Math.min(c.dirty, p.launder); const f=Math.round(amt*0.08); c.dirty-=amt; washed+=amt-f; fee+=f; if(p.id==='bar' && amt>3000) crBump(c,'heat',1); } }
-  if(inc) txn(st, inc, 'Property', 'Property income'); if(washed) { txn(st, washed, 'Laundered', 'Through your businesses'); c.laundered=(c.laundered||0)+washed; }
+  if(inc) txn(st, inc, 'Property income', 'From your businesses'); if(washed) { txn(st, washed, 'Laundered', 'Through your businesses'); c.laundered=(c.laundered||0)+washed; }
   if((w.props.office||w.props.desk) && st.day%7===0) st.reputation=Math.min(100,st.reputation+1);
   w.wk=w.wk||{inc:0,washed:0}; w.wk.inc+=inc; w.wk.washed+=washed;
   if(st.day%7===0 && (w.wk.inc||w.wk.washed)){ phonePush({from:'bank', text:`Island Credit Union weekly summary: your businesses earned ${money(w.wk.inc)}${w.wk.washed?` and deposited ${money(w.wk.washed)} in "takings"`:''}.`}); w.wk={inc:0,washed:0}; } });
@@ -309,7 +310,10 @@ function foHTML(){ const t=foTrait(); if(!t) return ''; return `<section class="
 
 AFTER_RENDER.push(function worldPanels(){ if(!S.st) return; const main=document.querySelector('main'); if(!main || main.querySelector('.w-added')) return;
   let html=''; if(S.view==='profile') html=islandsHTML()+foHTML(); else if(S.view==='money') html=moneyWorldHTML(); else if(S.view==='hangar') html=acHistHTML();
-  if(!html) return; const d=document.createElement('div'); d.className='w-added stack'; d.innerHTML=html; main.appendChild(d); });
+  if(!html) return; const d=document.createElement('div'); d.className='w-added stack'; d.innerHTML=html;
+  // on the Money page the things you act on (property, insurance, the loan, customs) go above the records
+  let at=null; if(S.view==='money'){ const h=[...main.querySelectorAll('h2')].find(x=>x.textContent.trim()==='Income statement'); at=h&&h.closest('section'); while(at && at.parentElement && at.parentElement!==main && at.parentElement.children.length===1) at=at.parentElement; if(at && at.parentElement && at.parentElement.classList.contains('grid-2')) at=at.parentElement; }
+  if(at && at.parentElement) at.parentElement.insertBefore(d, at); else main.appendChild(d); });
 
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act]'); if(!b||!S.st) return; const a=b.dataset.act;
   if(a==='w-buy'){ if(propBuy(b.dataset.id)){ const p=PROPS.find(x=>x.id===b.dataset.id); toast(`${p.n} is yours.`); S.keepScroll=true; render(); } }

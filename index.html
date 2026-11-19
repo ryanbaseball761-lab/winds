@@ -2388,7 +2388,7 @@ document.addEventListener('keydown', e=>{ if((e.key==='Enter'||e.key===' ') && e
 const CAT_GROUP = {
   'Flight pay':'in','Company revenue':'in','Route revenue':'in','Tips & bonuses':'in','Gifts & windfalls':'in','Interest earned':'in','Story':'in','Network':'in','Laundered':'in',
   'Fuel':'op','Maintenance':'op','Repairs':'op','Crew wages':'op','Landing & handling fees':'op','Insurance':'op','Hangar & parking':'op','Rent':'op','Travel':'op','Licenses & training':'op','Accidents & fines':'op','Loan interest':'op','Credit interest':'op','Crew':'op','Safehouse':'op','Payoffs':'op','Operation':'op','Overdraft fees':'op',
-  'Aircraft purchases':'inv','Aircraft sales':'inv','Loan principal':'fin','Training bond':'fin','Credit line':'fin','Savings':'fin','Owed to Castillo':'fin'
+  'Aircraft purchases':'inv','Aircraft sales':'inv','Property':'inv','Property income':'in','Loan principal':'fin','Training bond':'fin','Credit line':'fin','Savings':'fin','Owed to Castillo':'fin'
 };
 function fin(st){ if(!st.fin) st.fin = { savings:0, credit:0, score:680, housing:'bunk', ledger:[], history:[], oil:1, market:null, marketDay:0, bond:0, bondPaid:0, rescue:false }; const F=st.fin; if(!F.tot) F.tot={}; if(!F.days) F.days={}; return F; }
 function txn(st, amt, cat, memo){ amt=Math.round(amt); if(!amt) return; st.cash += amt; const F=fin(st); F.ledger.unshift({ d:st.day, t:st.clock, c:cat, a:amt, m:memo||'' }); if(F.ledger.length>250) F.ledger.length=250;
@@ -4523,7 +4523,7 @@ function afterRenderFx(){ const st=S.st; if(!st) return;
       document.querySelectorAll('main .chip.good').forEach(c=>{ const m=c.textContent.match(/^\+\$([\d,]+)$/); if(m){ const v=Number(m[1].replace(/,/g,'')); countUp(c, v, 1200, x=>'+'+money(x)); } });
       if(L.out && L.out.pay>0) setTimeout(cashSound, 650);
       if(L.job && L.job.kind==='check' && L.out && L.out.pass) setTimeout(()=>licenseReveal(st, L.out, L.job), 700);
-      else { if(L.res.grade==='A') setTimeout(()=>confetti(), 500); if(L.f && L.f.landing==='butter') setTimeout(()=>stamp('BUTTER','butter'), 350); else if(L.res.crash) setTimeout(()=>stamp('ACCIDENT','bad'), 300); } } }
+      else { if(L.res.grade==='A' && L.f && L.f.landing==='butter' && L.job && L.job.kind!=='story') setTimeout(()=>confetti(), 500); /* confetti only for a butter landing on a side job, not every A or a smuggling run */ if(L.f && L.f.landing==='butter') setTimeout(()=>stamp('BUTTER','butter'), 350); else if(L.res.crash) setTimeout(()=>stamp('ACCIDENT','bad'), 300); } } }
 }
 
 /* 8. boarding pass: the plane flies the route arc (and sits where you are once you're airborne) */
@@ -6365,7 +6365,7 @@ function safeLevel(st){ const c=crime(st); return SAFEHOUSES.findIndex(s=>s.id==
 function dailyCosts(st){ const d=st.story.done; const L=[]; FLEET.forEach(f=>{ if(d[f[0]] && UPKEEP[f[1]]) L.push([`${f[2]} (${f[3]}) upkeep`, UPKEEP[f[1]]]); }); const c=crime(st); if(c.crew){ for(const k in WAGES) if(crewHas(st,k)) L.push([`${CREW.find(x=>x.id===k).n} wages`, WAGES[k]]); }
   if(st.w && st.w.ins) L.push(['Hull insurance', insDaily(st)]);
   return L; }
-document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="buy-safe"]'); if(!b||!S.st) return; const s=SAFEHOUSES.find(x=>x.id===b.dataset.v); if(!s||S.st.cash<s.cost) return; txn(S.st,-s.cost,'Safehouse',s.n); crime().safe=s.id; save(); toast(`Bought: ${s.n}.`); S.keepScroll=true; render(); });
+document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="buy-safe"]'); if(!b||!S.st) return; const s=SAFEHOUSES.find(x=>x.id===b.dataset.v); if(!s||S.st.cash<s.cost) return; txn(S.st,-s.cost,'Property',s.n); crime().safe=s.id; save(); toast(`Bought: ${s.n}.`); S.keepScroll=true; render(); });
 
 /* ===================== B2. HEAT WITH TEETH: the feds are watching, airport bans ===================== */
 function fedsWatching(st){ return crime(st).heat>=80; }
@@ -6984,7 +6984,7 @@ function settleFlight(st, job, f, res){
     const tone = res.crash ? 'bad' : toneOf(res);
     out.story = res.crash ? `The mission ends with an accident report instead of a happy client. You can try this chapter again.` : (altOut||m.out)[tone];
     if(!res.crash){ for(const k in (m.rep||{})){ st.rep[k] = clamp((st.rep[k]||10) + (tone==='bad'? Math.round(m.rep[k]/3) : m.rep[k]), 0, 100); } }
-    if(!res.crash && m.reward){ if(m.reward.voucher){ st.voucher = m.reward.voucher; } if(m.reward.bonus){ txn(st, m.reward.bonus, 'Gifts & windfalls', m.title); out.pay += m.reward.bonus; } if(m.reward.note) out.notes.push(m.reward.note); }
+    if(!res.crash && m.reward){ if(m.reward.voucher){ st.voucher = m.reward.voucher; } if(m.reward.bonus){ txn(st, m.reward.bonus, 'Gifts & windfalls', m.title); out.pay += m.reward.bonus; out.gift=(out.gift||0)+m.reward.bonus; } if(m.reward.note) out.notes.push(m.reward.note); }
     addJournal(st, `${m.title}`, out.story, m.chars, 'story', res.grade);
   } else if(job.kind==='gen'){
     const line = res.crash ? `The ${job.label.toLowerCase()} ended badly at ${landedAt}.` : `${job.client}: ${job.label.toLowerCase()} from ${AP[job.from].isl} to ${AP[landedAt].isl}, grade ${res.grade}.`;
@@ -7039,7 +7039,7 @@ const AFTER_RESULT = [
     else if(c.on && !res.crash && job.kind==='gen'){ crBump(c,'heat',-2); } },
   /* The Offer (chapter 4): Castillo promised to pay for your jet rating, and he does, right away */
   function castilloPaysJetRating(st, job, f, res){ if(job.story!=='CR4' || res.crash || st.jetPaid || st.ratings.JET) return; const amt=feeFor(st,'JET'); st.jetPaid=amt;
-    txn(st, amt, 'Gifts & windfalls', 'Castillo: your jet rating'); const o=st.last&&st.last.out; if(o){ o.pay+=amt; o.notes.unshift(`Castillo paid for your jet rating: +${money(amt)}. Book the Jet Type Rating checkride on the Pilot page.`); } },
+    txn(st, amt, 'Gifts & windfalls', 'Castillo: your jet rating'); const o=st.last&&st.last.out; if(o){ o.pay+=amt; o.gift=(o.gift||0)+amt; o.notes.unshift(`Castillo paid for your jet rating: +${money(amt)}. Book the Jet Type Rating checkride on the Pilot page.`); } },
   /* Caribe Cargo (chapter 16) becomes your own company: buy aircraft, hire crews and run routes from the Airline page */
   function caribeCargoCompany(st, job, f, res){ if(job.story!=='CR15' || res.crash) return; const o=st.last&&st.last.out;
     if(!st.company){ st.company={name:'Caribe Cargo', base:job.to, fleet:[], ledger:[], founded:st.day, story:true}; st.ratings.CO=true; if(o) o.notes.unshift('Caribe Cargo is your company now. Spend your money on aircraft, crews and routes on the Pilot → Airline page.'); }
@@ -7133,9 +7133,9 @@ function weeklyAndRecords(st, job, f, res, out){
   for(const ch of weekPicks(W.key)){ if(W.done[ch.id]) continue;
     if(ch.set){ W.sets[ch.id]=W.sets[ch.id]||[]; const k=ch.key(c); if(k && !W.sets[ch.id].includes(k)) W.sets[ch.id].push(k); W.prog[ch.id]=W.sets[ch.id].length; }
     else if(ch.test(c)) W.prog[ch.id]=(W.prog[ch.id]||0)+1;
-    if((W.prog[ch.id]||0)>=ch.goal){ W.done[ch.id]=true; txn(st, ch.cash, 'Gifts & windfalls', `Weekly challenge: ${ch.n}`); st.reputation=clamp(st.reputation+2,0,100); out.pay+=ch.cash; out.notes.push(`Weekly challenge complete: ${ch.n}! +${money(ch.cash)}, reputation +2.`); }
+    if((W.prog[ch.id]||0)>=ch.goal){ W.done[ch.id]=true; txn(st, ch.cash, 'Gifts & windfalls', `Weekly challenge: ${ch.n}`); st.reputation=clamp(st.reputation+2,0,100); out.pay+=ch.cash; out.gift=(out.gift||0)+ch.cash; out.notes.push(`Weekly challenge complete: ${ch.n}! +${money(ch.cash)}, reputation +2.`); }
   }
-  if(!W.champ && weekPicks(W.key).every(ch=>W.done[ch.id])){ W.champ=true; txn(st, 1000, 'Gifts & windfalls', 'Weekly champion'); out.pay+=1000; out.notes.push(`All three weekly challenges done. Weekly champion bonus: ${money(1000)}.`); st.weeksWon=(st.weeksWon||0)+1; }
+  if(!W.champ && weekPicks(W.key).every(ch=>W.done[ch.id])){ W.champ=true; txn(st, 1000, 'Gifts & windfalls', 'Weekly champion'); out.pay+=1000; out.gift=(out.gift||0)+1000; out.notes.push(`All three weekly challenges done. Weekly champion bonus: ${money(1000)}.`); st.weeksWon=(st.weeksWon||0)+1; }
   const R = st.records = st.records || {};
   const nm = plan(job).dist;
   if(f.verified && (R.fpm==null || f.simFpm < R.fpm.v)) { R.fpm={v:f.simFpm, at:`${job.from}→${to}`, day:st.day}; out.notes.push(`New personal record: softest landing, ${f.simFpm} fpm.`); }
@@ -7788,6 +7788,8 @@ function hangarView(){
   const body = cur==='settings' ? hangarSettingsTab(st) : cur==='msfs' ? hangarMsfsTab() : cur==='save' ? hangarSaveTab(st) : '';
   return `<main class="wrap stack fade">${tabs}${body}</main>`;
 }
+/* "$920 pay, $310 in bonuses and tips, $22,000 from the story" under the total */
+function paySplit(pay, total, gift){ const tips=total-pay-gift; const L=[`${money(pay)} pay`]; if(tips>=20) L.push(`${money(tips)} in bonuses and tips`); if(gift>0) L.push(`${money(gift)} in gifts and rewards`); return L.join(', '); }
 /* ===================== RESULT PAGE =====================
    Shown on the Flight page right after a flight (S.showResult). From the top:
      the summary (grade, pay, Power and Heat), what changed, the next step, your decision if the
@@ -7844,7 +7846,7 @@ function resultView(){
         <p class="label">Flight complete · score ${res.score}/100</p>
         <h1 style="font-size:28px">${esc(job.title)}</h1>
         <p class="muted">${esc(job.from)} → ${esc(st.log[0]?.to||job.to)} · ${esc(AC[job.ac].n)} · ${durTxt(res.block)}</p>
-        <div class="row">${f && f.verified?`<span class="chip sea">Verified by MSFS · ${f.simFpm} fpm</span>`:''}${passFail}${out.pay?`<span class="chip good" title="Everything this flight paid">+${money(out.pay)}</span>${L.job&&L.job.pay&&out.pay-L.job.pay>=20?`<span class="small muted pay-split">${money(L.job.pay)} pay, ${money(out.pay-L.job.pay)} in bonuses and tips</span>`:''}`:''}${out.costs?`<span class="chip bad">−${money(out.costs)}</span>`:''}<span class="chip">Reputation ${st.reputation}/100</span></div>
+        <div class="row">${f && f.verified?`<span class="chip sea">Verified by MSFS · ${f.simFpm} fpm</span>`:''}${passFail}${out.pay?`<span class="chip good" title="Everything this flight paid">+${money(out.pay)}</span>${L.job&&L.job.pay&&out.pay-L.job.pay>=20?`<span class="small muted pay-split">${paySplit(L.job.pay, out.pay, out.gift||0)}</span>`:''}`:''}${out.costs?`<span class="chip bad">−${money(out.costs)}</span>`:''}<span class="chip">Reputation ${st.reputation}/100</span></div>
       </div></div>${crimeChips?`<div class="row" style="gap: 6px; margin-top: 8px; flex-wrap: wrap;">${crimeChips}</div>`:''}</section>
     ${resultDeltas(st)}${resultHeatWarning(st)}${resultNextBar(st)}
     ${choice}${betaFeedbackHTML(st)}
@@ -7908,7 +7910,8 @@ function chapterHero(job, lead=''){
   const to=job.local?AP[job.from]:AP[job.to]; const d=job.local?(job.tourNm||40):Math.round(distNm(AP[job.from],AP[job.to]));
   const feat = m.feature || (m.teach&&m.teach[0]) || '';
   /* the scene art behind the banner (the drawn islands only when the art hasn't loaded) */
-  const art = (typeof ART!=='undefined' && ART.scenes && ART.scenes.ramp) ? SCENES.ramp() : (typeof islandArt==='function' ? (()=>{ try{ return islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 300, job.ac); }catch(_){ return ''; } })() : '');
+  const dayDep = (job.dep||600)>=420 && (job.dep||600)<=1110;   // daylight departures get the day ramp with your own plane on it
+  const art = (typeof ART!=='undefined' && ART.scenes && ART.scenes.ramp) ? (dayDep && typeof dayRampArt==='function' ? dayRampArt(job.ac, job.dep) : SCENES.ramp()) : (typeof islandArt==='function' ? (()=>{ try{ return islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 300, job.ac); }catch(_){ return ''; } })() : '');
   const g=CH_GOAL[job.story];
   return `<section class="chapter-hero" style="--arc:${arcColor(m.arc)}">${lead}${art?`<div class="ch-art" aria-hidden="true">${art}</div>`:''}<div class="ch-in">
     <div class="row between"><p class="ch-kicker">${CRIME_IDS.has(m.id)?`Act ${CRIME_ACTS.findIndex(a=>a.arc===m.arc)+1} · ${esc(m.arc)} · Chapter ${mainChapters().indexOf(m)+1} of ${mainChapters().length}`:`${esc(m.arc)} · Chapter ${idx} of ${chs.length}${m.side?' · side story':''}`}</p><div class="row ch-cast">${(m.chars||[]).filter(k=>CAST[k]).map(k=>avatar(k)).join('')}</div></div>
@@ -8399,10 +8402,12 @@ function moneyView(){
         <section class="panel stack"><h3>Fuel today at ${esc(st.loc)}</h3><dl class="kv small"><dt>Avgas</dt><dd class="mono">$${fuelPrice(st,st.loc,'avgas').toFixed(2)}/gal</dd><dt>Jet-A</dt><dd class="mono">$${fuelPrice(st,st.loc,'jeta').toFixed(2)}/gal</dd><dt>Oil index</dt><dd class="mono">${F.oil.toFixed(2)}</dd></dl><p class="tiny muted">You only pay for fuel on your own company's planes.</p></section>
       </aside>
     </div>
-    <section class="panel"><div class="section-title"><h2>Transactions</h2><span class="small muted">Most recent first</span></div><div class="scroll-x" tabindex="0"><table><thead><tr><th>Day</th><th>Category</th><th>Details</th><th class="num">Amount</th></tr></thead><tbody>${F.ledger.slice(0,60).map(e=>`<tr><td class="mono">${e.d} · ${hhmm(e.t)}</td><td>${esc(e.c)}${e.transfer?' <span class="chip">transfer</span>':''}</td><td style="white-space:normal">${esc(e.m)}</td><td class="num" style="color:${e.a<0?'var(--bad)':'var(--good)'}">${money(e.a)}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">No transactions yet. Fly a job.</td></tr>'}</tbody></table></div></section>
+    <section class="panel"><div class="section-title"><h2>Transactions</h2><span class="small muted">Most recent first</span></div><div class="scroll-x" tabindex="0"><table><thead><tr><th>Day</th><th>Category</th><th>Details</th><th class="num">Amount</th></tr></thead><tbody>${F.ledger.slice(0,S._txAll?60:12).map(e=>`<tr><td class="mono">${e.d} · ${hhmm(e.t)}</td><td>${esc(e.c)}${e.transfer?' <span class="chip">transfer</span>':''}</td><td style="white-space:normal">${esc(e.m)}</td><td class="num" style="color:${e.a<0?'var(--bad)':'var(--good)'}">${money(e.a)}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">No transactions yet. Fly a job.</td></tr>'}</tbody></table></div>${F.ledger.length>12?`<button class="btn ghost sm" data-act="tx-all" style="margin-top:10px">${S._txAll?'Show the latest 12':`Show the last ${Math.min(60,F.ledger.length)}`}</button>`:''}</section>
     <details class="calm-more"><summary>Bank, savings and credit</summary><div class="calm-more-in">${bank}</div></details>
   </main>`;
 }
+
+document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="tx-all"]')) return; S._txAll=!S._txAll; S.keepScroll=true; render(); });
 /* ===================== MAP PAGE =====================
    The islands with every airport, today's job routes, a hurricane if there is one, your live flight,
    the story so far and the next chapter. The side panel describes the selected airport. */
@@ -8599,14 +8604,29 @@ function cutscene(opt){
   /* Skip jumps to the next decision (decisions can't be skipped), or to the end */
   const skip=()=>{ clearInterval(typing); const j=shots.findIndex((s,k)=>k>i && s.choice); if(shots[i]&&shots[i].choice) return; if(j>=0){ i=j-1; show(); } else end(); };
   document.addEventListener('keydown', key, true);
-  el.addEventListener('click', e=>{ if(e.target.closest('.cut-skip')){ skip(); return; } const b=e.target.closest('.cut-opt'); if(b){ if(b.disabled) return; const s=shots[i]; const more=s.pick(Number(b.dataset.k))||[]; shots.splice(i+1, 0, ...more); waiting=false; show(); return; } next(); });
+  el.addEventListener('click', e=>{ if(e.target.closest('.cut-skip')){ skip(); return; } const b=e.target.closest('.cut-opt'); if(b){ if(b.disabled) return; const s=shots[i]; if(!s || typeof s.pick!=="function") return; b.disabled=true; const more=s.pick(Number(b.dataset.k))||[]; shots.splice(i+1, 0, ...more); waiting=false; show(); return; } next(); });
   setTimeout(show, 450); return el;
 }
 
 /* The art behind a scene. */
 /* the opening background: a painting when they're loaded (the one the first line calls for, else `fallback`),
    otherwise the drawn islands */
-function paintedArt(shots, fallback, code, dep, ac){ if(typeof ART!=='undefined' && ART.scenes && ART.scenes[fallback]){ const first=(shots||[]).find(x=>Array.isArray(x)); const k=(first&&sceneFor(first))||fallback; return SCENES[k](); } return sceneArt(code, dep, ac); }
+function paintedArt(shots, fallback, code, dep, ac){ if(typeof ART!=='undefined' && ART.scenes && ART.scenes[fallback]){ const first=(shots||[]).find(x=>Array.isArray(x)); const k=(first&&sceneFor(first))||fallback; if(k==='ramp' && dep>=420 && dep<=1110) return dayRampArt(ac, dep); return SCENES[k](); }   /* daylight ramps show the day scene with your plane */ return sceneArt(code, dep, ac); }
+(function(){ const c=document.createElement('style'); c.textContent='.cut-bg:has(.dayramp){filter:saturate(.75) brightness(.78) contrast(1.05)}'; document.head.appendChild(c); })();
+/* a daytime ramp in the paintings' flat style, with the plane you actually flew parked on it */
+function dayRampArt(acId, min){ const h=((min||600)/60)%24, late=h>=16, early=h<8.5;
+  const sky = early ? ['#3b4a63','#c99a6b'] : late ? ['#3c3f5c','#d0895a'] : ['#41627a','#a9b9b8'];
+  const sun = early||late ? '#f1c27d' : '#efe6c8', sx = early ? 300 : late ? 1320 : 1180, sy = early||late ? 330 : 150;
+  const palm=x=>`<g transform="translate(${x} 560)" fill="#0b0f12"><path d="M0 0 C6 -60 14 -110 10 -170 L18 -170 C22 -110 16 -50 12 0Z"/><path d="M14 -170 C-20 -196 -60 -184 -78 -156 C-44 -176 -16 -176 14 -164Z"/><path d="M14 -170 C46 -202 92 -190 108 -158 C76 -180 44 -178 14 -164Z"/><path d="M14 -172 C0 -214 -34 -224 -58 -214 C-26 -212 -4 -200 14 -170Z"/><path d="M14 -172 C34 -218 70 -226 92 -212 C60 -210 36 -198 14 -170Z"/></g>`;
+  return `<svg class="dayramp" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" aria-hidden="true"><defs><linearGradient id="dr1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset="1" stop-color="${sky[1]}"/></linearGradient><linearGradient id="dr2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6b6c69"/><stop offset=".55" stop-color="#45474a"/><stop offset="1" stop-color="#1c1e20"/></linearGradient><radialGradient id="dr3" cx="${sx/1600}" cy="${sy/900}" r=".5"><stop offset="0" stop-color="${sun}" stop-opacity=".35"/><stop offset="1" stop-color="${sun}" stop-opacity="0"/></radialGradient></defs>
+  <rect width="1600" height="900" fill="url(#dr1)"/><rect width="1600" height="900" fill="url(#dr3)"/><circle cx="${sx}" cy="${sy}" r="44" fill="${sun}" opacity=".9"/>
+  <path d="M0 520 Q180 430 360 470 Q520 380 700 455 Q820 420 960 500 L960 540 L0 540Z" fill="#243039" opacity=".85"/><path d="M1000 520 Q1180 460 1330 490 Q1460 450 1600 480 L1600 540 L1000 540Z" fill="#2a3640" opacity=".7"/>
+  <rect y="530" width="1600" height="40" fill="#1d3a44" opacity=".9"/>
+  <path d="M1080 560 L1080 450 L1150 420 L1400 420 L1470 450 L1470 560Z" fill="#14181b"/><rect x="1150" y="470" width="250" height="90" fill="#0d1012"/><g fill="#d9a54a" opacity=".55"><rect x="1100" y="470" width="30" height="14"/><rect x="1420" y="470" width="30" height="14"/></g>
+  <rect y="560" width="1600" height="340" fill="url(#dr2)"/><g stroke="#c9a54a" stroke-opacity=".5" stroke-width="6" stroke-dasharray="60 50"><line x1="0" y1="760" x2="1600" y2="700"/></g><line x1="0" y1="610" x2="1600" y2="600" stroke="#000" stroke-opacity=".35" stroke-width="3"/>
+  ${palm(140)}${palm(260)}${palm(1530)}
+  <ellipse cx="790" cy="${470+6.2*30}" rx="330" ry="14" fill="#000" opacity=".45"/><g transform="translate(420 470) scale(6.2)">${acSvgInner(acId,'#0c0e10')}</g>
+  <g fill="#0a0c0e"><rect x="1210" y="650" width="70" height="40" rx="4"/><circle cx="1225" cy="694" r="10"/><circle cx="1266" cy="694" r="10"/><rect x="1240" y="630" width="30" height="22"/></g></svg>`; }
 function sceneArt(code, dep, ac){ try{ return islandArt(code, dep, 1600, 900, ac); }catch(_){ return ''; } }
 
 /* ---------- a chapter's scenes ---------- */
@@ -8676,7 +8696,7 @@ function playAftermath(){
     shots.push({choice:true, q:m.choice.q, opts, pick:i=>{ const btn=document.createElement('button'); btn.dataset.act='crime-choose'; btn.dataset.i=i; btn.style.display='none'; document.body.appendChild(btn); btn.click(); btn.remove();
       const o=m.choice.opts[i]; const after=splitOut(o.out).map(t=>[here, null, t]); const fx=fxSub(o); if(fx) after.push({card:true, kicker:'Your choice', title:o.t, sub:`<p>${esc(fx)}</p>`, auto:2200}); return after.concat(nextCard()); }});
   } else nextCard().forEach(s=>shots.push(s));
-  cutscene({shots, col:act.col, art:paintedArt([], (()=>{ const arr=Math.min(1439,(job.dep||600)+(job.est||60)); return (arr>=420 && arr<=1110) ? 'ramp' : 'cockpit'; })(), job.to, Math.min(1439,(job.dep||600)+(job.est||60)), job.ac), onEnd:()=>{ S.keepScroll=false; render(); }});
+  cutscene({shots, col:act.col, art:(()=>{ const arr=Math.min(1439,(job.dep||600)+(job.est||60)); return (arr>=420 && arr<=1110) ? dayRampArt(job.ac, arr) : paintedArt([], 'cockpit', job.to, arr, job.ac); })(), onEnd:()=>{ S.keepScroll=false; render(); }});
 }
 /* ===================== SMALL UI PIECES =====================
    Pop-up messages (toast) and the search bar's list of things you can jump to (cmdItems). */
@@ -9029,8 +9049,9 @@ function mktRoll(st){ const w=twW(); if(mktNow()) return; if(w.mktNext && st.day
   const c=crime(st); const pool=MKT.filter(m=>!m.crime||c.on); const m=pool[Math.floor(r()*pool.length)];
   const islands=[...new Set(Object.keys(AP).filter(k=>AP[k].r && ['LEE','WIN','VIR','ABC','GA'].includes(AP[k].r)).map(k=>AP[k].isl))].filter(Boolean);
   const isl=islands[Math.floor(r()*islands.length)]||'Antigua';
-  const regName={LEE:'the Leeward Islands',WIN:'the Windward Islands',VIR:'the Virgin Islands'}[m.reg?m.reg[0]:'']||'';
-  w.mkt={id:m.id, isl:m.isl?isl:null, reg:m.reg?m.reg[0]:null, until:st.day+6, text:m.txt(m.isl?String(isl).replace(/\s*\(.*?\)/,''):regName)}; w.mktNext=st.day+9;
+  const reg=m.reg ? m.reg[Math.floor(r()*m.reg.length)] : null;   // storms hit any of their regions, not always the first
+  const regName={LEE:'the Leeward Islands',WIN:'the Windward Islands',VIR:'the Virgin Islands'}[reg||'']||'';
+  w.mkt={id:m.id, isl:m.isl?isl:null, reg, until:st.day+6, text:m.txt(m.isl?String(isl).replace(/\s*\(.*?\)/,''):regName)}; w.mktNext=st.day+9;
   phonePush({from:m.from, text:w.mkt.text}); }
 function mktHit(job){ const e=mktNow(); if(!e) return null; const m=MKT.find(x=>x.id===e.id); const ap=AP[job.to]; if(!ap||!m) return null;
   const where = e.isl ? ap.isl===e.isl : ap.r===e.reg; if(!where) return null; if(m.cats && !m.cats.includes(job.cat) && !(m.cats.includes('vip')&&job.vip)) return null; return m; }
@@ -9099,7 +9120,7 @@ function propBuy(id){ const p=PROPS.find(x=>x.id===id); if(!p || propOwned(id) |
 DAY_HOOKS.push(st=>{ const w=twW(); const c=crime(st); let inc=0, washed=0, fee=0;
   for(const p of PROPS){ if(!w.props[p.id]) continue; inc+=p.inc;
     if(p.front && c.dirty>0){ const amt=Math.min(c.dirty, p.launder); const f=Math.round(amt*0.08); c.dirty-=amt; washed+=amt-f; fee+=f; if(p.id==='bar' && amt>3000) crBump(c,'heat',1); } }
-  if(inc) txn(st, inc, 'Property', 'Property income'); if(washed) { txn(st, washed, 'Laundered', 'Through your businesses'); c.laundered=(c.laundered||0)+washed; }
+  if(inc) txn(st, inc, 'Property income', 'From your businesses'); if(washed) { txn(st, washed, 'Laundered', 'Through your businesses'); c.laundered=(c.laundered||0)+washed; }
   if((w.props.office||w.props.desk) && st.day%7===0) st.reputation=Math.min(100,st.reputation+1);
   w.wk=w.wk||{inc:0,washed:0}; w.wk.inc+=inc; w.wk.washed+=washed;
   if(st.day%7===0 && (w.wk.inc||w.wk.washed)){ phonePush({from:'bank', text:`Island Credit Union weekly summary: your businesses earned ${money(w.wk.inc)}${w.wk.washed?` and deposited ${money(w.wk.washed)} in "takings"`:''}.`}); w.wk={inc:0,washed:0}; } });
@@ -9195,7 +9216,10 @@ function foHTML(){ const t=foTrait(); if(!t) return ''; return `<section class="
 
 AFTER_RENDER.push(function worldPanels(){ if(!S.st) return; const main=document.querySelector('main'); if(!main || main.querySelector('.w-added')) return;
   let html=''; if(S.view==='profile') html=islandsHTML()+foHTML(); else if(S.view==='money') html=moneyWorldHTML(); else if(S.view==='hangar') html=acHistHTML();
-  if(!html) return; const d=document.createElement('div'); d.className='w-added stack'; d.innerHTML=html; main.appendChild(d); });
+  if(!html) return; const d=document.createElement('div'); d.className='w-added stack'; d.innerHTML=html;
+  // on the Money page the things you act on (property, insurance, the loan, customs) go above the records
+  let at=null; if(S.view==='money'){ const h=[...main.querySelectorAll('h2')].find(x=>x.textContent.trim()==='Income statement'); at=h&&h.closest('section'); while(at && at.parentElement && at.parentElement!==main && at.parentElement.children.length===1) at=at.parentElement; if(at && at.parentElement && at.parentElement.classList.contains('grid-2')) at=at.parentElement; }
+  if(at && at.parentElement) at.parentElement.insertBefore(d, at); else main.appendChild(d); });
 
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act]'); if(!b||!S.st) return; const a=b.dataset.act;
   if(a==='w-buy'){ if(propBuy(b.dataset.id)){ const p=PROPS.find(x=>x.id===b.dataset.id); toast(`${p.n} is yours.`); S.keepScroll=true; render(); } }

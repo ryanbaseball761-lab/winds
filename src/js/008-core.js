@@ -2,7 +2,7 @@
 const CAT_GROUP = {
   'Flight pay':'in','Company revenue':'in','Route revenue':'in','Tips & bonuses':'in','Gifts & windfalls':'in','Interest earned':'in','Story':'in','Network':'in','Laundered':'in',
   'Fuel':'op','Maintenance':'op','Repairs':'op','Crew wages':'op','Landing & handling fees':'op','Insurance':'op','Hangar & parking':'op','Rent':'op','Travel':'op','Licenses & training':'op','Accidents & fines':'op','Loan interest':'op','Credit interest':'op','Crew':'op','Safehouse':'op','Payoffs':'op','Operation':'op','Overdraft fees':'op',
-  'Aircraft purchases':'inv','Aircraft sales':'inv','Loan principal':'fin','Training bond':'fin','Credit line':'fin','Savings':'fin','Owed to Castillo':'fin'
+  'Aircraft purchases':'inv','Aircraft sales':'inv','Property':'inv','Property income':'in','Loan principal':'fin','Training bond':'fin','Credit line':'fin','Savings':'fin','Owed to Castillo':'fin'
 };
 function fin(st){ if(!st.fin) st.fin = { savings:0, credit:0, score:680, housing:'bunk', ledger:[], history:[], oil:1, market:null, marketDay:0, bond:0, bondPaid:0, rescue:false }; const F=st.fin; if(!F.tot) F.tot={}; if(!F.days) F.days={}; return F; }
 function txn(st, amt, cat, memo){ amt=Math.round(amt); if(!amt) return; st.cash += amt; const F=fin(st); F.ledger.unshift({ d:st.day, t:st.clock, c:cat, a:amt, m:memo||'' }); if(F.ledger.length>250) F.ledger.length=250;

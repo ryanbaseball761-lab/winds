@@ -32,7 +32,7 @@ function afterRenderFx(){ const st=S.st; if(!st) return;
       document.querySelectorAll('main .chip.good').forEach(c=>{ const m=c.textContent.match(/^\+\$([\d,]+)$/); if(m){ const v=Number(m[1].replace(/,/g,'')); countUp(c, v, 1200, x=>'+'+money(x)); } });
       if(L.out && L.out.pay>0) setTimeout(cashSound, 650);
       if(L.job && L.job.kind==='check' && L.out && L.out.pass) setTimeout(()=>licenseReveal(st, L.out, L.job), 700);
-      else { if(L.res.grade==='A') setTimeout(()=>confetti(), 500); if(L.f && L.f.landing==='butter') setTimeout(()=>stamp('BUTTER','butter'), 350); else if(L.res.crash) setTimeout(()=>stamp('ACCIDENT','bad'), 300); } } }
+      else { if(L.res.grade==='A' && L.f && L.f.landing==='butter' && L.job && L.job.kind!=='story') setTimeout(()=>confetti(), 500); /* confetti only for a butter landing on a side job, not every A or a smuggling run */ if(L.f && L.f.landing==='butter') setTimeout(()=>stamp('BUTTER','butter'), 350); else if(L.res.crash) setTimeout(()=>stamp('ACCIDENT','bad'), 300); } } }
 }
 
 /* 8. boarding pass: the plane flies the route arc (and sits where you are once you're airborne) */

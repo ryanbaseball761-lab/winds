@@ -123,7 +123,7 @@ function settleFlight(st, job, f, res){
     const tone = res.crash ? 'bad' : toneOf(res);
     out.story = res.crash ? `The mission ends with an accident report instead of a happy client. You can try this chapter again.` : (altOut||m.out)[tone];
     if(!res.crash){ for(const k in (m.rep||{})){ st.rep[k] = clamp((st.rep[k]||10) + (tone==='bad'? Math.round(m.rep[k]/3) : m.rep[k]), 0, 100); } }
-    if(!res.crash && m.reward){ if(m.reward.voucher){ st.voucher = m.reward.voucher; } if(m.reward.bonus){ txn(st, m.reward.bonus, 'Gifts & windfalls', m.title); out.pay += m.reward.bonus; } if(m.reward.note) out.notes.push(m.reward.note); }
+    if(!res.crash && m.reward){ if(m.reward.voucher){ st.voucher = m.reward.voucher; } if(m.reward.bonus){ txn(st, m.reward.bonus, 'Gifts & windfalls', m.title); out.pay += m.reward.bonus; out.gift=(out.gift||0)+m.reward.bonus; } if(m.reward.note) out.notes.push(m.reward.note); }
     addJournal(st, `${m.title}`, out.story, m.chars, 'story', res.grade);
   } else if(job.kind==='gen'){
     const line = res.crash ? `The ${job.label.toLowerCase()} ended badly at ${landedAt}.` : `${job.client}: ${job.label.toLowerCase()} from ${AP[job.from].isl} to ${AP[landedAt].isl}, grade ${res.grade}.`;
@@ -178,7 +178,7 @@ const AFTER_RESULT = [
     else if(c.on && !res.crash && job.kind==='gen'){ crBump(c,'heat',-2); } },
   /* The Offer (chapter 4): Castillo promised to pay for your jet rating, and he does, right away */
   function castilloPaysJetRating(st, job, f, res){ if(job.story!=='CR4' || res.crash || st.jetPaid || st.ratings.JET) return; const amt=feeFor(st,'JET'); st.jetPaid=amt;
-    txn(st, amt, 'Gifts & windfalls', 'Castillo: your jet rating'); const o=st.last&&st.last.out; if(o){ o.pay+=amt; o.notes.unshift(`Castillo paid for your jet rating: +${money(amt)}. Book the Jet Type Rating checkride on the Pilot page.`); } },
+    txn(st, amt, 'Gifts & windfalls', 'Castillo: your jet rating'); const o=st.last&&st.last.out; if(o){ o.pay+=amt; o.gift=(o.gift||0)+amt; o.notes.unshift(`Castillo paid for your jet rating: +${money(amt)}. Book the Jet Type Rating checkride on the Pilot page.`); } },
   /* Caribe Cargo (chapter 16) becomes your own company: buy aircraft, hire crews and run routes from the Airline page */
   function caribeCargoCompany(st, job, f, res){ if(job.story!=='CR15' || res.crash) return; const o=st.last&&st.last.out;
     if(!st.company){ st.company={name:'Caribe Cargo', base:job.to, fleet:[], ledger:[], founded:st.day, story:true}; st.ratings.CO=true; if(o) o.notes.unshift('Caribe Cargo is your company now. Spend your money on aircraft, crews and routes on the Pilot → Airline page.'); }
@@ -272,9 +272,9 @@ function weeklyAndRecords(st, job, f, res, out){
   for(const ch of weekPicks(W.key)){ if(W.done[ch.id]) continue;
     if(ch.set){ W.sets[ch.id]=W.sets[ch.id]||[]; const k=ch.key(c); if(k && !W.sets[ch.id].includes(k)) W.sets[ch.id].push(k); W.prog[ch.id]=W.sets[ch.id].length; }
     else if(ch.test(c)) W.prog[ch.id]=(W.prog[ch.id]||0)+1;
-    if((W.prog[ch.id]||0)>=ch.goal){ W.done[ch.id]=true; txn(st, ch.cash, 'Gifts & windfalls', `Weekly challenge: ${ch.n}`); st.reputation=clamp(st.reputation+2,0,100); out.pay+=ch.cash; out.notes.push(`Weekly challenge complete: ${ch.n}! +${money(ch.cash)}, reputation +2.`); }
+    if((W.prog[ch.id]||0)>=ch.goal){ W.done[ch.id]=true; txn(st, ch.cash, 'Gifts & windfalls', `Weekly challenge: ${ch.n}`); st.reputation=clamp(st.reputation+2,0,100); out.pay+=ch.cash; out.gift=(out.gift||0)+ch.cash; out.notes.push(`Weekly challenge complete: ${ch.n}! +${money(ch.cash)}, reputation +2.`); }
   }
-  if(!W.champ && weekPicks(W.key).every(ch=>W.done[ch.id])){ W.champ=true; txn(st, 1000, 'Gifts & windfalls', 'Weekly champion'); out.pay+=1000; out.notes.push(`All three weekly challenges done. Weekly champion bonus: ${money(1000)}.`); st.weeksWon=(st.weeksWon||0)+1; }
+  if(!W.champ && weekPicks(W.key).every(ch=>W.done[ch.id])){ W.champ=true; txn(st, 1000, 'Gifts & windfalls', 'Weekly champion'); out.pay+=1000; out.gift=(out.gift||0)+1000; out.notes.push(`All three weekly challenges done. Weekly champion bonus: ${money(1000)}.`); st.weeksWon=(st.weeksWon||0)+1; }
   const R = st.records = st.records || {};
   const nm = plan(job).dist;
   if(f.verified && (R.fpm==null || f.simFpm < R.fpm.v)) { R.fpm={v:f.simFpm, at:`${job.from}→${to}`, day:st.day}; out.notes.push(`New personal record: softest landing, ${f.simFpm} fpm.`); }

@@ -61,14 +61,29 @@ function cutscene(opt){
   /* Skip jumps to the next decision (decisions can't be skipped), or to the end */
   const skip=()=>{ clearInterval(typing); const j=shots.findIndex((s,k)=>k>i && s.choice); if(shots[i]&&shots[i].choice) return; if(j>=0){ i=j-1; show(); } else end(); };
   document.addEventListener('keydown', key, true);
-  el.addEventListener('click', e=>{ if(e.target.closest('.cut-skip')){ skip(); return; } const b=e.target.closest('.cut-opt'); if(b){ if(b.disabled) return; const s=shots[i]; const more=s.pick(Number(b.dataset.k))||[]; shots.splice(i+1, 0, ...more); waiting=false; show(); return; } next(); });
+  el.addEventListener('click', e=>{ if(e.target.closest('.cut-skip')){ skip(); return; } const b=e.target.closest('.cut-opt'); if(b){ if(b.disabled) return; const s=shots[i]; if(!s || typeof s.pick!=="function") return; b.disabled=true; const more=s.pick(Number(b.dataset.k))||[]; shots.splice(i+1, 0, ...more); waiting=false; show(); return; } next(); });
   setTimeout(show, 450); return el;
 }
 
 /* The art behind a scene. */
 /* the opening background: a painting when they're loaded (the one the first line calls for, else `fallback`),
    otherwise the drawn islands */
-function paintedArt(shots, fallback, code, dep, ac){ if(typeof ART!=='undefined' && ART.scenes && ART.scenes[fallback]){ const first=(shots||[]).find(x=>Array.isArray(x)); const k=(first&&sceneFor(first))||fallback; return SCENES[k](); } return sceneArt(code, dep, ac); }
+function paintedArt(shots, fallback, code, dep, ac){ if(typeof ART!=='undefined' && ART.scenes && ART.scenes[fallback]){ const first=(shots||[]).find(x=>Array.isArray(x)); const k=(first&&sceneFor(first))||fallback; if(k==='ramp' && dep>=420 && dep<=1110) return dayRampArt(ac, dep); return SCENES[k](); }   /* daylight ramps show the day scene with your plane */ return sceneArt(code, dep, ac); }
+(function(){ const c=document.createElement('style'); c.textContent='.cut-bg:has(.dayramp){filter:saturate(.75) brightness(.78) contrast(1.05)}'; document.head.appendChild(c); })();
+/* a daytime ramp in the paintings' flat style, with the plane you actually flew parked on it */
+function dayRampArt(acId, min){ const h=((min||600)/60)%24, late=h>=16, early=h<8.5;
+  const sky = early ? ['#3b4a63','#c99a6b'] : late ? ['#3c3f5c','#d0895a'] : ['#41627a','#a9b9b8'];
+  const sun = early||late ? '#f1c27d' : '#efe6c8', sx = early ? 300 : late ? 1320 : 1180, sy = early||late ? 330 : 150;
+  const palm=x=>`<g transform="translate(${x} 560)" fill="#0b0f12"><path d="M0 0 C6 -60 14 -110 10 -170 L18 -170 C22 -110 16 -50 12 0Z"/><path d="M14 -170 C-20 -196 -60 -184 -78 -156 C-44 -176 -16 -176 14 -164Z"/><path d="M14 -170 C46 -202 92 -190 108 -158 C76 -180 44 -178 14 -164Z"/><path d="M14 -172 C0 -214 -34 -224 -58 -214 C-26 -212 -4 -200 14 -170Z"/><path d="M14 -172 C34 -218 70 -226 92 -212 C60 -210 36 -198 14 -170Z"/></g>`;
+  return `<svg class="dayramp" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" aria-hidden="true"><defs><linearGradient id="dr1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sky[0]}"/><stop offset="1" stop-color="${sky[1]}"/></linearGradient><linearGradient id="dr2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6b6c69"/><stop offset=".55" stop-color="#45474a"/><stop offset="1" stop-color="#1c1e20"/></linearGradient><radialGradient id="dr3" cx="${sx/1600}" cy="${sy/900}" r=".5"><stop offset="0" stop-color="${sun}" stop-opacity=".35"/><stop offset="1" stop-color="${sun}" stop-opacity="0"/></radialGradient></defs>
+  <rect width="1600" height="900" fill="url(#dr1)"/><rect width="1600" height="900" fill="url(#dr3)"/><circle cx="${sx}" cy="${sy}" r="44" fill="${sun}" opacity=".9"/>
+  <path d="M0 520 Q180 430 360 470 Q520 380 700 455 Q820 420 960 500 L960 540 L0 540Z" fill="#243039" opacity=".85"/><path d="M1000 520 Q1180 460 1330 490 Q1460 450 1600 480 L1600 540 L1000 540Z" fill="#2a3640" opacity=".7"/>
+  <rect y="530" width="1600" height="40" fill="#1d3a44" opacity=".9"/>
+  <path d="M1080 560 L1080 450 L1150 420 L1400 420 L1470 450 L1470 560Z" fill="#14181b"/><rect x="1150" y="470" width="250" height="90" fill="#0d1012"/><g fill="#d9a54a" opacity=".55"><rect x="1100" y="470" width="30" height="14"/><rect x="1420" y="470" width="30" height="14"/></g>
+  <rect y="560" width="1600" height="340" fill="url(#dr2)"/><g stroke="#c9a54a" stroke-opacity=".5" stroke-width="6" stroke-dasharray="60 50"><line x1="0" y1="760" x2="1600" y2="700"/></g><line x1="0" y1="610" x2="1600" y2="600" stroke="#000" stroke-opacity=".35" stroke-width="3"/>
+  ${palm(140)}${palm(260)}${palm(1530)}
+  <ellipse cx="790" cy="${470+6.2*30}" rx="330" ry="14" fill="#000" opacity=".45"/><g transform="translate(420 470) scale(6.2)">${acSvgInner(acId,'#0c0e10')}</g>
+  <g fill="#0a0c0e"><rect x="1210" y="650" width="70" height="40" rx="4"/><circle cx="1225" cy="694" r="10"/><circle cx="1266" cy="694" r="10"/><rect x="1240" y="630" width="30" height="22"/></g></svg>`; }
 function sceneArt(code, dep, ac){ try{ return islandArt(code, dep, 1600, 900, ac); }catch(_){ return ''; } }
 
 /* ---------- a chapter's scenes ---------- */
@@ -138,5 +153,5 @@ function playAftermath(){
     shots.push({choice:true, q:m.choice.q, opts, pick:i=>{ const btn=document.createElement('button'); btn.dataset.act='crime-choose'; btn.dataset.i=i; btn.style.display='none'; document.body.appendChild(btn); btn.click(); btn.remove();
       const o=m.choice.opts[i]; const after=splitOut(o.out).map(t=>[here, null, t]); const fx=fxSub(o); if(fx) after.push({card:true, kicker:'Your choice', title:o.t, sub:`<p>${esc(fx)}</p>`, auto:2200}); return after.concat(nextCard()); }});
   } else nextCard().forEach(s=>shots.push(s));
-  cutscene({shots, col:act.col, art:paintedArt([], (()=>{ const arr=Math.min(1439,(job.dep||600)+(job.est||60)); return (arr>=420 && arr<=1110) ? 'ramp' : 'cockpit'; })(), job.to, Math.min(1439,(job.dep||600)+(job.est||60)), job.ac), onEnd:()=>{ S.keepScroll=false; render(); }});
+  cutscene({shots, col:act.col, art:(()=>{ const arr=Math.min(1439,(job.dep||600)+(job.est||60)); return (arr>=420 && arr<=1110) ? dayRampArt(job.ac, arr) : paintedArt([], 'cockpit', job.to, arr, job.ac); })(), onEnd:()=>{ S.keepScroll=false; render(); }});
 }

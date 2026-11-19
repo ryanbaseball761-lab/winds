@@ -39,7 +39,8 @@ function chapterHero(job, lead=''){
   const to=job.local?AP[job.from]:AP[job.to]; const d=job.local?(job.tourNm||40):Math.round(distNm(AP[job.from],AP[job.to]));
   const feat = m.feature || (m.teach&&m.teach[0]) || '';
   /* the scene art behind the banner (the drawn islands only when the art hasn't loaded) */
-  const art = (typeof ART!=='undefined' && ART.scenes && ART.scenes.ramp) ? SCENES.ramp() : (typeof islandArt==='function' ? (()=>{ try{ return islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 300, job.ac); }catch(_){ return ''; } })() : '');
+  const dayDep = (job.dep||600)>=420 && (job.dep||600)<=1110;   // daylight departures get the day ramp with your own plane on it
+  const art = (typeof ART!=='undefined' && ART.scenes && ART.scenes.ramp) ? (dayDep && typeof dayRampArt==='function' ? dayRampArt(job.ac, job.dep) : SCENES.ramp()) : (typeof islandArt==='function' ? (()=>{ try{ return islandArt(job.local?job.from+'L':job.to, job.dep, 1200, 300, job.ac); }catch(_){ return ''; } })() : '');
   const g=CH_GOAL[job.story];
   return `<section class="chapter-hero" style="--arc:${arcColor(m.arc)}">${lead}${art?`<div class="ch-art" aria-hidden="true">${art}</div>`:''}<div class="ch-in">
     <div class="row between"><p class="ch-kicker">${CRIME_IDS.has(m.id)?`Act ${CRIME_ACTS.findIndex(a=>a.arc===m.arc)+1} · ${esc(m.arc)} · Chapter ${mainChapters().indexOf(m)+1} of ${mainChapters().length}`:`${esc(m.arc)} · Chapter ${idx} of ${chs.length}${m.side?' · side story':''}`}</p><div class="row ch-cast">${(m.chars||[]).filter(k=>CAST[k]).map(k=>avatar(k)).join('')}</div></div>
