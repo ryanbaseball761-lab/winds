@@ -3758,6 +3758,15 @@ function buildReport(note){ const st=S.st||{}; return JSON.stringify({ app:'Trad
   feedback:(st.feedback||[]).slice(-30),
   career:{day:st.day, loc:st.loc, flights:st.flights, minutes:st.minutes, difficulty:st.difficulty, active:st.active?{title:st.active.job.title, ac:st.active.job.ac, from:st.active.job.from, to:st.active.job.to}:null},
   errors:errLog(), screen:`${innerWidth}x${innerHeight}`, ua:navigator.userAgent, trail:TW_TRAIL.slice() }, null, 2); }
+/* the beta's feedback channel: a prefilled issue on the public repo (issue forms take field values from the URL) */
+const TW_ISSUES='https://github.com/ryanbaseball761-lab/winds/issues/new';
+function issueUrl(note, rep){ const first=(note||'').trim().split('\n')[0].slice(0,80);
+  const q=new URLSearchParams({template:'bug.yml', title:`[${TW_VERSION}] ${first||'Bug report'}`, what:note||''});
+  if(rep.length<5000) q.set('report', rep); return `${TW_ISSUES}?${q}`; }
+document.addEventListener('click', async e=>{ const b=e.target.closest('[data-act="bug-issue"]'); if(!b) return; const note=(document.getElementById('bug-note')||{}).value||''; const rep=buildReport(note);
+  let copied=false; try{ await navigator.clipboard.writeText(rep); copied=true; }catch(_){}
+  window.open(issueUrl(note, rep), '_blank', 'noopener');
+  toast(rep.length<5000 ? 'Opening GitHub. Your report is already filled in.' : copied ? 'Opening GitHub. Your report is copied: paste it into "Report from the game".' : 'Opening GitHub. Use Save report and attach the file.'); });
 document.addEventListener('click', async e=>{
   const b=e.target.closest('[data-act="bug-save"],[data-act="bug-copy"]'); if(!b) return; const note=(document.getElementById('bug-note')||{}).value||''; const rep=buildReport(note);
   if(b.dataset.act==='bug-copy'){ try{ await navigator.clipboard.writeText(rep); toast('Report copied.'); }catch(_){ toast('Copy not allowed here. Use Save.'); } return; }
@@ -4615,7 +4624,7 @@ let PANEL_ST=null; if(window.twNative && twNative.panelStatus) twNative.panelSta
 document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="panel-install"]')) return; const r=await twNative.panelInstall(); if(r&&r.ok){ toast('Installed. Start (or restart) MSFS and click the Trade Winds icon in the toolbar.'); PANEL_ST=Object.assign({},PANEL_ST,{installed:true}); } else toast(r&&r.why==='no-community'?"Couldn't find your MSFS Community folder. Is MSFS installed on this PC?":"Couldn't install the panel."); S.keepScroll=true; render(); });
 function panelSetupHTML(){ if(!(window.twNative && twNative.panelSetup)) return '';
   if(PANEL_ST && PANEL_ST.prebuilt) return `<section class="panel stack"><div class="row between"><div><p class="label">MSFS toolbar</p><h3>Trade Winds inside the sim</h3></div><button class="btn sm ${PANEL_ST.installed?'':'primary'}" data-act="panel-install">${PANEL_ST.installed?'Reinstall':'Install the in-sim panel'}</button></div><p class="small muted">Adds a Trade Winds button to the MSFS toolbar: your job, checklist, live numbers, story moments you can answer, flight orders and chat votes, without alt-tabbing. ${PANEL_ST.installed?'Installed: click the Trade Winds icon in the MSFS toolbar.':'One click, no SDK needed. Restart MSFS afterwards.'}</p></section>`;
-  return `<section class="panel stack"><div class="row between"><div><p class="label">MSFS toolbar</p><h3>Trade Winds inside the sim</h3></div><button class="btn sm primary" data-act="panel-setup">Set up the in-sim panel</button></div><p class="small muted">Adds a Trade Winds button to the MSFS toolbar: your job, checklist (tap to tick), live numbers, cabin feed, copilot calls and sealed orders, without alt-tabbing. One-time setup needs the free MSFS SDK; the folder that opens has a one-click installer and instructions.</p></section>`; }
+  return `<section class="panel stack"><div class="row between"><div><p class="label">MSFS toolbar</p><h3>Trade Winds inside the sim</h3></div><span class="chip">Coming soon</span></div><p class="small muted">A Trade Winds button in the MSFS toolbar (your job, checklist, live numbers and story moments without alt-tabbing) isn't in this beta yet. Until then, play from this window or open the phone companion on your phone.</p><p class="tiny muted">Have the MSFS SDK? <button class="btn ghost sm" data-act="panel-setup">Build the panel yourself</button></p></section>`; }
 document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="panel-setup"]')) return; const d=await twNative.panelSetup(); toast(d?'Opened the panel folder. Double-click build-and-install.bat.':'Couldn\'t prepare the panel files.'); });
 
 /* ---- 2. premium voices: OpenAI TTS through the app, with Windows voices as the fallback ---- */
@@ -6405,7 +6414,7 @@ function titleHTML(){ const st=S.st; const a=st&&st.active; let cont=''; if(st){
     ${st?'<button data-ts="settings"><b>Settings</b><span>Sound, units, cutscenes</span></button>':''}
     <button data-ts-credits="1"><b>Credits</b><span>Who made this</span></button>
     ${window.twNative?'<button data-ts="quit"><b>Quit</b></button>':''}</nav>
-  <button class="ts-new" data-ts-new="1">What's new in ${WHATS_NEW[0][0]}</button><p class="ts-foot">v${typeof TW_VERSION!=='undefined'?TW_VERSION:''} · A story career for Microsoft Flight Simulator 2024 · Not affiliated with Microsoft or Asobo</p></div>`; }
+  <button class="ts-new" data-ts-new="1">What's new in ${WHATS_NEW[0][0]}</button><p class="ts-foot"><b class="ts-beta">Free beta</b> v${typeof TW_VERSION!=='undefined'?TW_VERSION:''} · Found a bug? Hangar → Saves &amp; help → Report a problem<br>A story career for Microsoft Flight Simulator 2024 and 2020 · Not affiliated with Microsoft or Asobo</p></div>`; }
 function showTitle(){ if(document.querySelector('.title-screen')) return; const el=document.createElement('div'); el.className='title-screen'; el.innerHTML=titleHTML(); document.body.appendChild(el); requestAnimationFrame(()=>el.classList.add('on'));
   try{ MUSIC && MUSIC.play('title'); }catch(_){}
   const buttons=()=>[...el.querySelectorAll('.ts-menu button:not([disabled])')]; let idx=0;
@@ -6458,8 +6467,10 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="uni
 .ts-logo{display:flex;align-items:center;gap:20px;margin-bottom:6vh}.ts-logo svg{width:64px;height:64px;flex:none}.ts-logo h1{margin:0;white-space:nowrap;font-size:clamp(40px,5.5vw,72px);letter-spacing:.14em;font-weight:800}.ts-logo p{margin:4px 0 0;font-family:var(--f-mono);font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:#c8962a}
 .ts-menu{display:grid;gap:6px;max-width:460px}.ts-menu button{display:grid;gap:2px;text-align:left;background:transparent;border:0;border-left:3px solid transparent;color:#cfc8bb;font:inherit;padding:12px 18px;cursor:pointer;transition:.15s}
 .ts-menu button b{font-size:22px;font-weight:700}.ts-menu button span{font-size:13px;color:#8f897e}.ts-menu button.on{border-left-color:#c8962a;background:linear-gradient(90deg,rgba(200,150,42,.16),transparent);color:#fff;padding-left:24px}.ts-menu button[disabled]{opacity:.35;cursor:default}
-.ts-foot{position:absolute;bottom:24px;left:9vw;font-size:12px;color:#6d685f}
+.ts-foot{position:absolute;bottom:24px;left:9vw;font-size:12px;line-height:1.6;color:#7d786f}
 .vol{display:grid;grid-template-columns:70px 1fr 34px;align-items:center;gap:10px;font-size:14px;margin:6px 0}.vol input{width:100%}.vol b{font-family:var(--f-mono);font-size:12px;color:var(--muted)}`; document.head.appendChild(s); })();
+
+(function(){ const c=document.createElement('style'); c.textContent='.ts-beta{color:var(--amb);border:1px solid var(--amb);padding:1px 6px;margin-right:6px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:.85em}'; document.head.appendChild(c); })();
 /* ===================== B. MUSIC, CHARACTER VOICES, ART PIPELINE ===================== */
 
 /* ---- music: a small synth score, played live (no files needed) ---- */
@@ -6658,7 +6669,7 @@ function save(){ const r=saveBase.apply(this, arguments); try{ clearTimeout(S._s
 .ring.gA .ring-fg,.ring.gA circle:last-child{stroke:#7cbf6f}.ring.gB circle:last-child{stroke:#c8962a}.ring.gC circle:last-child{stroke:#e0b24a}.ring.gD circle:last-child,.ring.gF circle:last-child{stroke:#e5533d}
 .fhud-prog{position:relative;height:6px;border-radius:4px;background:rgba(255,255,255,.07);margin-top:14px}.fhud-prog i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#c8962a,#e0b24a)}.fhud-prog span{position:absolute;right:0;top:-18px;font-size:11px;color:var(--muted);font-family:var(--f-mono)}
 .np-clear{float:right;margin-top:-26px}
-.ts-new{position:absolute;bottom:52px;left:9vw;background:none;border:0;color:#c8962a;font:inherit;font-size:13px;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:3px}
+.ts-new{position:absolute;bottom:70px;left:9vw;background:none;border:0;color:#c8962a;font:inherit;font-size:13px;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:3px}
 .cut-bg:has(.art-scene),.ts-bg:has(.art-scene){filter:saturate(.95) brightness(.9) contrast(1.05)!important}
 .saved-flash{color:#7cbf6f!important;transition:color .2s}`; document.head.appendChild(s); })();
 /* ===================== 50 FIXES (Nov 9, second sweep) ===================== */
@@ -6795,6 +6806,7 @@ WHATS_NEW.unshift(['0.81','A still title screen and fifty fixes and upgrades: so
 WHATS_NEW.unshift(['0.82','A radio call or cabin line no longer knocks an unanswered question (like the Coast Guard) off the screen; it waits its turn.']);
 WHATS_NEW.unshift(['0.83','A tidier game: one Property list on the Money page (your home, safehouses and businesses together), one phone for texts and notifications, the Coast Guard radio warning now leads into the intercept instead of being a separate scare, and a lot of old code cleaned out underneath.']);
 WHATS_NEW.unshift(['0.84','Daytime scenes now show a sunlit ramp with the plane you actually flew, instead of the rainy night jet. The result screen splits story money from tips, property income counts as income on the Money page, the transaction list starts short, and confetti is saved for butter landings. Fixed a rare crash when clicking a choice as a scene ended.']);
+WHATS_NEW.unshift(['0.85','Free public beta. Report a problem now opens a GitHub issue with your report filled in. Map labels no longer pile on top of each other, the boarding pass tags stay readable over the sky, and the in-sim panel says plainly that it is coming in a later beta.']);
 /* ===================== RECORDED VOICE LINES =====================
    Story lines can be played from recorded audio instead of computer speech. Each spoken line has a stable id made
    from its words (voKey). Put recordings in art/voice/<id>.mp3 and list the ids in art/voice/index.json:
@@ -7744,7 +7756,7 @@ function hangarSaveTab(st){
       <div class="row"><button class="btn sm primary" data-act="export-file">Export career file</button><button class="btn sm" data-act="import-file">Import career file</button><button class="btn sm" data-act="copy-save">Copy</button><button class="btn sm" data-act="import-save">Restore from the text above</button>
       ${S.confirm==='reset' ? `<span class="small">Erase this career and start over?</span><button class="btn sm danger" data-act="reset-yes">Erase it</button><button class="btn sm" data-act="confirm-no">Cancel</button>` : `<button class="btn sm danger" data-act="reset">Start a new career</button>`}</div>
     </section>
-    <section class="panel stack" style="max-width:760px"><h3>Report a problem</h3><p class="small muted">Something broke or felt wrong? Describe it and save a report. It includes the version, recent errors (${errLog().length}) and your sim status, but not your whole save.</p><textarea id="bug-note" placeholder="What happened? What did you expect?" style="min-height:90px"></textarea><div class="row"><button class="btn sm primary" data-act="bug-save">Save report</button><button class="btn sm" data-act="bug-copy">Copy report</button><span class="tiny muted">Version ${TW_VERSION}</span></div></section>
+    <section class="panel stack" style="max-width:760px"><h3>Report a problem</h3><p class="small muted">Something broke or felt wrong? Describe it, then open a GitHub issue: the report is filled in or copied for you to paste. It includes the version, recent errors (${errLog().length}) and your sim status, but not your whole save.</p><textarea id="bug-note" placeholder="What happened? What did you expect?" style="min-height:90px"></textarea><div class="row"><button class="btn sm primary" data-act="bug-issue">Open a GitHub issue</button><button class="btn sm" data-act="bug-save">Save report</button><button class="btn sm" data-act="bug-copy">Copy report</button><span class="tiny muted">Version ${TW_VERSION}</span></div></section>
     ${backupsHTML()}`;
 }
 
@@ -8431,7 +8443,12 @@ function mapView(){
   if(st.active && !st.active.job.local){ const a=AP[st.active.job.to], b=AP[st.active.job.from]; routes+=`<line x1="${X(b.lon)}" y1="${Y(b.lat)}" x2="${X(a.lon)}" y2="${Y(a.lat)}" class="route active"/>`; }
   // airports
   let dots='', offmap=[]; const placed=[];
-  const labelPos=(x,y,w)=>{ for(const [dx,dy] of [[9,-8],[9,16],[-w-9,-8],[-w-9,16],[9,30],[-w-9,30]]){ const bx=x+dx, by=y+dy; if(!placed.some(p=>Math.abs(p[0]-bx)<w+2 && Math.abs(p[1]-by)<13)){ placed.push([bx,by]); return [bx,by]; } } return null; };
+  // labels keep clear of other labels, of every airport dot, of the grid's degree labels, and of the map's edges
+  const dotsAt=Object.keys(AP).filter(k=>inView(k)).map(k=>[X(AP[k].lon),Y(AP[k].lat)]);
+  for(let la=Math.ceil(v.lat[0]); la<=v.lat[1]; la++) if(!(la%(S.mapZoom==='all'?5:1))) placed.push([0,Y(la)-4,40]);
+  for(let lo=Math.ceil(v.lon[0]); lo<=v.lon[1]; lo++) if(!(lo%(S.mapZoom==='all'?5:1))) placed.push([X(lo),H-6,40]);
+  const hit=(bx,by,w)=> bx<2 || bx+w>W-2 || by<12 || by>H-4 || placed.some(p=>bx<p[0]+p[2]+3 && p[0]<bx+w+3 && Math.abs(p[1]-by)<13) || dotsAt.some(([cx,cy])=>cx>bx-5 && cx<bx+w+5 && cy>by-15 && cy<by+6);
+  const labelPos=(x,y,w)=>{ for(const [dx,dy] of [[9,-8],[9,16],[-w-9,-8],[-w-9,16],[-w/2,-14],[-w/2,24],[9,30],[-w-9,30]]){ const bx=x+dx, by=y+dy; if(!hit(bx,by,w)){ placed.push([bx,by,w]); return [bx,by]; } } return null; };
   const order = Object.keys(AP).sort((a,b)=>(b===st.loc)-(a===st.loc) || (b===sel)-(a===sel));
   for(const k of order){ const a=AP[k]; if(!inView(k)){ if(a.r==='LONG'||a.r==='FL'||a.r==='CAM') offmap.push(k); continue; }
     const locked = !regions.includes(a.r); const visited = st.landedAt && st.landedAt[k]; const isHere = k===st.loc; const jobTo = st.jobs.some(j=>j.to===k);
@@ -10479,6 +10496,9 @@ html.ckp body .pf-bar>div{grid-column:1 / -1;grid-row:2;height:4px;border-radius
   html.ckp .sc-prev+.sc-next{padding-top:44px!important}
 }`;
 (function(){ const s=document.createElement('style'); s.id='tw-polish'; s.textContent=POLISH_CSS; document.head.appendChild(s); })();
+
+/* chips on the boarding pass sit over the ticket art (the sun, palms): give them a solid backing */
+(function(){ const c=document.createElement('style'); c.textContent='.pass .pass-art{z-index:0}.pass .pass-main{position:relative;z-index:1}.pass .pass-main .chip{background:rgba(12,13,14,.82)!important}'; document.head.appendChild(c); })();
 /* ===================== START =====================
    Everything above only defines things. This starts the app. Keep this file last in order.txt. */
 boot();

@@ -52,6 +52,15 @@ function buildReport(note){ const st=S.st||{}; return JSON.stringify({ app:'Trad
   feedback:(st.feedback||[]).slice(-30),
   career:{day:st.day, loc:st.loc, flights:st.flights, minutes:st.minutes, difficulty:st.difficulty, active:st.active?{title:st.active.job.title, ac:st.active.job.ac, from:st.active.job.from, to:st.active.job.to}:null},
   errors:errLog(), screen:`${innerWidth}x${innerHeight}`, ua:navigator.userAgent, trail:TW_TRAIL.slice() }, null, 2); }
+/* the beta's feedback channel: a prefilled issue on the public repo (issue forms take field values from the URL) */
+const TW_ISSUES='https://github.com/ryanbaseball761-lab/winds/issues/new';
+function issueUrl(note, rep){ const first=(note||'').trim().split('\n')[0].slice(0,80);
+  const q=new URLSearchParams({template:'bug.yml', title:`[${TW_VERSION}] ${first||'Bug report'}`, what:note||''});
+  if(rep.length<5000) q.set('report', rep); return `${TW_ISSUES}?${q}`; }
+document.addEventListener('click', async e=>{ const b=e.target.closest('[data-act="bug-issue"]'); if(!b) return; const note=(document.getElementById('bug-note')||{}).value||''; const rep=buildReport(note);
+  let copied=false; try{ await navigator.clipboard.writeText(rep); copied=true; }catch(_){}
+  window.open(issueUrl(note, rep), '_blank', 'noopener');
+  toast(rep.length<5000 ? 'Opening GitHub. Your report is already filled in.' : copied ? 'Opening GitHub. Your report is copied: paste it into "Report from the game".' : 'Opening GitHub. Use Save report and attach the file.'); });
 document.addEventListener('click', async e=>{
   const b=e.target.closest('[data-act="bug-save"],[data-act="bug-copy"]'); if(!b) return; const note=(document.getElementById('bug-note')||{}).value||''; const rep=buildReport(note);
   if(b.dataset.act==='bug-copy'){ try{ await navigator.clipboard.writeText(rep); toast('Report copied.'); }catch(_){ toast('Copy not allowed here. Use Save.'); } return; }

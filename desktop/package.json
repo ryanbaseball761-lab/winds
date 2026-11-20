@@ -1,7 +1,7 @@
 {
   "name": "trade-winds",
   "productName": "Trade Winds",
-  "version": "0.19.1",
+  "version": "0.84.0",
   "description": "A story-driven Caribbean career for Microsoft Flight Simulator",
   "main": "main.js",
   "author": "Trade Winds",
@@ -11,7 +11,7 @@
   "scripts": {
     "game": "node -e \"require('fs').mkdirSync('game',{recursive:true});require('fs').copyFileSync('../index.html','game/index.html')\"",
     "start": "npm run game && electron .",
-    "dist": "npm run game && electron-builder --win nsis"
+    "dist": "npm run game && electron-builder --win nsis --publish never"
   },
   "dependencies": {
     "node-simconnect": "^4.2.1",

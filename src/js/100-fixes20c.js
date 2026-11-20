@@ -65,6 +65,6 @@ function save(){ const r=saveBase.apply(this, arguments); try{ clearTimeout(S._s
 .ring.gA .ring-fg,.ring.gA circle:last-child{stroke:#7cbf6f}.ring.gB circle:last-child{stroke:#c8962a}.ring.gC circle:last-child{stroke:#e0b24a}.ring.gD circle:last-child,.ring.gF circle:last-child{stroke:#e5533d}
 .fhud-prog{position:relative;height:6px;border-radius:4px;background:rgba(255,255,255,.07);margin-top:14px}.fhud-prog i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#c8962a,#e0b24a)}.fhud-prog span{position:absolute;right:0;top:-18px;font-size:11px;color:var(--muted);font-family:var(--f-mono)}
 .np-clear{float:right;margin-top:-26px}
-.ts-new{position:absolute;bottom:52px;left:9vw;background:none;border:0;color:#c8962a;font:inherit;font-size:13px;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:3px}
+.ts-new{position:absolute;bottom:70px;left:9vw;background:none;border:0;color:#c8962a;font:inherit;font-size:13px;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:3px}
 .cut-bg:has(.art-scene),.ts-bg:has(.art-scene){filter:saturate(.95) brightness(.9) contrast(1.05)!important}
 .saved-flash{color:#7cbf6f!important;transition:color .2s}`; document.head.appendChild(s); })();

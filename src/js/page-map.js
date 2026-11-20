@@ -20,7 +20,12 @@ function mapView(){
   if(st.active && !st.active.job.local){ const a=AP[st.active.job.to], b=AP[st.active.job.from]; routes+=`<line x1="${X(b.lon)}" y1="${Y(b.lat)}" x2="${X(a.lon)}" y2="${Y(a.lat)}" class="route active"/>`; }
   // airports
   let dots='', offmap=[]; const placed=[];
-  const labelPos=(x,y,w)=>{ for(const [dx,dy] of [[9,-8],[9,16],[-w-9,-8],[-w-9,16],[9,30],[-w-9,30]]){ const bx=x+dx, by=y+dy; if(!placed.some(p=>Math.abs(p[0]-bx)<w+2 && Math.abs(p[1]-by)<13)){ placed.push([bx,by]); return [bx,by]; } } return null; };
+  // labels keep clear of other labels, of every airport dot, of the grid's degree labels, and of the map's edges
+  const dotsAt=Object.keys(AP).filter(k=>inView(k)).map(k=>[X(AP[k].lon),Y(AP[k].lat)]);
+  for(let la=Math.ceil(v.lat[0]); la<=v.lat[1]; la++) if(!(la%(S.mapZoom==='all'?5:1))) placed.push([0,Y(la)-4,40]);
+  for(let lo=Math.ceil(v.lon[0]); lo<=v.lon[1]; lo++) if(!(lo%(S.mapZoom==='all'?5:1))) placed.push([X(lo),H-6,40]);
+  const hit=(bx,by,w)=> bx<2 || bx+w>W-2 || by<12 || by>H-4 || placed.some(p=>bx<p[0]+p[2]+3 && p[0]<bx+w+3 && Math.abs(p[1]-by)<13) || dotsAt.some(([cx,cy])=>cx>bx-5 && cx<bx+w+5 && cy>by-15 && cy<by+6);
+  const labelPos=(x,y,w)=>{ for(const [dx,dy] of [[9,-8],[9,16],[-w-9,-8],[-w-9,16],[-w/2,-14],[-w/2,24],[9,30],[-w-9,30]]){ const bx=x+dx, by=y+dy; if(!hit(bx,by,w)){ placed.push([bx,by,w]); return [bx,by]; } } return null; };
   const order = Object.keys(AP).sort((a,b)=>(b===st.loc)-(a===st.loc) || (b===sel)-(a===sel));
   for(const k of order){ const a=AP[k]; if(!inView(k)){ if(a.r==='LONG'||a.r==='FL'||a.r==='CAM') offmap.push(k); continue; }
     const locked = !regions.includes(a.r); const visited = st.landedAt && st.landedAt[k]; const isHere = k===st.loc; const jobTo = st.jobs.some(j=>j.to===k);

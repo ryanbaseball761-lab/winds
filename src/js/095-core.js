@@ -13,7 +13,7 @@ function titleHTML(){ const st=S.st; const a=st&&st.active; let cont=''; if(st){
     ${st?'<button data-ts="settings"><b>Settings</b><span>Sound, units, cutscenes</span></button>':''}
     <button data-ts-credits="1"><b>Credits</b><span>Who made this</span></button>
     ${window.twNative?'<button data-ts="quit"><b>Quit</b></button>':''}</nav>
-  <button class="ts-new" data-ts-new="1">What's new in ${WHATS_NEW[0][0]}</button><p class="ts-foot">v${typeof TW_VERSION!=='undefined'?TW_VERSION:''} · A story career for Microsoft Flight Simulator 2024 · Not affiliated with Microsoft or Asobo</p></div>`; }
+  <button class="ts-new" data-ts-new="1">What's new in ${WHATS_NEW[0][0]}</button><p class="ts-foot"><b class="ts-beta">Free beta</b> v${typeof TW_VERSION!=='undefined'?TW_VERSION:''} · Found a bug? Hangar → Saves &amp; help → Report a problem<br>A story career for Microsoft Flight Simulator 2024 and 2020 · Not affiliated with Microsoft or Asobo</p></div>`; }
 function showTitle(){ if(document.querySelector('.title-screen')) return; const el=document.createElement('div'); el.className='title-screen'; el.innerHTML=titleHTML(); document.body.appendChild(el); requestAnimationFrame(()=>el.classList.add('on'));
   try{ MUSIC && MUSIC.play('title'); }catch(_){}
   const buttons=()=>[...el.querySelectorAll('.ts-menu button:not([disabled])')]; let idx=0;
@@ -66,5 +66,7 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="uni
 .ts-logo{display:flex;align-items:center;gap:20px;margin-bottom:6vh}.ts-logo svg{width:64px;height:64px;flex:none}.ts-logo h1{margin:0;white-space:nowrap;font-size:clamp(40px,5.5vw,72px);letter-spacing:.14em;font-weight:800}.ts-logo p{margin:4px 0 0;font-family:var(--f-mono);font-size:13px;letter-spacing:.3em;text-transform:uppercase;color:#c8962a}
 .ts-menu{display:grid;gap:6px;max-width:460px}.ts-menu button{display:grid;gap:2px;text-align:left;background:transparent;border:0;border-left:3px solid transparent;color:#cfc8bb;font:inherit;padding:12px 18px;cursor:pointer;transition:.15s}
 .ts-menu button b{font-size:22px;font-weight:700}.ts-menu button span{font-size:13px;color:#8f897e}.ts-menu button.on{border-left-color:#c8962a;background:linear-gradient(90deg,rgba(200,150,42,.16),transparent);color:#fff;padding-left:24px}.ts-menu button[disabled]{opacity:.35;cursor:default}
-.ts-foot{position:absolute;bottom:24px;left:9vw;font-size:12px;color:#6d685f}
+.ts-foot{position:absolute;bottom:24px;left:9vw;font-size:12px;line-height:1.6;color:#7d786f}
 .vol{display:grid;grid-template-columns:70px 1fr 34px;align-items:center;gap:10px;font-size:14px;margin:6px 0}.vol input{width:100%}.vol b{font-family:var(--f-mono);font-size:12px;color:var(--muted)}`; document.head.appendChild(s); })();
+
+(function(){ const c=document.createElement('style'); c.textContent='.ts-beta{color:var(--amb);border:1px solid var(--amb);padding:1px 6px;margin-right:6px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:.85em}'; document.head.appendChild(c); })();

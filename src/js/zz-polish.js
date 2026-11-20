@@ -67,3 +67,6 @@ html.ckp body .pf-bar>div{grid-column:1 / -1;grid-row:2;height:4px;border-radius
   html.ckp .sc-prev+.sc-next{padding-top:44px!important}
 }`;
 (function(){ const s=document.createElement('style'); s.id='tw-polish'; s.textContent=POLISH_CSS; document.head.appendChild(s); })();
+
+/* chips on the boarding pass sit over the ticket art (the sun, palms): give them a solid backing */
+(function(){ const c=document.createElement('style'); c.textContent='.pass .pass-art{z-index:0}.pass .pass-main{position:relative;z-index:1}.pass .pass-main .chip{background:rgba(12,13,14,.82)!important}'; document.head.appendChild(c); })();

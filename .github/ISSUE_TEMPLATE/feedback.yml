@@ -1,0 +1,20 @@
+name: Feedback
+description: A chapter you loved or hated, something confusing, an idea
+labels: [feedback, beta]
+body:
+  - type: input
+    id: where
+    attributes:
+      label: Where in the game?
+      placeholder: Chapter 6, the Money page, a checkride...
+  - type: textarea
+    id: thoughts
+    attributes:
+      label: Your thoughts
+    validations:
+      required: true
+  - type: dropdown
+    id: fun
+    attributes:
+      label: How much are you enjoying it so far?
+      options: ["Loving it", "It's good", "It's OK", "Not for me"]

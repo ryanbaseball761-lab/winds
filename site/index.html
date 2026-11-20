@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trade Winds · Free beta for Microsoft Flight Simulator</title>
+<meta name="description" content="A 20-chapter Caribbean crime story you fly yourself in Microsoft Flight Simulator 2024 and 2020. Free public beta for Windows.">
+<meta property="og:title" content="Trade Winds · a crime story you fly yourself">
+<meta property="og:description" content="Twenty chapters, from a borrowed Cessna to a 747 full of contraband, across 110 real Caribbean airports. Free beta for MSFS 2024 and 2020.">
+<meta property="og:image" content="img/cutscene.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="img/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0b0c0d;--panel:#121416;--line:#24282c;--ink:#ece8e1;--muted:#9a958c;--dim:#6f6b64;--amb:#f0a53a;--amb-2:#c8962a}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Instrument Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--amb)}
+img{display:block;max-width:100%}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+.label{font:500 12px/1 "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--amb)}
+h1,h2,h3{font-family:"Bricolage Grotesque",sans-serif;line-height:1.05;margin:0}
+nav{display:flex;align-items:center;justify-content:space-between;padding:20px 0;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:12px;font:700 15px/1 "Bricolage Grotesque",sans-serif;letter-spacing:.22em;color:var(--ink);text-decoration:none}
+.brand img{width:28px;height:28px}
+nav .links{display:flex;gap:24px;font-size:14px}
+nav .links a{color:var(--muted);text-decoration:none}
+nav .links a:hover{color:var(--ink)}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:14px 22px;font:600 15px/1 "Instrument Sans",sans-serif;text-decoration:none;border:1px solid var(--amb);color:#111;background:var(--amb)}
+.btn:hover{background:#ffb95a}
+.btn.ghost{background:none;color:var(--ink);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--muted)}
+.hero{padding:72px 0 40px}
+.hero h1{font-size:clamp(44px,7vw,88px);font-weight:800;letter-spacing:-.02em;max-width:12ch}
+.hero p.lede{font-size:clamp(18px,2vw,21px);color:var(--muted);max-width:44ch;margin:22px 0 32px}
+.hero .cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.hero .meta{margin-top:18px;font-size:13px;color:var(--dim)}
+.beta{display:inline-block;border:1px solid var(--amb);color:var(--amb);padding:3px 8px;margin-bottom:22px}
+.shot{border:1px solid var(--line);background:var(--panel)}
+.hero .shot{margin-top:48px}
+section{padding:72px 0;border-top:1px solid var(--line)}
+section h2{font-size:clamp(30px,4vw,44px);font-weight:700;margin:10px 0 18px;max-width:22ch}
+section p.sub{color:var(--muted);max-width:60ch;margin:0 0 36px}
+.feat{margin-bottom:72px}.feat .txt{display:grid;grid-template-columns:1fr 1.2fr;gap:12px 48px;align-items:end;margin-bottom:24px}.feat .txt .label{grid-column:1/-1}
+.feat:last-child{margin-bottom:0}
+.feat h3{font-size:30px;font-weight:700;margin:0}
+.feat p{color:var(--muted);margin:0}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--line)}
+.step{padding:28px;border-right:1px solid var(--line)}
+.step:last-child{border-right:0}
+.step .n{font:500 13px/1 "IBM Plex Mono",monospace;color:var(--amb)}
+.step h3{font-size:20px;font-weight:700;margin:14px 0 10px}
+.step p{margin:0;color:var(--muted);font-size:15px}
+.note{margin-top:20px;padding:16px 20px;border-left:2px solid var(--amb);background:var(--panel);color:var(--muted);font-size:15px}
+.note b{color:var(--ink)}
+.cols{display:grid;grid-template-columns:repeat(2,1fr);gap:40px}
+.cols h3{font-size:20px;font-weight:700;margin:0 0 10px}
+.cols p,.cols li{color:var(--muted);font-size:15px}
+.cols ul{margin:0;padding-left:18px}
+footer{padding:36px 0 56px;border-top:1px solid var(--line);color:var(--dim);font-size:13px}
+@media (max-width:820px){
+  nav .links{display:none}
+  .cols{grid-template-columns:1fr;gap:20px}
+  .feat .txt{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr}
+  .step{border-right:0;border-bottom:1px solid var(--line)}
+  .step:last-child{border-bottom:0}
+  .hero{padding-top:48px}
+  section{padding:56px 0}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <a class="brand" href="#"><img src="img/icon.png" alt="">TRADE WINDS</a>
+    <div class="links"><a href="#story">The game</a><a href="#install">Install</a><a href="#feedback">Feedback</a></div>
+  </nav>
+
+  <header class="hero">
+    <span class="label beta">Free public beta</span>
+    <h1>A crime story you fly yourself.</h1>
+    <p class="lede">Twenty chapters across 110 real Caribbean airports, from a borrowed Cessna to a 747 full of contraband. You fly every leg in Microsoft Flight Simulator. Trade Winds books it, briefs you, follows you live and grades the landing.</p>
+    <div class="cta">
+      <a class="btn" href="https://github.com/ryanbaseball761-lab/winds/releases/latest">Download the beta</a>
+      <a class="btn ghost" href="#install">How to install</a>
+    </div>
+    <p class="meta mono">Free · Windows 10/11 · MSFS 2024 and 2020 · Any aircraft that fits the role</p>
+    <img class="shot" src="img/cutscene.jpg" width="1440" height="900" alt="A cutscene: a jet on a rainy ramp at San Juan as a storm comes in.">
+  </header>
+
+  <section id="story">
+    <p class="label">The game</p>
+    <h2>Not a job board. A story with choices and endings.</h2>
+    <p class="sub">Career add-ons give you cargo. Trade Winds gives you Castillo, a soft-spoken businessman who needs a pilot who doesn't ask questions, and a DEA agent who has started asking them about you.</p>
+
+    <div class="feat">
+      <div class="txt"><p class="label">Twenty chapters</p><h3>Every chapter is a real flight</h3><p>Each chapter has a route, an aircraft role and a goal. Fly it in the sim, then live with what you chose. Five acts, several endings and a New Game+ where someone else is the leak.</p></div>
+      <img class="shot" src="img/story.jpg" width="1440" height="900" alt="The Story page showing Chapter 8, Into the Storm.">
+    </div>
+    <div class="feat flip">
+      <div class="txt"><p class="label">Live from the sim</p><h3>It knows how you flew</h3><p>The flight starts when your engine runs and ends when you park. Mid-flight orders come in: climb away from a shadowing jet, stay under 1,000 feet, take the Coast Guard's call. The landing is graded.</p></div>
+      <img class="shot" src="img/flight.jpg" width="1440" height="900" alt="The Flight page with a boarding pass from San Juan to Punta Cana.">
+    </div>
+    <div class="feat">
+      <div class="txt"><p class="label">Between chapters</p><h3>Your own corner of the Caribbean</h3><p>Side jobs, checkrides, an airline to run, businesses that wash money, a customs officer who can be paid, and Heat that rises every time you push your luck.</p></div>
+      <img class="shot" src="img/map.jpg" width="1440" height="900" alt="The map of the eastern Caribbean with routes and airports.">
+    </div>
+    <div class="feat flip">
+      <div class="txt"><p class="label">Made for streams</p><h3>Let Twitch chat decide</h3><p>Turn on chat voting and your viewers pick the story choices by typing 1, 2 or 3. Texts from the cast land on an in-game phone between flights.</p></div>
+      <img class="shot" src="img/phone.jpg" width="1440" height="900" alt="The in-game phone with texts from Mari, Dez and an unknown number.">
+    </div>
+  </section>
+
+  <section id="install">
+    <p class="label">Install</p>
+    <h2>Up and running in five minutes.</h2>
+    <div class="steps">
+      <div class="step"><span class="n">01</span><h3>Download</h3><p>Get <span class="mono">TradeWinds-Setup.exe</span> from the <a href="https://github.com/ryanbaseball761-lab/winds/releases/latest">latest release</a> and run it.</p></div>
+      <div class="step"><span class="n">02</span><h3>Start MSFS</h3><p>Load into any airport in Microsoft Flight Simulator 2024 or 2020.</p></div>
+      <div class="step"><span class="n">03</span><h3>Open Trade Winds</h3><p>It connects to the sim by itself. Start chapter 1 on the Story page.</p></div>
+    </div>
+    <p class="note"><b>"Windows protected your PC"?</b> The beta isn't code-signed yet, so Windows warns about it. Click <b>More info</b>, then <b>Run anyway</b>. The game updates itself after that.</p>
+  </section>
+
+  <section id="feedback">
+    <p class="label">Beta</p>
+    <h2>Tell us what broke, and what you loved.</h2>
+    <div class="cols">
+      <div><h3>Report from the game</h3><p>Go to Hangar → Saves &amp; help → Report a problem, describe what happened, then press <b>Open a GitHub issue</b>. Your report is filled in for you. Or <a href="https://github.com/ryanbaseball761-lab/winds/issues/new/choose">open an issue here</a>.</p></div>
+      <div><h3>Most useful to us</h3><ul><li>Anything confusing in the story: who someone is, why you're flying somewhere</li><li>A flight that didn't start, didn't finish, or got graded wrong</li><li>Money or Heat that feels unfair or stuck</li></ul></div>
+      <div><h3>Privacy</h3><p>Your saves stay on your PC. The app contacts GitHub for game updates and art, Google Fonts, and the US National Hurricane Center for real storms. OpenAI only if you add your own key for premium voices.</p></div>
+      <div><h3>Known in this beta</h3><ul><li>The in-sim toolbar panel isn't included yet</li><li>Briefings follow MSFS live weather (add-ons can't set it)</li></ul></div>
+    </div>
+  </section>
+</div>
+<footer><div class="wrap">Trade Winds is a free fan-made add-on. Not affiliated with Microsoft or Asobo Studio. Microsoft Flight Simulator is a trademark of Microsoft Corporation.</div></footer>
+</body>
+</html>

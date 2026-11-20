@@ -1,0 +1,27 @@
+name: Bug report
+description: Something broke, looked wrong, or got stuck
+labels: [bug, beta]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: And what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: Report from the game
+      description: Hangar → Saves & help → Report a problem → Open a GitHub issue copies it for you. Paste it here.
+      render: json
+  - type: input
+    id: sim
+    attributes:
+      label: Sim and aircraft
+      placeholder: MSFS 2024, Cessna 172
+  - type: textarea
+    id: shots
+    attributes:
+      label: Screenshots
+      description: Drag images here. They help a lot.
