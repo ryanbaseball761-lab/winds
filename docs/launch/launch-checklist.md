@@ -30,8 +30,11 @@ What has to be true before strangers can install and play Trade Winds. ✅ done,
 ## Store and marketing (drafts in this folder)
 - ✅ `store-page.md`, `trailer-script.md`, `beta-tester-guide.md`, `patch-notes-1.0.md`
 - ⬜ Screenshots and a trailer captured in MSFS
-- ⬜ A place to download it (itch.io, flightsim.to or a site) and a support channel (Discord or email)
-- ⬜ Privacy line for the store page: saves stay on the player's PC. The page itself only contacts GitHub (updates and
+- ✅ Download: [beta page](https://ryanbaseball761-lab.github.io/winds/) (GitHub Pages, source in `site/`, deployed to the `gh-pages` branch) and GitHub Releases (Actions → Desktop installer → Run workflow with a version)
+- ✅ Support channel: GitHub issues with bug and feedback forms; the game's Report a problem opens one prefilled
+- ⬜ Discord server, then link it from the title screen and the beta page
+- ⬜ flightsim.to listing (ask the moderators first: it's a companion app)
+- ✅ Privacy line on the beta page and release notes: saves stay on the player's PC. The page itself only contacts GitHub (updates and
   character art) and Google Fonts; SimBrief and SkyVector open only when the player clicks those links. The desktop app
   also fetches real storms (US National Hurricane Center) and, only if the player adds a key, OpenAI (premium voices).
   Double-check the app side when its source is in the repo.
