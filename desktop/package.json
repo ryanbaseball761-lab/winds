@@ -1,7 +1,7 @@
 {
   "name": "trade-winds",
   "productName": "Trade Winds",
-  "version": "0.84.0",
+  "version": "0.85.0",
   "description": "A story-driven Caribbean career for Microsoft Flight Simulator",
   "main": "main.js",
   "author": "Trade Winds",
