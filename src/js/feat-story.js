@@ -221,3 +221,18 @@ function reactShot(m, i, fx){ const r=(REACT[m.id]||[])[i]; if(!r || !CAST[r[0]]
   put('CR2',`You called Dez before handing it over.`); put('CR4',`You turned Castillo's envelope down.`); put('CR6',`You drove the injured men to the clinic yourself.`);
   put('CR9',`You lied to Reyes and warned Castillo.`); put('CR11',`You hid Tico on Cayman Brac and lied to Castillo.`); put('CR13',`Mari runs the books now, not the flying.`);
   put('CR15',`You split it 50/50 and took on three of Castillo's pilots.`); })();
+
+/* ===================== after the story: challenges, and a harder New Game+ ===================== */
+function postGameChallenges(st){ const R=st.records||{}, v=st.visited||{};
+  return [
+    ['Ten in a row', `Ten A grades in a row`, Math.min(10,R.bestStreak||0), 10],
+    ['Every short strip', `Land at all ${BUSH_STRIPS.length} bush strips, Saba to Placencia`, BUSH_STRIPS.filter(k=>v[k]).length, BUSH_STRIPS.length],
+    ['Island collector', `Land at 60 different airports`, Math.min(60,Object.keys(v).length), 60],
+    ['Hundred hours', `Log 100 hours in the Caribbean`, Math.min(100,Math.floor((st.minutes||0)/60)), 100]]; }
+function challengesHTML(st){ if(!crime(st).ending) return ''; return `<section class="panel pg-ch"><p class="label">After the story</p><h3>Challenges</h3><ul class="ls-list">${postGameChallenges(st).map(c=>`<li class="${c[2]>=c[3]?'ok':''}"><b>${esc(c[0])}</b><span>${esc(c[1])} · <span class="mono">${c[2]} / ${c[3]}</span></span></li>`).join('')}</ul></section>`; }
+AFTER_RENDER.push(function pgChallenges(){ if(S.view!=='story'||!S.st) return; const main=document.querySelector('main'), ng=main&&main.querySelector('.ngp'); if(!ng || main.querySelector('.pg-ch')) return; ng.insertAdjacentHTML('afterend', challengesHTML(S.st));
+  if(!ng.querySelector('.ng-hard')) ng.querySelector('[data-act="ng-start"]').insertAdjacentHTML('beforebegin', `<label class="check ng-hard" style="margin:10px 0"><input type="checkbox" id="ng-hard" ${S.st.ui&&S.st.ui.ngHard?'checked':''}> Hard rules: customs start searching at Heat 45, Heat never drops below 20, and pay is 15% lower</label>`); });
+document.addEventListener('change', e=>{ if(e.target.id!=='ng-hard'||!S.st) return; S.st.ui=S.st.ui||{}; S.st.ui.ngHard=e.target.checked; save(); });
+/* the New Game+ button carries the hard rules into the new round */
+document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="ng-start"]'); if(!b||!S.st||!b.dataset.ok) return; setTimeout(()=>{ const c=crime(S.st); if(c.ng && S.st.ui && S.st.ui.ngHard){ c.hard=1; save(); } },0); }, true);
+DAY_HOOKS.push(function hardFloor(st){ const c=crime(st); if(c.hard && c.on && (c.heat||0)<20) c.heat=20; });

@@ -124,6 +124,7 @@ function chipsFor(st, job){
     if(job.wx.ifr) c.push(`<span class="chip vio">IFR</span>`);
     if(isNight(job.dep)) c.push(`<span class="chip">Night</span>`);
     if(!st.types[job.ac]) c.push(`<span class="chip new">New type</span>`);
+    if(job.bush) c.push(`<span class="chip" title="Short strip in a STOL or bush plane. Land in the first third for a bonus.">Bush</span>`);
     if(!job.local && !st.visited[job.to] && !AP[job.to].water) c.push(`<span class="chip new">New airport</span>`);
     if(AP[job.to].water) c.push(`<span class="chip sky">Water landing</span>`);
     if(!job.local && ZONE(AP[job.from].c)!==ZONE(AP[job.to].c)) c.push(`<span class="chip">Customs</span>`);

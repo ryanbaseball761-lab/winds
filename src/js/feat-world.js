@@ -375,3 +375,28 @@ GEN_JOB_STEPS.push(function invJobs(st, L){ if(!L) return; const v=invNow(st); i
 AFTER_RENDER.push(function invBanner(){ if(S.view!=='board' || !S.st) return; const v=invNow(S.st); const main=document.querySelector('main'); if(!v || !main || main.querySelector('.w-inv')) return; const list=main.querySelector('.jlist'); if(!list) return;
   const d=document.createElement('section'); d.className='panel w-inv'; d.style.borderLeft='3px solid var(--bad,#d0643a)';
   d.innerHTML=`<p class="label">Investigation, until day ${v.until}</p><p>Federal agents are watching ${esc(AP[v.ap].n)} (${v.ap}). No network runs from there, and any run that lands there will be searched.</p>`; list.parentElement.insertBefore(d, list.previousElementSibling||list); });
+
+/* ===================== bush runs =====================
+   Short strips (under 3,300 ft) in a STOL or bush plane: Saba, Barbuda, Montserrat, Anegada, Union Island and more.
+   A Bush tag on the board, a little more pay, and a short-field bonus for a good landing. */
+const BUSH_STRIPS = ['TNCS','TAPH','TRPG','TFFJ','TVSU','TGPZ','TJCP','TUPA','TUPW','TVSM','MWCL','MYES','MZPL','TDCF'];
+const BUSH_RUNS = {
+  TAPH:{t:`Generator parts for Codrington`, c:`Barbuda Council`, p:`The town's backup generator died in the last storm.`},
+  TRPG:{t:`Batteries for the volcano observatory`, c:`Montserrat Volcano Observatory`, p:`The seismographs on the hill run on these. The volcano doesn't wait.`},
+  TUPA:{t:`Ice and lobster traps for Anegada`, c:`Setting Point fishermen`, p:`Anegada is flat, low and easy to miss. Look for the reef first.`},
+  TNCS:{t:`Mail and medicine for Saba`, c:`Saba Cares`, p:`The ferry is cancelled again. You're the only way in today.`},
+  TVSU:{t:`Spare sails for the kite school`, c:`Clifton Kite Club`, p:`The approach is over the hill and the wind is always strong.`},
+  TGPZ:{t:`School books for Carriacou`, c:`Hillsborough Secondary`, p:`The strip runs right across the island's main road. Watch for traffic lights.`},
+};
+function bushJob(st){ const acs=eligibleAircraft(st).filter(k=>['stol','bush'].includes(AC[k].cls)); if(!acs.length) return null; const acId=acs[Math.floor(Math.random()*acs.length)], a=AC[acId];
+  const dests=BUSH_STRIPS.filter(k=>k!==st.loc && AP[k] && apOk(st,k,acId) && distNm(AP[st.loc],AP[k])<=Math.min(160,(a.range||300)*0.75)); if(!dests.length) return null;
+  const to=dests[Math.floor(Math.random()*dests.length)], len=Math.max(...AP[to].rw.map(r=>r[1])), R=BUSH_RUNS[to]||{t:`Supplies for ${AP[to].isl}`, c:`${AP[to].isl} general store`, p:`Whatever the ferry couldn't take this week.`};
+  const dep=Math.round((st.clock+20+Math.floor(Math.random()*180))/5)*5;
+  const job={ id:uid(), kind:'gen', arch:'bush', label:'Bush run', cat:'cargo', bush:true, from:st.loc, to, local:false, tourNm:0, ac:acId, pax:0, cargo:200+Math.floor(Math.random()*5)*60, dep:Math.max(dep, isNight(dep)?st.clock+20:dep), wx:genWx(st,to,null,dep), urgent:false, vip:false, airline:false, company:false };
+  let p=plan(job); if(p.over>0){ job.cargo=Math.max(60, job.cargo-p.over-20); p=plan(job); } if(p.over>0 || !p.range) return null;
+  job.title=R.t; job.client=R.c; job.paras=[R.p, `${AP[to].n} has ${len.toLocaleString()} ft of runway. Touch down in the first third and you'll stop with room to spare.`];
+  job.pay=Math.round(payFor(st,job)*1.3/10)*10; job.est=p.est; return job; }
+GEN_JOB_STEPS.push(function bushJobs(st, L){ if(!L) return; if(L.some(j=>j.bush)) return L; const out=L.slice(); for(let i=0;i<2;i++){ const j=bushJob(st); if(j && !out.some(x=>x.to===j.to && x.bush)) out.push(j); } return out; });
+AFTER_RESULT.push(function bushBonus(st, job, f, res){ if(!job.bush || res.crash) return; const o=st.last&&st.last.out; if(!o) return; const A=f&&f.tda;
+  const good = A ? (A.zone==='aim'||A.zone==='zone') : (res.grade==='A'||res.grade==='B');
+  if(good){ const b=Math.max(50, Math.round(job.pay*0.2/10)*10); txn(st,b,'Tips & bonuses','Short-field landing'); o.pay+=b; o.notes.push(`Short-field landing at ${job.to}: ${money(b)} bonus.`); } });

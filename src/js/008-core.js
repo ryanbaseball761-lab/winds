@@ -41,6 +41,7 @@ function payFor(st, job){
   if(!hasRating(st,'COMM') && !job.story) p*=0.55;
   p *= 0.9 + clamp(st.reputation,0,100)/500;
   if(job.story) p*=1.25;
+  if(st.crime && st.crime.hard) p*=0.85;   // New Game+ hard rules
   if(job.cat!=='cargo' && !job.story) p *= demandIndex(st);
   return Math.round(p/10)*10;
 }
