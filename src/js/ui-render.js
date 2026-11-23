@@ -53,7 +53,7 @@ function restoreJobListPrefs(){ if(!RENDER_ONCE.jobPrefs && S.st){ RENDER_ONCE.j
 /* first run: the cold open, then one card that jumps back to the start of the story */
 function maybeStartWalkthrough(){ if(RENDER_ONCE.walkthrough || !S.st || S._title) return; RENDER_ONCE.walkthrough=true; const st=S.st; st.ui=st.ui||{};
   if(!st.ui.walk3 && !(st.active&&st.active.started)){ S._walk=true; st.ui.walk3=1; save();
-    setTimeout(()=>cutscene({col:'#c8962a', art:(typeof SCENES!=='undefined'?SCENES.ramp():''), shots:[...(typeof coldOpenShots==='function'?coldOpenShots():[]),
+    setTimeout(()=>cutscene({col:'#c8962a', art:(typeof nightRampArt==='function'?nightRampArt('B748',true):(typeof SCENES!=='undefined'?SCENES.ramp():'')), shots:[...(typeof coldOpenShots==='function'?coldOpenShots():[]),
       {card:true,kicker:'How it works',title:'You fly every chapter',sub:`<p>Each chapter is a real flight in MSFS, with a scene before it and a choice after it. The game follows your flight and grades the landing by itself.</p>`}], onEnd:()=>{ S._walk=false; }}), 700); } }
 /* aircraft specs you measured in MSFS replace the built-in ones (once per app start) */
 function applyMeasuredAircraft(){ try{ if(!S._acReal && S.st){ S._acReal=true; for(const k in (S.st.acReal||{})) if(AC[k]) Object.assign(AC[k], S.st.acReal[k]); } }catch(_){} }

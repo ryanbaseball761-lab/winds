@@ -31,12 +31,7 @@ AFTER_RENDER.push(function nickShow(){ const st=S.st; if(!st||!st.w||!st.w.ac) r
   if(S.view==='flight' && st.active){ const n=acName(st.active.job.ac); const f=[...document.querySelectorAll('.pass-fields > div')].find(d=>/Aircraft/.test(d.textContent)); if(n && f && !f.querySelector('.nick')) f.insertAdjacentHTML('beforeend',`<small class="nick">${esc(n)}</small>`); }
   if(S.view==='board'){ document.querySelectorAll('.jr-ac').forEach(el=>{ if(el.dataset.nk) return; el.dataset.nk=1; const id=Object.keys(AC).find(k=>AC[k].n===el.textContent.trim()); const n=id&&acName(id); if(n) el.insertAdjacentHTML('beforeend',` <small class="nick">${esc(n)}</small>`); }); } });
 
-/* 13. the job board can sort by departure, pay or flight time (remembered) */
-AFTER_RENDER.push(function boardSort(){ if(S.view!=='board'||!S.st) return; const list=document.querySelector('.jlist'); if(!list||list.dataset.sorted) return; list.dataset.sorted=1; const u=S.st.ui=S.st.ui||{}; const k=u.jsort||'dep';
-  const head=list.querySelector('.jl-head'); if(head && !document.querySelector('.jsort')){ head.insertAdjacentHTML('beforebegin', `<div class="jsort row" role="group" aria-label="Sort jobs"><span class="small muted">Sort</span>${[['dep','Departure'],['pay','Pay'],['time','Flight time']].map(([v,n])=>`<button class="btn sm ${k===v?'on':''}" data-act="jsort" data-v="${v}" aria-pressed="${k===v}">${n}</button>`).join('')}</div>`); }
-  const rows=[...list.querySelectorAll('.jrow')]; if(rows.length<2) return; const val=r=>{ const id=(r.querySelector('[data-id]')||{}).dataset; const j=S.st.jobs.find(x=>x.id===(id&&id.id)); if(!j) return 0; return k==='pay'?-j.pay : k==='time'?(j.est||0) : (j.dep||0); };
-  rows.sort((a,b)=>val(a)-val(b)).forEach(r=>list.appendChild(r)); const more=list.querySelector('.calm-showmore,.b2-more'); if(more) list.appendChild(more); });
-document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="jsort"]'); if(!b||!S.st) return; S.st.ui=S.st.ui||{}; S.st.ui.jsort=b.dataset.v; save(); S.keepScroll=true; render(); });
+/* 13. (sorting lives in the board's own Sort menu) */
 
 /* 14. Castillo's loan: when it's nearly due, the top bar says so */
 AFTER_RENDER.push(function loanChip(){ const st=S.st; const L=st&&st.w&&st.w.loan; const sub=document.querySelector('.cb-sub'); if(!sub || sub.querySelector('.cb-loan')) return; if(!L) return; const left=L.due-st.day; if(left>3) return;
@@ -83,7 +78,7 @@ document.addEventListener('change', e=>{ const i=e.target.closest('[data-act="ui
 
 (function(){ const s=document.createElement('style'); s.textContent=`
 .nick{display:block;color:var(--amb);font-family:var(--f-body);font-size:12px;font-weight:500}.jr-ac .nick{display:inline}
-.jsort{gap:6px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}.jsort .btn.on{border-color:var(--amb)!important;color:var(--amb)!important}
+
 .mkt-line{margin:0!important;padding:10px 14px;border:1px solid var(--line);border-left:2px solid var(--amb);background:var(--surface)}.mkt-line .btn{margin-left:8px}
 .ts-credits{margin-right:6px}
 .w-stats{margin-bottom:14px}
@@ -109,7 +104,7 @@ DAY_HOOKS.push(st=>{ if(st._csDay){ for(const k in st._csDay){ const d=Number(k.
 AFTER_RESULT.push(function halconNote(st, job){ if(!job.rival) return; const o=st.last&&st.last.out; const h=st.w&&st.w.halcon; if(o&&h) o.notes.push(`You and Halcón: ${h.w} win${h.w===1?'':'s'}, ${h.l} loss${h.l===1?'':'es'}.`); });
 
 /* 38. when a new weekly event starts, the job board says so with a toast the first time you open it */
-AFTER_RENDER.push(function mktToast(){ if(S.view!=='board'||!S.st) return; const e=mktNow(); const w=twW(); if(e && w.mktToasted!==e.until){ w.mktToasted=e.until; save(); setTimeout(()=>toast(`This week: ${e.text}`), 400); } });
+/* (the week's market event shows as a banner on the Jobs page; no toast on top of it) */
 
 
 /* 42. the job board's sealed-destination rows say "Sealed" in the To column, never "????" */

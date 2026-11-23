@@ -17,7 +17,7 @@ function showToast(msg){
   const m=String(msg); const now=Date.now(); if(S._lt===m && now-(S._ltT||0)<20000) return; S._lt=m; S._ltT=now;   // the same message twice in 20 s shows once
   S.toast=msg; let host=document.getElementById('toasts'); if(!host){ host=document.createElement('div'); host.id='toasts'; host.setAttribute('role','status'); host.setAttribute('aria-live','polite'); document.body.appendChild(host); }
   const k=toastKind(msg); const el=document.createElement('div'); el.className='toast2 '+k; el.innerHTML=`<span class="ti">${k==='ok'?'✓':k==='warn'?'!':'✈'}</span><span class="tt"></span><i class="tbar"></i>`; el.querySelector('.tt').textContent=msg;
-  host.appendChild(el); while(host.children.length>3) host.firstElementChild.remove();
+  host.appendChild(el); while(host.children.length>2) host.firstElementChild.remove();   // two at most, so they never wall off the page
   if(k==='warn') softTone(330,.08); else if(k==='ok') softTone(880,.05);
   const ttl = Math.min(7000, 2800 + String(msg).length*25); el.style.setProperty('--ttl', ttl+'ms');
   setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>{ el.remove(); if(!host.children.length) S.toast=null; }, 350); }, ttl);
@@ -45,7 +45,7 @@ function cmdItems(){ const st=S.st; const L=[]; if(!st) return L; const pg=(n,v,
   { const add=(n,k,run)=>L.push({n,k,run});
   if(unlocked('phone')) add('Phone','Messages',()=>openPhone()); add('Property','Money',()=>{ go('money'); setTimeout(()=>{ const x=document.querySelector('.w-props'); x&&x.scrollIntoView({block:'start'}); },150); });
   if(unlocked('islands')) add('Islands and contacts','Pilot',()=>{ go('profile'); setTimeout(()=>{ const x=document.querySelector('.w-isl'); x&&x.scrollIntoView({block:'start'}); },150); });
-  add('Aircraft logbooks','Hangar',()=>{ go('hangar'); setTimeout(()=>{ const x=document.querySelector('.w-achist'); x&&x.scrollIntoView({block:'start'}); },150); });
+  add('Aircraft logbooks','Hangar',()=>{ go('hangar'); setTimeout(()=>{ const x=document.querySelector('.w-achist'); if(x){ x.open=true; x.scrollIntoView({block:'start'}); } },150); });
   add('Mute or unmute (M)','Sound',()=>{ const u=uiP(); u.muted=!u.muted; save(); toast(u.muted?'Sound off.':'Sound on.'); }); }
   return L; }
 

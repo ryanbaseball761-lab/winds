@@ -16,7 +16,7 @@ document.addEventListener('click', e=>{ const p=e.target.closest('.sh-p, .sc-who
 
 document.addEventListener('input', e=>{ if(!e.target.closest('.cmd-box input')) return; }, true);
 
-document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cold-again"]')) return; const st=S.st; const f=st.flights, d=st.story.done.CW1; st.flights=0; delete st.story.done.CW1; const shots=coldOpenShots(); st.flights=f; if(d) st.story.done.CW1=d; cutscene({shots, col:'#c8962a', art:SCENES.ramp(), replay:true, onEnd:()=>{}}); });
+document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cold-again"]')) return; const st=S.st; const f=st.flights, d=st.story.done.CW1; st.flights=0; delete st.story.done.CW1; const shots=coldOpenShots(); st.flights=f; if(d) st.story.done.CW1=d; cutscene({shots, col:'#c8962a', art:nightRampArt('B748',true), replay:true, onEnd:()=>{}}); });
 
 
 /* 10. notifications: a Clear button */

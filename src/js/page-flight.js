@@ -241,7 +241,12 @@ function briefingGrid(st, job, p, withBriefing, noTasks){
 function flightView(){
   const st=S.st; const act=st.active;
   if(S.showResult && st.last) return resultView();
-  if(!act) return `<main class="wrap"><div class="empty fade"><h3>No flight booked</h3><p>Pick a job from the board to get your briefing.</p><p style="margin-top:14px"><button class="btn primary" data-act="nav" data-v="board">Go to the job board</button>${st.last?` <button class="btn" data-act="show-last">See last result</button>`:''}</p></div></main>`;
+  if(!act){ /* nothing booked: what to fly next, right here, instead of a dead end */
+    const nx=(typeof rightNowBase==='function')?rightNowBase(st):null;
+    const soon=(st.jobs||[]).filter(j=>j.kind!=='story' && canAcceptJob(st,j)).sort((x,y)=>(x.dep||0)-(y.dep||0)).slice(0,3);
+    const nxBtn=nx?`<button class="btn primary" data-act="${nx.act}" ${nx.v?`data-v="${nx.v}"`:''} ${nx.id?`data-id="${nx.id}"`:''}>${esc(nx.b)}</button>`:'';
+    return `<main class="wrap stack fade"><section class="panel fl-next"><p class="small muted">No flight booked</p><h2 style="margin:4px 0 14px">${nx?esc(nx.t):'Pick your next flight'}</h2><div class="row">${nxBtn}${st.last?` <button class="btn" data-act="show-last">See last result</button>`:''}</div></section>
+    ${soon.length?`<section class="panel"><div class="section-title"><h2>Leaving soon from ${esc(st.loc)}</h2><button class="btn ghost sm" data-act="nav" data-v="board">All jobs</button></div><div class="jlist">${soon.map(j=>jobRow(st,j)).join('')}</div></section>`:`<p><button class="btn" data-act="nav" data-v="board">Go to the job board</button></p>`}</main>`; }
   const job = act.job; const a=AC[job.ac]; const p=plan(job);
   const started = act.started;
   if(started && !S.debrief && !S.showResult && !S.ifBrief && !S.confirm) return inflightView();

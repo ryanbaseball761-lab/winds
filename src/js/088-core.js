@@ -7,6 +7,7 @@ function rightNowBase(st){ if(!st) return null; const a=st.active; if(a) return 
   if(s.k==='ready') return {t:`Chapter ${n} · ${next.title}`, b:'▶ Play', act:'accept-story', id:next.id};
   if(s.k==='travel') return {t:`Chapter ${n} · ${next.title}`, b:'▶ Play', act:'story-go', id:next.id};
   if(s.k==='locked'){ const need=((next.req||{}).ratings||[]).find(r=>!st.ratings[r]); if(need && checkrideReady(st,need).ok) return {t:`Next: ${RATINGS[need].n} checkride`, b:'Book it', act:'nav', v:'pilot'}; if(need) return {t:`Needs ${RATINGS[need].n}`, b:'Fly side jobs', act:'nav', v:'board'}; }
+  if(s.k==='aircraft' && s.need) return {t:`Chapter ${n} needs your ${RATINGS[s.need].n}`, b:checkrideReady(st,s.need).ok?'Book checkride':'Pilot', act:'nav', v:'pilot'};
   if(s.k==='aircraft') return {t:`Chapter ${n} needs an aircraft`, b:'Hangar', act:'nav', v:'hangar'};
   return {t:`Chapter ${n} · ${next.title}`, b:'Story', act:'nav', v:'story'}; }
 

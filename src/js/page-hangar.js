@@ -67,11 +67,14 @@ function hangarSaveTab(st){
 /* What's loaded in MSFS right now. */
 function loadedNowCard(st){
   const live=S.simState==='live'; const L=live?loadedAircraft():{};
+  if(!live) return '';   // the header already says the sim isn't connected
   return `<section class="panel loaded-now"><p class="label">Loaded in MSFS</p>${live?(L.id?`<h3>${esc(AC[L.id].n)}</h3><p class="small muted">${esc(AC[L.id].cls)} · cruise ${AC[L.id].cruise} kt · range ${AC[L.id].range} nm${st.hangar&&st.hangar[L.id]?' · in your hangar list':' · <b>not ticked in your hangar list below</b>'}</p>`:`<h3>${esc(L.title||'Nothing loaded')}</h3><p class="small muted">This aircraft isn't one the game knows.</p>`):`<h3>MSFS isn't connected</h3><p class="small muted">Start MSFS and load an aircraft to see it here.</p>`}</section>`;
 }
 /* Health of the aircraft you've flown, with a paid rush repair. */
 function airframeHealthSection(st){
-  const list=Object.keys(st.airframes||{}).filter(k=>AC[k]); if(!list.length) return '';
+  const all=Object.keys(st.airframes||{}).filter(k=>AC[k]); if(!all.length) return '';
+  const list=all.filter(k=>st.airframes[k].h<100 || isGrounded(st,k));   // only the ones that need attention
+  if(!list.length) return `<section class="panel"><div class="row between"><h3>Airframe health</h3><span class="small muted">All ${all.length} aircraft you've flown are in perfect shape.</span></div></section>`;
   return `<section class="panel stack"><div class="row between"><h3>Airframe health</h3><span class="small muted">Gentle flying keeps them healthy. Dez repairs a little every night.</span></div>
     <div class="cards">${list.map(k=>{ const A=st.airframes[k]; const g=isGrounded(st,k); const cost=Math.round((100-A.h)*22/10)*10; return `<div class="cell stack" style="gap:6px"><div class="row between"><b>${esc(AC[k].n)}</b><span class="mono">${A.h}%</span></div>${healthBar(A.h)}<span class="tiny muted">${g?`Grounded until day ${A.grounded}`:A.log[0]?`Last flight: ${esc(A.log[0].why)}`:''}</span>${A.h<100?`<button class="btn sm" data-act="rush-repair" data-id="${k}" ${st.cash<cost?'disabled':''}>Rush repair · ${money(cost)}</button>`:''}</div>`; }).join('')}</div></section>`;
 }

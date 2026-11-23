@@ -70,7 +70,7 @@ function boardView(){
     <span class="b2-here"><b>${esc(st.loc)}</b> ${esc(here.isl||here.n)}</span>
     <span>${hhmm(st.clock)} local</span>${w&&w.dir!=null?`<span>Wind ${pad3(w.dir)}°/${w.spd} kt</span>`:''}
     <span class="b2-dot ${live?'ok':''}">${live?'MSFS connected':'MSFS not connected'}</span>${L.id?`<span>Loaded: ${esc(AC[L.id].n)}</span>`:''}
-    <span class="b2-sp"></span><button class="btn sm" data-act="rest" title="Rent ${money(H.rent||0)}${ops?` + fleet and crew ${money(ops)}`:''}" ${st.active?'disabled':''}>New day · ${money((H.rent||0)+ops)}</button></div>`;
+    <span class="b2-sp"></span><button class="btn sm" data-act="rest" title="Rent ${money(H.rent||0)}${ops?` + fleet and crew ${money(ops)}`:''}" ${st.active?'disabled':''}>Sleep until tomorrow <span class="muted">−${money((H.rent||0)+ops)} rent and upkeep</span></button></div>`;
   /* the next story chapter */
   let strip=''; if(next){ const n=MC.indexOf(next)+1; const act=CRIME_ACTS.find(a=>a.arc===next.arc)||CRIME_ACTS[0]; const pa=playAction(st,next,availSet,n);
     strip=`<section class="b2-story" style="--arc:${act.col}"><div><p class="sc-k">Main story · Chapter ${n} of ${MC.length}</p><b>${esc(next.title)}</b><span class="small muted"> ${esc(next.hook||'')}</span></div><div class="b2-story-go">${pa.btn.replace('btn action big','btn action')}<button class="btn ghost sm" data-act="nav" data-v="story">Story</button></div></section>`; }

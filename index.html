@@ -2910,13 +2910,15 @@ function unlockHintBase(st, m){
   if(r.hours && st.minutes/60 < r.hours) miss.push(`${r.hours} career hours (you have ${(st.minutes/60).toFixed(1)})`);
   return miss;
 }
+/* the license a chapter's aircraft need that you don't have yet (the real blocker, not the hangar) */
+function storyRatingNeed(st, m){ for(const k of m.ac||[]){ const need=((AC[k]||{}).req||[]).find(r=>!st.ratings[r]); if(need) return need; } return null; }
 /* Where a chapter stands right now: done | ready | travel | aircraft | locked */
 function chapterStatus(st, m, availSet){
   if(st.story.done[m.id]) return {k:'done'};
   const avail = availSet ? availSet.has(m.id) : storyAvailable(st).some(x=>x.id===m.id);
   if(!avail) return {k:'locked', miss:unlockHint(st,m)};
   const acs = storyAircraft(st, m);
-  if(!acs.length) return {k:'aircraft', ac:m.ac};
+  if(!acs.length) return {k:'aircraft', ac:m.ac, need:storyRatingNeed(st,m)};   // need: the rating that's really in the way, if any
   if(st.loc!==m.from) return {k:'travel', at:m.from};
   return {k:'ready', at:m.from};
 }
@@ -3164,7 +3166,7 @@ function byoSection(st){
   const L = loadedAircraft(); const list = Object.keys(st.customAc||{});
   const pre = L.title && !L.id ? L.title : '';
   const clsOpts = Object.keys(CLS_TEMPLATE).map(k=>`<option value="${k}">${esc(CLS[k]?CLS[k].name:k)}</option>`).join('');
-  return `<section class="panel stack byo"><div class="row between"><div><p class="label">Your plane, your career</p><h2>Bring your own aircraft</h2></div>${L.title?`<span class="chip sea">MSFS: ${esc(L.title)}</span>`:''}</div>
+  return `<details class="panel stack byo" ${L.title&&!AC[L.id||""]?"open":""}><summary class="row between" style="cursor:pointer"><div><p class="label">Your plane, your career</p><h2>Bring your own aircraft</h2><p class="small muted" style="margin:4px 0 0">Fenix, PMDG, Black Square or anything from the Marketplace</p></div>${L.title?`<span class="chip sea">MSFS: ${esc(L.title)}</span>`:''}</summary>
     <p class="small muted">Fly add-ons like Fenix, PMDG, Black Square or anything from the Marketplace. Add the plane once and the job board builds work around it. Load it in MSFS with the Bridge running and the name fills in for you.</p>
     <form id="byo-form" class="form-grid">
       <label class="field"><span>Name</span><input id="byo-n" required maxlength="60" value="${esc(pre)}" placeholder="e.g. Black Square Baron"></label>
@@ -3177,7 +3179,7 @@ function byoSection(st){
       <div class="field" style="justify-content:flex-end"><button class="btn primary" type="submit">Add to my hangar</button></div>
     </form>
     ${list.length?`<div class="cards">${list.map(k=>{ const a=st.customAc[k]; return `<div class="cell stack" style="gap:6px"><b>${esc(a.n)}</b><span class="small muted">${esc(CLS[a.cls]?CLS[a.cls].name:a.cls)} · ${a.pax} seats · ${a.cruise} kt · ${a.range} nm · ${a.rwy.toLocaleString()} ft</span><div class="row" style="gap:4px">${a.req.map(r=>`<span class="chip ${st.ratings[r]?'good':''}">${RATINGS[r].code}</span>`).join('')}${st.types[k]?`<span class="chip sea">${st.types[k]} flown</span>`:''}<button class="btn sm ghost" data-act="byo-del" data-id="${k}" style="margin-left:auto">Remove</button></div></div>`; }).join('')}</div>`:''}
-  </section>`;
+  </details>`;
 }
 document.addEventListener('submit', e=>{
   if(e.target.id!=='byo-form' || !S.st) return; e.preventDefault(); e.stopImmediatePropagation();
@@ -5437,7 +5439,12 @@ function crimeChoiceHTMLBase(st){ const L=st.last; const j=L&&L.job; if(!j || j.
   const m=CRIME.find(x=>x.id===j.story); if(!m || !m.choice) return null; const c=crime(st); const picked=c.choice[m.id];
   if(picked!=null){ const o=m.choice.opts[picked]; return `<section class="panel choice made" style="--arc:${arcMeta(m.arc).col}"><p class="label">You chose: ${esc(o.t)}</p><p class="brief" style="margin:6px 0 0">${esc(o.out)}</p>${fxLine(o)}</section>`; }
   return `<section class="panel choice" style="--arc:${arcMeta(m.arc).col}"><p class="label">Your call</p><p class="brief" style="margin:6px 0 12px">${esc(m.choice.q)}</p><div class="choice-btns">${m.choice.opts.map((o,i)=>`<button class="btn ${i===0?'primary':''}" data-act="crime-choose" data-i="${i}">${esc(o.t)}</button>`).join('')}</div><p class="tiny muted" style="margin-top:8px"></p></section>`; }
-function fxLine(o){ const b=[]; if(o.power) b.push(`Power ${o.power>0?'+':''}${o.power>=100?'max':o.power}`); if(o.heat) b.push(`Heat ${o.heat>0?'+':''}${o.heat<=-100?'cleared':o.heat}`); if(o.cash) b.push(`${o.cash>0?'+':'−'}${money(Math.abs(o.cash))}`); return b.length?`<p class="tiny muted" style="margin-top:8px">${b.join(' · ')}</p>`:''; }
+/* what a choice did, said the way the story would say it, with the number quietly after */
+function fxLine(o){ const b=[];
+  if(o.power) b.push(o.power>=100?`You run things now <span class="mono">(Power max)</span>` : o.power>0?`Your name carries further <span class="mono">(Power +${o.power})</span>`:`You lose some standing <span class="mono">(Power ${o.power})</span>`);
+  if(o.heat) b.push(o.heat<=-100?`The heat is gone <span class="mono">(Heat cleared)</span>` : o.heat>0?`Someone noticed <span class="mono">(Heat +${o.heat})</span>`:`The heat comes off you a little <span class="mono">(Heat ${o.heat})</span>`);
+  if(o.cash) b.push(`${o.cash>0?'+':'−'}${money(Math.abs(o.cash))}`);
+  return b.length?`<p class="small muted fx-line" style="margin-top:8px">${b.join(' · ')}</p>`:''; }
 function choiceHTML(st){ const h=crimeChoiceHTML(st); return h!=null ? h : choiceHTMLBase(st); }
 document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="crime-choose"]'); if(!b || !S.st || !S.st.last) return; const st=S.st; const id=st.last.job.story; const m=CRIME.find(x=>x.id===id); const c=crime(st); if(!m || !m.choice || c.choice[id]!=null) return;
   const i=Number(b.dataset.i); const o=m.choice.opts[i]; c.choice[id]=i; const p0=c.power, h0=c.heat;
@@ -6168,6 +6175,7 @@ function rightNowBase(st){ if(!st) return null; const a=st.active; if(a) return 
   if(s.k==='ready') return {t:`Chapter ${n} · ${next.title}`, b:'▶ Play', act:'accept-story', id:next.id};
   if(s.k==='travel') return {t:`Chapter ${n} · ${next.title}`, b:'▶ Play', act:'story-go', id:next.id};
   if(s.k==='locked'){ const need=((next.req||{}).ratings||[]).find(r=>!st.ratings[r]); if(need && checkrideReady(st,need).ok) return {t:`Next: ${RATINGS[need].n} checkride`, b:'Book it', act:'nav', v:'pilot'}; if(need) return {t:`Needs ${RATINGS[need].n}`, b:'Fly side jobs', act:'nav', v:'board'}; }
+  if(s.k==='aircraft' && s.need) return {t:`Chapter ${n} needs your ${RATINGS[s.need].n}`, b:checkrideReady(st,s.need).ok?'Book checkride':'Pilot', act:'nav', v:'pilot'};
   if(s.k==='aircraft') return {t:`Chapter ${n} needs an aircraft`, b:'Hangar', act:'nav', v:'hangar'};
   return {t:`Chapter ${n} · ${next.title}`, b:'Story', act:'nav', v:'story'}; }
 
@@ -6620,7 +6628,7 @@ document.addEventListener('click', e=>{ const p=e.target.closest('.sh-p, .sc-who
 
 document.addEventListener('input', e=>{ if(!e.target.closest('.cmd-box input')) return; }, true);
 
-document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cold-again"]')) return; const st=S.st; const f=st.flights, d=st.story.done.CW1; st.flights=0; delete st.story.done.CW1; const shots=coldOpenShots(); st.flights=f; if(d) st.story.done.CW1=d; cutscene({shots, col:'#c8962a', art:SCENES.ramp(), replay:true, onEnd:()=>{}}); });
+document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="cold-again"]')) return; const st=S.st; const f=st.flights, d=st.story.done.CW1; st.flights=0; delete st.story.done.CW1; const shots=coldOpenShots(); st.flights=f; if(d) st.story.done.CW1=d; cutscene({shots, col:'#c8962a', art:nightRampArt('B748',true), replay:true, onEnd:()=>{}}); });
 
 
 /* 10. notifications: a Clear button */
@@ -6970,7 +6978,9 @@ function settleFlight(st, job, f, res){
   const expectedDivert = sc && sc.divert;
   const divertedOk = landedAt!==job.to && (expectedDivert || f.scen==='book');
   // pay
-  let factor = 0.6 + res.score/100*0.6;
+  // pay follows the grade: a rough flight costs real money (A 115%, B 100%, C 85%, D 60%, F 35%)
+  let factor = ({A:1.15,B:1,C:0.85,D:0.6,F:0.35})[res.grade] ?? (0.6 + res.score/100*0.6);
+  if((res.grade==='D'||res.grade==='F') && !res.crash && job.kind!=='check') out.notes.push(`The client docked your pay for a rough flight: you get ${Math.round(factor*100)}% of the fare.`);
   if(res.crash){ factor=0; out.ok=false; }
   else if(landedAt!==job.to && !job.local && !divertedOk){ factor*=0.4; out.notes.push(`You landed at ${landedAt} instead of ${job.to}, so the client pays only part of the fare.`); }
   else if(landedAt!==job.to && !job.local){ out.notes.push(`Diverting was the right call. The client pays in full, and Coral Wing arranges onward transport.`); st.stats.diverts++; }
@@ -7062,9 +7072,12 @@ const AFTER_RESULT = [
     if(typeof bribeCustoms==='function' && bribeCustoms(st, job, res)) return;   // a paid-off officer (feat-world.js)
     if(job.network){ crBump(c,'heat',12); crBump(c,'power',1); }   // (a network run is also a 'gen' job, so the −2 above already ran: net +5)
     if((job.network || job.kind==='story') && o){
-      if(c.heat>=90){ txn(st,-50000,'Payoffs',`Lawyers, ${job.to}`); crBump(c,'power',-10); c.heat=50; o.notes.push(`BUSTED at ${job.to}. Customs found the hidden compartment. The network's lawyers got you out for $50,000. Power −10, Heat down to 50.`); try{ setTimeout(()=>takeover({kind:'orders',kicker:'Busted',title:`Customs at ${job.to}`,text:`They found the hidden compartment. The network's lawyers got you out, for $50,000.`,ms:9000}),600); }catch(_){} }
+      if(c.heat>=90){ const law=Math.max(50000, Math.round(st.cash*0.12/1000)*1000); txn(st,-law,'Payoffs',`Lawyers, ${job.to}`); crBump(c,'power',-10); c.heat=50; o.notes.push(`BUSTED at ${job.to}. Customs found the hidden compartment. The network's lawyers got you out for ${money(law)}. Power −10, Heat down to 50.`); try{ setTimeout(()=>takeover({kind:'orders',kicker:'Busted',title:`Customs at ${job.to}`,text:`They found the hidden compartment. The network's lawyers got you out, for ${money(law)}.`,ms:9000}),600); }catch(_){} }
       else if(c.heat>=60 && Math.random() < Math.min(0.75, Math.max(0.15, (c.heat-50)/45))){ if(res.grade==='A' || (res.grade==='B' && c.heat<75)){ o.notes.push(`Customs came out to the plane, but a clean landing and calm answers got you waved through. Heat −5.`); crBump(c,'heat',-5); }
-        else { const cost=Math.round(c.heat*60/10)*10; txn(st,-cost,'Payoffs',`Customs at ${job.to}`); crBump(c,'heat',-15); o.notes.push(`Customs searched the plane at ${job.to}. Your people made it go away for ${money(cost)}. Heat −15. (${c.heat+15>=75?'Above 75 Heat, only an A landing gets you waved through.':'A cleaner landing gets you waved through.'})`); } } } },
+        else { const cost=Math.max(Math.round(c.heat*60/10)*10, Math.round(st.cash*0.03/100)*100); txn(st,-cost,'Payoffs',`Customs at ${job.to}`); crBump(c,'heat',-15);
+          // a searched network run loses its load: the run's pay goes back to the network
+          if(job.network && o.pay>0){ txn(st,-o.pay,'Network',`Load seized at ${job.to}`); o.notes.push(`They found the load. It's gone, and so is the ${money(o.pay)} for this run.`); o.pay=0; }
+          o.notes.push(`Customs searched the plane at ${job.to}. Your people made it go away for ${money(cost)}. Heat −15. (${c.heat+15>=75?'Above 75 Heat, only an A landing gets you waved through.':'A cleaner landing gets you waved through.'})`); } } } },
   /* the outcome text follows the choices you made earlier */
   function storyOutcomeText(st, job, f, res){ if(job.kind==='story' && CRIME_IDS.has(job.story) && !res.crash){ const o=st.last&&st.last.out; const m=CRIME.find(x=>x.id===job.story); const mm=dynM(st,m); const outs=job.out||mm.out;
     const tone=toneOf(res); if(o && outs && outs[tone]) o.story=outs[tone]; } },
@@ -7237,7 +7250,7 @@ function rest(st){
   // Heat: Boss rank cools it; hot airports cool off after 3 days
   try{ const c=crime(st); if(c.power>=85) crBump(c,'heat',-2); for(const k in (c.hot||{})) if(st.day-c.hot[k]>3) delete c.hot[k]; }catch(_){}
   // fleet upkeep and crew wages; a safehouse cools Heat
-  try{ const c=crime(st); const L=dailyCosts(st); const tot=L.reduce((s,x)=>s+x[1],0); if(tot){ txn(st,-tot,'Operation','Fleet upkeep and crew wages'); setTimeout(()=>toast(`Daily costs: ${money(tot)} for your fleet and crew.`),400); }
+  try{ const c=crime(st); const L=dailyCosts(st); const tot=L.reduce((s,x)=>s+x[1],0); if(tot){ txn(st,-tot,'Operation','Fleet upkeep and crew wages'); const changed=st._lastCosts!==tot; st._lastCosts=tot; if(changed) setTimeout(()=>toast(`Daily costs are now ${money(tot)} a day for your fleet and crew.`),400); }   /* told only when the amount changes */
     const lv=safeLevel(st); if(lv>=0) crBump(c,'heat',-(lv+1)); }catch(_){}
   // lying low while the feds watch cools Heat faster
   try{ if(fedsWatching(st)) crBump(crime(st),'heat',-4); }catch(_){}
@@ -7765,11 +7778,14 @@ function hangarSaveTab(st){
 /* What's loaded in MSFS right now. */
 function loadedNowCard(st){
   const live=S.simState==='live'; const L=live?loadedAircraft():{};
+  if(!live) return '';   // the header already says the sim isn't connected
   return `<section class="panel loaded-now"><p class="label">Loaded in MSFS</p>${live?(L.id?`<h3>${esc(AC[L.id].n)}</h3><p class="small muted">${esc(AC[L.id].cls)} · cruise ${AC[L.id].cruise} kt · range ${AC[L.id].range} nm${st.hangar&&st.hangar[L.id]?' · in your hangar list':' · <b>not ticked in your hangar list below</b>'}</p>`:`<h3>${esc(L.title||'Nothing loaded')}</h3><p class="small muted">This aircraft isn't one the game knows.</p>`):`<h3>MSFS isn't connected</h3><p class="small muted">Start MSFS and load an aircraft to see it here.</p>`}</section>`;
 }
 /* Health of the aircraft you've flown, with a paid rush repair. */
 function airframeHealthSection(st){
-  const list=Object.keys(st.airframes||{}).filter(k=>AC[k]); if(!list.length) return '';
+  const all=Object.keys(st.airframes||{}).filter(k=>AC[k]); if(!all.length) return '';
+  const list=all.filter(k=>st.airframes[k].h<100 || isGrounded(st,k));   // only the ones that need attention
+  if(!list.length) return `<section class="panel"><div class="row between"><h3>Airframe health</h3><span class="small muted">All ${all.length} aircraft you've flown are in perfect shape.</span></div></section>`;
   return `<section class="panel stack"><div class="row between"><h3>Airframe health</h3><span class="small muted">Gentle flying keeps them healthy. Dez repairs a little every night.</span></div>
     <div class="cards">${list.map(k=>{ const A=st.airframes[k]; const g=isGrounded(st,k); const cost=Math.round((100-A.h)*22/10)*10; return `<div class="cell stack" style="gap:6px"><div class="row between"><b>${esc(AC[k].n)}</b><span class="mono">${A.h}%</span></div>${healthBar(A.h)}<span class="tiny muted">${g?`Grounded until day ${A.grounded}`:A.log[0]?`Last flight: ${esc(A.log[0].why)}`:''}</span>${A.h<100?`<button class="btn sm" data-act="rush-repair" data-id="${k}" ${st.cash<cost?'disabled':''}>Rush repair · ${money(cost)}</button>`:''}</div>`; }).join('')}</div></section>`;
 }
@@ -8125,7 +8141,12 @@ function briefingGrid(st, job, p, withBriefing, noTasks){
 function flightView(){
   const st=S.st; const act=st.active;
   if(S.showResult && st.last) return resultView();
-  if(!act) return `<main class="wrap"><div class="empty fade"><h3>No flight booked</h3><p>Pick a job from the board to get your briefing.</p><p style="margin-top:14px"><button class="btn primary" data-act="nav" data-v="board">Go to the job board</button>${st.last?` <button class="btn" data-act="show-last">See last result</button>`:''}</p></div></main>`;
+  if(!act){ /* nothing booked: what to fly next, right here, instead of a dead end */
+    const nx=(typeof rightNowBase==='function')?rightNowBase(st):null;
+    const soon=(st.jobs||[]).filter(j=>j.kind!=='story' && canAcceptJob(st,j)).sort((x,y)=>(x.dep||0)-(y.dep||0)).slice(0,3);
+    const nxBtn=nx?`<button class="btn primary" data-act="${nx.act}" ${nx.v?`data-v="${nx.v}"`:''} ${nx.id?`data-id="${nx.id}"`:''}>${esc(nx.b)}</button>`:'';
+    return `<main class="wrap stack fade"><section class="panel fl-next"><p class="small muted">No flight booked</p><h2 style="margin:4px 0 14px">${nx?esc(nx.t):'Pick your next flight'}</h2><div class="row">${nxBtn}${st.last?` <button class="btn" data-act="show-last">See last result</button>`:''}</div></section>
+    ${soon.length?`<section class="panel"><div class="section-title"><h2>Leaving soon from ${esc(st.loc)}</h2><button class="btn ghost sm" data-act="nav" data-v="board">All jobs</button></div><div class="jlist">${soon.map(j=>jobRow(st,j)).join('')}</div></section>`:`<p><button class="btn" data-act="nav" data-v="board">Go to the job board</button></p>`}</main>`; }
   const job = act.job; const a=AC[job.ac]; const p=plan(job);
   const started = act.started;
   if(started && !S.debrief && !S.showResult && !S.ifBrief && !S.confirm) return inflightView();
@@ -8226,7 +8247,7 @@ function boardView(){
     <span class="b2-here"><b>${esc(st.loc)}</b> ${esc(here.isl||here.n)}</span>
     <span>${hhmm(st.clock)} local</span>${w&&w.dir!=null?`<span>Wind ${pad3(w.dir)}°/${w.spd} kt</span>`:''}
     <span class="b2-dot ${live?'ok':''}">${live?'MSFS connected':'MSFS not connected'}</span>${L.id?`<span>Loaded: ${esc(AC[L.id].n)}</span>`:''}
-    <span class="b2-sp"></span><button class="btn sm" data-act="rest" title="Rent ${money(H.rent||0)}${ops?` + fleet and crew ${money(ops)}`:''}" ${st.active?'disabled':''}>New day · ${money((H.rent||0)+ops)}</button></div>`;
+    <span class="b2-sp"></span><button class="btn sm" data-act="rest" title="Rent ${money(H.rent||0)}${ops?` + fleet and crew ${money(ops)}`:''}" ${st.active?'disabled':''}>Sleep until tomorrow <span class="muted">−${money((H.rent||0)+ops)} rent and upkeep</span></button></div>`;
   /* the next story chapter */
   let strip=''; if(next){ const n=MC.indexOf(next)+1; const act=CRIME_ACTS.find(a=>a.arc===next.arc)||CRIME_ACTS[0]; const pa=playAction(st,next,availSet,n);
     strip=`<section class="b2-story" style="--arc:${act.col}"><div><p class="sc-k">Main story · Chapter ${n} of ${MC.length}</p><b>${esc(next.title)}</b><span class="small muted"> ${esc(next.hook||'')}</span></div><div class="b2-story-go">${pa.btn.replace('btn action big','btn action')}<button class="btn ghost sm" data-act="nav" data-v="story">Story</button></div></section>`; }
@@ -8283,6 +8304,7 @@ function playAction(st, m, availSet, n){
     if(st.active) return {btn:`<button class="btn" data-act="nav" data-v="flight">Finish your current flight first</button>`, note:''};
     if(s.k==='ready') return {btn:`<button class="btn action big" data-act="accept-story" data-id="${m.id}">▶ Play chapter ${n}</button>`, note:''};
     if(s.k==='travel'){ const d=deadheadCost(st,s.at); return {btn:`<button class="btn action big" data-act="story-go" data-id="${m.id}" ${st.cash<d.cost?'disabled':''}>▶ Play chapter ${n}</button>`, note: d.cost ? `Starts at ${esc(s.at)}. Seat over: ${money(d.cost)}.` : `Starts at ${esc(s.at)}. The ride over is free.`}; }
+    if(s.k==='aircraft' && s.need) return {btn:`<button class="btn primary" data-act="nav" data-v="pilot">${checkrideReady(st,s.need).ok?'Book the checkride':'See what it takes'}</button>`, note:`This chapter flies the ${m.ac.map(k=>AC[k]?AC[k].n:k).join(' or ')}. You need your ${RATINGS[s.need].n} first.`};
     if(s.k==='aircraft') return {btn:`<button class="btn" data-act="nav" data-v="hangar">Open the Hangar</button>`, note:`Written for the ${m.ac.map(k=>AC[k]?AC[k].n:k).join(', ')}. Any ${storyRoleName(m)} in your hangar with ${m.pax||1}+ seats works too, including payware and mods (Hangar → Bring your own aircraft).`};
     if(s.k==='locked'){ const need=((m.req||{}).ratings||[]).filter(r=>!st.ratings[r]); const btns=chapterAction(st, m, availSet, false);
       return {btn: btns || `<button class="btn" data-act="nav" data-v="pilot">Open Pilot</button>`, note: need.length ? `Needs your ${need.map(r=>RATINGS[r].n).join(' and ')} first.` : `Finish the previous chapter first.`}; }
@@ -8507,7 +8529,9 @@ function mapJobBar(st){ const j=mapRouteJob(st); if(!j) return '';
 
 function pilotBaseHTML(){
   const st=S.st; const s=st.stats;
-  const rungs = RATING_ORDER.map(rid=>{
+  /* earned first, then what you can book now (the story's licenses ahead of the rest), then what's still locked */
+  const rank=rid=>{ if(st.ratings[rid]) return 0; const ok=checkrideReady(st,rid).ok, story=['JET','ATP'].includes(rid); return ok?(story?1:2):3; };
+  const rungs = RATING_ORDER.slice().sort((x,y)=>rank(x)-rank(y)).map(rid=>{
     const R=RATINGS[rid]; const earned=!!st.ratings[rid]; const chk = checkrideReady(st, rid);
     let action='';
     if(earned) action = `<span class="chip good">Earned</span>`;
@@ -8518,7 +8542,7 @@ function pilotBaseHTML(){
       <div class="badge">${R.code}</div>
       <div style="min-width:0"><div class="row" style="gap:8px"><b>${esc(R.n)}</b>${R.dest?`<span class="chip">${R.dest}</span>`:''}</div>
         <p class="small muted">${esc(R.unlocks||R.blurb||'')}</p>
-        ${!earned && req.hours ? `<div class="row small" style="margin-top:6px;gap:8px"><div class="meter" style="flex:1;min-width:120px"><i style="width:${hrsPct}%"></i></div><span class="mono">${(st.minutes/60).toFixed(1)} / ${req.hours} h</span></div>`:''}
+        ${!earned && req.hours ? (st.minutes/60>=req.hours ? `<p class="small" style="margin-top:6px;color:var(--good,#6fbf73)">✓ Hours done (${req.hours} h needed)</p>` : `<div class="row small" style="margin-top:6px;gap:8px"><div class="meter" style="flex:1;min-width:120px"><i style="width:${hrsPct}%"></i></div><span class="mono">${(st.minutes/60).toFixed(1)} of ${req.hours} h flown</span></div>`):''}
         ${!earned && !chk.ok && chk.miss?.length ? `<p class="tiny muted" style="margin-top:4px">Needs: ${esc(chk.miss.join(' · '))}</p>`:''}
       </div><div>${action}</div></div>`;
   }).join('');
@@ -8629,7 +8653,7 @@ function cutscene(opt){
 /* The art behind a scene. */
 /* the opening background: a painting when they're loaded (the one the first line calls for, else `fallback`),
    otherwise the drawn islands */
-function paintedArt(shots, fallback, code, dep, ac){ if(typeof ART!=='undefined' && ART.scenes && ART.scenes[fallback]){ const first=(shots||[]).find(x=>Array.isArray(x)); const k=(first&&sceneFor(first))||fallback; if(k==='ramp' && dep>=420 && dep<=1110) return dayRampArt(ac, dep); return SCENES[k](); }   /* daylight ramps show the day scene with your plane */ return sceneArt(code, dep, ac); }
+function paintedArt(shots, fallback, code, dep, ac){ if(typeof ART!=='undefined' && ART.scenes && ART.scenes[fallback]){ const first=(shots||[]).find(x=>Array.isArray(x)); const k=(first&&sceneFor(first))||fallback; if(k==='ramp') return (dep>=420 && dep<=1110) ? dayRampArt(ac, dep) : nightRampArt(ac); return SCENES[k](); }   /* daylight ramps show the day scene with your plane */ return sceneArt(code, dep, ac); }
 (function(){ const c=document.createElement('style'); c.textContent='.cut-bg:has(.dayramp){filter:saturate(.75) brightness(.78) contrast(1.05)}'; document.head.appendChild(c); })();
 /* a daytime ramp in the paintings' flat style, with the plane you actually flew parked on it */
 function dayRampArt(acId, min){ const h=((min||600)/60)%24, late=h>=16, early=h<8.5;
@@ -8688,7 +8712,7 @@ function playPrologue(m, done){
   if(uiP().skipCuts){ done(); return; }
   const MC=mainChapters(); const act=CRIME_ACTS.find(a=>a.arc===m.arc)||CRIME_ACTS[0]; const ai=CRIME_ACTS.indexOf(act); const shots=[];
   const firstOfAct = MC.filter(x=>x.arc===m.arc)[0]===m;
-  if(firstOfAct) shots.push({card:true, kicker:`Act ${ai+1} of ${CRIME_ACTS.length}`, title:act.arc, sub:`<p>${esc(act.tag)}</p><p class="cut-nerve"><span>Your nerve</span> ${esc(act.nerve)}</p>`});
+  if(firstOfAct) shots.push({card:true, kicker:`Act ${ai+1} of ${CRIME_ACTS.length}`, title:act.arc, sub:`<p>${esc(act.tag)}</p><p class="cut-nerve-line">${esc(act.nerve)}</p>`});
   (proFor(m.id)||[]).forEach(s=>shots.push(s));
   shots.push({card:true, kicker:`Chapter ${MC.indexOf(m)+1} of ${MC.length}`, title:m.title, sub:`<p>${esc((CH_GOAL[m.id]||[])[0]||'')}</p>`, auto:2600});
   cutscene({shots, col:act.col, art:paintedArt(shots,'ramp',m.from, m.dep, m.ac[0]), onEnd:done});
@@ -8716,6 +8740,39 @@ function playAftermath(){
   } else nextCard().forEach(s=>shots.push(s));
   cutscene({shots, col:act.col, art:(()=>{ const arr=Math.min(1439,(job.dep||600)+(job.est||60)); return (arr>=420 && arr<=1110) ? dayRampArt(job.ac, arr) : paintedArt([], 'cockpit', job.to, arr, job.ac); })(), onEnd:()=>{ S.keepScroll=false; render(); }});
 }
+
+(function(){ const c=document.createElement('style'); c.textContent='.cut-nerve-line{font-style:italic;opacity:.75;margin-top:10px}'; document.head.appendChild(c); })();
+
+/* a Boeing 747-8 in side profile (nose left, 400×120): the upper-deck hump, four engines, real gear */
+function jumboSvg(fill, lit){ return `<g fill="${fill}">
+  <path d="M6 74 C8 64 18 54 34 48 C44 40 58 35 76 34 L128 34 C142 34 152 40 166 48 L330 49 C346 49 358 52 372 56 L392 60 L392 64 L372 68 C352 74 330 82 300 86 L44 86 C24 86 10 82 6 74 Z"/>
+  <path d="M316 50 L348 6 L368 6 L376 52 Z"/><path d="M336 62 L394 56 L396 62 L340 68 Z"/>
+  <path d="M138 80 L222 78 L274 98 L262 101 L190 90 L140 88 Z"/>
+  <rect x="146" y="86" width="40" height="14" rx="7"/><rect x="160" y="82" width="6" height="6"/><rect x="200" y="91" width="40" height="14" rx="7"/><rect x="214" y="86" width="6" height="7"/>
+  <rect x="52" y="84" width="4" height="22"/><circle cx="54" cy="110" r="6"/>
+  <rect x="178" y="84" width="5" height="22"/><circle cx="174" cy="110" r="7"/><circle cx="188" cy="110" r="7"/>
+  <rect x="212" y="84" width="5" height="22"/><circle cx="208" cy="110" r="7"/><circle cx="222" cy="110" r="7"/></g>
+  ${lit?`<g fill="${lit}" opacity=".8"><path d="M22 52 L34 49 L36 53 L24 56 Z"/>${Array.from({length:9},(_,i)=>`<rect x="${62+i*8}" y="41" width="3" height="4" rx="1"/>`).join('')}</g>`:''}`; }
+
+/* the night ramp in the paintings' style: rain, floodlights, wet concrete, the plane you flew (a real 747 for the jumbo) */
+function nightRampArt(acId, blue){ const jumbo = acId==='B748';
+  const rain=Array.from({length:70},(_,i)=>{ const x=(i*97)%1600, y=(i*53)%560; return `<line x1="${x}" y1="${y}" x2="${x-14}" y2="${y+46}"/>`; }).join('');
+  const mast=(x,dir)=>`<rect x="${x-3}" y="300" width="6" height="260" fill="#0a0c0e"/><rect x="${x-18}" y="292" width="36" height="10" fill="#d8c48a"/><path d="M${x-14} 302 L${x+dir*520} 760 L${x+dir*120} 780 Z" fill="#f1e2b0" opacity=".09"/>`;
+  const plane = jumbo ? `<g transform="translate(330 330) scale(2.6)">${jumboSvg('#07090b','#e9c27a')}</g><ellipse cx="850" cy="622" rx="520" ry="16" fill="#000" opacity=".5"/>`
+    : `<g transform="translate(470 452) scale(5.6)">${acSvgInner(acId,'#07090b')}</g><ellipse cx="800" cy="${452+5.6*30}" rx="300" ry="12" fill="#000" opacity=".5"/>`;
+  const person=(x,h)=>`<g fill="#050607" transform="translate(${x} ${640-h})"><circle cx="0" cy="8" r="7"/><path d="M-10 18 Q0 13 10 18 L12 ${h*0.62} L7 ${h*0.62} L6 ${h} L1 ${h} L0 ${h*0.66} L-1 ${h} L-6 ${h} L-7 ${h*0.62} L-12 ${h*0.62} Z"/></g>`;
+  return `<svg class="nightramp" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" aria-hidden="true"><defs><linearGradient id="nr1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d1420"/><stop offset=".55" stop-color="#26354a"/><stop offset="1" stop-color="#3a4a60"/></linearGradient><linearGradient id="nr2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a4048"/><stop offset="1" stop-color="#111316"/></linearGradient><radialGradient id="nr3" cx=".82" cy=".7" r=".35"><stop offset="0" stop-color="#3a6cd6" stop-opacity="${blue?'.55':'0'}"/><stop offset="1" stop-color="#3a6cd6" stop-opacity="0"/></radialGradient></defs>
+  <rect width="1600" height="900" fill="url(#nr1)"/>
+  <g fill="#c89a4a">${Array.from({length:34},(_,i)=>`<circle cx="${20+i*47}" cy="548" r="2.4" opacity=".7"/>`).join('')}</g>
+  <path d="M0 520 L260 520 L260 470 L420 470 L420 520 L1600 520 L1600 560 L0 560 Z" fill="#161b22"/>
+  <rect y="556" width="1600" height="344" fill="url(#nr2)"/>
+  ${mast(200,1)}${mast(1420,-1)}
+  ${plane}
+  <g fill="#f1e2b0" opacity=".08"><path d="M300 640 L1300 640 L1500 900 L100 900 Z"/></g>
+  ${person(1160,62)}${person(1196,66)}${person(1228,60)}
+  <rect width="1600" height="900" fill="url(#nr3)"/>
+  <g stroke="#9fb2c8" stroke-opacity=".22" stroke-width="2">${rain}</g></svg>`; }
+(function(){ const c=document.createElement('style'); c.textContent='.cut-bg:has(.nightramp){filter:brightness(.95) saturate(.9)}'; document.head.appendChild(c); })();
 /* ===================== SMALL UI PIECES =====================
    Pop-up messages (toast) and the search bar's list of things you can jump to (cmdItems). */
 
@@ -8735,7 +8792,7 @@ function showToast(msg){
   const m=String(msg); const now=Date.now(); if(S._lt===m && now-(S._ltT||0)<20000) return; S._lt=m; S._ltT=now;   // the same message twice in 20 s shows once
   S.toast=msg; let host=document.getElementById('toasts'); if(!host){ host=document.createElement('div'); host.id='toasts'; host.setAttribute('role','status'); host.setAttribute('aria-live','polite'); document.body.appendChild(host); }
   const k=toastKind(msg); const el=document.createElement('div'); el.className='toast2 '+k; el.innerHTML=`<span class="ti">${k==='ok'?'✓':k==='warn'?'!':'✈'}</span><span class="tt"></span><i class="tbar"></i>`; el.querySelector('.tt').textContent=msg;
-  host.appendChild(el); while(host.children.length>3) host.firstElementChild.remove();
+  host.appendChild(el); while(host.children.length>2) host.firstElementChild.remove();   // two at most, so they never wall off the page
   if(k==='warn') softTone(330,.08); else if(k==='ok') softTone(880,.05);
   const ttl = Math.min(7000, 2800 + String(msg).length*25); el.style.setProperty('--ttl', ttl+'ms');
   setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>{ el.remove(); if(!host.children.length) S.toast=null; }, 350); }, ttl);
@@ -8763,7 +8820,7 @@ function cmdItems(){ const st=S.st; const L=[]; if(!st) return L; const pg=(n,v,
   { const add=(n,k,run)=>L.push({n,k,run});
   if(unlocked('phone')) add('Phone','Messages',()=>openPhone()); add('Property','Money',()=>{ go('money'); setTimeout(()=>{ const x=document.querySelector('.w-props'); x&&x.scrollIntoView({block:'start'}); },150); });
   if(unlocked('islands')) add('Islands and contacts','Pilot',()=>{ go('profile'); setTimeout(()=>{ const x=document.querySelector('.w-isl'); x&&x.scrollIntoView({block:'start'}); },150); });
-  add('Aircraft logbooks','Hangar',()=>{ go('hangar'); setTimeout(()=>{ const x=document.querySelector('.w-achist'); x&&x.scrollIntoView({block:'start'}); },150); });
+  add('Aircraft logbooks','Hangar',()=>{ go('hangar'); setTimeout(()=>{ const x=document.querySelector('.w-achist'); if(x){ x.open=true; x.scrollIntoView({block:'start'}); } },150); });
   add('Mute or unmute (M)','Sound',()=>{ const u=uiP(); u.muted=!u.muted; save(); toast(u.muted?'Sound off.':'Sound on.'); }); }
   return L; }
 
@@ -8834,7 +8891,7 @@ function restoreJobListPrefs(){ if(!RENDER_ONCE.jobPrefs && S.st){ RENDER_ONCE.j
 /* first run: the cold open, then one card that jumps back to the start of the story */
 function maybeStartWalkthrough(){ if(RENDER_ONCE.walkthrough || !S.st || S._title) return; RENDER_ONCE.walkthrough=true; const st=S.st; st.ui=st.ui||{};
   if(!st.ui.walk3 && !(st.active&&st.active.started)){ S._walk=true; st.ui.walk3=1; save();
-    setTimeout(()=>cutscene({col:'#c8962a', art:(typeof SCENES!=='undefined'?SCENES.ramp():''), shots:[...(typeof coldOpenShots==='function'?coldOpenShots():[]),
+    setTimeout(()=>cutscene({col:'#c8962a', art:(typeof nightRampArt==='function'?nightRampArt('B748',true):(typeof SCENES!=='undefined'?SCENES.ramp():'')), shots:[...(typeof coldOpenShots==='function'?coldOpenShots():[]),
       {card:true,kicker:'How it works',title:'You fly every chapter',sub:`<p>Each chapter is a real flight in MSFS, with a scene before it and a choice after it. The game follows your flight and grades the landing by itself.</p>`}], onEnd:()=>{ S._walk=false; }}), 700); } }
 /* aircraft specs you measured in MSFS replace the built-in ones (once per app start) */
 function applyMeasuredAircraft(){ try{ if(!S._acReal && S.st){ S._acReal=true; for(const k in (S.st.acReal||{})) if(AC[k]) Object.assign(AC[k], S.st.acReal[k]); } }catch(_){} }
@@ -9229,7 +9286,7 @@ function moneyWorldHTML(){ const st=S.st, w=twW(), c=crime(st), L=loanNow();
 
 /* Hangar: aircraft logbooks */
 function acHistHTML(){ const w=twW(); const ids=Object.keys(w.ac).filter(k=>AC[k]); if(!ids.length) return '';
-  return `<section class="panel w-achist"><div class="section-title"><h2>Aircraft logbooks</h2></div><table class="w-tab"><thead><tr><th>Aircraft</th><th>Name</th><th>Flights</th><th>Hours</th><th>Softest</th><th>Hard landings</th></tr></thead><tbody>${ids.sort((a,b)=>w.ac[b].f-w.ac[a].f).map(k=>{ const h=w.ac[k]; return `<tr><td>${esc(AC[k].n)}</td><td><input class="w-nick" data-id="${k}" value="${esc(h.nick||'')}" maxlength="24" placeholder="Give her a name" aria-label="Name for ${esc(AC[k].n)}"></td><td class="mono" data-l="Flights">${h.f}</td><td class="mono" data-l="Hours">${(h.m/60).toFixed(1)}</td><td class="mono" data-l="Softest">${h.best!=null?Math.round(h.best)+' fpm':'–'}</td><td class="mono" data-l="Hard landings">${h.hard}</td></tr>`; }).join('')}</tbody></table></section>`; }
+  return `<details class="panel w-achist"><summary class="section-title" style="cursor:pointer"><h2>Aircraft logbooks</h2><span class="small muted">${ids.length} aircraft · name them, see their records</span></summary><table class="w-tab"><thead><tr><th>Aircraft</th><th>Name</th><th>Flights</th><th>Hours</th><th>Softest</th><th>Hard landings</th></tr></thead><tbody>${ids.sort((a,b)=>w.ac[b].f-w.ac[a].f).map(k=>{ const h=w.ac[k]; return `<tr><td>${esc(AC[k].n)}</td><td><input class="w-nick" data-id="${k}" value="${esc(h.nick||'')}" maxlength="24" placeholder="Give her a name" aria-label="Name for ${esc(AC[k].n)}"></td><td class="mono" data-l="Flights">${h.f}</td><td class="mono" data-l="Hours">${(h.m/60).toFixed(1)}</td><td class="mono" data-l="Softest">${h.best!=null?Math.round(h.best)+' fpm':'–'}</td><td class="mono" data-l="Hard landings">${h.hard}</td></tr>`; }).join('')}</tbody></table></details>`; }
 function foHTML(){ const t=foTrait(); if(!t) return ''; return `<section class="panel"><p class="label">Your first officer</p><h3>${esc(t.n)}</h3><p class="small muted">${esc(t.d)}</p></section>`; }
 
 AFTER_RENDER.push(function worldPanels(){ if(!S.st) return; const main=document.querySelector('main'); if(!main || main.querySelector('.w-added')) return;
@@ -9944,12 +10001,7 @@ AFTER_RENDER.push(function nickShow(){ const st=S.st; if(!st||!st.w||!st.w.ac) r
   if(S.view==='flight' && st.active){ const n=acName(st.active.job.ac); const f=[...document.querySelectorAll('.pass-fields > div')].find(d=>/Aircraft/.test(d.textContent)); if(n && f && !f.querySelector('.nick')) f.insertAdjacentHTML('beforeend',`<small class="nick">${esc(n)}</small>`); }
   if(S.view==='board'){ document.querySelectorAll('.jr-ac').forEach(el=>{ if(el.dataset.nk) return; el.dataset.nk=1; const id=Object.keys(AC).find(k=>AC[k].n===el.textContent.trim()); const n=id&&acName(id); if(n) el.insertAdjacentHTML('beforeend',` <small class="nick">${esc(n)}</small>`); }); } });
 
-/* 13. the job board can sort by departure, pay or flight time (remembered) */
-AFTER_RENDER.push(function boardSort(){ if(S.view!=='board'||!S.st) return; const list=document.querySelector('.jlist'); if(!list||list.dataset.sorted) return; list.dataset.sorted=1; const u=S.st.ui=S.st.ui||{}; const k=u.jsort||'dep';
-  const head=list.querySelector('.jl-head'); if(head && !document.querySelector('.jsort')){ head.insertAdjacentHTML('beforebegin', `<div class="jsort row" role="group" aria-label="Sort jobs"><span class="small muted">Sort</span>${[['dep','Departure'],['pay','Pay'],['time','Flight time']].map(([v,n])=>`<button class="btn sm ${k===v?'on':''}" data-act="jsort" data-v="${v}" aria-pressed="${k===v}">${n}</button>`).join('')}</div>`); }
-  const rows=[...list.querySelectorAll('.jrow')]; if(rows.length<2) return; const val=r=>{ const id=(r.querySelector('[data-id]')||{}).dataset; const j=S.st.jobs.find(x=>x.id===(id&&id.id)); if(!j) return 0; return k==='pay'?-j.pay : k==='time'?(j.est||0) : (j.dep||0); };
-  rows.sort((a,b)=>val(a)-val(b)).forEach(r=>list.appendChild(r)); const more=list.querySelector('.calm-showmore,.b2-more'); if(more) list.appendChild(more); });
-document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="jsort"]'); if(!b||!S.st) return; S.st.ui=S.st.ui||{}; S.st.ui.jsort=b.dataset.v; save(); S.keepScroll=true; render(); });
+/* 13. (sorting lives in the board's own Sort menu) */
 
 /* 14. Castillo's loan: when it's nearly due, the top bar says so */
 AFTER_RENDER.push(function loanChip(){ const st=S.st; const L=st&&st.w&&st.w.loan; const sub=document.querySelector('.cb-sub'); if(!sub || sub.querySelector('.cb-loan')) return; if(!L) return; const left=L.due-st.day; if(left>3) return;
@@ -9996,7 +10048,7 @@ document.addEventListener('change', e=>{ const i=e.target.closest('[data-act="ui
 
 (function(){ const s=document.createElement('style'); s.textContent=`
 .nick{display:block;color:var(--amb);font-family:var(--f-body);font-size:12px;font-weight:500}.jr-ac .nick{display:inline}
-.jsort{gap:6px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}.jsort .btn.on{border-color:var(--amb)!important;color:var(--amb)!important}
+
 .mkt-line{margin:0!important;padding:10px 14px;border:1px solid var(--line);border-left:2px solid var(--amb);background:var(--surface)}.mkt-line .btn{margin-left:8px}
 .ts-credits{margin-right:6px}
 .w-stats{margin-bottom:14px}
@@ -10022,7 +10074,7 @@ DAY_HOOKS.push(st=>{ if(st._csDay){ for(const k in st._csDay){ const d=Number(k.
 AFTER_RESULT.push(function halconNote(st, job){ if(!job.rival) return; const o=st.last&&st.last.out; const h=st.w&&st.w.halcon; if(o&&h) o.notes.push(`You and Halcón: ${h.w} win${h.w===1?'':'s'}, ${h.l} loss${h.l===1?'':'es'}.`); });
 
 /* 38. when a new weekly event starts, the job board says so with a toast the first time you open it */
-AFTER_RENDER.push(function mktToast(){ if(S.view!=='board'||!S.st) return; const e=mktNow(); const w=twW(); if(e && w.mktToasted!==e.until){ w.mktToasted=e.until; save(); setTimeout(()=>toast(`This week: ${e.text}`), 400); } });
+/* (the week's market event shows as a banner on the Jobs page; no toast on top of it) */
 
 
 /* 42. the job board's sealed-destination rows say "Sealed" in the To column, never "????" */
@@ -10439,7 +10491,7 @@ const POLISH_CSS = `
 .co-short{margin:2px 0 0}
 /* achievement pop-up: centred without a transform (its fade-in animation replaced the transform, so it slid in from
    the right), and as wide as its title instead of half the screen, which wrapped titles on a phone */
-body .achpop{left:0;right:0;margin:0 auto;transform:none;width:max-content;max-width:calc(100vw - 32px);text-align:center}
+body .achpop{left:20px;right:auto;top:auto;bottom:20px;margin:0;transform:none;width:max-content;max-width:min(360px,calc(100vw - 40px));text-align:left;justify-items:start;padding:12px 18px;border-radius:0}
 /* a collapsed section (Dispatch on the flight page) has no rule and gap under its title */
 html.ckp body details:not([open])>summary.section-title{border-bottom:0;padding-bottom:0;margin-bottom:0}
 /* Saves & help: the backups panel matches the width of the save and report panels above it */
@@ -10499,6 +10551,9 @@ html.ckp body .pf-bar>div{grid-column:1 / -1;grid-row:2;height:4px;border-radius
 
 /* chips on the boarding pass sit over the ticket art (the sun, palms): give them a solid backing */
 (function(){ const c=document.createElement('style'); c.textContent='.pass .pass-art{z-index:0}.pass .pass-main{position:relative;z-index:1}.pass .pass-main .chip{background:rgba(12,13,14,.82)!important}'; document.head.appendChild(c); })();
+
+/* nothing a player has to read is smaller than 12px (header labels 11px, where space is tight) */
+(function(){ const c=document.createElement('style'); c.textContent='html main small,html main th,html main .tiny{font-size:12px!important}html main .mono.small,html main small.mono{font-size:12px!important}.cb-ro small,.cb-pilot small,.cb-sync{font-size:11px!important}.cb-sub .btn{font-size:12px!important}'; document.head.appendChild(c); })();
 /* ===================== START =====================
    Everything above only defines things. This starts the app. Keep this file last in order.txt. */
 boot();

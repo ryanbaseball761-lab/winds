@@ -68,7 +68,7 @@ function cutscene(opt){
 /* The art behind a scene. */
 /* the opening background: a painting when they're loaded (the one the first line calls for, else `fallback`),
    otherwise the drawn islands */
-function paintedArt(shots, fallback, code, dep, ac){ if(typeof ART!=='undefined' && ART.scenes && ART.scenes[fallback]){ const first=(shots||[]).find(x=>Array.isArray(x)); const k=(first&&sceneFor(first))||fallback; if(k==='ramp' && dep>=420 && dep<=1110) return dayRampArt(ac, dep); return SCENES[k](); }   /* daylight ramps show the day scene with your plane */ return sceneArt(code, dep, ac); }
+function paintedArt(shots, fallback, code, dep, ac){ if(typeof ART!=='undefined' && ART.scenes && ART.scenes[fallback]){ const first=(shots||[]).find(x=>Array.isArray(x)); const k=(first&&sceneFor(first))||fallback; if(k==='ramp') return (dep>=420 && dep<=1110) ? dayRampArt(ac, dep) : nightRampArt(ac); return SCENES[k](); }   /* daylight ramps show the day scene with your plane */ return sceneArt(code, dep, ac); }
 (function(){ const c=document.createElement('style'); c.textContent='.cut-bg:has(.dayramp){filter:saturate(.75) brightness(.78) contrast(1.05)}'; document.head.appendChild(c); })();
 /* a daytime ramp in the paintings' flat style, with the plane you actually flew parked on it */
 function dayRampArt(acId, min){ const h=((min||600)/60)%24, late=h>=16, early=h<8.5;
@@ -127,7 +127,7 @@ function playPrologue(m, done){
   if(uiP().skipCuts){ done(); return; }
   const MC=mainChapters(); const act=CRIME_ACTS.find(a=>a.arc===m.arc)||CRIME_ACTS[0]; const ai=CRIME_ACTS.indexOf(act); const shots=[];
   const firstOfAct = MC.filter(x=>x.arc===m.arc)[0]===m;
-  if(firstOfAct) shots.push({card:true, kicker:`Act ${ai+1} of ${CRIME_ACTS.length}`, title:act.arc, sub:`<p>${esc(act.tag)}</p><p class="cut-nerve"><span>Your nerve</span> ${esc(act.nerve)}</p>`});
+  if(firstOfAct) shots.push({card:true, kicker:`Act ${ai+1} of ${CRIME_ACTS.length}`, title:act.arc, sub:`<p>${esc(act.tag)}</p><p class="cut-nerve-line">${esc(act.nerve)}</p>`});
   (proFor(m.id)||[]).forEach(s=>shots.push(s));
   shots.push({card:true, kicker:`Chapter ${MC.indexOf(m)+1} of ${MC.length}`, title:m.title, sub:`<p>${esc((CH_GOAL[m.id]||[])[0]||'')}</p>`, auto:2600});
   cutscene({shots, col:act.col, art:paintedArt(shots,'ramp',m.from, m.dep, m.ac[0]), onEnd:done});
@@ -155,3 +155,36 @@ function playAftermath(){
   } else nextCard().forEach(s=>shots.push(s));
   cutscene({shots, col:act.col, art:(()=>{ const arr=Math.min(1439,(job.dep||600)+(job.est||60)); return (arr>=420 && arr<=1110) ? dayRampArt(job.ac, arr) : paintedArt([], 'cockpit', job.to, arr, job.ac); })(), onEnd:()=>{ S.keepScroll=false; render(); }});
 }
+
+(function(){ const c=document.createElement('style'); c.textContent='.cut-nerve-line{font-style:italic;opacity:.75;margin-top:10px}'; document.head.appendChild(c); })();
+
+/* a Boeing 747-8 in side profile (nose left, 400×120): the upper-deck hump, four engines, real gear */
+function jumboSvg(fill, lit){ return `<g fill="${fill}">
+  <path d="M6 74 C8 64 18 54 34 48 C44 40 58 35 76 34 L128 34 C142 34 152 40 166 48 L330 49 C346 49 358 52 372 56 L392 60 L392 64 L372 68 C352 74 330 82 300 86 L44 86 C24 86 10 82 6 74 Z"/>
+  <path d="M316 50 L348 6 L368 6 L376 52 Z"/><path d="M336 62 L394 56 L396 62 L340 68 Z"/>
+  <path d="M138 80 L222 78 L274 98 L262 101 L190 90 L140 88 Z"/>
+  <rect x="146" y="86" width="40" height="14" rx="7"/><rect x="160" y="82" width="6" height="6"/><rect x="200" y="91" width="40" height="14" rx="7"/><rect x="214" y="86" width="6" height="7"/>
+  <rect x="52" y="84" width="4" height="22"/><circle cx="54" cy="110" r="6"/>
+  <rect x="178" y="84" width="5" height="22"/><circle cx="174" cy="110" r="7"/><circle cx="188" cy="110" r="7"/>
+  <rect x="212" y="84" width="5" height="22"/><circle cx="208" cy="110" r="7"/><circle cx="222" cy="110" r="7"/></g>
+  ${lit?`<g fill="${lit}" opacity=".8"><path d="M22 52 L34 49 L36 53 L24 56 Z"/>${Array.from({length:9},(_,i)=>`<rect x="${62+i*8}" y="41" width="3" height="4" rx="1"/>`).join('')}</g>`:''}`; }
+
+/* the night ramp in the paintings' style: rain, floodlights, wet concrete, the plane you flew (a real 747 for the jumbo) */
+function nightRampArt(acId, blue){ const jumbo = acId==='B748';
+  const rain=Array.from({length:70},(_,i)=>{ const x=(i*97)%1600, y=(i*53)%560; return `<line x1="${x}" y1="${y}" x2="${x-14}" y2="${y+46}"/>`; }).join('');
+  const mast=(x,dir)=>`<rect x="${x-3}" y="300" width="6" height="260" fill="#0a0c0e"/><rect x="${x-18}" y="292" width="36" height="10" fill="#d8c48a"/><path d="M${x-14} 302 L${x+dir*520} 760 L${x+dir*120} 780 Z" fill="#f1e2b0" opacity=".09"/>`;
+  const plane = jumbo ? `<g transform="translate(330 330) scale(2.6)">${jumboSvg('#07090b','#e9c27a')}</g><ellipse cx="850" cy="622" rx="520" ry="16" fill="#000" opacity=".5"/>`
+    : `<g transform="translate(470 452) scale(5.6)">${acSvgInner(acId,'#07090b')}</g><ellipse cx="800" cy="${452+5.6*30}" rx="300" ry="12" fill="#000" opacity=".5"/>`;
+  const person=(x,h)=>`<g fill="#050607" transform="translate(${x} ${640-h})"><circle cx="0" cy="8" r="7"/><path d="M-10 18 Q0 13 10 18 L12 ${h*0.62} L7 ${h*0.62} L6 ${h} L1 ${h} L0 ${h*0.66} L-1 ${h} L-6 ${h} L-7 ${h*0.62} L-12 ${h*0.62} Z"/></g>`;
+  return `<svg class="nightramp" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" width="100%" height="100%" aria-hidden="true"><defs><linearGradient id="nr1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d1420"/><stop offset=".55" stop-color="#26354a"/><stop offset="1" stop-color="#3a4a60"/></linearGradient><linearGradient id="nr2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a4048"/><stop offset="1" stop-color="#111316"/></linearGradient><radialGradient id="nr3" cx=".82" cy=".7" r=".35"><stop offset="0" stop-color="#3a6cd6" stop-opacity="${blue?'.55':'0'}"/><stop offset="1" stop-color="#3a6cd6" stop-opacity="0"/></radialGradient></defs>
+  <rect width="1600" height="900" fill="url(#nr1)"/>
+  <g fill="#c89a4a">${Array.from({length:34},(_,i)=>`<circle cx="${20+i*47}" cy="548" r="2.4" opacity=".7"/>`).join('')}</g>
+  <path d="M0 520 L260 520 L260 470 L420 470 L420 520 L1600 520 L1600 560 L0 560 Z" fill="#161b22"/>
+  <rect y="556" width="1600" height="344" fill="url(#nr2)"/>
+  ${mast(200,1)}${mast(1420,-1)}
+  ${plane}
+  <g fill="#f1e2b0" opacity=".08"><path d="M300 640 L1300 640 L1500 900 L100 900 Z"/></g>
+  ${person(1160,62)}${person(1196,66)}${person(1228,60)}
+  <rect width="1600" height="900" fill="url(#nr3)"/>
+  <g stroke="#9fb2c8" stroke-opacity=".22" stroke-width="2">${rain}</g></svg>`; }
+(function(){ const c=document.createElement('style'); c.textContent='.cut-bg:has(.nightramp){filter:brightness(.95) saturate(.9)}'; document.head.appendChild(c); })();

@@ -96,7 +96,9 @@ function settleFlight(st, job, f, res){
   const expectedDivert = sc && sc.divert;
   const divertedOk = landedAt!==job.to && (expectedDivert || f.scen==='book');
   // pay
-  let factor = 0.6 + res.score/100*0.6;
+  // pay follows the grade: a rough flight costs real money (A 115%, B 100%, C 85%, D 60%, F 35%)
+  let factor = ({A:1.15,B:1,C:0.85,D:0.6,F:0.35})[res.grade] ?? (0.6 + res.score/100*0.6);
+  if((res.grade==='D'||res.grade==='F') && !res.crash && job.kind!=='check') out.notes.push(`The client docked your pay for a rough flight: you get ${Math.round(factor*100)}% of the fare.`);
   if(res.crash){ factor=0; out.ok=false; }
   else if(landedAt!==job.to && !job.local && !divertedOk){ factor*=0.4; out.notes.push(`You landed at ${landedAt} instead of ${job.to}, so the client pays only part of the fare.`); }
   else if(landedAt!==job.to && !job.local){ out.notes.push(`Diverting was the right call. The client pays in full, and Coral Wing arranges onward transport.`); st.stats.diverts++; }
@@ -188,9 +190,12 @@ const AFTER_RESULT = [
     if(typeof bribeCustoms==='function' && bribeCustoms(st, job, res)) return;   // a paid-off officer (feat-world.js)
     if(job.network){ crBump(c,'heat',12); crBump(c,'power',1); }   // (a network run is also a 'gen' job, so the −2 above already ran: net +5)
     if((job.network || job.kind==='story') && o){
-      if(c.heat>=90){ txn(st,-50000,'Payoffs',`Lawyers, ${job.to}`); crBump(c,'power',-10); c.heat=50; o.notes.push(`BUSTED at ${job.to}. Customs found the hidden compartment. The network's lawyers got you out for $50,000. Power −10, Heat down to 50.`); try{ setTimeout(()=>takeover({kind:'orders',kicker:'Busted',title:`Customs at ${job.to}`,text:`They found the hidden compartment. The network's lawyers got you out, for $50,000.`,ms:9000}),600); }catch(_){} }
+      if(c.heat>=90){ const law=Math.max(50000, Math.round(st.cash*0.12/1000)*1000); txn(st,-law,'Payoffs',`Lawyers, ${job.to}`); crBump(c,'power',-10); c.heat=50; o.notes.push(`BUSTED at ${job.to}. Customs found the hidden compartment. The network's lawyers got you out for ${money(law)}. Power −10, Heat down to 50.`); try{ setTimeout(()=>takeover({kind:'orders',kicker:'Busted',title:`Customs at ${job.to}`,text:`They found the hidden compartment. The network's lawyers got you out, for ${money(law)}.`,ms:9000}),600); }catch(_){} }
       else if(c.heat>=60 && Math.random() < Math.min(0.75, Math.max(0.15, (c.heat-50)/45))){ if(res.grade==='A' || (res.grade==='B' && c.heat<75)){ o.notes.push(`Customs came out to the plane, but a clean landing and calm answers got you waved through. Heat −5.`); crBump(c,'heat',-5); }
-        else { const cost=Math.round(c.heat*60/10)*10; txn(st,-cost,'Payoffs',`Customs at ${job.to}`); crBump(c,'heat',-15); o.notes.push(`Customs searched the plane at ${job.to}. Your people made it go away for ${money(cost)}. Heat −15. (${c.heat+15>=75?'Above 75 Heat, only an A landing gets you waved through.':'A cleaner landing gets you waved through.'})`); } } } },
+        else { const cost=Math.max(Math.round(c.heat*60/10)*10, Math.round(st.cash*0.03/100)*100); txn(st,-cost,'Payoffs',`Customs at ${job.to}`); crBump(c,'heat',-15);
+          // a searched network run loses its load: the run's pay goes back to the network
+          if(job.network && o.pay>0){ txn(st,-o.pay,'Network',`Load seized at ${job.to}`); o.notes.push(`They found the load. It's gone, and so is the ${money(o.pay)} for this run.`); o.pay=0; }
+          o.notes.push(`Customs searched the plane at ${job.to}. Your people made it go away for ${money(cost)}. Heat −15. (${c.heat+15>=75?'Above 75 Heat, only an A landing gets you waved through.':'A cleaner landing gets you waved through.'})`); } } } },
   /* the outcome text follows the choices you made earlier */
   function storyOutcomeText(st, job, f, res){ if(job.kind==='story' && CRIME_IDS.has(job.story) && !res.crash){ const o=st.last&&st.last.out; const m=CRIME.find(x=>x.id===job.story); const mm=dynM(st,m); const outs=job.out||mm.out;
     const tone=toneOf(res); if(o && outs && outs[tone]) o.story=outs[tone]; } },
@@ -363,7 +368,7 @@ function rest(st){
   // Heat: Boss rank cools it; hot airports cool off after 3 days
   try{ const c=crime(st); if(c.power>=85) crBump(c,'heat',-2); for(const k in (c.hot||{})) if(st.day-c.hot[k]>3) delete c.hot[k]; }catch(_){}
   // fleet upkeep and crew wages; a safehouse cools Heat
-  try{ const c=crime(st); const L=dailyCosts(st); const tot=L.reduce((s,x)=>s+x[1],0); if(tot){ txn(st,-tot,'Operation','Fleet upkeep and crew wages'); setTimeout(()=>toast(`Daily costs: ${money(tot)} for your fleet and crew.`),400); }
+  try{ const c=crime(st); const L=dailyCosts(st); const tot=L.reduce((s,x)=>s+x[1],0); if(tot){ txn(st,-tot,'Operation','Fleet upkeep and crew wages'); const changed=st._lastCosts!==tot; st._lastCosts=tot; if(changed) setTimeout(()=>toast(`Daily costs are now ${money(tot)} a day for your fleet and crew.`),400); }   /* told only when the amount changes */
     const lv=safeLevel(st); if(lv>=0) crBump(c,'heat',-(lv+1)); }catch(_){}
   // lying low while the feds watch cools Heat faster
   try{ if(fedsWatching(st)) crBump(crime(st),'heat',-4); }catch(_){}

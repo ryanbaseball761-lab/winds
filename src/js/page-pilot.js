@@ -2,7 +2,9 @@
 
 function pilotBaseHTML(){
   const st=S.st; const s=st.stats;
-  const rungs = RATING_ORDER.map(rid=>{
+  /* earned first, then what you can book now (the story's licenses ahead of the rest), then what's still locked */
+  const rank=rid=>{ if(st.ratings[rid]) return 0; const ok=checkrideReady(st,rid).ok, story=['JET','ATP'].includes(rid); return ok?(story?1:2):3; };
+  const rungs = RATING_ORDER.slice().sort((x,y)=>rank(x)-rank(y)).map(rid=>{
     const R=RATINGS[rid]; const earned=!!st.ratings[rid]; const chk = checkrideReady(st, rid);
     let action='';
     if(earned) action = `<span class="chip good">Earned</span>`;
@@ -13,7 +15,7 @@ function pilotBaseHTML(){
       <div class="badge">${R.code}</div>
       <div style="min-width:0"><div class="row" style="gap:8px"><b>${esc(R.n)}</b>${R.dest?`<span class="chip">${R.dest}</span>`:''}</div>
         <p class="small muted">${esc(R.unlocks||R.blurb||'')}</p>
-        ${!earned && req.hours ? `<div class="row small" style="margin-top:6px;gap:8px"><div class="meter" style="flex:1;min-width:120px"><i style="width:${hrsPct}%"></i></div><span class="mono">${(st.minutes/60).toFixed(1)} / ${req.hours} h</span></div>`:''}
+        ${!earned && req.hours ? (st.minutes/60>=req.hours ? `<p class="small" style="margin-top:6px;color:var(--good,#6fbf73)">✓ Hours done (${req.hours} h needed)</p>` : `<div class="row small" style="margin-top:6px;gap:8px"><div class="meter" style="flex:1;min-width:120px"><i style="width:${hrsPct}%"></i></div><span class="mono">${(st.minutes/60).toFixed(1)} of ${req.hours} h flown</span></div>`):''}
         ${!earned && !chk.ok && chk.miss?.length ? `<p class="tiny muted" style="margin-top:4px">Needs: ${esc(chk.miss.join(' · '))}</p>`:''}
       </div><div>${action}</div></div>`;
   }).join('');

@@ -22,13 +22,15 @@ function unlockHintBase(st, m){
   if(r.hours && st.minutes/60 < r.hours) miss.push(`${r.hours} career hours (you have ${(st.minutes/60).toFixed(1)})`);
   return miss;
 }
+/* the license a chapter's aircraft need that you don't have yet (the real blocker, not the hangar) */
+function storyRatingNeed(st, m){ for(const k of m.ac||[]){ const need=((AC[k]||{}).req||[]).find(r=>!st.ratings[r]); if(need) return need; } return null; }
 /* Where a chapter stands right now: done | ready | travel | aircraft | locked */
 function chapterStatus(st, m, availSet){
   if(st.story.done[m.id]) return {k:'done'};
   const avail = availSet ? availSet.has(m.id) : storyAvailable(st).some(x=>x.id===m.id);
   if(!avail) return {k:'locked', miss:unlockHint(st,m)};
   const acs = storyAircraft(st, m);
-  if(!acs.length) return {k:'aircraft', ac:m.ac};
+  if(!acs.length) return {k:'aircraft', ac:m.ac, need:storyRatingNeed(st,m)};   // need: the rating that's really in the way, if any
   if(st.loc!==m.from) return {k:'travel', at:m.from};
   return {k:'ready', at:m.from};
 }

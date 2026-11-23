@@ -40,7 +40,7 @@ function byoSection(st){
   const L = loadedAircraft(); const list = Object.keys(st.customAc||{});
   const pre = L.title && !L.id ? L.title : '';
   const clsOpts = Object.keys(CLS_TEMPLATE).map(k=>`<option value="${k}">${esc(CLS[k]?CLS[k].name:k)}</option>`).join('');
-  return `<section class="panel stack byo"><div class="row between"><div><p class="label">Your plane, your career</p><h2>Bring your own aircraft</h2></div>${L.title?`<span class="chip sea">MSFS: ${esc(L.title)}</span>`:''}</div>
+  return `<details class="panel stack byo" ${L.title&&!AC[L.id||""]?"open":""}><summary class="row between" style="cursor:pointer"><div><p class="label">Your plane, your career</p><h2>Bring your own aircraft</h2><p class="small muted" style="margin:4px 0 0">Fenix, PMDG, Black Square or anything from the Marketplace</p></div>${L.title?`<span class="chip sea">MSFS: ${esc(L.title)}</span>`:''}</summary>
     <p class="small muted">Fly add-ons like Fenix, PMDG, Black Square or anything from the Marketplace. Add the plane once and the job board builds work around it. Load it in MSFS with the Bridge running and the name fills in for you.</p>
     <form id="byo-form" class="form-grid">
       <label class="field"><span>Name</span><input id="byo-n" required maxlength="60" value="${esc(pre)}" placeholder="e.g. Black Square Baron"></label>
@@ -53,7 +53,7 @@ function byoSection(st){
       <div class="field" style="justify-content:flex-end"><button class="btn primary" type="submit">Add to my hangar</button></div>
     </form>
     ${list.length?`<div class="cards">${list.map(k=>{ const a=st.customAc[k]; return `<div class="cell stack" style="gap:6px"><b>${esc(a.n)}</b><span class="small muted">${esc(CLS[a.cls]?CLS[a.cls].name:a.cls)} · ${a.pax} seats · ${a.cruise} kt · ${a.range} nm · ${a.rwy.toLocaleString()} ft</span><div class="row" style="gap:4px">${a.req.map(r=>`<span class="chip ${st.ratings[r]?'good':''}">${RATINGS[r].code}</span>`).join('')}${st.types[k]?`<span class="chip sea">${st.types[k]} flown</span>`:''}<button class="btn sm ghost" data-act="byo-del" data-id="${k}" style="margin-left:auto">Remove</button></div></div>`; }).join('')}</div>`:''}
-  </section>`;
+  </details>`;
 }
 document.addEventListener('submit', e=>{
   if(e.target.id!=='byo-form' || !S.st) return; e.preventDefault(); e.stopImmediatePropagation();

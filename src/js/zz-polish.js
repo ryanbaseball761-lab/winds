@@ -10,7 +10,7 @@ const POLISH_CSS = `
 .co-short{margin:2px 0 0}
 /* achievement pop-up: centred without a transform (its fade-in animation replaced the transform, so it slid in from
    the right), and as wide as its title instead of half the screen, which wrapped titles on a phone */
-body .achpop{left:0;right:0;margin:0 auto;transform:none;width:max-content;max-width:calc(100vw - 32px);text-align:center}
+body .achpop{left:20px;right:auto;top:auto;bottom:20px;margin:0;transform:none;width:max-content;max-width:min(360px,calc(100vw - 40px));text-align:left;justify-items:start;padding:12px 18px;border-radius:0}
 /* a collapsed section (Dispatch on the flight page) has no rule and gap under its title */
 html.ckp body details:not([open])>summary.section-title{border-bottom:0;padding-bottom:0;margin-bottom:0}
 /* Saves & help: the backups panel matches the width of the save and report panels above it */
@@ -70,3 +70,6 @@ html.ckp body .pf-bar>div{grid-column:1 / -1;grid-row:2;height:4px;border-radius
 
 /* chips on the boarding pass sit over the ticket art (the sun, palms): give them a solid backing */
 (function(){ const c=document.createElement('style'); c.textContent='.pass .pass-art{z-index:0}.pass .pass-main{position:relative;z-index:1}.pass .pass-main .chip{background:rgba(12,13,14,.82)!important}'; document.head.appendChild(c); })();
+
+/* nothing a player has to read is smaller than 12px (header labels 11px, where space is tight) */
+(function(){ const c=document.createElement('style'); c.textContent='html main small,html main th,html main .tiny{font-size:12px!important}html main .mono.small,html main small.mono{font-size:12px!important}.cb-ro small,.cb-pilot small,.cb-sync{font-size:11px!important}.cb-sub .btn{font-size:12px!important}'; document.head.appendChild(c); })();
