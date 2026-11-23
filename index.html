@@ -4635,7 +4635,7 @@ let PANEL_ST=null; if(window.twNative && twNative.panelStatus) twNative.panelSta
 document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="panel-install"]')) return; const r=await twNative.panelInstall(); if(r&&r.ok){ toast('Installed. Start (or restart) MSFS and click the Trade Winds icon in the toolbar.'); PANEL_ST=Object.assign({},PANEL_ST,{installed:true}); } else toast(r&&r.why==='no-community'?"Couldn't find your MSFS Community folder. Is MSFS installed on this PC?":"Couldn't install the panel."); S.keepScroll=true; render(); });
 function panelSetupHTML(){ if(!(window.twNative && twNative.panelSetup)) return '';
   if(PANEL_ST && PANEL_ST.prebuilt) return `<section class="panel stack"><div class="row between"><div><p class="label">MSFS toolbar</p><h3>Trade Winds inside the sim</h3></div><button class="btn sm ${PANEL_ST.installed?'':'primary'}" data-act="panel-install">${PANEL_ST.installed?'Reinstall':'Install the in-sim panel'}</button></div><p class="small muted">Adds a Trade Winds button to the MSFS toolbar: your job, checklist, live numbers, story moments you can answer, flight orders and chat votes, without alt-tabbing. ${PANEL_ST.installed?'Installed: click the Trade Winds icon in the MSFS toolbar.':'One click, no SDK needed. Restart MSFS afterwards.'}</p></section>`;
-  return `<section class="panel stack"><div class="row between"><div><p class="label">MSFS toolbar</p><h3>Trade Winds inside the sim</h3></div><span class="chip">Coming soon</span></div><p class="small muted">A Trade Winds button in the MSFS toolbar (your job, checklist, live numbers and story moments without alt-tabbing) isn't in this beta yet. Until then, play from this window or open the phone companion on your phone.</p><p class="tiny muted">Have the MSFS SDK? <button class="btn ghost sm" data-act="panel-setup">Build the panel yourself</button></p></section>`; }
+  return `<section class="panel stack"><div class="row between"><div><p class="label">MSFS toolbar</p><h3>Trade Winds inside the sim</h3></div><span class="chip">Coming soon</span></div><p class="small muted">A Trade Winds button in the MSFS toolbar (your job, checklist, live numbers and story moments without alt-tabbing) isn't in this beta yet. Until then, use the mini window: on the Flight page, open a small window that stays on top of MSFS. Or use the phone companion.</p><p class="tiny muted">Have the MSFS SDK? <button class="btn ghost sm" data-act="panel-setup">Build the panel yourself</button></p></section>`; }
 document.addEventListener('click', async e=>{ if(!e.target.closest('[data-act="panel-setup"]')) return; const d=await twNative.panelSetup(); toast(d?'Opened the panel folder. Double-click build-and-install.bat.':'Couldn\'t prepare the panel files.'); });
 
 /* ---- 2. premium voices: OpenAI TTS through the app, with Windows voices as the fallback ---- */
@@ -6567,7 +6567,7 @@ Object.assign(MUSIC.TRACKS, {
 function actTheme(){ const st=S.st; if(!st) return 'tension'; const MC=mainChapters(); const j=(st.active&&st.active.job)||(st.last&&st.last.job); let m=j&&j.story?MC.find(x=>x.id===j.story):null; if(!m) m=MC.find(x=>!st.story.done[x.id]); if(!m) return 'act5';
   const i=CRIME_ACTS.findIndex(a=>a.arc===m.arc); return i>=0?`act${i+1}`:'act1'; }
 function menuMusicOK(){ const st=S.st; if(!st || document.querySelector('.title-screen,.cut')) return false; if(uiP().menuMusic===false) return false; if(S.simState==='live') return false; if(st.active&&st.active.started) return false; return true; }
-AFTER_RENDER.push(function menuMusic(){ try{ if(menuMusicOK()){ if(MUSIC.cur!=='hangar' && !MUSIC.cur) MUSIC.play('hangar'); } else if(MUSIC.cur==='hangar') MUSIC.stop(); }catch(_){} });
+/* (the render hook that starts it is in feat-ui.js, which loads after AFTER_RENDER exists) */
 setInterval(()=>{ try{ if(MUSIC.cur==='hangar' && !menuMusicOK()) MUSIC.stop(); }catch(_){} }, 3000);
 /* ===================== 20 SMALL FIXES AND UPGRADES ===================== */
 
@@ -9771,6 +9771,9 @@ html.bigscreen body.flying .beat .bt-t{font-size:26px}
 `; document.head.appendChild(s); })();
 document.addEventListener('toggle', e=>{ if(e.target.classList && e.target.classList.contains('dispatch')) S._dspOpen=e.target.open; }, true);
 (function(){ const s=document.createElement('style'); s.textContent=`details.dispatch>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:12px;margin-bottom:0;border-bottom:0;padding-bottom:0}details.dispatch>summary::-webkit-details-marker{display:none}details.dispatch>summary::after{content:"Show";margin-left:auto;font-size:13px;color:var(--muted);border:1px solid var(--line-2);padding:3px 10px}details.dispatch[open]>summary::after{content:"Hide"}details.dispatch[open]>summary{margin-bottom:14px}`; document.head.appendChild(s); })();
+
+/* menu music between flights (MUSIC.TRACKS.hangar, 096-core.js) */
+AFTER_RENDER.push(function menuMusic(){ try{ if(menuMusicOK()){ if(MUSIC.cur!=='hangar' && !MUSIC.cur) MUSIC.play('hangar'); } else if(MUSIC.cur==='hangar') MUSIC.stop(); }catch(_){} });
 /* ===================== STORY, ROUND 2 (0.70) =====================
    - Consequences you can see: later chapters mention what you did earlier, on the Story page and the flight banner.
    - Timed choices: some in-flight decisions have a clock. Wait too long and the default happens.

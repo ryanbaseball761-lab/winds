@@ -183,3 +183,6 @@ html.bigscreen body.flying .beat .bt-t{font-size:26px}
 `; document.head.appendChild(s); })();
 document.addEventListener('toggle', e=>{ if(e.target.classList && e.target.classList.contains('dispatch')) S._dspOpen=e.target.open; }, true);
 (function(){ const s=document.createElement('style'); s.textContent=`details.dispatch>summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:12px;margin-bottom:0;border-bottom:0;padding-bottom:0}details.dispatch>summary::-webkit-details-marker{display:none}details.dispatch>summary::after{content:"Show";margin-left:auto;font-size:13px;color:var(--muted);border:1px solid var(--line-2);padding:3px 10px}details.dispatch[open]>summary::after{content:"Hide"}details.dispatch[open]>summary{margin-bottom:14px}`; document.head.appendChild(s); })();
+
+/* menu music between flights (MUSIC.TRACKS.hangar, 096-core.js) */
+AFTER_RENDER.push(function menuMusic(){ try{ if(menuMusicOK()){ if(MUSIC.cur!=='hangar' && !MUSIC.cur) MUSIC.play('hangar'); } else if(MUSIC.cur==='hangar') MUSIC.stop(); }catch(_){} });

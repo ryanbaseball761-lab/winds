@@ -77,5 +77,5 @@ Object.assign(MUSIC.TRACKS, {
 function actTheme(){ const st=S.st; if(!st) return 'tension'; const MC=mainChapters(); const j=(st.active&&st.active.job)||(st.last&&st.last.job); let m=j&&j.story?MC.find(x=>x.id===j.story):null; if(!m) m=MC.find(x=>!st.story.done[x.id]); if(!m) return 'act5';
   const i=CRIME_ACTS.findIndex(a=>a.arc===m.arc); return i>=0?`act${i+1}`:'act1'; }
 function menuMusicOK(){ const st=S.st; if(!st || document.querySelector('.title-screen,.cut')) return false; if(uiP().menuMusic===false) return false; if(S.simState==='live') return false; if(st.active&&st.active.started) return false; return true; }
-AFTER_RENDER.push(function menuMusic(){ try{ if(menuMusicOK()){ if(MUSIC.cur!=='hangar' && !MUSIC.cur) MUSIC.play('hangar'); } else if(MUSIC.cur==='hangar') MUSIC.stop(); }catch(_){} });
+/* (the render hook that starts it is in feat-ui.js, which loads after AFTER_RENDER exists) */
 setInterval(()=>{ try{ if(MUSIC.cur==='hangar' && !menuMusicOK()) MUSIC.stop(); }catch(_){} }, 3000);
