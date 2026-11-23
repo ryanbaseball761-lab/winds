@@ -115,3 +115,48 @@ AFTER_RENDER.push(function customsScene(){ const st=S.st, L=st&&st.last; if(!S.s
 
 /* beat options are equal choices too */
 (function(){ const s=document.createElement('style'); s.textContent=`html.ckp .beat .bt-o .btn{background:transparent!important;border-color:var(--line-2)!important;color:var(--ink)!important}html.ckp .beat .bt-o .btn:hover{border-color:var(--amb)!important;color:var(--amb)!important}`; document.head.appendChild(s); })();
+
+/* ===================== guided flight: step-by-step help for people new to MSFS =====================
+   Offered on chapter 1 (and switchable in Settings). A card on the Flight page follows the sim and says the
+   one thing to do next, from starting the engine to parking. Each new step is also spoken and toasted once. */
+function guidedOn(a){ return !!(a && (a.guided || (S.st.ui&&S.st.ui.guided))); }
+function guideStep(a){ const s=S.sim; if(!s || S.simState!=='live' || !s.motion) return {k:'wait', t:`Start MSFS and load into the ${AC[a.job.ac].n} at ${a.job.from}. This card will tell you what to do, one step at a time.`};
+  const job=a.job, m=s.motion, pos=s.position||{}, sys=s.systems||{}, rec=simRecFor(a)||{};
+  const vapp=vappOf(job.ac)||65, vr=Math.max(50, Math.round(vapp*0.85)), alt=(typeof cruiseAltFor==='function'?cruiseAltFor(job):2500);
+  const dist=(!job.local && AP[job.to] && pos.lat!=null) ? distNm({lat:pos.lat,lon:pos.lon},AP[job.to]) : null, agl=pos.aglFt||0;
+  if(rec.touchdown && m.onGround) return m.gs>3 ? {k:'landed', t:`You're down. Brakes, slow to a walking pace, and leave the runway at the next taxiway.`} : {k:'park', t:`Park, set the parking brake and shut the engine down. Trade Winds finishes the flight by itself.`};
+  if(m.onGround && !rec.takeoff){
+    if(!sys.engineRunning) return {k:'start', t:`Start the engine. In MSFS, Ctrl+E starts it for you.`};
+    if(m.gs<1 && sys.parkingBrake) return {k:'brake', t:`Release the parking brake, then taxi to the runway. Follow the yellow line and keep it under 15 knots.`};
+    if(m.gs<30) return {k:'taxi', t:`Line up on the runway centreline. When you're straight, push the throttle all the way in.`};
+    return {k:'roll', t:`At ${vr} knots, ease back on the yoke and let it fly.`}; }
+  if(!m.onGround && agl<1200 && (dist==null || dist>6)) return {k:'climb', t:`Climb at about ${Math.round(vapp*1.15)} knots. Keep the wings level.`};
+  if(dist!=null && dist>8) return {k:'cruise', t:`Level off at ${alt.toLocaleString()} feet and follow the magenta line to ${job.to}. ${Math.round(dist)} nm to go.`};
+  if(dist!=null && agl>1200) return {k:'descend', t:`Start down now, about 500 feet per minute. Aim for 1,000 feet above the field about 3 miles out.`};
+  return {k:'final', t:`Line up with the runway. Slow to ${vapp} knots and put the flaps down. Touch down gently on the main wheels.`}; }
+function guideHTML(a){ const g=guideStep(a); return `<section class="panel guide-card" aria-live="polite"><p class="label">Step by step <button class="btn ghost sm" data-act="guide-off" style="margin-left:10px">Turn off</button></p><p class="guide-t">${esc(g.t)}</p></section>`; }
+SIM_TICK.push(function guidedTick(){ const a=S.st&&S.st.active; if(!guidedOn(a)) return; const g=guideStep(a); const el=document.querySelector('.guide-card .guide-t'); if(el && el.textContent!==g.t) el.textContent=g.t;
+  if(a._gk!==g.k){ a._gk=g.k; if(g.k!=='wait'){ toast(`Step by step: ${g.t}`); try{ if(typeof voiceOn==='function'&&voiceOn()&&window.speechSynthesis){ const u=new SpeechSynthesisUtterance(g.t); u.volume=(typeof voiceVol==='function'?voiceVol():1); speechSynthesis.speak(u); } }catch(_){} } } });
+AFTER_RENDER.push(function guideCard(){ if(S.view!=='flight' || !S.st) return; const a=S.st.active, main=document.querySelector('main'); if(!a || !main || main.querySelector('.guide-card,.guide-offer')) return;
+  const anchor=main.querySelector('.pass, .brief, section'); if(!anchor) return;
+  if(guidedOn(a)) anchor.insertAdjacentHTML('beforebegin', guideHTML(a));
+  else if(a.job.story==='CW1' && !a.started && !(S.st.ui&&S.st.ui.guideAsked)) anchor.insertAdjacentHTML('beforebegin', `<section class="panel guide-offer row between"><div><b>First time flying MSFS?</b><p class="small muted" style="margin:2px 0 0">Turn on step-by-step help: start the engine, taxi, take off, find Anguilla and land.</p></div><div class="row"><button class="btn primary" data-act="guide-on">Turn on</button><button class="btn ghost" data-act="guide-no">I know how to fly</button></div></section>`); });
+document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="guide-on"],[data-act="guide-no"],[data-act="guide-off"]'); if(!b||!S.st) return; const a=S.st.active; S.st.ui=S.st.ui||{}; S.st.ui.guideAsked=1;
+  if(b.dataset.act==='guide-on' && a) a.guided=true; if(b.dataset.act==='guide-off'){ if(a) a.guided=false; S.st.ui.guided=false; } save(); S.keepScroll=true; render(); });
+(function(){ const c=document.createElement('style'); c.textContent='.guide-card{border-left:3px solid var(--amb)}.guide-card .guide-t{font-size:19px;line-height:1.45;margin:6px 0 0}.guide-offer{gap:16px;flex-wrap:wrap;border-left:3px solid var(--amb)}'; document.head.appendChild(c); })();
+
+/* ===================== live grading: what's counting while you fly ===================== */
+function liveScoreRows(a){ const C=a.cab||{}, comfort=C.comfort, t=C.tally||{}, p=plan(a.job), rec=simRecFor(a)||{};
+  const elapsed=rec.blockMinutes!=null?Math.round(rec.blockMinutes):0, est=p.est||60;
+  const warn=(t.stall||0)+(t.overspeed||0)+(t.flapOver||0)+(t.gearOver||0);
+  const rows=[
+    ['Smooth flying', comfort==null||comfort>=75, comfort==null?'Waiting for takeoff':`Passenger comfort ${Math.round(comfort)}%${comfort<75?' (under 75 costs 5 points)':''}`],
+    ['No warnings', !warn, warn?`${warn} warning${warn>1?'s':''} so far (stall, overspeed, flaps or gear)`:'None so far'],
+    ['Time vs plan', elapsed<=est*1.25, elapsed?`${elapsed} of ~${est} min${elapsed>est*1.25?' (running long)':''}`:`~${est} min planned`]];
+  if(diff()==='expert') rows.unshift(['Checklist', checklistDone(a), checklistDone(a)?'Done':'Not done yet (costs 10 points on Expert)']);
+  rows.push(['Landing', null, 'Under 200 fpm in the touchdown zone, on the centreline, for full marks']);
+  return rows; }
+function liveScoreHTML(a){ return `<section class="panel live-score"><div class="section-title"><h2>Scoring as you fly</h2></div><ul class="ls-list">${liveScoreRows(a).map(r=>`<li class="${r[1]===true?'ok':r[1]===false?'bad':''}"><b>${esc(r[0])}</b><span>${esc(r[2])}</span></li>`).join('')}</ul></section>`; }
+AFTER_RENDER.push(function liveScoreCard(){ if(S.view!=='flight' || !S.st) return; const a=S.st.active, main=document.querySelector('main'); if(!a || !a.started || !main || main.querySelector('.live-score')) return; const anchor=main.querySelector('.guide-card, .pass, section'); if(anchor) anchor.insertAdjacentHTML('afterend', liveScoreHTML(a)); });
+SIM_TICK.push(function liveScoreTick(){ const a=S.st&&S.st.active, el=document.querySelector('.live-score'); if(!a||!el) return; const now=Date.now(); if(now-(a._lsT||0)<3000) return; a._lsT=now; el.outerHTML=liveScoreHTML(a); });
+(function(){ const c=document.createElement('style'); c.textContent='.ls-list{list-style:none;margin:0;padding:0}.ls-list li{display:grid;grid-template-columns:150px 1fr;gap:12px;padding:8px 0;border-top:1px solid var(--line)}.ls-list li:first-child{border-top:0}.ls-list li b{font-weight:600}.ls-list li.ok b::before{content:"✓ ";color:var(--good,#6fbf73)}.ls-list li.bad b::before{content:"✗ ";color:var(--bad,#d0643a)}.ls-list li span{color:var(--muted)}'; document.head.appendChild(c); })();
