@@ -143,7 +143,11 @@ function makeJob(st, arch, fleetOnly){
   acs = acs.filter(k=>arch.cls.includes(AC[k].cls) && AC[k].pax >= arch.pax[0] && (!arch.cargo || AC[k].useful > arch.cargo[0]+200));
   if(!acs.length) return null;
   const fresh = acs.filter(k=>!st.types[k]);
-  let acId = (fresh.length && Math.random()<0.3) ? pick(fresh) : pick(acs);
+  /* the board grows with you: once you hold turbine, jet or airline ratings, bigger aircraft (and bigger pay) come up more often */
+  const TIER={ga:0,stol:0,amph:1,bush:1,hp:1,twin:1,turbo:2,jet:3,regional:3,airliner:4,widebody:4};
+  const grown=['TURB','JET','ATP'].filter(r=>st.ratings&&st.ratings[r]).length;
+  const weighted=k=>{ const ws=acs.map(x=>1+(TIER[AC[x].cls]||0)*grown*1.5); let t=Math.random()*ws.reduce((a,b)=>a+b,0); for(let i=0;i<acs.length;i++){ t-=ws[i]; if(t<=0) return acs[i]; } return acs.at(-1); };
+  let acId = (fresh.length && Math.random()<0.3) ? pick(fresh) : weighted();
   const a = AC[acId];
   let to = st.loc, tourNm=0;
   if(arch.local){ tourNm = ri(25,60); }

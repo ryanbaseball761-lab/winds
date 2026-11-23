@@ -147,3 +147,53 @@ PHONE_POOL.push({id:'ng1', from:'reyes', need:['CR11'], crime:true, gate:()=>!!(
 .bt-timer{height:3px;background:var(--line-2);margin:8px 0 2px;overflow:hidden}.bt-timer i{display:block;height:100%;background:var(--amb);animation:btT linear forwards}@keyframes btT{from{width:100%}to{width:0}}
 .sx1{border-left:2px solid #8a7a4a!important}
 `; document.head.appendChild(s); })();
+
+/* ===================== ROUND 2: choices with three ways out, and consequences that come back =====================
+   Seven chapters get a third option. Each sets a flag that a later chapter remembers (ECHO_LINES),
+   and the endings now depend on what you did along the way, not on one number. */
+(function(){
+  const add=(id,opt)=>{ const m=CRIME.find(x=>x.id===id); if(!m||!m.choice) return; if(!m.choice.opts.some(o=>o.flag===opt.flag)) m.choice.opts.push(opt); };
+  const flagOn=(id,i,flag)=>{ const m=CRIME.find(x=>x.id===id); if(m&&m.choice&&m.choice.opts[i]&&!m.choice.opts[i].flag) m.choice.opts[i].flag=flag; };
+  flagOn('CR2',1,'skim');   // the bundle you kept is the start of a stash
+  add('CR2',{t:`Call Dez before you hand it over`, flag:'askedDez', power:2, out:`Dez picks up on the first ring. "Don't count it, don't open it, don't call me on this phone." The broker watches you hang up and smiles like he's learned something about you.`});
+  add('CR4',{t:`Turn the envelope down, politely`, flag:'politeNo', power:2, heat:2, out:`Castillo slides the envelope back into his jacket without a flicker. "A careful man. Careful men live longer." He pays for lunch anyway. You get the feeling you've been measured.`});
+  add('CR6',{t:`Drive them to the clinic yourself`, flag:'clinic', power:2, heat:8, out:`You leave the plane with the door open and drive the truck yourself. The nurse at the clinic doesn't ask how they got hurt. She does write down the registration on your flight bag.`});
+  add('CR9',{t:`Lie to her, then warn Castillo`, flag:'warned', power:10, heat:12, out:`You tell Reyes you'll think about it. Ten minutes later you're calling Castillo from the pay phone at the marina. He's quiet for a long time. "Thank you," he says, which is somehow worse.`});
+  add('CR11',{t:`Fly him somewhere else and tell no one`, flag:'ticoHidden', power:-10, heat:12, out:`You file for Grand Cayman and land on Cayman Brac. Tico walks into the dark with your last two hundred dollars. When Castillo calls, you tell him the man ran at the fuel stop.`});
+  add('CR13',{t:`Ask her to run the books, not the flying`, flag:'mariBooks', power:4, out:`Mari thinks about it for a whole leg. "Somebody has to make this look legitimate," she says. "And somebody has to keep you out of the paperwork."`});
+  add('CR15',{t:`Split it 50/50 and take three of his pilots`, flag:'castilloPilots', power:6, heat:4, out:`Castillo raises an eyebrow, then laughs. "Half. And you train three of my boys to fly like you." It sounds generous. It also means three of his people on your ramp.`});
+
+  const more = {
+    CR3:  f=>f.askedDez ? `Dez says the broker called him about you. "He said you're careful. In his line of work, that's a compliment."` : f.skim ? `The bundle you kept is in a coffee can behind the water heater. You check on it more than you'd like.` : null,
+    CR5:  f=>f.politeNo ? `Castillo's people still don't use your first name.` : null,
+    CR9:  f=>f.clinic ? `Reyes has the clinic nurse's notes in her file. She mentions your flight bag once, casually.` : null,
+    CR12: f=>f.ticoHidden ? `A postcard from Cayman Brac arrives at the hangar. No name. Just a child's drawing of an airplane.` : null,
+    CR14: f=>f.warned ? `Castillo sends a car to the hangar every morning now. "For your safety," the driver says.` : null,
+    CR16: f=>f.castilloPilots ? `Castillo's three pilots are good. Too good. One of them asks a lot of questions about your routes.` : null,
+    CR17: f=>f.mariBooks ? `Mari keeps two sets of books. Only one of them is in the office.` : null,
+  };
+  for(const k in more){ const old=ECHO_LINES[k]; ECHO_LINES[k] = old ? (f=>old(f)||more[k](f)) : more[k]; }
+
+  /* endings: each one needs something you did earlier; if nothing qualifies, you can always vanish */
+  if(typeof ENDING_REQ!=='undefined'){
+    const F=c=>c.flags||{};
+    const others=c=>['kingpin','witness','walk','home'].some(k=>!ENDING_REQ[k](c));
+    ENDING_REQ.kingpin=c=> c.power<50 ? `Needs Power 50+ (you have ${c.power})` : (F(c).defied||F(c).war||F(c).medinaAlly||F(c).warned||F(c).castilloPilots) ? null : `Nobody would follow you. You never stood up to Castillo or made allies of your own`;
+    ENDING_REQ.ghost=c=> (F(c).skim||F(c).medinaDeal||F(c).ticoHidden||F(c).politeNo||!others(c)) ? null : `You'd need money nobody knows about, or to know how to disappear someone`;
+    ENDING_REQ.walk=c=> F(c).war ? `You can't walk away from a war you started` : c.heat<40 ? null : `Needs Heat under 40 (you have ${c.heat})`;
+    ENDING_REQ.home=c=> (F(c).mari||F(c).mariBooks||F(c).dezFree) ? null : `Nobody's waiting for you`;
+  }
+})();
+
+/* ===================== the calendar matters: Castillo's jobs have a deadline =====================
+   Once you work for Castillo (after chapter 4), each of his chapters is due three days after it opens.
+   Late costs Power and gets you a text. The story page shows the date. */
+function chDue(st, m){ const c=crime(st); if(!c.on || !st.story.done.CR4 || !CRIME_IDS.has(m.id) || st.story.done[m.id] || m.id==='CR17') return null;
+  c.due=c.due||{}; if(c.due[m.id]==null){ const avail=storyAvailable(st).some(x=>x.id===m.id); if(!avail) return null; c.due[m.id]=st.day+3; save(); } return c.due[m.id]; }
+DAY_HOOKS.push(function lateChapters(st){ const c=crime(st); if(!c.on || !c.due) return; c.late=c.late||{};
+  for(const id in c.due){ if(!st.story.done[id] && !c.late[id] && st.day>c.due[id]){ c.late[id]=1; crBump(c,'power',-4); const m=CRIME.find(x=>x.id===id);
+    phonePush({from:'castillo', text:`I asked for "${m?m.title:'it'}" by day ${c.due[id]}. I don't like asking twice.`}); } } });
+AFTER_RENDER.push(function dueChip(){ if(S.view!=='story' || !S.st) return; const main=document.querySelector('main'); if(!main || main.querySelector('.ch-due')) return;
+  const MC=mainChapters(); const next=MC.find(m=>!S.st.story.done[m.id]); if(!next) return; const due=chDue(S.st,next); if(due==null) return;
+  const h=main.querySelector('h1, .sh-title, h2'); if(!h) return; const left=due-S.st.day;
+  h.insertAdjacentHTML('afterend', `<p class="ch-due small" style="margin:6px 0 0;color:${left<=0?'var(--bad,#d0643a)':'var(--amb)'}">${left<0?`Late: Castillo wanted this by day ${due}`:left===0?`Castillo expects this today`:`Castillo expects this by day ${due} (${left} day${left>1?'s':''})`}</p>`); });

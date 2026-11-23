@@ -35,7 +35,8 @@ function companyFlightCost(st, job, blockMin){
 function payFor(st, job){
   const a=AC[job.ac]; const arch = job.arch ? ARCH.find(x=>x.id===job.arch) : null;
   const dist = job.local ? (job.tourNm||40) : distNm(AP[job.from],AP[job.to]);
-  let p = (150 + dist*CLS[a.cls].rate + (job.pax||0)*(a.cls==='airliner'||a.cls==='widebody'?6:25) + (job.cargo||0)*0.4);
+  const lb=job.cargo||0, cargoPay = Math.min(lb,4000)*0.4 + Math.max(0,lb-4000)*0.05;   // freight pays well by the pound, then tapers: an 80-ton 747 isn't a lottery ticket
+  let p = (150 + dist*CLS[a.cls].rate + (job.pax||0)*(a.cls==='airliner'||a.cls==='widebody'?6:25) + cargoPay);
   if(arch?.mult) p*=arch.mult; if(job.wx.ifr) p*=1.15; if(isNight(job.dep)) p*=1.15; if(job.urgent) p*=1.1;
   if(!hasRating(st,'COMM') && !job.story) p*=0.55;
   p *= 0.9 + clamp(st.reputation,0,100)/500;

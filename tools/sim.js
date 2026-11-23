@@ -51,7 +51,7 @@ const SEEDS=(process.env.SEEDS||'11,22,33').split(',').map(Number); const ONLY=p
         const n=(st.last&&st.last.out&&st.last.out.notes)||[]; if(n.some(x=>/^BUSTED/.test(x))) M.busts++; if(n.some(x=>/^Customs searched/.test(x))) M.searches++; }
       M.peakHeat=Math.max(M.peakHeat,c().heat);
       const before=st.cash; rest(st); M.minCash=Math.min(M.minCash, st.cash); if(fin(st).ledger.slice(0,5).some(x=>/couldn't cover/.test(x.m))) M.shortfalls++; }
-    const cats={}; fin(st).ledger.forEach(x=>{ cats[x.c]=(cats[x.c]||0)+x.a; }); M.cats=cats; M.ledgerLen=fin(st).ledger.length; M.ending=c().ending; M.doneIds=MC.filter(x=>st.story.done[x.id]).length; M.choice17=c().choice.CR17; M.next=(MC.find(x=>!st.story.done[x.id])||{}).id; M.cash=st.cash; M.power=c().power; M.heat=c().heat; M.net=M.net; return M; }, style);
+    const cats=Object.assign({}, fin(st).tot||{}); M.cats=cats; M.top=fin(st).ledger.filter(x=>x.a>0).sort((a,b)=>b.a-a.a).slice(0,12).map(x=>x.a+" "+x.c+" "+x.m); M.ledgerLen=fin(st).ledger.length; M.ending=c().ending; M.doneIds=MC.filter(x=>st.story.done[x.id]).length; M.choice17=c().choice.CR17; M.next=(MC.find(x=>!st.story.done[x.id])||{}).id; M.cash=st.cash; M.power=c().power; M.heat=c().heat; M.net=M.net; return M; }, style);
   rows.push(Object.assign({style:name, seed}, r, {errors:errs.length})); await ctx.close(); }
  await b.close();
  if(process.argv.includes('--json')){ console.log(JSON.stringify(rows,null,1)); return; }

@@ -135,10 +135,10 @@ const CLS = {
   hp:{name:`High-performance single`,rate:9,over:15,daily:2600,wage:480},
   twin:{name:`Piston / diesel twin`,rate:10,over:16,daily:3000,wage:560},
   turbo:{name:`Turboprop`,rate:13,over:18,daily:5200,wage:900},
-  jet:{name:`Business jet`,rate:20,over:22,daily:9000,wage:1600},
-  regional:{name:`Regional airliner`,rate:18,over:24,daily:16000,wage:4500},
-  airliner:{name:`Narrowbody airliner`,rate:24,over:30,daily:70000,wage:22000},
-  widebody:{name:`Widebody airliner`,rate:30,over:35,daily:0,wage:0}
+  jet:{name:`Business jet`,rate:14,over:22,daily:9000,wage:1600},
+  regional:{name:`Regional airliner`,rate:12,over:24,daily:16000,wage:4500},
+  airliner:{name:`Narrowbody airliner`,rate:13,over:30,daily:70000,wage:22000},
+  widebody:{name:`Widebody airliner`,rate:15,over:35,daily:0,wage:0}
 };
 const RATINGS = {
   PPL:{n:`Private Pilot`,code:`PPL`,start:true,blurb:`Where you start. You can fly, but for now Coral Wing pays you a trainee rate while you build time.`},

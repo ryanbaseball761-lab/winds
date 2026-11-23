@@ -137,7 +137,7 @@ function settleFlight(st, job, f, res){
   st.minutes += res.block; st.flights += 1; st.stats[f.landing] = (st.stats[f.landing]||0)+1; st.stats.nm += p.dist; if(job.scen && f.scen==='book') st.stats.scen++;
   const firstType = !st.types[job.ac]; st.types[job.ac] = (st.types[job.ac]||0) + 1; if(firstType && !res.crash) out.notes.push(`New type in your logbook: ${a.n}.`);
   const firstAp = !st.visited[landedAt]; st.visited[landedAt]=true; if(firstAp && !AP[landedAt].water) out.notes.push(`First landing at ${AP[landedAt].n}, ${AP[landedAt].isl}.`);
-  st.log.unshift({ id:uid(), day:st.day, dep:job.dep, from:job.from, to:landedAt, ac:job.ac, min:res.block, grade:res.grade, score:res.score, pay:out.pay-out.costs, title:job.title, kind:job.kind, landing:f.landing, verified:!!f.verified, fpm:f.verified?f.simFpm:null });
+  st.log.unshift({ id:uid(), net:job.network?1:undefined, day:st.day, dep:job.dep, from:job.from, to:landedAt, ac:job.ac, min:res.block, grade:res.grade, score:res.score, pay:out.pay-out.costs, title:job.title, kind:job.kind, landing:f.landing, verified:!!f.verified, fpm:f.verified?f.simFpm:null });
   st.log = st.log.slice(0,300);
   // clock
   const start = Math.max(st.clock, job.dep);
@@ -191,7 +191,7 @@ const AFTER_RESULT = [
     if(job.network){ crBump(c,'heat',12); crBump(c,'power',1); }   // (a network run is also a 'gen' job, so the −2 above already ran: net +5)
     if((job.network || job.kind==='story') && o){
       if(c.heat>=90){ const law=Math.max(50000, Math.round(st.cash*0.12/1000)*1000); txn(st,-law,'Payoffs',`Lawyers, ${job.to}`); crBump(c,'power',-10); c.heat=50; o.notes.push(`BUSTED at ${job.to}. Customs found the hidden compartment. The network's lawyers got you out for ${money(law)}. Power −10, Heat down to 50.`); try{ setTimeout(()=>takeover({kind:'orders',kicker:'Busted',title:`Customs at ${job.to}`,text:`They found the hidden compartment. The network's lawyers got you out, for ${money(law)}.`,ms:9000}),600); }catch(_){} }
-      else if(c.heat>=60 && Math.random() < Math.min(0.75, Math.max(0.15, (c.heat-50)/45))){ if(res.grade==='A' || (res.grade==='B' && c.heat<75)){ o.notes.push(`Customs came out to the plane, but a clean landing and calm answers got you waved through. Heat −5.`); crBump(c,'heat',-5); }
+      else if((job.network && typeof invNow==='function' && invNow(st) && invNow(st).ap===(f.landedAt||job.to)) || (c.heat>=60 && Math.random() < Math.min(0.75, Math.max(0.15, (c.heat-50)/45)))){   /* an airport under investigation always searches */ if(res.grade==='A' || (res.grade==='B' && c.heat<75)){ o.notes.push(`Customs came out to the plane, but a clean landing and calm answers got you waved through. Heat −5.`); crBump(c,'heat',-5); }
         else { const cost=Math.max(Math.round(c.heat*60/10)*10, Math.round(st.cash*0.03/100)*100); txn(st,-cost,'Payoffs',`Customs at ${job.to}`); crBump(c,'heat',-15);
           // a searched network run loses its load: the run's pay goes back to the network
           if(job.network && o.pay>0){ txn(st,-o.pay,'Network',`Load seized at ${job.to}`); o.notes.push(`They found the load. It's gone, and so is the ${money(o.pay)} for this run.`); o.pay=0; }

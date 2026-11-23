@@ -286,6 +286,16 @@ function islandsHTML(){ const w=twW(); const L=Object.entries(w.isl).filter(([,v
     <h3 style="margin-top:18px">Contacts</h3>
     ${met.length?`<ul class="w-contacts">${met.map(k=>`<li><b>${esc(k.n)}</b> <span class="muted">${esc(k.role)}. ${esc(islOf(k.ap))} (${k.ap}).</span> ${contactLevel(k.id)?`<span class="chip">${contactLevel(k.id)} job${contactLevel(k.id)>1?'s':''}</span>`:''}</li>`).join('')}</ul>`:`<p class="muted">Be good to an island and someone there will start sending you work.</p>`}</section>`; }
 
+/* what your money is for: the next aircraft of your own, as a savings bar (a 20% down payment buys it through your airline) */
+function goalHTML(st){ const owned=new Set(((st.company&&st.company.fleet)||[]).map(f=>f.ac));
+  const L=Object.keys(AC).filter(k=>AC[k].price && canFly(st,k) && !owned.has(k)).sort((a,b)=>AC[a].price-AC[b].price);
+  const k=L.find(x=>AC[x].price*0.2>st.cash) || L.at(-1); if(!k) return '';
+  const down=Math.round(AC[k].price*0.2), pct=Math.min(100, Math.round(st.cash/down*100)), hasCo=!!st.company;
+  return `<section class="panel w-goal"><div class="section-title"><h2>Saving for</h2><span class="small muted">${hasCo?'Bought through your airline, 20% down':'Your own aircraft open up with your airline (the Company rating)'}</span></div>
+    <div class="row between" style="gap:16px;flex-wrap:wrap"><div><b style="font-size:20px">${esc(AC[k].n)}</b><p class="small muted" style="margin:2px 0 0">${money(AC[k].price)} · down payment ${money(down)}</p></div>
+    ${pct>=100&&hasCo?`<button class="btn primary" data-act="nav" data-v="company">Buy it</button>`:`<span class="mono">${pct}%</span>`}</div>
+    <div class="meter" style="margin-top:12px"><i style="width:${pct}%"></i></div>
+    ${pct<100?`<p class="small muted" style="margin:8px 0 0">${money(down-st.cash)} to go.</p>`:''}</section>`; }
 /* Money: property (home, safehouses, businesses), the loan, bribes */
 function moneyWorldHTML(){ const st=S.st, w=twW(), c=crime(st), L=loanNow();
   /* one Property list: where you live (rented), safehouses (bought in order, crime story only), and businesses */
@@ -301,7 +311,7 @@ function moneyWorldHTML(){ const st=S.st, w=twW(), c=crime(st), L=loanNow();
   const props=`<section class="panel w-props"><div class="section-title"><h2>Property</h2></div><table class="w-tab"><tbody>${home}${safe}${biz}</tbody></table></section>`;
   const loan = c.on ? `<section class="panel w-loan"><div class="section-title"><h2>Castillo's money</h2></div>${L?`<p>You owe <b class="mono">${money(L.owe)}</b> by day ${L.due} (${Math.max(0,L.due-st.day)} days).</p><button class="btn sm" data-act="w-repay" ${st.cash<L.owe?'disabled':''}>Pay him back</button>`:`<p class="muted">Castillo lends at 20% for two weeks. Late, and he sends someone.</p><div class="row" style="gap:8px;flex-wrap:wrap">${[10000,25000,50000].map(a=>`<button class="btn sm" data-act="w-loan" data-a="${a}">Borrow ${money(a)}</button>`).join('')}</div>`}</section>` : '';
   const here=st.loc; const br = c.on ? `<section class="panel w-bribe"><div class="section-title"><h2>Customs at ${esc(here)}</h2></div>${bribeActive(here)?`<p>Your man at ${esc(here)} is looking the other way until day ${w.bribes[here].until}.</p>`:`<p class="muted">For ${money(bribeCost(here))}, an officer here waves you through for a week, even when you're hot. Every time he does, the chance he gets caught goes up.</p><button class="btn sm" data-act="w-bribe" ${st.cash<bribeCost(here)?'disabled':''}>Pay him · ${money(bribeCost(here))}</button>`}</section>` : '';
-  return props+loan+br; }
+  return goalHTML(st)+props+loan+br; }
 
 /* Hangar: aircraft logbooks */
 function acHistHTML(){ const w=twW(); const ids=Object.keys(w.ac).filter(k=>AC[k]); if(!ids.length) return '';
@@ -350,3 +360,18 @@ document.addEventListener('change', e=>{ const i=e.target.closest('.w-nick'); if
 .w-props .w-pgroup th{text-align:left;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:16px 0 6px;border-bottom:1px solid var(--line)}.w-props .w-pgroup:first-child th{padding-top:0}.w-props select{max-width:100%}.w-props .w-pgroup th{width:100%;box-sizing:border-box}
 @media (max-width:700px){ .w-bar{width:70px} .w-tab{font-size:13px} .w-props .w-tab,.w-props .w-tab tbody,.w-props .w-tab tr,.w-props .w-tab td,.w-achist .w-tab,.w-achist .w-tab tbody,.w-achist .w-tab tr,.w-achist .w-tab td{display:block;width:auto} .w-achist thead{display:none} .w-props tr,.w-achist tr{border-top:1px solid var(--line);padding:10px 0} .w-props td,.w-achist td{border:0!important;padding:3px 0!important} .w-achist td[data-l]{display:inline-block;margin-right:14px} .w-achist td[data-l]::before{content:attr(data-l) ' ';color:var(--muted);font-family:var(--f-body)} .w-nick{width:100%!important} }
 `; document.head.appendChild(s); })();
+
+/* ===================== Heat with teeth: investigations =====================
+   At Heat 70+, each morning there's a chance investigators stake out the airport you use most for network runs.
+   For five days, network runs there disappear from the board and any run that lands there anyway is searched. */
+function invNow(st){ const w=(st||S.st).w||{}; return (w.inv && w.inv.until>=(st||S.st).day) ? w.inv : null; }
+function invRoll(st){ const c=crime(st); if(!c.on || invNow(st)) return; if((c.heat||0)<70 || Math.random()>0.3) return;
+  const n={}; (st.log||[]).slice(0,40).forEach(l=>{ if(l.net && l.to) n[l.to]=(n[l.to]||0)+1; });
+  const ap=Object.keys(n).sort((a,b)=>n[b]-n[a])[0] || st.loc; if(!AP[ap]) return;
+  const w=twW(); w.inv={ap, until:st.day+5, from:st.day};
+  phonePush({from:'dez', text:`stay away from ${AP[ap].isl||ap} for a few days. feds are sitting on the ramp. i mean it`}); }
+DAY_HOOKS.push(invRoll);
+GEN_JOB_STEPS.push(function invJobs(st, L){ if(!L) return; const v=invNow(st); if(!v) return L; return L.filter(j=>!(j.network && (j.to===v.ap || j.from===v.ap))); });
+AFTER_RENDER.push(function invBanner(){ if(S.view!=='board' || !S.st) return; const v=invNow(S.st); const main=document.querySelector('main'); if(!v || !main || main.querySelector('.w-inv')) return; const list=main.querySelector('.jlist'); if(!list) return;
+  const d=document.createElement('section'); d.className='panel w-inv'; d.style.borderLeft='3px solid var(--bad,#d0643a)';
+  d.innerHTML=`<p class="label">Investigation, until day ${v.until}</p><p>Federal agents are watching ${esc(AP[v.ap].n)} (${v.ap}). No network runs from there, and any run that lands there will be searched.</p>`; list.parentElement.insertBefore(d, list.previousElementSibling||list); });

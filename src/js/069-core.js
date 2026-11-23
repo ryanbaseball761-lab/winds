@@ -1,6 +1,6 @@
 /* ===================== FASTER TO THE BIG JETS: ratings follow the story ===================== */
 try{
-  RATINGS.JET.req = {after:['PPL'], hours:1};
+  RATINGS.JET.req = {after:['PPL'], hours:4};   /* about two side jobs for Mari after chapter 4, so the jet feels earned */
   RATINGS.JET.unlocks = `Business jets: the Vision Jet and the Citation CJ4. Castillo is paying.`;
   RATINGS.JET.tasks = [`Climb to FL250 or above`,`Descent planned early, arrival at the right speed`,`Approach at Vref ±5 kt and a landing in the touchdown zone`];
   RATINGS.ATP.req = {after:['JET'], hours:6};

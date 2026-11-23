@@ -16,7 +16,7 @@ function band(){
   const cur = navGroup(S.view); const isCur = g => !!(cur && cur.v===g.v);
   const ready = storyAvailable(st).filter(m=>MAIN_ORDER.includes(m.arc)).length;   // chapters you can play now
   const urgent = urgentBanner(); const unread=S.notifs.length-S.notifSeen;
-  const rankLine = c.on ? `${esc(crimeRank(c))} · Power ${c.power}` : `${esc(rk.name)}`;
+  const rankLine = c.on ? `${esc(crimeRank(c))}` : `${esc(rk.name)}`;   /* Power lives on the Story page; the header keeps only Heat */
   const tab = (g,i) => `<button class="cb-tab ${isCur(g)?'on':''}" data-act="nav" data-v="${g.v}" ${isCur(g)?'aria-current="page"':''} title="${g.n} (${i+1})"><span>${g.n}</span>${g.v==='story'&&ready?`<i class="cb-nb" title="${ready} chapter${ready>1?'s':''} ready to play">${ready}</i>`:''}</button>`;
   const ro = (k,v,cls='') => `<span class="cb-ro ${cls}"><small>${k}</small><b class="mono">${v}</b></span>`;
   const a=st.active;
