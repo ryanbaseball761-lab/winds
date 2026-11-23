@@ -110,6 +110,21 @@ ipcMain.handle('storms', async () => { try{ const { net } = require('electron');
 /* phone companion on the local network */
 let companionState = '{}'; let mainWin = null;
 ipcMain.on('companion-state', (_e, json) => { companionState = json; });
+/* the mini window: the in-sim panel page in a small always-on-top window over MSFS, so story moments, orders
+   and the checklist never need an alt-tab. Remembers where you put it. */
+let miniWin = null;
+function miniCfg(){ try{ return JSON.parse(fs.readFileSync(path.join(app.getPath('userData'),'mini.json'),'utf8')); }catch(e){ return {}; } }
+ipcMain.handle('mini', (_e, on) => {
+  if(!on){ if(miniWin && !miniWin.isDestroyed()) miniWin.close(); return false; }
+  if(miniWin && !miniWin.isDestroyed()){ miniWin.show(); miniWin.focus(); return true; }
+  const c = miniCfg();
+  miniWin = new BrowserWindow({ width:c.w||380, height:c.h||620, x:c.x, y:c.y, minWidth:300, minHeight:360, alwaysOnTop:true, title:'Trade Winds', backgroundColor:'#08171c', autoHideMenuBar:true, icon:path.join(__dirname,'build','icon.png'), webPreferences:{ contextIsolation:true, nodeIntegration:false } });
+  miniWin.setAlwaysOnTop(true, 'screen-saver'); miniWin.setVisibleOnAllWorkspaces(true);
+  miniWin.loadURL('http://127.0.0.1:4747/panel');
+  const keep = () => { try{ const b=miniWin.getBounds(); fs.writeFileSync(path.join(app.getPath('userData'),'mini.json'), JSON.stringify({x:b.x,y:b.y,w:b.width,h:b.height})); }catch(e){} };
+  miniWin.on('moved', keep); miniWin.on('resized', keep);
+  miniWin.on('closed', () => { miniWin = null; try{ if(mainWin && !mainWin.isDestroyed()) mainWin.webContents.send('mini-closed'); }catch(e){} });
+  return true; });
 function lanIp(){ const nets=require('os').networkInterfaces(); for(const k of Object.keys(nets)) for(const n of nets[k]||[]) if(n.family==='IPv4' && !n.internal && !/^169\.254/.test(n.address)) return n.address; return null; }
 function startCompanion(){
   const http=require('http'); const page=fs.readFileSync(path.join(__dirname,'companion.html')); let panelPage=''; try{ panelPage=fs.readFileSync(path.join(__dirname,'panel.html')); }catch(e){}

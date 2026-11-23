@@ -23,5 +23,7 @@ contextBridge.exposeInMainWorld('twNative', {
   ttsKeyHas: () => ipcRenderer.invoke('tts-key-has'),
   onGameUpdated: (fn) => ipcRenderer.on('game-updated', (_e,v) => fn(v)),
   restartGame: () => ipcRenderer.invoke('restart-game'),
+  mini: (on) => ipcRenderer.invoke('mini', !!on),
+  onMiniClosed: (fn) => ipcRenderer.on('mini-closed', () => fn()),
   standalone: true
 });

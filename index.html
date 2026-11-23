@@ -9574,6 +9574,18 @@ function liveScoreHTML(a){ return `<section class="panel live-score"><div class=
 AFTER_RENDER.push(function liveScoreCard(){ if(S.view!=='flight' || !S.st) return; const a=S.st.active, main=document.querySelector('main'); if(!a || !a.started || !main || main.querySelector('.live-score')) return; const anchor=main.querySelector('.guide-card, .pass, section'); if(anchor) anchor.insertAdjacentHTML('afterend', liveScoreHTML(a)); });
 SIM_TICK.push(function liveScoreTick(){ const a=S.st&&S.st.active, el=document.querySelector('.live-score'); if(!a||!el) return; const now=Date.now(); if(now-(a._lsT||0)<3000) return; a._lsT=now; el.outerHTML=liveScoreHTML(a); });
 (function(){ const c=document.createElement('style'); c.textContent='.ls-list{list-style:none;margin:0;padding:0}.ls-list li{display:grid;grid-template-columns:150px 1fr;gap:12px;padding:8px 0;border-top:1px solid var(--line)}.ls-list li:first-child{border-top:0}.ls-list li b{font-weight:600}.ls-list li.ok b::before{content:"✓ ";color:var(--good,#6fbf73)}.ls-list li.bad b::before{content:"✗ ";color:var(--bad,#d0643a)}.ls-list li span{color:var(--muted)}'; document.head.appendChild(c); })();
+
+/* ===================== the mini window (desktop app) =====================
+   A button on the Flight page opens a small always-on-top window over MSFS with the story moments, orders and
+   checklist, so you answer without alt-tabbing. It opens by itself when a flight starts if you've used it before. */
+function miniAvail(){ return !!(window.twNative && twNative.mini); }
+function miniOpen(on){ if(!miniAvail()) return; twNative.mini(on); S._miniOn=!!on; const u=S.st.ui=S.st.ui||{}; u.mini=!!on; save(); }
+if(window.twNative && twNative.onMiniClosed) twNative.onMiniClosed(()=>{ S._miniOn=false; });
+AFTER_RENDER.push(function miniButton(){ if(!miniAvail() || S.view!=='flight' || !S.st || !S.st.active) return; const main=document.querySelector('main'); if(!main || main.querySelector('.mini-btn')) return;
+  const bar=main.querySelector('.guide-card, .live-score, .pass, section'); if(!bar) return;
+  bar.insertAdjacentHTML('beforebegin', `<div class="row mini-row" style="justify-content:flex-end;margin-bottom:8px"><button class="btn sm mini-btn" data-act="mini-toggle" title="A small window that stays on top of MSFS: story moments, orders and the checklist">${S._miniOn?'Close the mini window':'Open the mini window over MSFS'}</button></div>`); });
+document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="mini-toggle"]')||!S.st) return; miniOpen(!S._miniOn); S.keepScroll=true; render(); });
+SIM_TICK.push(function miniAuto(){ const a=S.st&&S.st.active; if(!miniAvail() || !a || !a.started || a._miniTried) return; a._miniTried=1; if(S.st.ui&&S.st.ui.mini && !S._miniOn) miniOpen(true); });
 /* ===================== THE INTERFACE, ROUND 3 (0.69) =====================
    - Dispatch: before you start a flight, the paperwork. Weights, fuel, NOTAMs (some of them hints) and the fuel slip.
    - Sound: phone buzz, the result stamp, paper and switches. Optional ramp ambience.
