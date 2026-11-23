@@ -189,7 +189,7 @@ PHONE_POOL.push({id:'ng1', from:'reyes', need:['CR11'], crime:true, gate:()=>!!(
    Once you work for Castillo (after chapter 4), each of his chapters is due three days after it opens.
    Late costs Power and gets you a text. The story page shows the date. */
 function chDue(st, m){ const c=crime(st); if(!c.on || !st.story.done.CR4 || !CRIME_IDS.has(m.id) || st.story.done[m.id] || m.id==='CR17') return null;
-  c.due=c.due||{}; if(c.due[m.id]==null){ const avail=storyAvailable(st).some(x=>x.id===m.id); if(!avail) return null; c.due[m.id]=st.day+3; save(); } return c.due[m.id]; }
+  c.due=c.due||{}; if(c.due[m.id]==null){ const k=chapterStatus(st,m).k; if(k!=='ready' && k!=='travel') return null; c.due[m.id]=st.day+3; save(); } return c.due[m.id]; }   /* the clock starts only once you can actually fly it */
 DAY_HOOKS.push(function lateChapters(st){ const c=crime(st); if(!c.on || !c.due) return; c.late=c.late||{};
   for(const id in c.due){ if(!st.story.done[id] && !c.late[id] && st.day>c.due[id]){ c.late[id]=1; crBump(c,'power',-4); const m=CRIME.find(x=>x.id===id);
     phonePush({from:'castillo', text:`I asked for "${m?m.title:'it'}" by day ${c.due[id]}. I don't like asking twice.`}); } } });
