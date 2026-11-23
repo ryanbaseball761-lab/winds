@@ -151,7 +151,7 @@ function playAftermath(){
   if(m.choice && c.choice[m.id]==null && !L.res.crash){
     const opts=m.choice.opts.map(o=>({t:o.t, why: (m.id==='CR17' && o.ending && typeof ENDING_REQ!=='undefined') ? ENDING_REQ[o.ending](c) : null}));
     shots.push({choice:true, q:m.choice.q, opts, pick:i=>{ const btn=document.createElement('button'); btn.dataset.act='crime-choose'; btn.dataset.i=i; btn.style.display='none'; document.body.appendChild(btn); btn.click(); btn.remove();
-      const o=m.choice.opts[i]; const after=splitOut(o.out).map(t=>[here, null, t]); const fx=fxSub(o); if(fx) after.push({card:true, kicker:'Your choice', title:o.t, sub:`<p>${esc(fx)}</p>`, auto:2200}); return after.concat(nextCard()); }});
+      const o=m.choice.opts[i]; const after=splitOut(o.out).map(t=>[here, null, t]); const fx=fxSub(o); const rs=(typeof reactShot==='function')?reactShot(m,i,null):null; if(rs) after.push(rs); if(fx) after.push({card:true, kicker:'Your choice', title:o.t, sub:`<p class="small">${esc(fx)}</p>`, auto:1600}); return after.concat(nextCard()); }});
   } else nextCard().forEach(s=>shots.push(s));
   cutscene({shots, col:act.col, art:(()=>{ const arr=Math.min(1439,(job.dep||600)+(job.est||60)); return (arr>=420 && arr<=1110) ? dayRampArt(job.ac, arr) : paintedArt([], 'cockpit', job.to, arr, job.ac); })(), onEnd:()=>{ S.keepScroll=false; render(); }});
 }
@@ -188,3 +188,6 @@ function nightRampArt(acId, blue){ const jumbo = acId==='B748';
   <rect width="1600" height="900" fill="url(#nr3)"/>
   <g stroke="#9fb2c8" stroke-opacity=".22" stroke-width="2">${rain}</g></svg>`; }
 (function(){ const c=document.createElement('style'); c.textContent='.cut-bg:has(.nightramp){filter:brightness(.95) saturate(.9)}'; document.head.appendChild(c); })();
+/* the old ramp painting (a jet that read as a bomber) is retired: every ramp scene is the drawn one, with the plane you're flying */
+(function(){ if(typeof SCENES==='undefined') return; SCENES.ramp=()=>{ const st=S.st, j=st&&((st.active&&st.active.job)||(st.last&&st.last.job)); const ac=(j&&j.ac)||'CJ4'; const t=j?Math.min(1439,(j.dep||600)+(j.est||0)):1200;
+  return (t>=420 && t<=1110 && typeof dayRampArt==='function') ? dayRampArt(ac,t) : nightRampArt(ac); }; })();

@@ -197,3 +197,27 @@ AFTER_RENDER.push(function dueChip(){ if(S.view!=='story' || !S.st) return; cons
   const MC=mainChapters(); const next=MC.find(m=>!S.st.story.done[m.id]); if(!next) return; const due=chDue(S.st,next); if(due==null) return;
   const h=main.querySelector('h1, .sh-title, h2'); if(!h) return; const left=due-S.st.day;
   h.insertAdjacentHTML('afterend', `<p class="ch-due small" style="margin:6px 0 0;color:${left<=0?'var(--bad,#d0643a)':'var(--amb)'}">${left<0?`Late: Castillo wanted this by day ${due}`:left===0?`Castillo expects this today`:`Castillo expects this by day ${due} (${left} day${left>1?'s':''})`}</p>`); });
+
+/* ===================== a reaction after every choice =====================
+   Instead of a stats card, someone answers you: one line, with their face. The numbers stay small underneath. */
+const REACT = {
+  CR2:  [['dez',`Good. You didn't count it, right? Right.`],['dez',`Broker says the count was light. I told him you're new. Don't make me say it twice.`],['dez',`Next time just fly. Phones are for people who want to get caught.`]],
+  CR4:  [['castillo',`Spend some of it. A pilot who looks poor makes people nervous.`],['castillo',`Five percent. Earn it, and we'll talk about ten.`],['castillo',`You'll come back for it. Everyone does.`]],
+  CR6:  [['dez',`You did the right thing. That's what scares me.`],['castillo',`Clean. Quiet. Thank you.`],['mari',`Why is there blood on your flight bag? No. Don't answer that.`]],
+  CR9:  [['reyes',`Smart. Now act normal. Normal is the hardest part.`],['reyes',`Lawyers are expensive. So is prison. Think about the rate.`],['castillo',`I won't forget this. Neither will she.`]],
+  CRM:  [['medina',`Loyal. How old-fashioned.`],['medina',`Two doors. Just remember which one locks.`]],
+  CR11: [['castillo',`My driver says Tico ran fast. For a man with a limp.`],['castillo',`Loyalty. It's the only currency I trust.`],['castillo',`Jumped at the fuel stop. Of course he did.`]],
+  CR12: [['dez',`I'll pay you back. Every cent. Maybe not in cash.`],['dez',`Tell Mari I'm sorry. Not you. Her.`]],
+  CR13: [['mari',`Partners. God help us both.`],['mari',`Look after the Cessna. It deserves better than you.`],['mari',`Two sets of books. I'll need a bigger desk.`]],
+  CR14: [['castillo',`Leverage. You're learning.`],['reyes',`This is enough to start. Not enough to finish.`]],
+  CR15: [['castillo',`Seventy is generous. I'm in a generous mood.`],['castillo',`Yours. Say that again. Slowly.`],['castillo',`They'll learn fast. They always do.`]],
+  CRB:  [['castillo',`Then we'll see whose people are better.`],['castillo',`Good. We'll both pretend.`]],
+  CRT:  [['medina',`Partners, then. Don't make me regret it.`],['reyes',`Medina's routes. You just made a very dangerous friend. Me.`]],
+};
+function reactShot(m, i, fx){ const r=(REACT[m.id]||[])[i]; if(!r || !CAST[r[0]]) return null; return [CAST[r[0]].n, r[0], r[1]+(fx?`\n${fx}`:'')]; }
+
+/* recap lines ("Previously on") for the third options */
+(function(){ if(typeof CHOICE_RECAP==='undefined') return; const put=(id,t)=>{ CHOICE_RECAP[id]=CHOICE_RECAP[id]||[]; CHOICE_RECAP[id][2]=t; };
+  put('CR2',`You called Dez before handing it over.`); put('CR4',`You turned Castillo's envelope down.`); put('CR6',`You drove the injured men to the clinic yourself.`);
+  put('CR9',`You lied to Reyes and warned Castillo.`); put('CR11',`You hid Tico on Cayman Brac and lied to Castillo.`); put('CR13',`Mari runs the books now, not the flying.`);
+  put('CR15',`You split it 50/50 and took on three of Castillo's pilots.`); })();

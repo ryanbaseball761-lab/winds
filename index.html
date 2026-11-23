@@ -3659,13 +3659,15 @@ function islandArt(code, min, w=600, h=140, plane=null){
     <g stroke="#fff" stroke-opacity=".25">${Array.from({length:4},(_,i)=>`<line x1="${(w*0.1+i*40).toFixed(0)}" x2="${(w*0.1+i*40+60).toFixed(0)}" y1="${(base+10+i*7).toFixed(0)}" y2="${(base+10+i*7).toFixed(0)}"/>`).join('')}</g></svg>`;
 }
 /* side-view silhouettes, 120 x 40 */
+/* aircraft side profiles, nose left, in a 120×40 box: real gear legs, props, wings where they sit (redrawn in 0.87) */
+const SIL_GEAR=(nx,mx)=>`<path d="M${nx} 27 L${nx} 33" stroke="currentColor" stroke-width="1.6"/><circle cx="${nx}" cy="34" r="2.4"/><path d="M${mx+4} 26 L${mx} 33" stroke="currentColor" stroke-width="2"/><circle cx="${mx}" cy="34" r="3"/>`;
 const SIL = {
-  high:`<path d="M8 24 Q10 18 22 18 L78 17 Q92 17 100 21 L104 24 Q92 28 70 28 L22 28 Q12 28 8 24Z"/><path d="M30 15 L84 14 L84 16 L30 17Z"/><path d="M42 16 L48 26 L50 26 L46 16Z"/><path d="M96 20 L108 8 L112 8 L106 22Z"/><path d="M92 22 L114 21 L114 23 L92 24Z"/><rect x="4" y="16" width="2" height="16" rx="1"/><circle cx="34" cy="31" r="2.6"/><circle cx="60" cy="31" r="2.6"/><path d="M34 28 L34 31 M60 28 L60 31" stroke="currentColor" stroke-width="1.4"/>`,
-  low:`<path d="M8 23 Q10 17 24 17 L78 17 Q92 17 100 21 L104 23 Q92 27 70 27 L22 27 Q12 27 8 23Z"/><path d="M28 24 L86 24 L86 27 L28 27Z"/><path d="M34 16 Q40 11 52 12 L60 17Z" opacity=".55"/><path d="M96 20 L108 8 L112 8 L106 22Z"/><path d="M92 21 L114 20 L114 22 L92 23Z"/><rect x="4" y="15" width="2" height="16" rx="1"/><circle cx="36" cy="31" r="2.6"/><circle cx="62" cy="31" r="2.6"/>`,
-  twin:`<path d="M10 22 Q12 16 26 16 L82 16 Q94 16 102 20 L106 22 Q94 26 72 26 L24 26 Q14 26 10 22Z"/><path d="M30 23 L84 23 L84 26 L30 26Z"/><path d="M36 20 Q38 18 52 18 L56 22 L52 25 L38 25Z"/><path d="M98 19 L110 6 L114 6 L108 21Z"/><path d="M94 20 L116 19 L116 21 L94 22Z"/><rect x="34" y="15" width="2" height="14" rx="1"/><circle cx="40" cy="31" r="2.6"/><circle cx="64" cy="31" r="2.6"/>`,
-  jet:`<path d="M4 23 Q6 17 20 17 L84 17 Q98 17 104 21 L106 23 Q96 27 78 27 L20 27 Q8 27 4 23Z"/><path d="M40 24 L76 24 L80 27 L40 27Z"/><path d="M78 14 L96 14 Q100 17 96 20 L78 20Z"/><path d="M98 20 L104 4 L108 4 L106 21Z"/><path d="M98 5 L116 4 L116 6 L100 7Z"/><path d="M10 18 Q14 14 22 15 L24 18Z" opacity=".5"/><circle cx="18" cy="31" r="2.2"/><circle cx="62" cy="31" r="2.6"/>`,
-  airliner:`<path d="M2 22 Q4 16 18 16 L96 16 Q106 16 110 20 L112 22 Q104 26 90 26 L18 26 Q6 26 2 22Z"/><path d="M38 23 L82 23 L88 28 L44 28Z"/><path d="M48 27 Q50 25 60 25 L62 31 L50 31Z"/><path d="M104 19 L112 2 L117 2 L114 21Z"/><path d="M102 20 L118 19 L118 21 L102 22Z"/><circle cx="16" cy="31" r="2"/><circle cx="64" cy="33" r="2.4"/><g opacity=".55">${Array.from({length:12},(_,i)=>`<rect x="${20+i*6}" y="18" width="2.6" height="2.6" rx="1"/>`).join('')}</g>`,
-  float:`<path d="M10 20 Q12 14 24 14 L78 13 Q92 13 100 17 L104 20 Q92 24 70 24 L24 24 Q14 24 10 20Z"/><path d="M30 11 L84 10 L84 12 L30 13Z"/><path d="M96 16 L108 4 L112 4 L106 18Z"/><path d="M92 18 L114 17 L114 19 L92 20Z"/><path d="M24 31 Q20 31 18 29 L86 29 L82 33 L26 33Z"/><path d="M34 24 L36 29 M70 24 L72 29" stroke="currentColor" stroke-width="1.6"/><rect x="6" y="12" width="2" height="16" rx="1"/>`
+  high:`<path d="M9 21 C9 18.5 11 17 15 17 L30 17 L36 11.5 L61 11.5 C66 11.5 70 14 76 16 L102 18.5 L106 21 L101 23.5 L72 25.5 L42 27.5 L20 27.5 C13 27.5 9 25.5 9 21 Z"/><path d="M28 9.5 L74 9.5 L74 12 L28 12 Z"/><path d="M54 12 L45 26" stroke="currentColor" stroke-width="1.3"/><path d="M90 17.5 L101 5 L107 5 L106 19.5 Z"/><path d="M95 19.5 L117 19 L117 21.5 L96 22 Z"/><rect x="5.5" y="12" width="2" height="19" rx="1"/><circle cx="8.5" cy="21.5" r="2"/>${SIL_GEAR(15,46)}`,
+  low:`<path d="M9 21 C9 18.5 11 17 15 17 L32 17 C36 12 42 11 50 11 C56 11 60 13 64 16 L102 18.5 L106 21 L101 23.5 L72 25.5 L42 27 L20 27 C13 27 9 25.5 9 21 Z"/><path d="M27 24 L74 23.5 L72 27 L29 27.5 Z"/><path d="M90 17.5 L101 5 L107 5 L106 19.5 Z"/><path d="M95 19.5 L117 19 L117 21.5 L96 22 Z"/><rect x="5.5" y="12" width="2" height="19" rx="1"/><circle cx="8.5" cy="21.5" r="2"/>${SIL_GEAR(15,44)}`,
+  twin:`<path d="M6 21 C6 18 9 16.5 14 16.5 L28 16.5 L33 12 L64 12 C70 12 74 14 80 16 L104 18.5 L108 21 L103 23.5 L74 25.5 L42 27 L18 27 C10 27 6 25 6 21 Z"/><path d="M30 24 L76 23.5 L74 27 L32 27.5 Z"/><path d="M36 21 C36 19 38 18 42 18 L58 18 L60 22.5 L58 25 L42 25 C38 25 36 23.5 36 21 Z"/><rect x="33.5" y="13" width="2" height="17" rx="1"/><path d="M92 17.5 L103 4 L109 4 L108 19.5 Z"/><path d="M97 19.5 L118 19 L118 21.5 L98 22 Z"/>${SIL_GEAR(13,50)}`,
+  jet:`<path d="M3 22 C3 19 7 17 14 16.5 L22 13.5 L30 12.5 L84 13 C92 13.5 98 16 104 19 L106 21.5 L100 24 L84 25.5 L40 26.5 L16 26.5 C8 26.5 3 25 3 22 Z"/><path d="M40 23.5 L74 23 L80 27.5 L44 27.5 Z"/><path d="M74 13.5 C74 11.5 76 10.5 80 10.5 L94 10.5 C97 10.5 98 12 98 13.5 C98 15 97 16.5 94 16.5 L80 16.5 C76 16.5 74 15.5 74 13.5 Z"/><path d="M80 16 L84 13" stroke="currentColor" stroke-width="1.6"/><path d="M96 18 L101 3.5 L106 3.5 L105 19 Z"/><path d="M95 4 L117 3 L117 5.5 L97 6.5 Z"/>${SIL_GEAR(14,58)}`,
+  airliner:`<path d="M2 21 C2 17.5 6 15.5 13 15 L20 13 L100 13 C106 13 110 15.5 113 18.5 L114 21 L108 23.5 L90 25.5 L18 26 C8 26 2 24.5 2 21 Z"/><path d="M38 23 L80 22.5 L90 28.5 L46 28.5 Z"/><path d="M46 27 C46 25.5 48 25 52 25 L64 25 L66 27.5 L64 30.5 L52 30.5 C48 30.5 46 29 46 27 Z"/><path d="M100 14 L110 1 L117 1 L115 18 Z"/><path d="M102 17.5 L119 16.5 L119 19 L104 20.5 Z"/>${SIL_GEAR(13,64)}`,
+  float:`<path d="M9 19 C9 16.5 11 15 15 15 L30 15 L36 9.5 L61 9.5 C66 9.5 70 12 76 14 L102 16.5 L106 19 L101 21.5 L72 23.5 L42 25 L20 25 C13 25 9 23.5 9 19 Z"/><path d="M28 7.5 L74 7.5 L74 10 L28 10 Z"/><path d="M90 15.5 L101 3 L107 3 L106 17.5 Z"/><path d="M95 17.5 L117 17 L117 19.5 L96 20 Z"/><rect x="5.5" y="10" width="2" height="19" rx="1"/><path d="M14 31 C14 29.5 16 29 20 29 L84 29 L90 31.5 L84 34 L20 34 C16 34 14 32.5 14 31 Z"/><path d="M28 25 L30 29 M64 24 L66 29" stroke="currentColor" stroke-width="1.8"/>`
 };
 function silType(acId){ const a=AC[acId]; if(!a) return 'high';
   if(['airliner','regional','widebody'].includes(a.cls)) return 'airliner'; if(a.cls==='jet') return 'jet'; if(a.cls==='amph' || acId==='GOOSE') return 'float';
@@ -8742,7 +8744,7 @@ function playAftermath(){
   if(m.choice && c.choice[m.id]==null && !L.res.crash){
     const opts=m.choice.opts.map(o=>({t:o.t, why: (m.id==='CR17' && o.ending && typeof ENDING_REQ!=='undefined') ? ENDING_REQ[o.ending](c) : null}));
     shots.push({choice:true, q:m.choice.q, opts, pick:i=>{ const btn=document.createElement('button'); btn.dataset.act='crime-choose'; btn.dataset.i=i; btn.style.display='none'; document.body.appendChild(btn); btn.click(); btn.remove();
-      const o=m.choice.opts[i]; const after=splitOut(o.out).map(t=>[here, null, t]); const fx=fxSub(o); if(fx) after.push({card:true, kicker:'Your choice', title:o.t, sub:`<p>${esc(fx)}</p>`, auto:2200}); return after.concat(nextCard()); }});
+      const o=m.choice.opts[i]; const after=splitOut(o.out).map(t=>[here, null, t]); const fx=fxSub(o); const rs=(typeof reactShot==='function')?reactShot(m,i,null):null; if(rs) after.push(rs); if(fx) after.push({card:true, kicker:'Your choice', title:o.t, sub:`<p class="small">${esc(fx)}</p>`, auto:1600}); return after.concat(nextCard()); }});
   } else nextCard().forEach(s=>shots.push(s));
   cutscene({shots, col:act.col, art:(()=>{ const arr=Math.min(1439,(job.dep||600)+(job.est||60)); return (arr>=420 && arr<=1110) ? dayRampArt(job.ac, arr) : paintedArt([], 'cockpit', job.to, arr, job.ac); })(), onEnd:()=>{ S.keepScroll=false; render(); }});
 }
@@ -8779,6 +8781,9 @@ function nightRampArt(acId, blue){ const jumbo = acId==='B748';
   <rect width="1600" height="900" fill="url(#nr3)"/>
   <g stroke="#9fb2c8" stroke-opacity=".22" stroke-width="2">${rain}</g></svg>`; }
 (function(){ const c=document.createElement('style'); c.textContent='.cut-bg:has(.nightramp){filter:brightness(.95) saturate(.9)}'; document.head.appendChild(c); })();
+/* the old ramp painting (a jet that read as a bomber) is retired: every ramp scene is the drawn one, with the plane you're flying */
+(function(){ if(typeof SCENES==='undefined') return; SCENES.ramp=()=>{ const st=S.st, j=st&&((st.active&&st.active.job)||(st.last&&st.last.job)); const ac=(j&&j.ac)||'CJ4'; const t=j?Math.min(1439,(j.dep||600)+(j.est||0)):1200;
+  return (t>=420 && t<=1110 && typeof dayRampArt==='function') ? dayRampArt(ac,t) : nightRampArt(ac); }; })();
 /* ===================== SMALL UI PIECES =====================
    Pop-up messages (toast) and the search bar's list of things you can jump to (cmdItems). */
 
@@ -9857,6 +9862,30 @@ AFTER_RENDER.push(function dueChip(){ if(S.view!=='story' || !S.st) return; cons
   const MC=mainChapters(); const next=MC.find(m=>!S.st.story.done[m.id]); if(!next) return; const due=chDue(S.st,next); if(due==null) return;
   const h=main.querySelector('h1, .sh-title, h2'); if(!h) return; const left=due-S.st.day;
   h.insertAdjacentHTML('afterend', `<p class="ch-due small" style="margin:6px 0 0;color:${left<=0?'var(--bad,#d0643a)':'var(--amb)'}">${left<0?`Late: Castillo wanted this by day ${due}`:left===0?`Castillo expects this today`:`Castillo expects this by day ${due} (${left} day${left>1?'s':''})`}</p>`); });
+
+/* ===================== a reaction after every choice =====================
+   Instead of a stats card, someone answers you: one line, with their face. The numbers stay small underneath. */
+const REACT = {
+  CR2:  [['dez',`Good. You didn't count it, right? Right.`],['dez',`Broker says the count was light. I told him you're new. Don't make me say it twice.`],['dez',`Next time just fly. Phones are for people who want to get caught.`]],
+  CR4:  [['castillo',`Spend some of it. A pilot who looks poor makes people nervous.`],['castillo',`Five percent. Earn it, and we'll talk about ten.`],['castillo',`You'll come back for it. Everyone does.`]],
+  CR6:  [['dez',`You did the right thing. That's what scares me.`],['castillo',`Clean. Quiet. Thank you.`],['mari',`Why is there blood on your flight bag? No. Don't answer that.`]],
+  CR9:  [['reyes',`Smart. Now act normal. Normal is the hardest part.`],['reyes',`Lawyers are expensive. So is prison. Think about the rate.`],['castillo',`I won't forget this. Neither will she.`]],
+  CRM:  [['medina',`Loyal. How old-fashioned.`],['medina',`Two doors. Just remember which one locks.`]],
+  CR11: [['castillo',`My driver says Tico ran fast. For a man with a limp.`],['castillo',`Loyalty. It's the only currency I trust.`],['castillo',`Jumped at the fuel stop. Of course he did.`]],
+  CR12: [['dez',`I'll pay you back. Every cent. Maybe not in cash.`],['dez',`Tell Mari I'm sorry. Not you. Her.`]],
+  CR13: [['mari',`Partners. God help us both.`],['mari',`Look after the Cessna. It deserves better than you.`],['mari',`Two sets of books. I'll need a bigger desk.`]],
+  CR14: [['castillo',`Leverage. You're learning.`],['reyes',`This is enough to start. Not enough to finish.`]],
+  CR15: [['castillo',`Seventy is generous. I'm in a generous mood.`],['castillo',`Yours. Say that again. Slowly.`],['castillo',`They'll learn fast. They always do.`]],
+  CRB:  [['castillo',`Then we'll see whose people are better.`],['castillo',`Good. We'll both pretend.`]],
+  CRT:  [['medina',`Partners, then. Don't make me regret it.`],['reyes',`Medina's routes. You just made a very dangerous friend. Me.`]],
+};
+function reactShot(m, i, fx){ const r=(REACT[m.id]||[])[i]; if(!r || !CAST[r[0]]) return null; return [CAST[r[0]].n, r[0], r[1]+(fx?`\n${fx}`:'')]; }
+
+/* recap lines ("Previously on") for the third options */
+(function(){ if(typeof CHOICE_RECAP==='undefined') return; const put=(id,t)=>{ CHOICE_RECAP[id]=CHOICE_RECAP[id]||[]; CHOICE_RECAP[id][2]=t; };
+  put('CR2',`You called Dez before handing it over.`); put('CR4',`You turned Castillo's envelope down.`); put('CR6',`You drove the injured men to the clinic yourself.`);
+  put('CR9',`You lied to Reyes and warned Castillo.`); put('CR11',`You hid Tico on Cayman Brac and lied to Castillo.`); put('CR13',`Mari runs the books now, not the flying.`);
+  put('CR15',`You split it 50/50 and took on three of Castillo's pilots.`); })();
 /* ===================== REPLAY, SHARING AND RELEASE (0.71) =====================
    - Butter Cup share codes: every best landing makes a short code. Paste a friend's code and they show up on your board.
    - Secret achievements: hidden until you earn them.
