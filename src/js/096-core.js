@@ -16,7 +16,7 @@ const MUSIC = { cur:null, timer:null, nodes:[], bus:null, rev:null,
     act:{bpm:60, bars:[[45,[57,60,64,69]]], mel:null, sting:true}
   },
   play(name){ const c=this.ctx(); if(!c) return; if(this.cur===name) return; this.stop(true); this.cur=name; const T=this.TRACKS[name]; const beat=60/T.bpm, bar=beat*4; let barI=0; let next=c.currentTime+0.1;
-    this.bus.gain.cancelScheduledValues(c.currentTime); this.bus.gain.setValueAtTime(this.bus.gain.value,c.currentTime); this.bus.gain.linearRampToValueAtTime(name==='tension'?0.5:0.8, c.currentTime+2);
+    this.bus.gain.cancelScheduledValues(c.currentTime); this.bus.gain.setValueAtTime(this.bus.gain.value,c.currentTime); this.bus.gain.linearRampToValueAtTime(name==='hangar'?0.3:name==='tension'?0.5:0.75, c.currentTime+2);
     const sched=()=>{ while(next < c.currentTime+bar*1.2){ const [bass,ch]=T.bars[barI%T.bars.length];
         this.voice(c,{f:N(bass-12),t:next,d:bar,type:'sawtooth',g:0.05,lp:220,att:0.3,rel:0.8});
         ch.forEach(n=>this.voice(c,{f:N(n),t:next,d:bar,type:'triangle',g:0.018,att:1.2,rel:1.4,lp:1800,dry:0.4}));
@@ -62,3 +62,20 @@ Object.keys(SCENES).forEach(k=>{ const f=SCENES[k]; SCENES[k]=()=>ART.scenes[k] 
 .art-scene{width:100%;height:100%;background-size:cover;background-position:center}
 /* portraits: a consistent noir treatment for the drawn ones */
 .avatar:not(.art-av) svg{filter:saturate(.75) contrast(1.08)}.avatar{box-shadow:0 0 0 2px rgba(0,0,0,.5),0 0 0 3px rgba(200,150,42,.25)}`; document.head.appendChild(s); })();
+
+/* ===================== a theme for each act, and quiet music between flights =====================
+   Cutscenes play their act's theme instead of one generic loop. Between flights a soft "hangar" bed plays,
+   and it goes quiet by itself once MSFS is connected or a flight starts, so it never fights the sim. */
+Object.assign(MUSIC.TRACKS, {
+  act1:{bpm:82, bars:[[50,[62,66,69]],[47,[62,66,71]],[43,[62,67,71]],[45,[61,64,69]]], mel:[74,null,76,78,null,76,74,null, 71,null,74,null,76,null,null,null, 74,null,71,69,null,67,null,null, 69,null,71,73,null,null,null,null], hats:true},
+  act2:{bpm:90, bars:[[40,[55,59,64]],[36,[55,60,64]],[43,[55,59,62]],[38,[54,57,62]]], mel:[71,null,null,74,null,71,null,69, 67,null,null,null,64,null,67,null, 71,null,null,74,null,76,null,74, 71,null,69,null,67,null,null,null], hats:true, pulse:true},
+  act3:{bpm:66, bars:[[48,[60,63,67]],[44,[60,63,68]],[46,[58,62,65]],[43,[59,62,67]]], mel:[72,null,null,null,75,null,74,null, 72,null,null,null,null,null,null,null, 70,null,null,72,null,68,null,null, 67,null,null,null,null,null,null,null], pulse:true},
+  act4:{bpm:62, bars:[[41,[53,56,60]],[41,[53,56,61]],[39,[51,55,58]],[43,[55,58,62]]], mel:null, pulse:true},
+  act5:{bpm:72, bars:[[45,[57,60,64]],[41,[57,60,65]],[38,[57,62,65]],[40,[56,59,64]]], mel:[76,null,null,null,null,null,77,76, 74,null,null,null,72,null,null,null, 69,null,null,null,null,null,71,72, 71,null,null,null,68,null,null,null], pulse:true},
+  hangar:{bpm:56, bars:[[45,[60,64,67,71]],[41,[60,64,69,72]],[43,[59,62,67,71]],[40,[59,64,67,71]]], mel:[null,null,76,null,null,null,null,null, null,null,null,null,74,null,null,null, null,null,72,null,null,null,71,null, null,null,null,null,null,null,null,null]}
+});
+function actTheme(){ const st=S.st; if(!st) return 'tension'; const MC=mainChapters(); const j=(st.active&&st.active.job)||(st.last&&st.last.job); let m=j&&j.story?MC.find(x=>x.id===j.story):null; if(!m) m=MC.find(x=>!st.story.done[x.id]); if(!m) return 'act5';
+  const i=CRIME_ACTS.findIndex(a=>a.arc===m.arc); return i>=0?`act${i+1}`:'act1'; }
+function menuMusicOK(){ const st=S.st; if(!st || document.querySelector('.title-screen,.cut')) return false; if(uiP().menuMusic===false) return false; if(S.simState==='live') return false; if(st.active&&st.active.started) return false; return true; }
+AFTER_RENDER.push(function menuMusic(){ try{ if(menuMusicOK()){ if(MUSIC.cur!=='hangar' && !MUSIC.cur) MUSIC.play('hangar'); } else if(MUSIC.cur==='hangar') MUSIC.stop(); }catch(_){} });
+setInterval(()=>{ try{ if(MUSIC.cur==='hangar' && !menuMusicOK()) MUSIC.stop(); }catch(_){} }, 3000);

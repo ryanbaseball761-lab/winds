@@ -12,7 +12,7 @@ function cutAuto(){ return !!uiP().autoCut; }   // "play cutscenes automatically
 /* When a scene opens: music, rain for stormy flights, text size. */
 function cutStart(el, opt){
   try{ if(opt && opt.rain) ambStart('rain', 0.05); el.dataset.scene=''; }catch(_){}
-  try{ MUSIC.play('tension'); }catch(_){}
+  try{ MUSIC.cur==='hangar' && MUSIC.stop(true); MUSIC.play(typeof actTheme==='function'?actTheme():'tension'); }catch(_){}   /* each act has its own theme */
   try{ el.dataset.size=uiP().cutSize||'m'; }catch(_){}
 }
 /* On every shot: the backdrop and ambience follow the place, act cards get a musical sting,
