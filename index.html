@@ -3707,7 +3707,7 @@ ALT_OUT.BO5 = st => st.story.flags.BO4==='a' ? {good:`De Vries closes his notebo
 /* Hartwell now follows The Buyout */
 (function(){ const h=STORY.find(m=>m.id==='HW1'); if(h && h.req) h.req.after='BO3'; })();
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.85.0';
+const TW_VERSION = '0.86.0';
 
 /* ---------- live map ---------- */
 
@@ -6815,6 +6815,7 @@ WHATS_NEW.unshift(['0.82','A radio call or cabin line no longer knocks an unansw
 WHATS_NEW.unshift(['0.83','A tidier game: one Property list on the Money page (your home, safehouses and businesses together), one phone for texts and notifications, the Coast Guard radio warning now leads into the intercept instead of being a separate scare, and a lot of old code cleaned out underneath.']);
 WHATS_NEW.unshift(['0.84','Daytime scenes now show a sunlit ramp with the plane you actually flew, instead of the rainy night jet. The result screen splits story money from tips, property income counts as income on the Money page, the transaction list starts short, and confetti is saved for butter landings. Fixed a rare crash when clicking a choice as a scene ended.']);
 WHATS_NEW.unshift(['0.85','Free public beta. Report a problem now opens a GitHub issue with your report filled in. Map labels no longer pile on top of each other, the boarding pass tags stay readable over the sky, and the in-sim panel says plainly that it is coming in a later beta.']);
+WHATS_NEW.unshift(['0.86','Landings now matter: pay follows your grade (115% for an A, 35% for an F), and a customs search at high Heat seizes the load. The opening scene has a real 747, choices read like the story instead of stat changes, the Flight tab always shows what to fly next, and the Hangar and Pilot pages are cleaner. Fewer pop-ups over buttons, and nothing you need to read is smaller than 12px.']);
 /* ===================== RECORDED VOICE LINES =====================
    Story lines can be played from recorded audio instead of computer speech. Each spoken line has a stable id made
    from its words (voKey). Put recordings in art/voice/<id>.mp3 and list the ids in art/voice/index.json:
