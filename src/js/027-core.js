@@ -1,5 +1,5 @@
 /* ===================== LIVE MAP, FLIGHT REPLAY, AIRCRAFT FROM SIM, REPORTS, VOICES, REAL-WORLD EVENTS ===================== */
-const TW_VERSION = '0.87.1';
+const TW_VERSION = '0.88.0';
 
 /* ---------- live map ---------- */
 
