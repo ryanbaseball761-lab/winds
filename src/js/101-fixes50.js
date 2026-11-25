@@ -5,8 +5,8 @@
 
 /* 5 + 6. pop-ups really sit bottom-right; achievements show one at a time, after any cutscene */
 const ACH_Q=[]; let achBusy=false;
-function achPop(a){ ACH_Q.push(a); achPump(); }
-function achPump(){ if(achBusy||!ACH_Q.length) return; if(document.querySelector('.cut')){ setTimeout(achPump,1500); return; } achBusy=true; achPopBase(ACH_Q.shift()); setTimeout(()=>{ achBusy=false; achPump(); }, 4400); }
+function achPop(a){ ACH_Q.push(Object.assign({_t:Date.now()}, a)); achPump(); }
+function achPump(){ if(achBusy||!ACH_Q.length) return; if(document.querySelector('.cut') || (!S.showResult && !document.querySelector('.title-screen') && ACH_Q[0]._t && Date.now()-ACH_Q[0]._t<10*60000)){ setTimeout(achPump,1500); return; }   /* they wait for the result screen (or 10 minutes), never over the page you're using */ achBusy=true; achPopBase(ACH_Q.shift()); setTimeout(()=>{ achBusy=false; achPump(); }, 4400); }
 
 /* 7. network runs have no airline flight number on the ticket */
 function flightNo(job){ return job && job.network ? 'Unlisted' : flightNoBase(job); }

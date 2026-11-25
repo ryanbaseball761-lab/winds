@@ -6713,8 +6713,8 @@ function save(){ const r=saveBase.apply(this, arguments); try{ clearTimeout(S._s
 
 /* 5 + 6. pop-ups really sit bottom-right; achievements show one at a time, after any cutscene */
 const ACH_Q=[]; let achBusy=false;
-function achPop(a){ ACH_Q.push(a); achPump(); }
-function achPump(){ if(achBusy||!ACH_Q.length) return; if(document.querySelector('.cut')){ setTimeout(achPump,1500); return; } achBusy=true; achPopBase(ACH_Q.shift()); setTimeout(()=>{ achBusy=false; achPump(); }, 4400); }
+function achPop(a){ ACH_Q.push(Object.assign({_t:Date.now()}, a)); achPump(); }
+function achPump(){ if(achBusy||!ACH_Q.length) return; if(document.querySelector('.cut') || (!S.showResult && !document.querySelector('.title-screen') && ACH_Q[0]._t && Date.now()-ACH_Q[0]._t<10*60000)){ setTimeout(achPump,1500); return; }   /* they wait for the result screen (or 10 minutes), never over the page you're using */ achBusy=true; achPopBase(ACH_Q.shift()); setTimeout(()=>{ achBusy=false; achPump(); }, 4400); }
 
 /* 7. network runs have no airline flight number on the ticket */
 function flightNo(job){ return job && job.network ? 'Unlisted' : flightNoBase(job); }
@@ -6897,7 +6897,7 @@ function band(){
       <div class="hud cb-hud">
         ${ro('Loc',esc(st.loc))}${ro('Day '+st.day,`<span class="cb-date">${dateTxt(st.day)} </span>${hhmm(st.clock)}`,'cb-time')}${ro('Cash',money(st.cash),'cash')}
         ${c.on?`<button class="cb-ro heat-chip ${c.heat>=80?'hot':c.heat>=60?'warm':'cool'}" data-act="nav" data-v="story" title="${esc(CX_TIPS.Heat)}"><small>Heat</small><b class="mono">${c.heat}</b></button>`:''}
-        ${c.dirty>0?`<button class="cb-ro dirty-chip" data-act="nav" data-v="money" title="Dirty cash from network runs. Launder it on the Money page."><small>Dirty</small><b class="mono">${money(c.dirty)}</b></button>`:''}
+        ${c.dirty>0?`<button class="cb-ro dirty-chip" data-act="nav" data-v="money" title="Cash from network runs that you can't spend openly yet. Clean it through your businesses on the Money page."><small>Dirty</small><b class="mono">${money(c.dirty)}</b></button>`:''}
         <span class="cb-ro cb-sim ${live?'on':''}" title="${live?'MSFS is connected':'MSFS is not connected'}"><small>Sim</small><b class="mono"><i class="simdot ${live?'on':''}"></i><span id="sim-band">${live?'MSFS live':'Not connected'}</span></b></span>
         <button class="cb-ic cb-phone" data-act="w-phone" title="Phone: texts and notifications" aria-label="Phone"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 18.5h3" stroke="currentColor" stroke-width="1.6"/></svg><b style="display:none"></b></button><button class="cb-ic cmd-btn" data-act="cmd" title="Search (Ctrl+K)" aria-label="Search">${ICON_SEARCH}</button><button class="cb-ic cmd-btn gear-btn" title="Settings" aria-label="Settings" data-act="open-settings">${ICON_GEAR}</button>
       </div>
@@ -8356,7 +8356,7 @@ function campaignCard(st){ const c=crime(st); const MC=mainChapters(); const ava
     let length=''; try{ const jj=storyJob(st,next,acN); length=`<span>~${durTxt(jj.est||plan(jj).est)}</span>`; }catch(_){}   // roughly how long the flight is
     body=`<div class="sc-next">
       <p class="sc-k">Chapter ${n}</p><h2>${esc(next.title)}</h2><p class="sc-hook">${esc(next.hook||'')}</p>
-      <div class="sc-meta ro-strip"><div><small>Route</small><b class="mono">${esc(next.from)} → ${esc(next.to)}</b></div>${length?`<div><small>Flight</small><b class="mono">${length.replace(/<\/?span>/g,'')}</b></div>`:''}<div><small>Aircraft</small><b>${esc(AC[acN]?AC[acN].n:acN)}</b></div><div><small>Light</small><b>${esc({dawn:'Dawn',day:'Daytime',dusk:'Dusk',night:'Night'}[next.time]||'Any')}</b></div></div>
+      <div class="sc-meta ro-strip"><div><small>Route</small><b class="mono">${esc(next.from)} → ${esc(next.to)}</b></div>${length?`<div><small>Flight</small><b class="mono">${length.replace(/<\/?span>/g,'')}</b></div>`:''}<div><small>Aircraft</small><b>${esc(AC[acN]?AC[acN].n:acN)}</b></div><div><small>Time of day</small><b>${esc({dawn:'At dawn',day:'In daylight',dusk:'At dusk',night:'At night'}[next.time]||'Any time')}</b></div></div>
       ${who?`<div class="sc-whos"><small>With</small>${who}</div>`:''}
       <div class="sc-go">${pa.btn}${pa.note?`<span class="small muted">${pa.note}</span>`:''}</div></div>`; }
   else { const end={kingpin:'Kingpin',witness:'Witness',ghost:'Ghost',walk:'Walk Away',home:'Coming Home'}[c.ending]||'The end'; body=`<div class="sc-next"><p class="sc-k">Story complete</p><h2>Ending: ${esc(end)}</h2><p class="sc-hook">Side jobs and the Starling story are still out there.</p></div>`; }
@@ -8396,21 +8396,32 @@ function storyView(){
   const acts = CRIME_ACTS.map((a,i)=>{ const ch=MC.filter(m=>m.arc===a.arc); return `<div class="sh-act" style="--c:${a.col}"><p class="label">Act ${i+1} · ${ch.filter(m=>st.story.done[m.id]).length}/${ch.length}</p><h4>${esc(a.arc)}</h4><ol>${ch.map(m=>{ const isD=st.story.done[m.id], isN=m===next; const req=(m.req&&m.req.ratings||[]).filter(r=>!st.ratings[r]).map(r=>RATINGS[r]?RATINGS[r].n:r).join(', '); return `<li class="${isD?'d':isN?'n':''}">${isD?'✓':isN?'▶':'·'} ${esc(m.title)}${!isD&&req?` <small>${esc(req)}</small>`:''}</li>`; }).join('')}</ol></div>`; }).join('');
   const epi = c.ending ? epilogue(st) : [];
   const earned=totalEarned(st); const best=(st.log||[]).filter(x=>x.fpm).reduce((b,x)=>Math.min(b,x.fpm),9999);
-  const stats=`<section class="panel sh-stats"><div><span>Chapters</span><b>${done.length}<small>/${MC.length}</small></b></div><div><span>Flights</span><b>${st.flights||0}</b></div><div><span>Hours</span><b>${Math.round((st.minutes||0)/6)/10}</b></div><div><span>Earned</span><b>${money(earned)}</b></div><div><span>Best landing</span><b>${best<9999?best+'<small> fpm</small>':'—'}</b></div>${c.on?`<div><span>Laundered</span><b>${money(c.laundered||0)}</b></div>`:''}</section>`;
+  const stats=`<section class="panel sh-stats"><div><span>Chapters</span><b>${done.length}<small>/${MC.length}</small></b></div><div><span>Flights</span><b>${st.flights||0}</b></div><div><span>Hours</span><b>${Math.round((st.minutes||0)/6)/10}</b></div><div><span>Earned</span><b>${money(earned)}</b></div><div><span>Best landing</span><b>${best<9999?best+'<small> fpm</small>':'—'}</b></div>${c.on?`<div><span>Money cleaned</span><b>${money(c.laundered||0)}</b></div>`:''}</section>`;
   const operation = !c.on ? '' : `<div class="sh-grid">${fleetCrewHTML(st)||''}<section class="panel"><h3>Rank rewards <span class="small muted">Power ${c.power}</span></h3><ul class="perks">${RANK_PERKS.map(([v,n,p])=>`<li class="${c.power>=v?'on':''}"><b>${n}</b> <span class="mono small">${v}+</span><p>${esc(p)}</p></li>`).join('')}</ul></section></div>`;
   const side = STORY.filter(m=>m.arc==='Starling'); const sNext=side.find(m=>!st.story.done[m.id]);
-  return `<main class="wrap story-home fade">${ngHTML(st)||''}${fedsHTML(st)||''}
-    ${campaignCard(st)}
+  /* three tabs instead of one long scroll: the chapter you're on, the case file, and the people */
+  const tab=S.storyTab||'chapter';
+  const tabs=`<nav class="sh-tabs" role="tablist">${[['chapter','Chapter'],['case','Case file'],['people','People']].map(([k,n])=>`<button role="tab" aria-selected="${tab===k}" class="${tab===k?'on':''}" data-act="story-tab" data-v="${k}">${n}</button>`).join('')}</nav>`;
+  const sideHTML = sNext?`<section class="panel sh-side"><h3>Starling</h3><p class="small muted">${esc(sNext.title)}. Private jet charters, clean money, nothing to do with Castillo.</p><div class="row" style="margin-top:8px">${chapterAction(st,sNext,availSet,true).replace(' &amp; start · $0',' &amp; start (free)')}</div></section>`:'';
+  let pane='';
+  if(tab==='chapter') pane=`${ngHTML(st)||''}${campaignCard(st)}
     ${epi.length?`<section class="panel"><h3>What became of everyone</h3><ul class="tight">${epi.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`:''}
-    ${endingCardHTML(st)}
-    ${stats}<div class="sh-grid">
-      <section class="panel"><h3>The story so far</h3><ol class="sh-time ${done.length>4?'clip':''}">${time}</ol>${done.length>4?`<button class="btn sm ghost sh-more" data-act="sh-more">Show all ${done.length} chapters</button>`:''}</section>
-      <section class="panel"><h3>The people</h3><div class="sh-people">${people||'<p class="small muted">You\'ll meet them soon.</p>'}</div></section>
-    </div>
-    <details class="panel sh-acts-d"><summary><h3>The five acts</h3><span class="small muted">${done.length} of ${MC.length} chapters</span></summary><div class="sh-acts">${acts}</div></details>
-    ${sNext?`<section class="panel sh-side"><h3>Starling</h3><p class="small muted">${esc(sNext.title)}. Private jet charters, clean money, nothing to do with Castillo.</p><div class="row" style="margin-top:8px">${chapterAction(st,sNext,availSet,true).replace(' &amp; start · $0',' &amp; start (free)')}</div></section>`:''}
+    ${endingCardHTML(st)}${endingsTrackerHTML(st)}${sideHTML}`;
+  else if(tab==='case') pane=`${fedsHTML(st)||''}${stats}
+    <section class="panel"><h3>The story so far</h3><ol class="sh-time ${done.length>4?'clip':''}">${time}</ol>${done.length>4?`<button class="btn sm ghost sh-more" data-act="sh-more">Show all ${done.length} chapters</button>`:''}</section>
+    <details class="panel sh-acts-d"><summary><h3>The five acts</h3><span class="small muted">${done.length} of ${MC.length} chapters</span></summary><div class="sh-acts">${acts}</div></details>`;
+  else pane=`<section class="panel"><h3>The people</h3><div class="sh-people">${people||'<p class="small muted">You\'ll meet them soon.</p>'}</div></section>`;
+  return `<main class="wrap story-home fade">${tabs}${pane}
   </main>`;
 }
+
+document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="story-tab"]'); if(!b) return; S.storyTab=b.dataset.v; render(); });
+/* which endings are still within reach, and what's in the way of the others */
+function endingsTrackerHTML(st){ const c=crime(st); if(!c.on || c.ending || typeof ENDING_REQ==='undefined' || !st.story.done.CR4) return '';
+  const N={kingpin:'Kingpin',witness:'Witness',ghost:'Ghost',walk:'Walk Away',home:'Coming Home'};
+  const rows=Object.keys(N).map(k=>{ const why=ENDING_REQ[k](c); return `<li class="${why?'':'ok'}"><b>${N[k]}</b><span>${why?esc(why):'In reach'}</span></li>`; }).join('');
+  return `<section class="panel sh-endings"><div class="section-title"><h3>Endings in reach</h3><span class="small muted">What you do from here can still change these</span></div><ul class="ls-list">${rows}</ul></section>`; }
+(function(){ const c=document.createElement('style'); c.textContent='.sh-tabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:18px}.sh-tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:10px 18px;font:inherit;font-weight:600;cursor:pointer}.sh-tabs button.on{color:var(--ink);border-bottom-color:var(--amb)}.sh-tabs button:hover{color:var(--ink)}'; document.head.appendChild(c); })();
 /* ===================== MONEY PAGE =====================
    Cash, savings, debt and net worth; the income statement; fuel; the transaction list. (Housing is in the Property list.)
    With the crime story on, your operation (crew, safehouses) and dirty cash sit at the top.
@@ -9289,7 +9300,7 @@ AFTER_RENDER.push(function phoneButton(){ phoneBadge(); });
 
 /* the job board: the week's event and a contact tag on their jobs */
 AFTER_RENDER.push(function boardWorld(){ if(S.view!=='board' || !S.st) return; const main=document.querySelector('main'); if(!main || main.querySelector('.w-mkt')) return;
-  const e=mktNow(); const list=main.querySelector('.jlist'); if(e && list){ const d=document.createElement('section'); d.className='panel w-mkt'; d.innerHTML=`<p class="label">This week, until day ${e.until}</p><p>${esc(e.text)}</p>`; list.parentElement.insertBefore(d, list.previousElementSibling||list); }
+  const wk=weekCardHTML(S.st); const list=main.querySelector('.jlist'); if(wk && list){ const d=document.createElement('div'); d.innerHTML=wk; list.parentElement.insertBefore(d.firstElementChild, list.previousElementSibling||list); }
   S.st.jobs && S.st.jobs.forEach(j=>{ if(!j.contact && !j.mkt) return; const r=main.querySelector(`.jrow [data-id="${j.id}"] .jr-t small`); if(r && !r.dataset.w){ r.dataset.w=1; r.textContent += j.contact?` · ${CONTACTS.find(k=>k.id===j.contact).n}`:` · ${j.mkt}`; } }); });
 
 /* Profile: islands and contacts */
@@ -9386,9 +9397,7 @@ function invRoll(st){ const c=crime(st); if(!c.on || invNow(st)) return; if((c.h
   phonePush({from:'dez', text:`stay away from ${AP[ap].isl||ap} for a few days. feds are sitting on the ramp. i mean it`}); }
 DAY_HOOKS.push(invRoll);
 GEN_JOB_STEPS.push(function invJobs(st, L){ if(!L) return; const v=invNow(st); if(!v) return L; return L.filter(j=>!(j.network && (j.to===v.ap || j.from===v.ap))); });
-AFTER_RENDER.push(function invBanner(){ if(S.view!=='board' || !S.st) return; const v=invNow(S.st); const main=document.querySelector('main'); if(!v || !main || main.querySelector('.w-inv')) return; const list=main.querySelector('.jlist'); if(!list) return;
   const d=document.createElement('section'); d.className='panel w-inv'; d.style.borderLeft='3px solid var(--bad,#d0643a)';
-  d.innerHTML=`<p class="label">Investigation, until day ${v.until}</p><p>Federal agents are watching ${esc(AP[v.ap].n)} (${v.ap}). No network runs from there, and any run that lands there will be searched.</p>`; list.parentElement.insertBefore(d, list.previousElementSibling||list); });
 
 /* ===================== bush runs =====================
    Short strips (under 3,300 ft) in a STOL or bush plane: Saba, Barbuda, Montserrat, Anegada, Union Island and more.
@@ -9414,6 +9423,12 @@ GEN_JOB_STEPS.push(function bushJobs(st, L){ if(!L) return; if(L.some(j=>j.bush)
 AFTER_RESULT.push(function bushBonus(st, job, f, res){ if(!job.bush || res.crash) return; const o=st.last&&st.last.out; if(!o) return; const A=f&&f.tda;
   const good = A ? (A.zone==='aim'||A.zone==='zone') : (res.grade==='A'||res.grade==='B');
   if(good){ const b=Math.max(50, Math.round(job.pay*0.2/10)*10); txn(st,b,'Tips & bonuses','Short-field landing'); o.pay+=b; o.notes.push(`Short-field landing at ${job.to}: ${money(b)} bonus.`); } });
+
+/* one "This week" card: the market event, an investigation, and Castillo's deadline, together */
+function weekCardHTML(st){ const L=[]; const e=mktNow(); if(e) L.push(`<li><b>Market</b><span>${esc(e.text)} Until day ${e.until}.</span></li>`);
+  const v=typeof invNow==='function'?invNow(st):null; if(v) L.push(`<li class="bad"><b>Investigation</b><span>Federal agents are watching ${esc(AP[v.ap].n)} (${v.ap}) until day ${v.until}. No network runs there, and any run that lands there is searched.</span></li>`);
+  const next=mainChapters().find(m=>!st.story.done[m.id]); const due=next&&typeof chDue==='function'?chDue(st,next):null; if(due!=null){ const left=due-st.day; L.push(`<li class="${left<=0?'bad':''}"><b>Castillo</b><span>${esc(next.title)}: ${left<0?`late, he wanted it by day ${due}`:left===0?'due today':`due by day ${due} (${left} day${left>1?'s':''})`}.</span></li>`); }
+  return L.length?`<section class="panel w-mkt w-week"><p class="label">This week</p><ul class="ls-list">${L.join('')}</ul></section>`:''; }
 /* ===================== THINGS THAT HAPPEN IN THE AIR (0.68) =====================
    All of these need MSFS live; without it nothing fires and nothing is lost.
    - ATC instructions on ordinary flights: a heading for traffic, a new altitude. Fly them.
@@ -9588,6 +9603,18 @@ AFTER_RENDER.push(function miniButton(){ if(!miniAvail() || S.view!=='flight' ||
   bar.insertAdjacentHTML('beforebegin', `<div class="row mini-row" style="justify-content:flex-end;margin-bottom:8px"><button class="btn sm mini-btn" data-act="mini-toggle" title="A small window that stays on top of MSFS: story moments, orders and the checklist">${S._miniOn?'Close the mini window':'Open the mini window over MSFS'}</button></div>`); });
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="mini-toggle"]')||!S.st) return; miniOpen(!S._miniOn); S.keepScroll=true; render(); });
 SIM_TICK.push(function miniAuto(){ const a=S.st&&S.st.active; if(!miniAvail() || !a || !a.started || a._miniTried) return; a._miniTried=1; if(S.st.ui&&S.st.ui.mini && !S._miniOn) miniOpen(true); });
+
+/* ===================== customs odds, out loud ===================== */
+function customsOdds(st, ap){ const c=crime(st); if(!c.on) return 0; const w=st.w||{}; if(w.bribes&&w.bribes[ap]&&w.bribes[ap]>=st.day) return 0;
+  if(typeof invNow==='function' && invNow(st) && invNow(st).ap===ap) return 1;
+  const floor=c.hard?45:60, base=c.hard?35:50; if((c.heat||0)<floor) return 0; return Math.min(0.75, Math.max(0.15, ((c.heat||0)-base)/45)); }
+function customsLine(st, job){ const p=customsOdds(st, job.to); const c=crime(st);
+  if(p>=1) return `Customs at ${job.to} will search the plane: the airport is under investigation.`;
+  if(!p) return (c.heat||0)>=40 ? `Customs at ${job.to} shouldn't bother you at Heat ${c.heat}. Searches start at Heat ${c.hard?45:60}.` : '';
+  return `About a ${Math.round(p*100)}% chance customs searches you at ${job.to} (Heat ${c.heat}).${(c.heat||0)<75?' A clean A landing gets you waved through.':''} A search on a network run loses the load.`; }
+AFTER_RENDER.push(function customsNote(){ if(S.view!=='flight'||!S.st) return; const a=S.st.active, main=document.querySelector('main'); if(!a||!a.job.network||!main||main.querySelector('.cs-odds')) return; const t=customsLine(S.st,a.job); if(!t) return;
+  const pass=main.querySelector('.pass'); if(pass) pass.insertAdjacentHTML('afterend', `<p class="cs-odds small" style="margin:10px 0 0;color:${customsOdds(S.st,a.job.to)>=0.4?'var(--bad,#d0643a)':'var(--muted)'}">${esc(t)}</p>`); });
+AFTER_RENDER.push(function heatTitle(){ const h=document.querySelector('.heat-chip'); if(!h||!S.st) return; const c=crime(S.st); const p=Math.min(0.75, Math.max(0, ((c.heat||0)-(c.hard?35:50))/45)); h.title=(c.heat||0)<(c.hard?45:60)?`Heat ${c.heat}: customs leave you alone below ${c.hard?45:60}`:`Heat ${c.heat}: about ${Math.round(Math.max(0.15,p)*100)}% chance of a customs search on each run`; });
 /* ===================== THE INTERFACE, ROUND 3 (0.69) =====================
    - Dispatch: before you start a flight, the paperwork. Weights, fuel, NOTAMs (some of them hints) and the fuel slip.
    - Sound: phone buzz, the result stamp, paper and switches. Optional ramp ambience.
@@ -10246,7 +10273,7 @@ AFTER_RENDER.push(function loanChip(){ const st=S.st; const L=st&&st.w&&st.w.loa
   sub.insertAdjacentHTML('afterbegin', `<button class="cb-booked cb-loan" data-act="nav" data-v="money"><small>Owed to Castillo</small><b class="mono">${money(L.owe)} · ${left<=0?'today':left+' day'+(left>1?'s':'')}</b></button>`); });
 
 /* 15. this week's event also shows on the Story page */
-AFTER_RENDER.push(function mktOnStory(){ if(S.view!=='story'||!S.st) return; const e=mktNow(); const hero=document.querySelector('.story-card'); if(!e||!hero||document.querySelector('.mkt-line')) return; hero.insertAdjacentHTML('afterend', `<p class="mkt-line small"><b>This week:</b> ${esc(e.text)} <button class="btn sm ghost" data-act="nav" data-v="board">See jobs</button></p>`); });
+AFTER_RENDER.push(function weekOnStory(){ if(S.view!=='story'||!S.st||(S.storyTab&&S.storyTab!=='chapter')) return; const hero=document.querySelector('.story-card'); if(!hero||document.querySelector('.w-week')) return; const h=weekCardHTML(S.st); if(h) hero.insertAdjacentHTML('afterend', h); });
 
 /* 17. Enter on a result screen goes to the next chapter (or back to the jobs) */
 document.addEventListener('keydown', e=>{ if(e.key!=='Enter' || !S.showResult || document.querySelector('.cut,.tw-sheet,.title-screen')) return; const t=e.target; if(t && /INPUT|TEXTAREA|SELECT|BUTTON|A/.test(t.tagName)) return;
@@ -10795,6 +10822,8 @@ html.ckp body .pf-bar>div{grid-column:1 / -1;grid-row:2;height:4px;border-radius
 
 /* difficulty on the name form */
 (function(){ const c=document.createElement('style'); c.textContent='.setup-diff{border:0;padding:0;margin:0}.setup-diff legend{font-size:13px;color:var(--muted);margin-bottom:6px}.setup-diff .diff{display:flex;gap:8px;flex-wrap:wrap}.setup-diff label{display:flex;align-items:center;gap:6px;border:1px solid var(--line);padding:8px 12px;cursor:pointer;font-size:14px}.setup-diff label:has(input:checked){border-color:var(--amb);color:var(--amb)}.setup-diff input{accent-color:var(--amb)}'; document.head.appendChild(c); })();
+
+(function(){ const c=document.createElement('style'); c.textContent='.w-week .ls-list li.bad b{color:var(--bad,#d0643a)}.w-week .ls-list li.bad b::before{content:none}'; document.head.appendChild(c); })();
 /* ===================== START =====================
    Everything above only defines things. This starts the app. Keep this file last in order.txt. */
 boot();

@@ -172,3 +172,15 @@ AFTER_RENDER.push(function miniButton(){ if(!miniAvail() || S.view!=='flight' ||
   bar.insertAdjacentHTML('beforebegin', `<div class="row mini-row" style="justify-content:flex-end;margin-bottom:8px"><button class="btn sm mini-btn" data-act="mini-toggle" title="A small window that stays on top of MSFS: story moments, orders and the checklist">${S._miniOn?'Close the mini window':'Open the mini window over MSFS'}</button></div>`); });
 document.addEventListener('click', e=>{ if(!e.target.closest('[data-act="mini-toggle"]')||!S.st) return; miniOpen(!S._miniOn); S.keepScroll=true; render(); });
 SIM_TICK.push(function miniAuto(){ const a=S.st&&S.st.active; if(!miniAvail() || !a || !a.started || a._miniTried) return; a._miniTried=1; if(S.st.ui&&S.st.ui.mini && !S._miniOn) miniOpen(true); });
+
+/* ===================== customs odds, out loud ===================== */
+function customsOdds(st, ap){ const c=crime(st); if(!c.on) return 0; const w=st.w||{}; if(w.bribes&&w.bribes[ap]&&w.bribes[ap]>=st.day) return 0;
+  if(typeof invNow==='function' && invNow(st) && invNow(st).ap===ap) return 1;
+  const floor=c.hard?45:60, base=c.hard?35:50; if((c.heat||0)<floor) return 0; return Math.min(0.75, Math.max(0.15, ((c.heat||0)-base)/45)); }
+function customsLine(st, job){ const p=customsOdds(st, job.to); const c=crime(st);
+  if(p>=1) return `Customs at ${job.to} will search the plane: the airport is under investigation.`;
+  if(!p) return (c.heat||0)>=40 ? `Customs at ${job.to} shouldn't bother you at Heat ${c.heat}. Searches start at Heat ${c.hard?45:60}.` : '';
+  return `About a ${Math.round(p*100)}% chance customs searches you at ${job.to} (Heat ${c.heat}).${(c.heat||0)<75?' A clean A landing gets you waved through.':''} A search on a network run loses the load.`; }
+AFTER_RENDER.push(function customsNote(){ if(S.view!=='flight'||!S.st) return; const a=S.st.active, main=document.querySelector('main'); if(!a||!a.job.network||!main||main.querySelector('.cs-odds')) return; const t=customsLine(S.st,a.job); if(!t) return;
+  const pass=main.querySelector('.pass'); if(pass) pass.insertAdjacentHTML('afterend', `<p class="cs-odds small" style="margin:10px 0 0;color:${customsOdds(S.st,a.job.to)>=0.4?'var(--bad,#d0643a)':'var(--muted)'}">${esc(t)}</p>`); });
+AFTER_RENDER.push(function heatTitle(){ const h=document.querySelector('.heat-chip'); if(!h||!S.st) return; const c=crime(S.st); const p=Math.min(0.75, Math.max(0, ((c.heat||0)-(c.hard?35:50))/45)); h.title=(c.heat||0)<(c.hard?45:60)?`Heat ${c.heat}: customs leave you alone below ${c.hard?45:60}`:`Heat ${c.heat}: about ${Math.round(Math.max(0.15,p)*100)}% chance of a customs search on each run`; });

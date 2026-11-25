@@ -38,7 +38,7 @@ AFTER_RENDER.push(function loanChip(){ const st=S.st; const L=st&&st.w&&st.w.loa
   sub.insertAdjacentHTML('afterbegin', `<button class="cb-booked cb-loan" data-act="nav" data-v="money"><small>Owed to Castillo</small><b class="mono">${money(L.owe)} · ${left<=0?'today':left+' day'+(left>1?'s':'')}</b></button>`); });
 
 /* 15. this week's event also shows on the Story page */
-AFTER_RENDER.push(function mktOnStory(){ if(S.view!=='story'||!S.st) return; const e=mktNow(); const hero=document.querySelector('.story-card'); if(!e||!hero||document.querySelector('.mkt-line')) return; hero.insertAdjacentHTML('afterend', `<p class="mkt-line small"><b>This week:</b> ${esc(e.text)} <button class="btn sm ghost" data-act="nav" data-v="board">See jobs</button></p>`); });
+AFTER_RENDER.push(function weekOnStory(){ if(S.view!=='story'||!S.st||(S.storyTab&&S.storyTab!=='chapter')) return; const hero=document.querySelector('.story-card'); if(!hero||document.querySelector('.w-week')) return; const h=weekCardHTML(S.st); if(h) hero.insertAdjacentHTML('afterend', h); });
 
 /* 17. Enter on a result screen goes to the next chapter (or back to the jobs) */
 document.addEventListener('keydown', e=>{ if(e.key!=='Enter' || !S.showResult || document.querySelector('.cut,.tw-sheet,.title-screen')) return; const t=e.target; if(t && /INPUT|TEXTAREA|SELECT|BUTTON|A/.test(t.tagName)) return;

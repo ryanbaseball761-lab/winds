@@ -76,3 +76,5 @@ html.ckp body .pf-bar>div{grid-column:1 / -1;grid-row:2;height:4px;border-radius
 
 /* difficulty on the name form */
 (function(){ const c=document.createElement('style'); c.textContent='.setup-diff{border:0;padding:0;margin:0}.setup-diff legend{font-size:13px;color:var(--muted);margin-bottom:6px}.setup-diff .diff{display:flex;gap:8px;flex-wrap:wrap}.setup-diff label{display:flex;align-items:center;gap:6px;border:1px solid var(--line);padding:8px 12px;cursor:pointer;font-size:14px}.setup-diff label:has(input:checked){border-color:var(--amb);color:var(--amb)}.setup-diff input{accent-color:var(--amb)}'; document.head.appendChild(c); })();
+
+(function(){ const c=document.createElement('style'); c.textContent='.w-week .ls-list li.bad b{color:var(--bad,#d0643a)}.w-week .ls-list li.bad b::before{content:none}'; document.head.appendChild(c); })();

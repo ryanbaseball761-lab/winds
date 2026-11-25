@@ -275,7 +275,7 @@ AFTER_RENDER.push(function phoneButton(){ phoneBadge(); });
 
 /* the job board: the week's event and a contact tag on their jobs */
 AFTER_RENDER.push(function boardWorld(){ if(S.view!=='board' || !S.st) return; const main=document.querySelector('main'); if(!main || main.querySelector('.w-mkt')) return;
-  const e=mktNow(); const list=main.querySelector('.jlist'); if(e && list){ const d=document.createElement('section'); d.className='panel w-mkt'; d.innerHTML=`<p class="label">This week, until day ${e.until}</p><p>${esc(e.text)}</p>`; list.parentElement.insertBefore(d, list.previousElementSibling||list); }
+  const wk=weekCardHTML(S.st); const list=main.querySelector('.jlist'); if(wk && list){ const d=document.createElement('div'); d.innerHTML=wk; list.parentElement.insertBefore(d.firstElementChild, list.previousElementSibling||list); }
   S.st.jobs && S.st.jobs.forEach(j=>{ if(!j.contact && !j.mkt) return; const r=main.querySelector(`.jrow [data-id="${j.id}"] .jr-t small`); if(r && !r.dataset.w){ r.dataset.w=1; r.textContent += j.contact?` · ${CONTACTS.find(k=>k.id===j.contact).n}`:` · ${j.mkt}`; } }); });
 
 /* Profile: islands and contacts */
@@ -372,9 +372,7 @@ function invRoll(st){ const c=crime(st); if(!c.on || invNow(st)) return; if((c.h
   phonePush({from:'dez', text:`stay away from ${AP[ap].isl||ap} for a few days. feds are sitting on the ramp. i mean it`}); }
 DAY_HOOKS.push(invRoll);
 GEN_JOB_STEPS.push(function invJobs(st, L){ if(!L) return; const v=invNow(st); if(!v) return L; return L.filter(j=>!(j.network && (j.to===v.ap || j.from===v.ap))); });
-AFTER_RENDER.push(function invBanner(){ if(S.view!=='board' || !S.st) return; const v=invNow(S.st); const main=document.querySelector('main'); if(!v || !main || main.querySelector('.w-inv')) return; const list=main.querySelector('.jlist'); if(!list) return;
   const d=document.createElement('section'); d.className='panel w-inv'; d.style.borderLeft='3px solid var(--bad,#d0643a)';
-  d.innerHTML=`<p class="label">Investigation, until day ${v.until}</p><p>Federal agents are watching ${esc(AP[v.ap].n)} (${v.ap}). No network runs from there, and any run that lands there will be searched.</p>`; list.parentElement.insertBefore(d, list.previousElementSibling||list); });
 
 /* ===================== bush runs =====================
    Short strips (under 3,300 ft) in a STOL or bush plane: Saba, Barbuda, Montserrat, Anegada, Union Island and more.
@@ -400,3 +398,9 @@ GEN_JOB_STEPS.push(function bushJobs(st, L){ if(!L) return; if(L.some(j=>j.bush)
 AFTER_RESULT.push(function bushBonus(st, job, f, res){ if(!job.bush || res.crash) return; const o=st.last&&st.last.out; if(!o) return; const A=f&&f.tda;
   const good = A ? (A.zone==='aim'||A.zone==='zone') : (res.grade==='A'||res.grade==='B');
   if(good){ const b=Math.max(50, Math.round(job.pay*0.2/10)*10); txn(st,b,'Tips & bonuses','Short-field landing'); o.pay+=b; o.notes.push(`Short-field landing at ${job.to}: ${money(b)} bonus.`); } });
+
+/* one "This week" card: the market event, an investigation, and Castillo's deadline, together */
+function weekCardHTML(st){ const L=[]; const e=mktNow(); if(e) L.push(`<li><b>Market</b><span>${esc(e.text)} Until day ${e.until}.</span></li>`);
+  const v=typeof invNow==='function'?invNow(st):null; if(v) L.push(`<li class="bad"><b>Investigation</b><span>Federal agents are watching ${esc(AP[v.ap].n)} (${v.ap}) until day ${v.until}. No network runs there, and any run that lands there is searched.</span></li>`);
+  const next=mainChapters().find(m=>!st.story.done[m.id]); const due=next&&typeof chDue==='function'?chDue(st,next):null; if(due!=null){ const left=due-st.day; L.push(`<li class="${left<=0?'bad':''}"><b>Castillo</b><span>${esc(next.title)}: ${left<0?`late, he wanted it by day ${due}`:left===0?'due today':`due by day ${due} (${left} day${left>1?'s':''})`}.</span></li>`); }
+  return L.length?`<section class="panel w-mkt w-week"><p class="label">This week</p><ul class="ls-list">${L.join('')}</ul></section>`:''; }

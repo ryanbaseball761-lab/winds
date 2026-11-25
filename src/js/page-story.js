@@ -44,7 +44,7 @@ function campaignCard(st){ const c=crime(st); const MC=mainChapters(); const ava
     let length=''; try{ const jj=storyJob(st,next,acN); length=`<span>~${durTxt(jj.est||plan(jj).est)}</span>`; }catch(_){}   // roughly how long the flight is
     body=`<div class="sc-next">
       <p class="sc-k">Chapter ${n}</p><h2>${esc(next.title)}</h2><p class="sc-hook">${esc(next.hook||'')}</p>
-      <div class="sc-meta ro-strip"><div><small>Route</small><b class="mono">${esc(next.from)} → ${esc(next.to)}</b></div>${length?`<div><small>Flight</small><b class="mono">${length.replace(/<\/?span>/g,'')}</b></div>`:''}<div><small>Aircraft</small><b>${esc(AC[acN]?AC[acN].n:acN)}</b></div><div><small>Light</small><b>${esc({dawn:'Dawn',day:'Daytime',dusk:'Dusk',night:'Night'}[next.time]||'Any')}</b></div></div>
+      <div class="sc-meta ro-strip"><div><small>Route</small><b class="mono">${esc(next.from)} → ${esc(next.to)}</b></div>${length?`<div><small>Flight</small><b class="mono">${length.replace(/<\/?span>/g,'')}</b></div>`:''}<div><small>Aircraft</small><b>${esc(AC[acN]?AC[acN].n:acN)}</b></div><div><small>Time of day</small><b>${esc({dawn:'At dawn',day:'In daylight',dusk:'At dusk',night:'At night'}[next.time]||'Any time')}</b></div></div>
       ${who?`<div class="sc-whos"><small>With</small>${who}</div>`:''}
       <div class="sc-go">${pa.btn}${pa.note?`<span class="small muted">${pa.note}</span>`:''}</div></div>`; }
   else { const end={kingpin:'Kingpin',witness:'Witness',ghost:'Ghost',walk:'Walk Away',home:'Coming Home'}[c.ending]||'The end'; body=`<div class="sc-next"><p class="sc-k">Story complete</p><h2>Ending: ${esc(end)}</h2><p class="sc-hook">Side jobs and the Starling story are still out there.</p></div>`; }
@@ -84,18 +84,29 @@ function storyView(){
   const acts = CRIME_ACTS.map((a,i)=>{ const ch=MC.filter(m=>m.arc===a.arc); return `<div class="sh-act" style="--c:${a.col}"><p class="label">Act ${i+1} · ${ch.filter(m=>st.story.done[m.id]).length}/${ch.length}</p><h4>${esc(a.arc)}</h4><ol>${ch.map(m=>{ const isD=st.story.done[m.id], isN=m===next; const req=(m.req&&m.req.ratings||[]).filter(r=>!st.ratings[r]).map(r=>RATINGS[r]?RATINGS[r].n:r).join(', '); return `<li class="${isD?'d':isN?'n':''}">${isD?'✓':isN?'▶':'·'} ${esc(m.title)}${!isD&&req?` <small>${esc(req)}</small>`:''}</li>`; }).join('')}</ol></div>`; }).join('');
   const epi = c.ending ? epilogue(st) : [];
   const earned=totalEarned(st); const best=(st.log||[]).filter(x=>x.fpm).reduce((b,x)=>Math.min(b,x.fpm),9999);
-  const stats=`<section class="panel sh-stats"><div><span>Chapters</span><b>${done.length}<small>/${MC.length}</small></b></div><div><span>Flights</span><b>${st.flights||0}</b></div><div><span>Hours</span><b>${Math.round((st.minutes||0)/6)/10}</b></div><div><span>Earned</span><b>${money(earned)}</b></div><div><span>Best landing</span><b>${best<9999?best+'<small> fpm</small>':'—'}</b></div>${c.on?`<div><span>Laundered</span><b>${money(c.laundered||0)}</b></div>`:''}</section>`;
+  const stats=`<section class="panel sh-stats"><div><span>Chapters</span><b>${done.length}<small>/${MC.length}</small></b></div><div><span>Flights</span><b>${st.flights||0}</b></div><div><span>Hours</span><b>${Math.round((st.minutes||0)/6)/10}</b></div><div><span>Earned</span><b>${money(earned)}</b></div><div><span>Best landing</span><b>${best<9999?best+'<small> fpm</small>':'—'}</b></div>${c.on?`<div><span>Money cleaned</span><b>${money(c.laundered||0)}</b></div>`:''}</section>`;
   const operation = !c.on ? '' : `<div class="sh-grid">${fleetCrewHTML(st)||''}<section class="panel"><h3>Rank rewards <span class="small muted">Power ${c.power}</span></h3><ul class="perks">${RANK_PERKS.map(([v,n,p])=>`<li class="${c.power>=v?'on':''}"><b>${n}</b> <span class="mono small">${v}+</span><p>${esc(p)}</p></li>`).join('')}</ul></section></div>`;
   const side = STORY.filter(m=>m.arc==='Starling'); const sNext=side.find(m=>!st.story.done[m.id]);
-  return `<main class="wrap story-home fade">${ngHTML(st)||''}${fedsHTML(st)||''}
-    ${campaignCard(st)}
+  /* three tabs instead of one long scroll: the chapter you're on, the case file, and the people */
+  const tab=S.storyTab||'chapter';
+  const tabs=`<nav class="sh-tabs" role="tablist">${[['chapter','Chapter'],['case','Case file'],['people','People']].map(([k,n])=>`<button role="tab" aria-selected="${tab===k}" class="${tab===k?'on':''}" data-act="story-tab" data-v="${k}">${n}</button>`).join('')}</nav>`;
+  const sideHTML = sNext?`<section class="panel sh-side"><h3>Starling</h3><p class="small muted">${esc(sNext.title)}. Private jet charters, clean money, nothing to do with Castillo.</p><div class="row" style="margin-top:8px">${chapterAction(st,sNext,availSet,true).replace(' &amp; start · $0',' &amp; start (free)')}</div></section>`:'';
+  let pane='';
+  if(tab==='chapter') pane=`${ngHTML(st)||''}${campaignCard(st)}
     ${epi.length?`<section class="panel"><h3>What became of everyone</h3><ul class="tight">${epi.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></section>`:''}
-    ${endingCardHTML(st)}
-    ${stats}<div class="sh-grid">
-      <section class="panel"><h3>The story so far</h3><ol class="sh-time ${done.length>4?'clip':''}">${time}</ol>${done.length>4?`<button class="btn sm ghost sh-more" data-act="sh-more">Show all ${done.length} chapters</button>`:''}</section>
-      <section class="panel"><h3>The people</h3><div class="sh-people">${people||'<p class="small muted">You\'ll meet them soon.</p>'}</div></section>
-    </div>
-    <details class="panel sh-acts-d"><summary><h3>The five acts</h3><span class="small muted">${done.length} of ${MC.length} chapters</span></summary><div class="sh-acts">${acts}</div></details>
-    ${sNext?`<section class="panel sh-side"><h3>Starling</h3><p class="small muted">${esc(sNext.title)}. Private jet charters, clean money, nothing to do with Castillo.</p><div class="row" style="margin-top:8px">${chapterAction(st,sNext,availSet,true).replace(' &amp; start · $0',' &amp; start (free)')}</div></section>`:''}
+    ${endingCardHTML(st)}${endingsTrackerHTML(st)}${sideHTML}`;
+  else if(tab==='case') pane=`${fedsHTML(st)||''}${stats}
+    <section class="panel"><h3>The story so far</h3><ol class="sh-time ${done.length>4?'clip':''}">${time}</ol>${done.length>4?`<button class="btn sm ghost sh-more" data-act="sh-more">Show all ${done.length} chapters</button>`:''}</section>
+    <details class="panel sh-acts-d"><summary><h3>The five acts</h3><span class="small muted">${done.length} of ${MC.length} chapters</span></summary><div class="sh-acts">${acts}</div></details>`;
+  else pane=`<section class="panel"><h3>The people</h3><div class="sh-people">${people||'<p class="small muted">You\'ll meet them soon.</p>'}</div></section>`;
+  return `<main class="wrap story-home fade">${tabs}${pane}
   </main>`;
 }
+
+document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="story-tab"]'); if(!b) return; S.storyTab=b.dataset.v; render(); });
+/* which endings are still within reach, and what's in the way of the others */
+function endingsTrackerHTML(st){ const c=crime(st); if(!c.on || c.ending || typeof ENDING_REQ==='undefined' || !st.story.done.CR4) return '';
+  const N={kingpin:'Kingpin',witness:'Witness',ghost:'Ghost',walk:'Walk Away',home:'Coming Home'};
+  const rows=Object.keys(N).map(k=>{ const why=ENDING_REQ[k](c); return `<li class="${why?'':'ok'}"><b>${N[k]}</b><span>${why?esc(why):'In reach'}</span></li>`; }).join('');
+  return `<section class="panel sh-endings"><div class="section-title"><h3>Endings in reach</h3><span class="small muted">What you do from here can still change these</span></div><ul class="ls-list">${rows}</ul></section>`; }
+(function(){ const c=document.createElement('style'); c.textContent='.sh-tabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:18px}.sh-tabs button{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);padding:10px 18px;font:inherit;font-weight:600;cursor:pointer}.sh-tabs button.on{color:var(--ink);border-bottom-color:var(--amb)}.sh-tabs button:hover{color:var(--ink)}'; document.head.appendChild(c); })();
