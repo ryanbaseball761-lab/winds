@@ -38,7 +38,10 @@ function ifMiniMap(a){
   const X=lo=>(W-(lo1-lo0)*k*sc)/2+(lo-lo0)*k*sc, Y=la=>H-((H-(la1-la0)*sc)/2+(la-la0)*sc);
   const near = Object.keys(AP).filter(c=>!AP[c].water && AP[c].lat>la0 && AP[c].lat<la1 && AP[c].lon>lo0 && AP[c].lon<lo1).slice(0,30);
   const rec=simRecFor(a); const tr=rec&&rec.track||[];
-  return `<svg viewBox="0 0 ${W} ${H}" class="if-map" aria-label="Route map">${near.map(c=>`<circle cx="${X(AP[c].lon).toFixed(1)}" cy="${Y(AP[c].lat).toFixed(1)}" r="3" class="nap"/><text x="${(X(AP[c].lon)+5).toFixed(1)}" y="${(Y(AP[c].lat)-4).toFixed(1)}" class="napl">${c}</text>`).join('')}
+  /* labels never sit on each other: departure and destination first, then the rest only where there's room */
+  const order=[job.from, job.to].concat(near.filter(c=>c!==job.from&&c!==job.to)).filter((c,i,arr)=>near.includes(c)&&arr.indexOf(c)===i), boxes=[];
+  const lab={}; for(const c of order){ const x=X(AP[c].lon), y=Y(AP[c].lat), w=c.length*7+4; for(const [dx,dy] of [[5,-4],[5,12],[-w-5,-4],[-w-5,12]]){ const bx=x+dx, by=y+dy; if(bx<2||bx+w>W-2||by<10||by>H-2) continue; if(boxes.some(q=>bx<q[0]+q[2]&&q[0]<bx+w&&Math.abs(q[1]-by)<12)) continue; boxes.push([bx,by,w]); lab[c]=[bx,by]; break; } }
+  return `<svg viewBox="0 0 ${W} ${H}" class="if-map" aria-label="Route map">${near.map(c=>`<circle cx="${X(AP[c].lon).toFixed(1)}" cy="${Y(AP[c].lat).toFixed(1)}" r="3" class="nap"/>${lab[c]?`<text x="${lab[c][0].toFixed(1)}" y="${lab[c][1].toFixed(1)}" class="napl">${c}</text>`:''}`).join('')}
     <line x1="${X(A.lon)}" y1="${Y(A.lat)}" x2="${X(B.lon)}" y2="${Y(B.lat)}" class="if-rt"/>${tr.length>1?`<polyline points="${tr.map(p=>`${X(p[1]).toFixed(1)},${Y(p[0]).toFixed(1)}`).join(' ')}" class="flown"/>`:''}
     <circle cx="${X(A.lon)}" cy="${Y(A.lat)}" r="6" class="r-start"/><circle cx="${X(B.lon)}" cy="${Y(B.lat)}" r="6" class="r-end"/>
     ${P?`<g transform="translate(${X(P.lon).toFixed(1)} ${Y(P.lat).toFixed(1)}) rotate(${s.position.hdg||0})" class="liveplane"><circle r="14" class="halo"/><path d="M0 -12 L3 -3 L12 2 L12 4 L3 2 L2 9 L5 11 L5 12 L0 11 L-5 12 L-5 11 L-2 9 L-3 2 L-12 4 L-12 2 L-3 -3Z"/></g>`:''}</svg>`;

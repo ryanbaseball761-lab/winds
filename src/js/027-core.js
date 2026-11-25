@@ -108,3 +108,11 @@ function realEvents(now=new Date()){
 let REAL_STORMS = [];
 async function loadRealStorms(){ if(!window.twNative || !twNative.storms) return; try{ const r=await twNative.storms(); REAL_STORMS = (r||[]).filter(s=>s.lat>8 && s.lat<30 && s.lon<-55 && s.lon>-90); if(REAL_STORMS.length && S.st) render(); }catch(_){} }
 setTimeout(loadRealStorms, 3000); setInterval(loadRealStorms, 30*60000);
+
+/* each character gets their own voice when the system has several: the same character always sounds the same,
+   and two men in a scene don't share a voice (natural/neural voices first) */
+function pickCastVoice(k, female){ if(!_voices.length) return null; const want=voicePref(female?'female':'male'); if(want && (k==='mari'||k==='dez')){ const v=_voices.find(x=>x.name===want); if(v) return v; }
+  const en=_voices.filter(v=>/^en/i.test(v.lang)); const isF=v=>/female|zira|aria|jenny|samantha|susan|hazel|libby|sonia|natasha|michelle|karen|moira|tessa|serena|emma|ava|ana/i.test(v.name);
+  const g=en.filter(v=>female?isF(v):!isF(v)); const nat=g.filter(v=>/natural|neural|online|premium|enhanced/i.test(v.name)); const pool=(nat.length>=2?nat:g).slice().sort((a,b)=>a.name.localeCompare(b.name)); if(!pool.length) return pickVoice(female,0);
+  const order=female?['mari','reyes','ana','tico']:['dez','castillo','medina','hartwell','tico']; let i=order.indexOf(k); if(i<0){ i=0; for(const ch of String(k)) i=(i*31+ch.charCodeAt(0))%997; }
+  return pool[i%pool.length]; }

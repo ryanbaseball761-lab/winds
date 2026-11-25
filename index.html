@@ -3825,6 +3825,14 @@ function realEvents(now=new Date()){
 let REAL_STORMS = [];
 async function loadRealStorms(){ if(!window.twNative || !twNative.storms) return; try{ const r=await twNative.storms(); REAL_STORMS = (r||[]).filter(s=>s.lat>8 && s.lat<30 && s.lon<-55 && s.lon>-90); if(REAL_STORMS.length && S.st) render(); }catch(_){} }
 setTimeout(loadRealStorms, 3000); setInterval(loadRealStorms, 30*60000);
+
+/* each character gets their own voice when the system has several: the same character always sounds the same,
+   and two men in a scene don't share a voice (natural/neural voices first) */
+function pickCastVoice(k, female){ if(!_voices.length) return null; const want=voicePref(female?'female':'male'); if(want && (k==='mari'||k==='dez')){ const v=_voices.find(x=>x.name===want); if(v) return v; }
+  const en=_voices.filter(v=>/^en/i.test(v.lang)); const isF=v=>/female|zira|aria|jenny|samantha|susan|hazel|libby|sonia|natasha|michelle|karen|moira|tessa|serena|emma|ava|ana/i.test(v.name);
+  const g=en.filter(v=>female?isF(v):!isF(v)); const nat=g.filter(v=>/natural|neural|online|premium|enhanced/i.test(v.name)); const pool=(nat.length>=2?nat:g).slice().sort((a,b)=>a.name.localeCompare(b.name)); if(!pool.length) return pickVoice(female,0);
+  const order=female?['mari','reyes','ana','tico']:['dez','castillo','medina','hartwell','tico']; let i=order.indexOf(k); if(i<0){ i=0; for(const ch of String(k)) i=(i*31+ch.charCodeAt(0))%997; }
+  return pool[i%pool.length]; }
 /* ===================== STORY: RETURN FLIGHTS + YOUR COMPANY (late game) + BRANCHING ENDINGS ===================== */
 ARC_META['Return Flights'] = {n:4.5, tag:`Old passengers come back, and some of them bring news.`, col:'#b0527a'};
 ARC_META['Your Company'] = {main:true, n:3.5, tag:`Your name on the hangar door, and everything that comes with it.`, col:'#1d6f8f'};
@@ -3905,7 +3913,10 @@ function ifMiniMap(a){
   const X=lo=>(W-(lo1-lo0)*k*sc)/2+(lo-lo0)*k*sc, Y=la=>H-((H-(la1-la0)*sc)/2+(la-la0)*sc);
   const near = Object.keys(AP).filter(c=>!AP[c].water && AP[c].lat>la0 && AP[c].lat<la1 && AP[c].lon>lo0 && AP[c].lon<lo1).slice(0,30);
   const rec=simRecFor(a); const tr=rec&&rec.track||[];
-  return `<svg viewBox="0 0 ${W} ${H}" class="if-map" aria-label="Route map">${near.map(c=>`<circle cx="${X(AP[c].lon).toFixed(1)}" cy="${Y(AP[c].lat).toFixed(1)}" r="3" class="nap"/><text x="${(X(AP[c].lon)+5).toFixed(1)}" y="${(Y(AP[c].lat)-4).toFixed(1)}" class="napl">${c}</text>`).join('')}
+  /* labels never sit on each other: departure and destination first, then the rest only where there's room */
+  const order=[job.from, job.to].concat(near.filter(c=>c!==job.from&&c!==job.to)).filter((c,i,arr)=>near.includes(c)&&arr.indexOf(c)===i), boxes=[];
+  const lab={}; for(const c of order){ const x=X(AP[c].lon), y=Y(AP[c].lat), w=c.length*7+4; for(const [dx,dy] of [[5,-4],[5,12],[-w-5,-4],[-w-5,12]]){ const bx=x+dx, by=y+dy; if(bx<2||bx+w>W-2||by<10||by>H-2) continue; if(boxes.some(q=>bx<q[0]+q[2]&&q[0]<bx+w&&Math.abs(q[1]-by)<12)) continue; boxes.push([bx,by,w]); lab[c]=[bx,by]; break; } }
+  return `<svg viewBox="0 0 ${W} ${H}" class="if-map" aria-label="Route map">${near.map(c=>`<circle cx="${X(AP[c].lon).toFixed(1)}" cy="${Y(AP[c].lat).toFixed(1)}" r="3" class="nap"/>${lab[c]?`<text x="${lab[c][0].toFixed(1)}" y="${lab[c][1].toFixed(1)}" class="napl">${c}</text>`:''}`).join('')}
     <line x1="${X(A.lon)}" y1="${Y(A.lat)}" x2="${X(B.lon)}" y2="${Y(B.lat)}" class="if-rt"/>${tr.length>1?`<polyline points="${tr.map(p=>`${X(p[1]).toFixed(1)},${Y(p[0]).toFixed(1)}`).join(' ')}" class="flown"/>`:''}
     <circle cx="${X(A.lon)}" cy="${Y(A.lat)}" r="6" class="r-start"/><circle cx="${X(B.lon)}" cy="${Y(B.lat)}" r="6" class="r-end"/>
     ${P?`<g transform="translate(${X(P.lon).toFixed(1)} ${Y(P.lat).toFixed(1)}) rotate(${s.position.hdg||0})" class="liveplane"><circle r="14" class="halo"/><path d="M0 -12 L3 -3 L12 2 L12 4 L3 2 L2 9 L5 11 L5 12 L0 11 L-5 12 L-5 11 L-2 9 L-3 2 L-12 4 L-12 2 L-3 -3Z"/></g>`:''}</svg>`;
@@ -8670,20 +8681,26 @@ function cutscene(opt){
   const shots=opt.shots.slice(); const col=opt.col||'#c8962a';
   const el=document.createElement('div'); el.className='cut'; el.dataset.sig=sig; el.style.setProperty('--arc', col);
   el.innerHTML=`<div class="cut-bg">${opt.art||''}</div><div class="cut-shade"></div><div class="cut-bar top"></div><div class="cut-bar bot"></div>
-    <div class="cut-stage"></div><div class="cut-ctl"><span class="cut-hint">Click or press Space</span><button class="cut-skip">Skip</button></div>`;
+    <div class="cut-stage"></div><div class="cut-ctl"><span class="cut-hint">Click or press Space</span><button class="cut-auto" aria-pressed="${cutAuto()}" title="Play the scene by itself (A)">Auto ${cutAuto()?'on':'off'}</button><button class="cut-skip">Skip</button></div><div class="cut-sr" aria-live="polite" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)"></div>`;
+  el.setAttribute('role','dialog'); el.setAttribute('aria-modal','true'); el.setAttribute('aria-label','Story scene');
   document.body.appendChild(el); requestAnimationFrame(()=>el.classList.add('on')); cutStart(el, opt);
   const stage=el.querySelector('.cut-stage'); let i=-1, typing=null, full='', txt=null, waiting=false, ended=false;
+  /* the Auto button (or A): play the rest of the scene by itself */
+  const autoBtn=el.querySelector('.cut-auto'); const toggleAuto=()=>{ const u=uiP(); u.autoCut=!u.autoCut; save(); autoBtn.textContent=`Auto ${u.autoCut?'on':'off'}`; autoBtn.setAttribute('aria-pressed', !!u.autoCut); if(u.autoCut && waiting) setTimeout(()=>{ if(waiting && !ended) show(); }, 900); };
+  autoBtn.addEventListener('click', e=>{ e.stopPropagation(); toggleAuto(); });
   const stopVoice=()=>{ try{ speechSynthesis.cancel(); }catch(_){} };
-  const say=(k,t)=>{ if(!(typeof voiceOn==='function'&&voiceOn())||!window.speechSynthesis) return; const v=PRO_VOICE[k]||[false,0.95,0.9]; try{ stopVoice(); const u=new SpeechSynthesisUtterance(String(t).replace(/"/g,'')); const vv=pickVoice(v[0], k==='castillo'||k==='medina'?1:0); if(vv) u.voice=vv; u.rate=v[1]; u.pitch=v[2]; u.volume=voiceVol(); speechSynthesis.speak(u); }catch(_){} };
+  const say=(k,t)=>{ if(!(typeof voiceOn==='function'&&voiceOn())||!window.speechSynthesis) return; const v=PRO_VOICE[k]||[false,0.95,0.9]; try{ stopVoice(); const u=new SpeechSynthesisUtterance(String(t).replace(/"/g,'')); const vv=(typeof pickCastVoice==='function'?pickCastVoice(k, v[0]):null)||pickVoice(v[0], k==='castillo'||k==='medina'?1:0); if(vv) u.voice=vv; u.rate=v[1]; u.pitch=v[2]; u.volume=voiceVol(); speechSynthesis.speak(u); }catch(_){} };
   const end=()=>{ if(ended) return; ended=true; CUT_RECENT[sig]=Date.now(); cutEnd(el, opt); clearInterval(typing); stopVoice(); document.removeEventListener('keydown', key, true); el.classList.remove('on'); setTimeout(()=>{ el.remove(); opt.onEnd&&opt.onEnd(); }, 600); };
   const bg=()=>{ el.querySelector('.cut-bg').style.transform=`scale(${1.06+Math.max(0,i)*0.025}) translate(${(i%2?-1:1)*1.2}%, ${Math.max(0,i)*0.35}%)`; };
-  const show=()=>{ i++; waiting=false; el.classList.remove('choosing','carding'); if(i>=shots.length){ end(); return; } const s=shots[i]; bg(); cutShot(s, el, i, opt);
+  const show=()=>{ i++; waiting=false; el.classList.remove('choosing','carding'); if(i>=shots.length){ end(); return; } const s=shots[i]; bg(); cutShot(s, el, i, opt); /* screen readers hear each line once, whole (not the typewriter); choices take keyboard focus */
+    try{ const sr=el.querySelector('.cut-sr'); const plain=h=>String(h||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim(); sr.textContent = s.card ? `${s.kicker||''}. ${s.title||''}. ${plain(s.sub)}` : s.choice ? `Choose: ${s.q||''}` : Array.isArray(s) ? `${s[1]&&CAST[s[1]]?CAST[s[1]].n+': ':''}${s[2]||''}` : ''; }catch(_){}
+    if(s.choice) setTimeout(()=>{ const b=el.querySelector('.cut-stage button'); b&&b.focus(); }, 300);
     if(s.card){ el.classList.add('carding'); stage.innerHTML=`<div class="cut-title"><p>${esc(s.kicker||'')}</p><h1>${esc(s.title||'')}</h1>${s.sub?`<div class="cut-sub">${s.sub}</div>`:''}</div>`; txt=null; full=''; try{ whoosh&&whoosh(); }catch(_){} if(s.auto) setTimeout(()=>{ if(shots[i]===s) show(); }, s.auto); return; }
     if(s.choice){ el.classList.add('choosing'); waiting=true; stage.innerHTML=`<p class="cut-place">Your call</p><p class="cut-text cut-q">${esc(s.q)}</p><div class="cut-opts">${s.opts.map((o,k)=>`<button class="cut-opt" data-k="${k}" ${o.why?'disabled':''}>${esc(o.t)}${o.why?`<small>${esc(o.why)}</small>`:''}</button>`).join('')}</div>`; txt=null; full=''; return; }
     const [pl,k,t]=s; stage.innerHTML=`<p class="cut-place">${esc(pl||'')}</p><div class="cut-line in">${k&&CAST[k]?`<div class="cut-who">${avatar(k)}<b>${esc(CAST[k].n)}</b></div>`:''}<p class="cut-text ${k?'':'nar'}"></p></div>`;
     txt=stage.querySelector('.cut-text'); full=k?`“${t}”`:t; let n=0; clearInterval(typing); const me=s, box=txt; typing=setInterval(()=>{ if(!box || !box.isConnected){ clearInterval(typing); return; } n+=2; box.textContent=full.slice(0,n); if(n>=full.length){ clearInterval(typing); if(cutAuto()){ clearTimeout(el._auto); el._auto=setTimeout(()=>{ if(shots[i]===me && !waiting) show(); }, 1800+full.length*28); } } }, 22); if(k) say(k,t); };
   const next=()=>{ if(waiting) return; if(txt && txt.textContent.length<full.length){ clearInterval(typing); txt.textContent=full; return; } show(); };
-  const key=e=>{ if(e.key===' '||e.key==='Enter'||e.key==='ArrowRight'){ e.preventDefault(); e.stopPropagation(); next(); } else if(e.key==='ArrowLeft'){ e.preventDefault(); e.stopPropagation(); if(!waiting){ let j=i-1; while(j>=0 && shots[j].card) j--; if(j>=0 && !shots.slice(j,i+1).some(x=>x.choice)){ clearInterval(typing); i=j-1; show(); } } } else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); skip(); } };
+  const key=e=>{ if((e.key==='a'||e.key==='A') && !e.ctrlKey && !e.metaKey && !(e.target.closest&&e.target.closest('input,textarea'))){ e.preventDefault(); e.stopPropagation(); toggleAuto(); return; } if(e.key===' '||e.key==='Enter'||e.key==='ArrowRight'){ e.preventDefault(); e.stopPropagation(); next(); } else if(e.key==='ArrowLeft'){ e.preventDefault(); e.stopPropagation(); if(!waiting){ let j=i-1; while(j>=0 && shots[j].card) j--; if(j>=0 && !shots.slice(j,i+1).some(x=>x.choice)){ clearInterval(typing); i=j-1; show(); } } } else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); skip(); } };
   /* Skip jumps to the next decision (decisions can't be skipped), or to the end */
   const skip=()=>{ clearInterval(typing); const j=shots.findIndex((s,k)=>k>i && s.choice); if(shots[i]&&shots[i].choice) return; if(j>=0){ i=j-1; show(); } else end(); };
   document.addEventListener('keydown', key, true);
@@ -8817,6 +8834,9 @@ function nightRampArt(acId, blue){ const jumbo = acId==='B748';
 /* the old ramp painting (a jet that read as a bomber) is retired: every ramp scene is the drawn one, with the plane you're flying */
 (function(){ if(typeof SCENES==='undefined') return; SCENES.ramp=()=>{ const st=S.st, j=st&&((st.active&&st.active.job)||(st.last&&st.last.job)); const ac=(j&&j.ac)||'CJ4'; const t=j?Math.min(1439,(j.dep||600)+(j.est||0)):1200;
   return (t>=420 && t<=1110 && typeof dayRampArt==='function') ? dayRampArt(ac,t) : nightRampArt(ac); }; })();
+
+/* the Auto button, and a slow continuous drift on the scene art (none if you prefer reduced motion) */
+(function(){ const c=document.createElement('style'); c.textContent='.cut-auto{background:none;border:1px solid rgba(255,255,255,.25);color:inherit;font:inherit;font-size:12px;padding:4px 10px;margin-right:8px;cursor:pointer}.cut-auto[aria-pressed="true"]{border-color:var(--amb);color:var(--amb)}.cut-bg{transition:transform 14s cubic-bezier(.2,.6,.3,1)}@media (prefers-reduced-motion:reduce){.cut-bg{transition:none;transform:none!important}}'; document.head.appendChild(c); })();
 /* ===================== SMALL UI PIECES =====================
    Pop-up messages (toast) and the search bar's list of things you can jump to (cmdItems). */
 
@@ -9615,6 +9635,24 @@ function customsLine(st, job){ const p=customsOdds(st, job.to); const c=crime(st
 AFTER_RENDER.push(function customsNote(){ if(S.view!=='flight'||!S.st) return; const a=S.st.active, main=document.querySelector('main'); if(!a||!a.job.network||!main||main.querySelector('.cs-odds')) return; const t=customsLine(S.st,a.job); if(!t) return;
   const pass=main.querySelector('.pass'); if(pass) pass.insertAdjacentHTML('afterend', `<p class="cs-odds small" style="margin:10px 0 0;color:${customsOdds(S.st,a.job.to)>=0.4?'var(--bad,#d0643a)':'var(--muted)'}">${esc(t)}</p>`); });
 AFTER_RENDER.push(function heatTitle(){ const h=document.querySelector('.heat-chip'); if(!h||!S.st) return; const c=crime(S.st); const p=Math.min(0.75, Math.max(0, ((c.heat||0)-(c.hard?35:50))/45)); h.title=(c.heat||0)<(c.hard?45:60)?`Heat ${c.heat}: customs leave you alone below ${c.hard?45:60}`:`Heat ${c.heat}: about ${Math.round(Math.max(0.15,p)*100)}% chance of a customs search on each run`; });
+
+/* ===================== landing coach: flare, float, speed and bounces, not just the descent rate ===================== */
+function landingTips(L){ if(!L||!L.replay||!L.replay.td) return []; const td=L.replay.td, job=L.job, out=[];
+  const ap=(L.f&&L.f.landedAt)||job.to, A=touchdownAnalysis(ap, td), vapp=vappOf(job.ac)||65, ap2=L.replay.approach||[];
+  // flare: how much the descent eased between ~50 ft and the ground
+  const at50=ap2.filter(x=>x[1]>30&&x[1]<70).map(x=>x[3]).filter(v=>v!=null); const vs50=at50.length?Math.abs(at50.reduce((a,b)=>a+b,0)/at50.length):null;
+  if(vs50!=null){ if(td.fpm>vs50*0.8 && td.fpm>250) out.push(['Flare', false, `You came down at about ${Math.round(vs50)} fpm at 50 ft and touched at ${td.fpm}. Start easing back around 20 ft and hold it off.`]);
+    else if(td.fpm<vs50*0.5) out.push(['Flare', true, `Good flare: ${Math.round(vs50)} fpm at 50 ft down to ${td.fpm} at touchdown.`]); }
+  if(A && A.runway){ if(A.zone==='long') out.push(['Float', false, `You touched down ${A.fromThr.toLocaleString()} ft past the threshold, past the touchdown zone. Close the throttle earlier and let it settle.`]);
+    else if(A.zone==='short') out.push(['Short', false, `You touched down before the runway. Aim for the markers about 1,000 ft in.`]);
+    else out.push(['Touchdown spot', true, `${A.fromThr.toLocaleString()} ft past the threshold, in the touchdown zone.`]);
+    if(A.center==='wide'||A.center==='off') out.push(['Centreline', false, `${Math.abs(A.xt)} ft ${A.xt>0?'right':'left'} of the centreline. Small rudder corrections on short final.`]); }
+  if(td.ias!=null){ const d=Math.round(td.ias-vapp); if(d>12) out.push(['Speed', false, `${Math.round(td.ias)} kt at touchdown, ${d} kt over the ${vapp} kt target. That's where the float comes from.`]); else if(d<-12) out.push(['Speed', false, `${Math.round(td.ias)} kt at touchdown, slow for this aircraft. Keep ${vapp} kt until the flare.`]); }
+  const b=(L.f&&L.f.simBounces)||0; if(b) out.push(['Bounce', false, `${b} bounce${b>1?'s':''}. After touchdown, hold the nose where it is and don't push forward.`]);
+  return out; }
+AFTER_RENDER.push(function landingCoach(){ if(!S.showResult||!S.st||!S.st.last) return; const main=document.querySelector('main'); if(!main||main.querySelector('.ld-coach')) return; const T=landingTips(S.st.last); if(!T.length) return;
+  const anchor=main.querySelector('details, .panel:last-of-type'); const h=`<section class="panel ld-coach"><h3>How the landing went</h3><ul class="ls-list">${T.map(r=>`<li class="${r[1]?'ok':'bad'}"><b>${esc(r[0])}</b><span>${esc(r[2])}</span></li>`).join('')}</ul></section>`;
+  if(anchor) anchor.insertAdjacentHTML('beforebegin', h); else main.insertAdjacentHTML('beforeend', h); });
 /* ===================== THE INTERFACE, ROUND 3 (0.69) =====================
    - Dispatch: before you start a flight, the paperwork. Weights, fuel, NOTAMs (some of them hints) and the fuel slip.
    - Sound: phone buzz, the result stamp, paper and switches. Optional ramp ambience.

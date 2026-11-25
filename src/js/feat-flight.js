@@ -184,3 +184,21 @@ function customsLine(st, job){ const p=customsOdds(st, job.to); const c=crime(st
 AFTER_RENDER.push(function customsNote(){ if(S.view!=='flight'||!S.st) return; const a=S.st.active, main=document.querySelector('main'); if(!a||!a.job.network||!main||main.querySelector('.cs-odds')) return; const t=customsLine(S.st,a.job); if(!t) return;
   const pass=main.querySelector('.pass'); if(pass) pass.insertAdjacentHTML('afterend', `<p class="cs-odds small" style="margin:10px 0 0;color:${customsOdds(S.st,a.job.to)>=0.4?'var(--bad,#d0643a)':'var(--muted)'}">${esc(t)}</p>`); });
 AFTER_RENDER.push(function heatTitle(){ const h=document.querySelector('.heat-chip'); if(!h||!S.st) return; const c=crime(S.st); const p=Math.min(0.75, Math.max(0, ((c.heat||0)-(c.hard?35:50))/45)); h.title=(c.heat||0)<(c.hard?45:60)?`Heat ${c.heat}: customs leave you alone below ${c.hard?45:60}`:`Heat ${c.heat}: about ${Math.round(Math.max(0.15,p)*100)}% chance of a customs search on each run`; });
+
+/* ===================== landing coach: flare, float, speed and bounces, not just the descent rate ===================== */
+function landingTips(L){ if(!L||!L.replay||!L.replay.td) return []; const td=L.replay.td, job=L.job, out=[];
+  const ap=(L.f&&L.f.landedAt)||job.to, A=touchdownAnalysis(ap, td), vapp=vappOf(job.ac)||65, ap2=L.replay.approach||[];
+  // flare: how much the descent eased between ~50 ft and the ground
+  const at50=ap2.filter(x=>x[1]>30&&x[1]<70).map(x=>x[3]).filter(v=>v!=null); const vs50=at50.length?Math.abs(at50.reduce((a,b)=>a+b,0)/at50.length):null;
+  if(vs50!=null){ if(td.fpm>vs50*0.8 && td.fpm>250) out.push(['Flare', false, `You came down at about ${Math.round(vs50)} fpm at 50 ft and touched at ${td.fpm}. Start easing back around 20 ft and hold it off.`]);
+    else if(td.fpm<vs50*0.5) out.push(['Flare', true, `Good flare: ${Math.round(vs50)} fpm at 50 ft down to ${td.fpm} at touchdown.`]); }
+  if(A && A.runway){ if(A.zone==='long') out.push(['Float', false, `You touched down ${A.fromThr.toLocaleString()} ft past the threshold, past the touchdown zone. Close the throttle earlier and let it settle.`]);
+    else if(A.zone==='short') out.push(['Short', false, `You touched down before the runway. Aim for the markers about 1,000 ft in.`]);
+    else out.push(['Touchdown spot', true, `${A.fromThr.toLocaleString()} ft past the threshold, in the touchdown zone.`]);
+    if(A.center==='wide'||A.center==='off') out.push(['Centreline', false, `${Math.abs(A.xt)} ft ${A.xt>0?'right':'left'} of the centreline. Small rudder corrections on short final.`]); }
+  if(td.ias!=null){ const d=Math.round(td.ias-vapp); if(d>12) out.push(['Speed', false, `${Math.round(td.ias)} kt at touchdown, ${d} kt over the ${vapp} kt target. That's where the float comes from.`]); else if(d<-12) out.push(['Speed', false, `${Math.round(td.ias)} kt at touchdown, slow for this aircraft. Keep ${vapp} kt until the flare.`]); }
+  const b=(L.f&&L.f.simBounces)||0; if(b) out.push(['Bounce', false, `${b} bounce${b>1?'s':''}. After touchdown, hold the nose where it is and don't push forward.`]);
+  return out; }
+AFTER_RENDER.push(function landingCoach(){ if(!S.showResult||!S.st||!S.st.last) return; const main=document.querySelector('main'); if(!main||main.querySelector('.ld-coach')) return; const T=landingTips(S.st.last); if(!T.length) return;
+  const anchor=main.querySelector('details, .panel:last-of-type'); const h=`<section class="panel ld-coach"><h3>How the landing went</h3><ul class="ls-list">${T.map(r=>`<li class="${r[1]?'ok':'bad'}"><b>${esc(r[0])}</b><span>${esc(r[2])}</span></li>`).join('')}</ul></section>`;
+  if(anchor) anchor.insertAdjacentHTML('beforebegin', h); else main.insertAdjacentHTML('beforeend', h); });
