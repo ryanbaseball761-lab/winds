@@ -9,7 +9,8 @@ function titleHTML(){ const st=S.st; const a=st&&st.active; let cont=''; if(st){
   return `<div class="ts-bg">${typeof SCENES!=='undefined'?SCENES.ramp():''}</div><div class="ts-rain"></div><div class="ts-shade"></div>
   <div class="ts-in"><div class="ts-logo"><svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" fill="none" stroke="#c8962a" stroke-width="2"/><path d="M32 6 L36 28 L58 32 L36 36 L32 58 L28 36 L6 32 L28 28Z" fill="#c8962a"/></svg><div><h1>TRADE WINDS</h1></div></div>
   <nav class="ts-menu" aria-label="Title menu">${st?`<button data-ts="continue" class="on"><b>${a?(a.started?'Resume flight':'Continue to your flight'):'Continue'}</b><span>${esc(st.pilot&&st.pilot.name||'')}${a?` · ${esc(a.job.from)} → ${esc(a.job.local?a.job.from:a.job.to)} · ${esc(a.job.title)}`:cont?` · ${esc(cont)}`:''}${titleLastPlayed()}</span></button>`:''}
-    <button data-ts="new"><b>New game</b><span>${st?'Start a new career (your current one is backed up)':'Start your career'}</span></button>
+    <button data-ts="new"><b>New game</b><span>${st?'Start a new career (your current one is kept under Careers)':'Start your career'}</span></button>
+    ${(st||slotsAll().length)?`<button data-ts="careers"><b>Careers</b><span>${slotsAll().length?`${slotsAll().length+ (st?1:0)} saved · switch between them`:'Keep up to four careers'}</span></button>`:''}
     ${st?'<button data-ts="settings"><b>Settings</b><span>Sound, units, cutscenes</span></button>':''}
     <button data-ts-credits="1"><b>Credits</b><span>Who made this</span></button>
     ${window.twNative?'<button data-ts="quit"><b>Quit</b></button>':''}</nav>
@@ -22,11 +23,12 @@ function showTitle(){ if(document.querySelector('.title-screen')) return; const 
   el.addEventListener('mouseover', e=>{ const b=e.target.closest('.ts-menu button'); if(b){ buttons().forEach(x=>x.classList.toggle('on',x===b)); idx=buttons().indexOf(b); } });
   el.addEventListener('click', e=>{ const b=e.target.closest('[data-ts]'); if(!b) { try{ MUSIC&&MUSIC.play('title'); }catch(_){} return; } const a=b.dataset.ts;
     if(a==='quit'){ window.close(); return; }
-    if(a==='new' && S.st && !b.dataset.ok){ b.dataset.ok=1; b.querySelector('span').textContent='Click again: your current career is backed up first'; return; }
+    if(a==='new' && S.st && !b.dataset.ok){ b.dataset.ok=1; b.querySelector('span').textContent='Click again: your current career moves to Careers'; return; }
+    if(a==='careers'){ careersSheet(); return; }
     const close=after=>{ el.classList.remove('on'); setTimeout(()=>{ el.remove(); document.removeEventListener('keydown',key,true); S._title=false; try{ MUSIC&&MUSIC.stop(); }catch(_){} after&&after(); }, 500); };
     if(a==='continue') close(()=>{ S.view = S.st.active ? 'flight' : 'story'; render(); setTimeout(playRecapNow, 300); });
     if(a==='settings') close(()=>{ S.view='hangar'; S.hangarTab='settings'; render(); });
-    if(a==='new') close(()=>{ if(S.st){ try{ backupLabeled(S.st,'Before starting a new game'); }catch(_){} } S.st=null; try{ localStorage.removeItem(KEY); }catch(_){} S.view='board'; render(); }); }); }
+    if(a==='new') close(()=>{ if(S.st){ try{ backupLabeled(S.st,'Before starting a new game'); slotPut(S.st); }catch(_){} } S.st=null; try{ localStorage.removeItem(KEY); }catch(_){} S.view='board'; render(); }); }); }
 /* "Previously on": only when you've been away 3+ hours */
 function markSeen(){ try{ localStorage.setItem('tw.lastSeen', String(Date.now())); }catch(_){} }
 setInterval(markSeen, 60000); window.addEventListener('beforeunload', markSeen);
@@ -70,3 +72,18 @@ document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="uni
 .vol{display:grid;grid-template-columns:70px 1fr 34px;align-items:center;gap:10px;font-size:14px;margin:6px 0}.vol input{width:100%}.vol b{font-family:var(--f-mono);font-size:12px;color:var(--muted)}`; document.head.appendChild(s); })();
 
 (function(){ const c=document.createElement('style'); c.textContent='.ts-beta{color:var(--amb);border:1px solid var(--amb);padding:1px 6px;margin-right:6px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:.85em}'; document.head.appendChild(c); })();
+
+/* ===================== save slots: up to four careers =====================
+   The current career lives in the usual save; the others wait in tw.slots. Switching shelves the current one. */
+function careerId(st){ if(!st.cid) st.cid='c'+Date.now().toString(36)+Math.floor(Math.random()*1e4); return st.cid; }
+function slotsAll(){ try{ return JSON.parse(localStorage.getItem('tw.slots')||'[]'); }catch(_){ return []; } }
+function slotsSet(a){ try{ localStorage.setItem('tw.slots', JSON.stringify(a.slice(-3))); return true; }catch(_){ toast('Not enough room to keep another career. Delete one under Careers.'); return false; } }
+function slotSummary(st){ const MC=mainChapters(); const n=MC.filter(m=>st.story.done[m.id]).length; return {name:(st.pilot&&st.pilot.name)||'Pilot', ch:n, of:MC.length, cash:st.cash, day:st.day, diff:st.difficulty||'standard'}; }
+function slotPut(st){ const id=careerId(st); const a=slotsAll().filter(x=>x.id!==id); a.push({id, at:Date.now(), sum:slotSummary(st), st:JSON.parse(JSON.stringify(st))}); return slotsSet(a); }
+function careersSheet(){ const cur=S.st, a=slotsAll(); const row=(s,cur)=>`<li class="row between" style="gap:12px;padding:12px 0;border-top:1px solid var(--line)"><div><b>${esc(s.name)}</b><p class="small muted" style="margin:2px 0 0">Chapter ${s.ch}/${s.of} · day ${s.day} · ${money(s.cash)} · ${esc((DIFF[s.diff]||{}).n||'')}</p></div>${cur?'<span class="chip">Playing</span>':''}</li>`;
+  const body=`<ul style="list-style:none;margin:12px 0 0;padding:0">${cur?row(slotSummary(cur),true):''}${a.slice().reverse().map(x=>row(x.sum,false).replace('</li>',`<div class="row"><button class="btn sm primary" data-act="slot-load" data-id="${x.id}">Switch to</button><button class="btn sm ghost" data-act="slot-del" data-id="${x.id}">Delete</button></div></li>`)).join('')}</ul>${!a.length?'<p class="small muted">Start a new game and your current career waits here.</p>':''}`;
+  twSheet("Careers", body); }
+document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="slot-load"],[data-act="slot-del"]'); if(!b) return; const a=slotsAll(), x=a.find(s=>s.id===b.dataset.id); if(!x) return;
+  if(b.dataset.act==='slot-del'){ if(!b.dataset.ok){ b.dataset.ok=1; b.textContent='Click again to delete'; return; } slotsSet(a.filter(s=>s.id!==x.id)); twSheetClose(); careersSheet(); return; }
+  if(S.st && !slotPut(S.st)) return; const rest=slotsAll().filter(s=>s.id!==x.id); slotsSet(rest);
+  S.st=migrate(x.st); S.st.savedAt=Date.now(); save(); twSheetClose(); document.querySelectorAll('.title-screen').forEach(t=>t.remove()); S._title=false; S.view=S.st.active?'flight':'story'; S.showResult=false; render(); toast(`Switched to ${x.sum.name}'s career.`); });

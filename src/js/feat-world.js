@@ -287,15 +287,22 @@ function islandsHTML(){ const w=twW(); const L=Object.entries(w.isl).filter(([,v
     ${met.length?`<ul class="w-contacts">${met.map(k=>`<li><b>${esc(k.n)}</b> <span class="muted">${esc(k.role)}. ${esc(islOf(k.ap))} (${k.ap}).</span> ${contactLevel(k.id)?`<span class="chip">${contactLevel(k.id)} job${contactLevel(k.id)>1?'s':''}</span>`:''}</li>`).join('')}</ul>`:`<p class="muted">Be good to an island and someone there will start sending you work.</p>`}</section>`; }
 
 /* what your money is for: the next aircraft of your own, as a savings bar (a 20% down payment buys it through your airline) */
-function goalHTML(st){ const owned=new Set(((st.company&&st.company.fleet)||[]).map(f=>f.ac));
-  const L=Object.keys(AC).filter(k=>AC[k].price && canFly(st,k) && !owned.has(k)).sort((a,b)=>AC[a].price-AC[b].price);
-  const k=L.find(x=>AC[x].price*0.2>st.cash) || L.at(-1); if(!k) return '';
-  const down=Math.round(AC[k].price*0.2), pct=Math.min(100, Math.round(st.cash/down*100)), hasCo=!!st.company;
-  return `<section class="panel w-goal"><div class="section-title"><h2>Saving for</h2><span class="small muted">${hasCo?'Bought through your airline, 20% down':'Your own aircraft open up with your airline (the Company rating)'}</span></div>
-    <div class="row between" style="gap:16px;flex-wrap:wrap"><div><b style="font-size:20px">${esc(AC[k].n)}</b><p class="small muted" style="margin:2px 0 0">${money(AC[k].price)} · down payment ${money(down)}</p></div>
-    ${pct>=100&&hasCo?`<button class="btn primary" data-act="nav" data-v="company">Buy it</button>`:`<span class="mono">${pct}%</span>`}</div>
+function ownUpkeep(k){ return Math.max(40, Math.round(AC[k].price*0.0003/10)*10); }
+function goalHTML(st){ st.owned=st.owned||{}; const mine=Object.keys(st.owned).filter(k=>AC[k]);
+  const L=Object.keys(AC).filter(k=>AC[k].price && canFly(st,k) && !st.owned[k]).sort((a,b)=>AC[a].price-AC[b].price);
+  const k=L[0];   // the cheapest plane you're rated for and don't own yet
+  const own = mine.length?`<div class="w-own">${mine.map(x=>`<div class="row between"><span><b>${esc(AC[x].n)}</b> <span class="small muted">yours since day ${st.owned[x].since} · ${money(ownUpkeep(x))}/day</span></span><button class="btn ghost sm" data-act="own-sell" data-id="${x}">Sell for ${money(Math.round(AC[x].price*0.8))}</button></div>`).join('')}</div>`:'';
+  if(!k) return own?`<section class="panel w-goal"><div class="section-title"><h2>Your aircraft</h2></div>${own}</section>`:'';
+  const price=AC[k].price, pct=Math.min(100, Math.round(st.cash/price*100));
+  return `<section class="panel w-goal"><div class="section-title"><h2>${mine.length?'Your aircraft':'Saving for your own aircraft'}</h2><span class="small muted">Jobs flown in a plane you own pay 20% more</span></div>${own}
+    <div class="row between" style="gap:16px;flex-wrap:wrap;margin-top:${own?'12px':'0'}"><div><b style="font-size:20px">${esc(AC[k].n)}</b><p class="small muted" style="margin:2px 0 0">${money(price)} · upkeep ${money(ownUpkeep(k))} a day</p></div>
+    ${st.cash>=price?`<button class="btn primary" data-act="own-buy" data-id="${k}">Buy it</button>`:`<span class="mono">${pct}%</span>`}</div>
     <div class="meter" style="margin-top:12px"><i style="width:${pct}%"></i></div>
-    ${pct<100?`<p class="small muted" style="margin:8px 0 0">${money(down-st.cash)} to go.</p>`:''}</section>`; }
+    ${pct<100?`<p class="small muted" style="margin:8px 0 0">${money(price-st.cash)} to go.${st.company?' Your airline can also buy it with 20% down.':''}</p>`:''}</section>`; }
+document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="own-buy"],[data-act="own-sell"]'); if(!b||!S.st) return; const st=S.st, k=b.dataset.id; if(!AC[k]) return; st.owned=st.owned||{};
+  if(b.dataset.act==='own-buy'){ if(st.cash<AC[k].price || st.owned[k]) return; txn(st,-AC[k].price,'Aircraft purchases',`Your own ${AC[k].n}`); st.owned[k]={since:st.day}; toast(`She's yours: ${AC[k].n}. Jobs in her pay 20% more.`); }
+  else { if(!st.owned[k]) return; txn(st,Math.round(AC[k].price*0.8),'Aircraft sales',`Sold your ${AC[k].n}`); delete st.owned[k]; toast(`Sold your ${AC[k].n}.`); }
+  save(); S.keepScroll=true; render(); });
 /* Money: property (home, safehouses, businesses), the loan, bribes */
 function moneyWorldHTML(){ const st=S.st, w=twW(), c=crime(st), L=loanNow();
   /* one Property list: where you live (rented), safehouses (bought in order, crime story only), and businesses */
@@ -404,3 +411,31 @@ function weekCardHTML(st){ const L=[]; const e=mktNow(); if(e) L.push(`<li><b>Ma
   const v=typeof invNow==='function'?invNow(st):null; if(v) L.push(`<li class="bad"><b>Investigation</b><span>Federal agents are watching ${esc(AP[v.ap].n)} (${v.ap}) until day ${v.until}. No network runs there, and any run that lands there is searched.</span></li>`);
   const next=mainChapters().find(m=>!st.story.done[m.id]); const due=next&&typeof chDue==='function'?chDue(st,next):null; if(due!=null){ const left=due-st.day; L.push(`<li class="${left<=0?'bad':''}"><b>Castillo</b><span>${esc(next.title)}: ${left<0?`late, he wanted it by day ${due}`:left===0?'due today':`due by day ${due} (${left} day${left>1?'s':''})`}.</span></li>`); }
   return L.length?`<section class="panel w-mkt w-week"><p class="label">This week</p><ul class="ls-list">${L.join('')}</ul></section>`:''; }
+
+/* ===================== the regulars have stories =====================
+   Each contact tells you a little more after your 1st, 3rd and 5th job for them. The fifth comes with a thank-you. */
+const CONTACT_STORY = {
+  lou:    [`lou here. my daughter wants to fly. i told her to ask you, not me`, `lou again. took my girl up to the fence to watch you land. she counted your bounces. zero. she was very serious about it`, `Lou: my daughter starts flight school in Antigua in September. you did that. fuel's on me this month`],
+  abigail:[`Sister Abigail: The clinic's freezer runs on hope and a generator. Your flights keep the insulin cold. Thank you.`, `Sister Abigail: A boy you flew medicine for came by to say thank you. He is nine and wants to be you. I told him to aim higher.`, `Sister Abigail: The church took up a collection for you. Please don't refuse it. We'd only spend it on candles.`],
+  kiko:   [`kiko: paid you same day. you'll find i'm the only broker in san juan who does that`, `kiko: the other pilots on my list are slow, drunk or both. you're neither. keep it that way`, `kiko: put you on my A list. better loads, better pay, and a bonus for putting up with me`],
+  oona:   [`Oona: A client asked who flew her. I said a professional. She said "that's rare". It is.`, `Oona: Don't repeat this, but the man you flew Tuesday owns half a football club. He liked your landing more than the villa.`, `Oona: The villa owners pooled a tip for "the pilot who never talks". Here it is. Keep not talking.`],
+  pere:   [`Père Léon: Every family on Marie-Galante now knows your name. Be careful with that.`, `Père Léon: The wedding you flew the cake for? The bride's grandmother wants to meet you. I said you were busy. She said, so is God.`, `Père Léon: The parish wanted to thank you. It isn't much, and it comes with prayers you didn't ask for.`],
+  vic:    [`vic at juliana dispatch. i hear everything on this ramp. you're starting to come up in conversations. good ones, mostly`, `vic: a guy in a linen suit asked who flies for Coral Wing. i said nobody special. you owe me`, `vic: dispatch put money together for the pilot who never misses a slot. that's you. don't tell the other guys`],
+};
+AFTER_RESULT.push(function contactStory(st, job){ if(!job.contact) return; const lv=(twW().contacts[job.contact]||0), lines=CONTACT_STORY[job.contact]; if(!lines) return;
+  const idx = lv===1?0 : lv===3?1 : lv===5?2 : -1; if(idx<0) return; const k=CONTACTS.find(x=>x.id===job.contact);
+  setTimeout(()=>{ phonePush({from:'contact', fromName:k.n, text:lines[idx]}); if(idx===2){ const gift=1500; txn(st,gift,'Gifts & windfalls',`A thank-you from ${k.n}`); save(); } }, 2500); });
+
+/* ===================== the cast notices how you fly =====================
+   After some flights (at most one a day), Mari or Dez texts about that landing, that airport, that weather. */
+AFTER_RESULT.push(function reactText(st, job, f, res){ if(!res || job.kind==='check') return; const w=twW(); if(w._rtDay===st.day || Math.random()>0.45) return;
+  const fpm=f&&f.simFpm, ap=AP[(f&&f.landedAt)||job.to]||{}, isl=ap.isl||job.to, first=!st.visited||st.visited[job.to]===1, crime_=crime(st).on, story=job.kind==='story';
+  let m=null;
+  if(res.crash) m={from:'dez', text:`heard about ${isl}. you ok? the plane isn't. call me when you can`};
+  else if(fpm!=null && fpm<90) m={from:'mari', text:`Tower at ${job.to} says you put it on at ${fpm} fpm. Don't let it go to your head. (Nice.)`};
+  else if(fpm!=null && fpm>450) m={from:'dez', text:`${fpm} fpm into ${isl}?? i'm going to be checking that gear all night`};
+  else if(res.grade==='A' && story && crime_) m={from:'castillo', text:`Clean work at ${isl}. I notice clean work.`};
+  else if(first && ap.n) m={from:'mari', text:`First time into ${ap.n}? Tell me how it was. Some of those approaches look easier on the chart.`};
+  else if(job.wx && /storm|rain|squall/i.test(JSON.stringify(job.wx))) m={from:'dez', text:`flying in that weather to ${isl}. you're braver than me. or dumber. can't decide`};
+  else if(res.grade==='D'||res.grade==='F') m={from:'mari', text:`That one to ${isl} wasn't your best. Happens to everyone. Once.`};
+  if(!m) return; w._rtDay=st.day; setTimeout(()=>phonePush(m), 4000); });

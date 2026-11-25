@@ -1,3 +1,5 @@
+/* the Heat where customs start searching: 70 on Casual, 60 on Standard, 50 on Expert, 45 with New Game+ hard rules */
+function customsFloor(c){ return c.hard?45 : diff()==='casual'?70 : diff()==='expert'?50 : 60; }
 /* ===================== GAME FLOW =====================
    What happens to the career when a flight is scored and finished, and when a new day starts.
      score(job, f)                 -> the grade for a flight
@@ -97,8 +99,10 @@ function settleFlight(st, job, f, res){
   const divertedOk = landedAt!==job.to && (expectedDivert || f.scen==='book');
   // pay
   // pay follows the grade: a rough flight costs real money (A 115%, B 100%, C 85%, D 60%, F 35%)
-  let factor = ({A:1.15,B:1,C:0.85,D:0.6,F:0.35})[res.grade] ?? (0.6 + res.score/100*0.6);
+  const PAYG = diff()==='casual' ? {A:1.15,B:1.05,C:0.95,D:0.8,F:0.6} : diff()==='expert' ? {A:1.15,B:1,C:0.75,D:0.45,F:0.2} : {A:1.15,B:1,C:0.85,D:0.6,F:0.35};   /* how much a rough flight costs depends on difficulty */
+  let factor = PAYG[res.grade] ?? (0.6 + res.score/100*0.6);
   if((res.grade==='D'||res.grade==='F') && !res.crash && job.kind!=='check') out.notes.push(`The client docked your pay for a rough flight: you get ${Math.round(factor*100)}% of the fare.`);
+  if(!res.crash && st.owned && st.owned[job.ac] && job.kind!=='check' && !job.company){ factor*=1.2; out.notes.push(`Your own ${AC[job.ac].n}: no rental cut, 20% more pay.`); }   /* personal aircraft (Money page) */
   if(res.crash){ factor=0; out.ok=false; }
   else if(landedAt!==job.to && !job.local && !divertedOk){ factor*=0.4; out.notes.push(`You landed at ${landedAt} instead of ${job.to}, so the client pays only part of the fare.`); }
   else if(landedAt!==job.to && !job.local){ out.notes.push(`Diverting was the right call. The client pays in full, and Coral Wing arranges onward transport.`); st.stats.diverts++; }
@@ -191,7 +195,7 @@ const AFTER_RESULT = [
     if(job.network){ crBump(c,'heat',12); crBump(c,'power',1); }   // (a network run is also a 'gen' job, so the −2 above already ran: net +5)
     if((job.network || job.kind==='story') && o){
       if(c.heat>=90){ const law=Math.max(50000, Math.round(st.cash*0.12/1000)*1000); txn(st,-law,'Payoffs',`Lawyers, ${job.to}`); crBump(c,'power',-10); c.heat=50; o.notes.push(`BUSTED at ${job.to}. Customs found the hidden compartment. The network's lawyers got you out for ${money(law)}. Power −10, Heat down to 50.`); try{ setTimeout(()=>takeover({kind:'orders',kicker:'Busted',title:`Customs at ${job.to}`,text:`They found the hidden compartment. The network's lawyers got you out, for ${money(law)}.`,ms:9000}),600); }catch(_){} }
-      else if((job.network && typeof invNow==='function' && invNow(st) && invNow(st).ap===(f.landedAt||job.to)) || (c.heat>=(c.hard?45:60) && Math.random() < Math.min(0.75, Math.max(0.15, (c.heat-(c.hard?35:50))/45)))){   /* an airport under investigation always searches */ if(res.grade==='A' || (res.grade==='B' && c.heat<75)){ o.notes.push(`Customs came out to the plane, but a clean landing and calm answers got you waved through. Heat −5.`); crBump(c,'heat',-5); }
+      else if((job.network && typeof invNow==='function' && invNow(st) && invNow(st).ap===(f.landedAt||job.to)) || (c.heat>=customsFloor(c) && Math.random() < Math.min(0.75, Math.max(0.15, (c.heat-(customsFloor(c)-10))/45)))){   /* an airport under investigation always searches */ if(res.grade==='A' || (res.grade==='B' && c.heat<75)){ o.notes.push(`Customs came out to the plane, but a clean landing and calm answers got you waved through. Heat −5.`); crBump(c,'heat',-5); }
         else { const cost=Math.max(Math.round(c.heat*60/10)*10, Math.round(st.cash*0.03/100)*100); txn(st,-cost,'Payoffs',`Customs at ${job.to}`); crBump(c,'heat',-15);
           // a searched network run loses its load: the run's pay goes back to the network
           if(job.network && o.pay>0){ txn(st,-o.pay,'Network',`Load seized at ${job.to}`); o.notes.push(`They found the load. It's gone, and so is the ${money(o.pay)} for this run.`); o.pay=0; }

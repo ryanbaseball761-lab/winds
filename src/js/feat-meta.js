@@ -42,7 +42,7 @@ function cupDecode(code){ const m=String(code).trim().toUpperCase().match(/^TW-(
 function cupFriendsHTML(st, c){ const fr=(cupState(st).friends||[]).filter(f=>f.cid===c.id && f.wk===isoWeek()); if(!fr.length) return '';
   return `<div class="cup-friends">${fr.map(f=>`<p class="small"><b>${esc(f.n)}</b> <span class="mono">${f.fpm} fpm</span>${f.b?` · ${f.b} bounce${f.b>1?'s':''}`:''}</p>`).join('')}</div>`; }
 AFTER_RENDER.push(function cupShare(){ if(S.view!=='cup'||!S.st) return; const main=document.querySelector('main'); if(!main||main.querySelector('.cup-share')) return; const C=cupState(S.st);
-  const mine=CUP.filter(c=>C.best[c.id]).map(c=>`<li><span>${esc(c.n)}</span><code class="mono">${cupCode(c.id, C.best[c.id].fpm, C.best[c.id].bounces)}</code><button class="btn sm" data-act="cup-copy" data-c="${cupCode(c.id, C.best[c.id].fpm, C.best[c.id].bounces)}">Copy</button></li>`).join('');
+  const mine=CUP.filter(c=>C.best[c.id]).map(c=>`<li><span>${esc(c.n)}</span><code class="mono">${cupCode(c.id, C.best[c.id].fpm, C.best[c.id].bounces)}</code><button class="btn sm" data-act="cup-copy" data-c="${cupCode(c.id, C.best[c.id].fpm, C.best[c.id].bounces)}">Copy</button><button class="btn sm ghost" data-act="share-discord" data-what="cup" data-c="${cupCode(c.id, C.best[c.id].fpm, C.best[c.id].bounces)}" data-n="${esc(c.n)}" data-fpm="${Math.round(C.best[c.id].fpm)}">Discord</button></li>`).join('');
   const d=document.createElement('section'); d.className='panel cup-share'; d.innerHTML=`<div class="section-title"><h2>Race your friends</h2></div>${mine?`<p class="small muted">Your codes for this week. Send one to a friend.</p><ul class="cs-list">${mine}</ul>`:`<p class="small muted">Land on any Cup approach and you'll get a code to send.</p>`}
     <div class="row" style="gap:8px;margin-top:12px;flex-wrap:wrap"><input id="cup-friend-n" placeholder="Friend's name" maxlength="20" aria-label="Friend's name" style="width:160px"><input id="cup-friend-c" placeholder="TW-MAHO-84-0-…" maxlength="40" aria-label="Friend's code" style="width:240px"><button class="btn sm" data-act="cup-add">Add to my board</button></div>`;
   main.appendChild(d); });
@@ -125,3 +125,15 @@ AFTER_RESULT.push(function finalDelta(st, job, f, res, was){ const c=crime(st); 
 (function(){ const s=document.createElement('style'); s.textContent=`.ff p,.ff .muted{color:var(--muted)!important;opacity:1!important}.perks li p{color:var(--muted)!important}.perks li{opacity:1!important}html.ckp .pass-stub .label{color:var(--muted)!important;opacity:1!important}`; document.head.appendChild(s); })();
 
 AFTER_RESULT.push(function tourOff(st){ if(!st.tourDone){ st.tourDone=true; } });
+
+/* ---- one-click share to Discord: copy the picture (or the text) and open Discord, ready to paste ---- */
+const DISCORD_URL='https://discord.com/channels/@me';
+async function shareDiscord(what, b){ let text='', cv=null;
+  if(what==='chapter'){ const m=S.st.last&&S.st.last.job&&S.st.last.job.mission; const ch=m&&mainChapters().find(x=>x.id===m); text=`Trade Winds: just finished ${ch&&ch.title?'"'+ch.title+'"':'a chapter'}, grade ${S.st.last.res.grade}.`; try{ cv=drawChapterCard(S.st); }catch(_){} }
+  else if(what==='cup'){ text=`Butter Cup, ${b.dataset.n}: ${b.dataset.fpm} fpm. Beat it in Trade Winds with my code ${b.dataset.c}`; }
+  let how='text';
+  try{ if(cv && window.ClipboardItem && navigator.clipboard.write){ const blob=await new Promise(r=>cv.toBlob(r,'image/png')); await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]); how='image'; } else { await navigator.clipboard.writeText(text); } }
+  catch(_){ try{ await navigator.clipboard.writeText(text); }catch(__){ how='none'; } }
+  window.open(DISCORD_URL,'_blank','noopener');
+  toast(how==='image'?'Picture copied. Paste it into Discord with Ctrl+V.':how==='text'?'Copied. Paste it into Discord with Ctrl+V.':'Opening Discord. Copy didn\'t work here, so use Save image.'); }
+document.addEventListener('click', e=>{ const b=e.target.closest('[data-act="share-discord"]'); if(!b||!S.st) return; shareDiscord(b.dataset.what, b); });

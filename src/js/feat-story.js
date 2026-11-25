@@ -80,7 +80,7 @@ function drawChapterCard(st){ const L=st.last, j=L.job, o=L.out; const cv=docume
   if(picked){ g.fillStyle='#8f989f'; g.font='500 26px "IBM Plex Sans",sans-serif'; g.fillText('You chose', 60, y+70); g.fillStyle='#f0a53a'; g.font='600 34px "IBM Plex Sans",sans-serif'; g.fillText(picked, 60, y+112); }
   g.fillStyle='#5d666d'; g.font='400 22px "IBM Plex Mono",monospace'; g.fillText(`${st.pilot.name} · day ${st.day}`, 60, 600); return cv; }
 AFTER_RENDER.push(function chapterCardButton(){ const st=S.st, L=st&&st.last; if(!S.showResult || !L || !L.job || L.job.kind!=='story' || L.res.crash) return; const main=document.querySelector('main'); if(!main || main.querySelector('.ch-card')) return;
-  const d=document.createElement('section'); d.className='panel row between ch-card'; d.innerHTML=`<div><p class="label">Chapter card</p><p class="small muted">A picture of this chapter: route, grade and what you chose.</p></div><button class="btn sm" data-act="ch-card">Save image</button>`;
+  const d=document.createElement('section'); d.className='panel row between ch-card'; d.innerHTML=`<div><p class="label">Chapter card</p><p class="small muted">A picture of this chapter: route, grade and what you chose.</p></div><div class="row" style="gap:6px"><button class="btn sm" data-act="share-discord" data-what="chapter">Share to Discord</button><button class="btn sm ghost" data-act="ch-card">Save image</button></div>`;
   const anchor=main.querySelector('.beta-fb')||main.lastElementChild; anchor.after(d); });
 document.addEventListener('click', async e=>{ const b=e.target.closest('[data-act="ch-card"]'); if(!b||!S.st||!S.st.last) return; const blob=await new Promise(r=>drawChapterCard(S.st).toBlob(r,'image/png'));
   try{ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`trade-winds-${S.st.last.job.story}.png`; document.body.appendChild(a); a.click(); a.remove(); toast('Chapter card saved.'); }catch(_){ toast('Saving isn\'t available in this view.'); } });
@@ -189,7 +189,7 @@ PHONE_POOL.push({id:'ng1', from:'reyes', need:['CR11'], crime:true, gate:()=>!!(
    Once you work for Castillo (after chapter 4), each of his chapters is due three days after it opens.
    Late costs Power and gets you a text. The story page shows the date. */
 function chDue(st, m){ const c=crime(st); if(!c.on || !st.story.done.CR4 || !CRIME_IDS.has(m.id) || st.story.done[m.id] || m.id==='CR17') return null;
-  c.due=c.due||{}; if(c.due[m.id]==null){ const k=chapterStatus(st,m).k; if(k!=='ready' && k!=='travel') return null; c.due[m.id]=st.day+3; save(); } return c.due[m.id]; }   /* the clock starts only once you can actually fly it */
+  c.due=c.due||{}; if(c.due[m.id]==null){ const k=chapterStatus(st,m).k; if(k!=='ready' && k!=='travel') return null; c.due[m.id]=st.day+(diff()==='casual'?5:diff()==='expert'?2:3); save(); } return c.due[m.id]; }   /* the clock starts only once you can actually fly it */
 DAY_HOOKS.push(function lateChapters(st){ const c=crime(st); if(!c.on || !c.due) return; c.late=c.late||{};
   for(const id in c.due){ if(!st.story.done[id] && !c.late[id] && st.day>c.due[id]){ c.late[id]=1; crBump(c,'power',-4); const m=CRIME.find(x=>x.id===id);
     phonePush({from:'castillo', text:`I asked for "${m?m.title:'it'}" by day ${c.due[id]}. I don't like asking twice.`}); } } });

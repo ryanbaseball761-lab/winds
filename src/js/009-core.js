@@ -26,7 +26,7 @@ function setupView(){
             <h2>Who's flying?</h2>
             <label class="field"><span>Your name</span><input id="pname" type="text" placeholder="Your name" maxlength="40" required autofocus></label>
             <label class="field"><span>Callsign or nickname <small>(optional)</small></span><input id="pcall" type="text" placeholder="e.g. Maverick" maxlength="30"></label>
-            <fieldset class="field setup-diff"><legend>Difficulty</legend><div class="diff">${Object.keys(DIFF).map(d=>`<label><input type="radio" name="pdiff" value="${d}" ${d==='standard'?'checked':''}> ${DIFF[d].n}</label>`).join('')}</div><span class="tiny muted">You can change it any time in Settings.</span></fieldset>
+            <fieldset class="field setup-diff"><legend>Difficulty</legend><div class="diff">${Object.keys(DIFF).map(d=>`<label><input type="radio" name="pdiff" value="${d}" ${d==='standard'?'checked':''}> ${DIFF[d].n}</label>`).join('')}</div><p class="small muted setup-diff-d" style="margin:8px 0 0">${esc(DIFF_SHORT.standard)}</p><span class="tiny muted">You can change it any time in Settings.</span></fieldset>
             <button class="btn action big" type="submit">Start the story</button>
             
           </form>
@@ -122,3 +122,9 @@ document.addEventListener('click', e=>{
   else if(act==='ck-next' && st.active){ const ck=st.active.ck; ck.p=ck.p+1; if(ck.p===4 && !st.active.started){ st.active.started=Date.now(); simArm(); toast('Block timer started.'); } save(); render(); window.scrollTo(0,0); }
   else if(act==='debrief-go'){ S.view='flight'; S.debrief=true; try{ history.replaceState(null,'','#flight'); }catch(_){} render(); const fm=document.getElementById('debrief'); if(fm) simPrefill(fm); window.scrollTo(0,0); }
 });
+
+/* what each difficulty means, in one line, under the choice on the name form */
+const DIFF_SHORT = { casual:`Forgiving landings, step-by-step help in the first chapters, customs leave you alone until Heat 70, five days for Castillo's jobs.`,
+  standard:`The career as designed. A rough landing costs you pay, customs start searching at Heat 60.`,
+  expert:`Real rules: checklist, fuel reserves and instrument weather enforced, customs from Heat 50, two days for Castillo, 15% more pay.` };
+document.addEventListener('change', e=>{ if(e.target.name!=='pdiff') return; const d=document.querySelector('.setup-diff-d'); if(d) d.textContent=DIFF_SHORT[e.target.value]||''; });

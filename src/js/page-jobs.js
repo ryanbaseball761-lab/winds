@@ -3,7 +3,9 @@
    attention, then the job list. A job is shown as a row (jobRow) that opens into a card (stripHTML). */
 
 /* Can this job be accepted right now? */
-function canAcceptJob(st, job){ return !st.active && !(dutyAfter(st, job) > DUTY_MAX); }
+/* Expert follows the real rules: no flying into instrument weather without an Instrument Rating */
+function wxBlocked(st, job){ return diff()==='expert' && job.wx && job.wx.ifr && !st.ratings.IR && job.kind!=='check'; }
+function canAcceptJob(st, job){ return !st.active && !(dutyAfter(st, job) > DUTY_MAX) && !wxBlocked(st, job); }
 
 /* A job as a card: route, pay, aircraft, weather and the Accept button.
    opts.btn replaces the button, opts.extra adds HTML under the tags, opts.locked greys the card out. */
@@ -13,7 +15,7 @@ function stripHTML(st, job, opts={}){
   const load = job.pax ? `${job.pax} pax${job.cargo?` · ${job.cargo} lb`:''}` : job.cargo ? `${job.cargo} lb cargo` : 'Ferry, empty';
   const payTxt = job.kind==='check' ? 'Checkride' : job.company ? money(Math.round(job.pay*2.6 - a.op*job.est/60)) : money(job.pay);
   const payLbl = job.kind==='check' ? '' : job.company ? 'est. profit' : 'pay';
-  const btn = opts.btn!==undefined ? opts.btn : (st.active ? `<button class="btn sm" disabled>Flight booked</button>` : !canAcceptJob(st, job) ? `<span class="chip warn">Over duty limit</span>` : `<button class="btn primary jc-go" data-act="accept" data-id="${job.id}">Accept ${ICO_PLANE}</button>`);
+  const btn = opts.btn!==undefined ? opts.btn : (st.active ? `<button class="btn sm" disabled>Flight booked</button>` : !canAcceptJob(st, job) ? (wxBlocked(st,job)?`<span class="chip warn" title="Expert: instrument weather needs an Instrument Rating">IFR, needs Instrument Rating</span>`:`<span class="chip warn">Over duty limit</span>`) : `<button class="btn primary jc-go" data-act="accept" data-id="${job.id}">Accept ${ICO_PLANE}</button>`);
   const from = AP[job.from], to = job.mystery ? null : AP[job.to];
   const toCode = job.mystery ? '????' : job.local ? job.from : job.to;
   const toName = job.mystery ? 'Sealed destination' : job.local ? 'Local flight' : to.isl.replace(/\s*\(.*\)/,'');
