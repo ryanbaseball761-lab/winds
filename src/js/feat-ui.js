@@ -25,7 +25,7 @@ function ambOn(){ return !!(S.st && S.st.ui && S.st.ui.amb); }
 function ambSync(){ const want = ambOn() && !document.hidden && !(S.st&&S.st.active&&S.st.active.started) && ['story','board','hangar','pilot','profile','money'].includes(S.view);
   const c=want && typeof actx==='function' ? actx() : AC_CTX; if(!c) return;
   if(want && !TW_AMB.node){ const n=c.sampleRate*4, b=c.createBuffer(2,n,c.sampleRate); for(let ch=0;ch<2;ch++){ const d=b.getChannelData(ch); let last=0; for(let i=0;i<n;i++){ last=(last+0.02*(Math.random()*2-1))/1.02; d[i]=last*3; } }
-    const s=c.createBufferSource(); s.buffer=b; s.loop=true; const f=c.createBiquadFilter(); f.type='lowpass'; f.frequency.value=500; const g=c.createGain(); g.gain.value=0.05; s.connect(f).connect(g).connect(c.destination); s.start(); TW_AMB.node=s; TW_AMB.g=g; }
+    const s=c.createBufferSource(); s.buffer=b; s.loop=true; const f=c.createBiquadFilter(); f.type='lowpass'; f.frequency.value=500; const g=c.createGain(); g.gain.value=0.05; s.connect(f).connect(g).connect(c.destination); s.start(); TW_AMB.node=s; TW_AMB.g=g; TW_AMB.f=f; }
   else if(!want && TW_AMB.node){ try{ TW_AMB.node.stop(); }catch(_){} TW_AMB.node=null; } }
 document.addEventListener('visibilitychange', ambSync);
 

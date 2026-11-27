@@ -26,7 +26,7 @@ function setupView(){
             <h2>Who's flying?</h2>
             <label class="field"><span>Your name</span><input id="pname" type="text" placeholder="Your name" maxlength="40" required autofocus></label>
             <label class="field"><span>Callsign or nickname <small>(optional)</small></span><input id="pcall" type="text" placeholder="e.g. Maverick" maxlength="30"></label>
-            <fieldset class="field setup-diff"><legend>Difficulty</legend><div class="diff">${Object.keys(DIFF).map(d=>`<label><input type="radio" name="pdiff" value="${d}" ${d==='standard'?'checked':''}> ${DIFF[d].n}</label>`).join('')}</div><p class="small muted setup-diff-d" style="margin:8px 0 0">${esc(DIFF_SHORT.standard)}</p><span class="tiny muted">You can change it any time in Settings.</span></fieldset>
+            ${backstoryField()}<fieldset class="field setup-diff"><legend>Difficulty</legend><div class="diff">${Object.keys(DIFF).map(d=>`<label><input type="radio" name="pdiff" value="${d}" ${d==='standard'?'checked':''}> ${DIFF[d].n}</label>`).join('')}</div><p class="small muted setup-diff-d" style="margin:8px 0 0">${esc(DIFF_SHORT.standard)}</p><span class="tiny muted">You can change it any time in Settings.</span></fieldset>
             <button class="btn action big" type="submit">Start the story</button>
             
           </form>

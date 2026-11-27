@@ -176,7 +176,7 @@ SIM_TICK.push(function miniAuto(){ const a=S.st&&S.st.active; if(!miniAvail() ||
 /* ===================== customs odds, out loud ===================== */
 function customsOdds(st, ap){ const c=crime(st); if(!c.on) return 0; const w=st.w||{}; if(w.bribes&&w.bribes[ap]&&w.bribes[ap]>=st.day) return 0;
   if(typeof invNow==='function' && invNow(st) && invNow(st).ap===ap) return 1;
-  const floor=customsFloor(c), base=floor-10; if((c.heat||0)<floor) return 0; return Math.min(0.75, Math.max(0.15, ((c.heat||0)-base)/45)); }
+  const floor=customsFloor(c)+nightEdge(st.active&&st.active.job), base=floor-10; if((c.heat||0)<floor) return 0; return Math.min(0.75, Math.max(0.15, ((c.heat||0)-base)/45)); }
 function customsLine(st, job){ const p=customsOdds(st, job.to); const c=crime(st);
   if(p>=1) return `Customs at ${job.to} will search the plane: the airport is under investigation.`;
   if(!p) return (c.heat||0)>=40 ? `Customs at ${job.to} shouldn't bother you at Heat ${c.heat}. Searches start at Heat ${customsFloor(c)}.` : '';

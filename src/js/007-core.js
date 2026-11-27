@@ -230,7 +230,7 @@ document.addEventListener('change', e=>{
 });
 document.addEventListener('submit', e=>{
   e.preventDefault(); const form=e.target; const st=S.st;
-  if(form.id==='setup-form'){ const name=document.getElementById('pname').value.trim()||'Pilot'; const call=document.getElementById('pcall').value.trim(); S.st=newState(name,call); const dv=(document.querySelector('input[name="pdiff"]:checked')||{}).value; if(dv&&DIFF[dv]) S.st.difficulty=dv; S.st.tourDone=true; S._goCh1=true; save(); flush(); go('board'); return; }   /* straight on: cold open, then chapter 1's briefing (no setup box) */
+  if(form.id==='setup-form'){ const name=document.getElementById('pname').value.trim()||'Pilot'; const call=document.getElementById('pcall').value.trim(); S.st=newState(name,call); const dv=(document.querySelector('input[name="pdiff"]:checked')||{}).value; if(dv&&DIFF[dv]) S.st.difficulty=dv; applyBackstory(S.st,(document.querySelector('input[name="pback"]:checked')||{}).value); S.st.tourDone=true; S._goCh1=true; save(); flush(); go('board'); return; }   /* straight on: cold open, then chapter 1's briefing (no setup box) */
   if(form.id==='co-form'){ const name=document.getElementById('coname').value.trim(); if(!name) return; txn(st,-RATINGS.CO.fee,'Licenses & training','Air Operator Certificate'); st.ratings.CO=true; st.company={name, base:st.loc, fleet:[], ledger:[], founded:st.day}; addJournal(st, `Founded ${name}`, `Paperwork filed, certificate framed, a new sign over a borrowed hangar door at ${AP[st.loc].n}. Mari brought cake.`, ['mari','dez'], 'milestone'); save(); toast(`${name} is open for business.`); render(); return; }
   if(form.id==='debrief'){
     const fd = new FormData(form); const job=st.active.job;

@@ -49,7 +49,7 @@ const FLIGHTS={
   story7:  {setup:chapterState(7), start:startStory, opt:{pick:1}},
   story19: {setup:chapterState(19), start:startStory, opt:{pick:0}},
   network: {setup:STATES.midstory, start:`S.st.jobs=genJobs(S.st); const j=S.st.jobs.find(x=>x.network); if(!j) throw new Error('no network job'); S.st.hangar=S.st.hangar||{}; S.st.hangar[j.ac]=true; S.st.loc=j.from; S.st.jobs=S.st.jobs.filter(x=>x.id!==j.id); S.st.active={job:j,accepted:Date.now()}; S.view='flight'; render();`, opt:{}},
-  check:   {setup:STATES.early+`S.st.cash=90000;`, start:`S.view='pilot'; render(); const b=document.querySelector('[data-act="book-check"]:not([disabled])'); if(!b) throw new Error('no checkride'); b.click(); __tick(400);`, opt:{}},
+  check:   {setup:STATES.early+`S.st.cash=90000; S.st.minutes=Math.max(S.st.minutes,600); S.st.flights=Math.max(S.st.flights||0,10);`, start:`S.view='pilot'; render(); const b=document.querySelector('[data-act="book-check"]:not([disabled])'); if(!b) throw new Error('no checkride'); b.click(); __tick(400);`, opt:{}},
 };
 const VIEWS=['story','board','map','flight','pilot','money','cup','academy','profile','log','hangar'];
 const VER=(fs.readFileSync(path.join(__dirname,'..','src','js','027-core.js'),'utf8').match(/TW_VERSION = '([^']*)'/)||[])[1]||'?';
